@@ -125,6 +125,8 @@ const ICONS = {
   gift: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8Z"/><path d="M16.5 8a2.5 2.5 0 0 0 0-5C13 3 12 8 12 8Z"/>',
   package: '<path d="M16.5 9.4 7.5 4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.29 7.29 12 12l8.71-4.71"/><path d="M12 22V12"/>',
   more: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+  cloud: '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h.79a4.5 4.5 0 1 1 0 9Z"/>',
+  bookopen: '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3Z"/>',
 };
 function iconSvg(name, color, size) {
   size = size || 20;
@@ -145,6 +147,7 @@ const TABS = [
   { key: "absensi", label: "Absensi", icon: "clipboard" },
   { key: "awg", label: "AWG", icon: "users" },
   { key: "pm", label: "Penerima Manfaat", icon: "heart" },
+  { key: "bukubesar", label: "Cloud Buku Besar", icon: "cloud" },
 ];
 
 // GANTI semua PLACEHOLDER di bawah ini dengan URL asli tiap aplikasi.
@@ -188,6 +191,18 @@ const MENUS = {
       { label: "Program & Donasi", icon: "piggy", color: "blue", tab: "programDonasi" },
       { label: "Data Penerima", icon: "users", color: "coral", tab: "penerima" },
       { label: "Distribusi Bantuan", icon: "package", color: "purple", tab: "distribusi" },
+    ],
+  },
+  bukubesar: {
+    title: "Cloud Buku Besar",
+    // App utuh (sama kaya AWG & PM), 5 tab internal: dashboard, input, data, laporan, aset.
+    baseUrl: "https://yayasansalamsatuaspaldc-eng.github.io/Buku-Besar/",
+    items: [
+      { label: "Dashboard", icon: "chart", color: "teal", tab: "dashboard" },
+      { label: "Input Jurnal", icon: "receipt", color: "blue", tab: "input" },
+      { label: "Buku Besar", icon: "bookopen", color: "coral", tab: "data" },
+      { label: "Laporan ISAK 35", icon: "printer", color: "amber", tab: "laporan" },
+      { label: "Aset & Lokasi", icon: "package", color: "purple", tab: "aset" },
     ],
   },
 };
