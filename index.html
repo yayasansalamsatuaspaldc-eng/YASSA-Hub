@@ -158,9 +158,16 @@ const MENUS = {
   },
   awg: {
     title: "AWG (Ahli Waris Gojek)",
-    singleApp: true,
-    url: "https://yayasansalamsatuaspaldc-eng.github.io/AWG/?embed=1",
-    desc: "Kelola pendaftaran, kontrol kualifikasi, antrian, dan cetak dokumen ahli waris Gojek. Navigasi lengkap tersedia di dalam aplikasi.",
+    // Sesuai 5 tab internal index.html AWG: dashboard, registrasi, penyelesaian, antrian, export.
+    // "tab" dipakai buat deep-link -> baseUrl + "?embed=1&tab=" + tab
+    baseUrl: "https://yayasansalamsatuaspaldc-eng.github.io/AWG/",
+    items: [
+      { label: "Beranda AWG", icon: "home", color: "teal", tab: "dashboard" },
+      { label: "Data Baru", icon: "userplus", color: "blue", tab: "registrasi" },
+      { label: "Kontrol", icon: "shield", color: "coral", tab: "penyelesaian" },
+      { label: "List Antrian", icon: "list", color: "amber", tab: "antrian" },
+      { label: "Print Data", icon: "printer", color: "purple", tab: "export" },
+    ],
   },
   pm: {
     title: "Penerima Manfaat",
@@ -255,7 +262,7 @@ function openSingleApp() {
 function openApp(index) {
   const menu = MENUS[active];
   const item = menu.items[index];
-  const resolvedUrl = item.url || (menu.baseUrl + "?tab=" + item.tab);
+  const resolvedUrl = item.url || (menu.baseUrl + "?embed=1&tab=" + item.tab);
   document.getElementById("overlayTitle").textContent = item.label;
   document.getElementById("overlayFrame").src = resolvedUrl;
   document.getElementById("overlay").classList.add("open");
