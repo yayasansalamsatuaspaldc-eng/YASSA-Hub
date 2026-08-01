@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>YASSA Hub</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0B7A45">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="YASSA Hub">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <style>
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: #F6F7F3; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
@@ -272,6 +281,16 @@ document.getElementById("overlayClose").addEventListener("click", function () {
   document.getElementById("overlay").classList.remove("open");
   document.getElementById("overlayFrame").src = "about:blank";
 });
+
+// Daftarkan service worker supaya app ini bisa "Add to Home Screen" / diinstall
+// sebagai PWA di HP. Kalau browser tidak mendukung (jarang), diabaikan saja.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("sw.js").catch(function (err) {
+      console.warn("Gagal daftar service worker:", err);
+    });
+  });
+}
 
 render();
 </script>
