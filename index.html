@@ -180,10 +180,14 @@ const MENUS = {
   },
   pm: {
     title: "Penerima Manfaat",
+    // App utuh (sama kaya AWG), 4 tab internal: dashboard, programDonasi, penerima, distribusi.
+    // "tab" dipakai buat deep-link -> baseUrl + "?embed=1&tab=" + tab
+    baseUrl: "https://yayasansalamsatuaspaldc-eng.github.io/Penerima-Manfaat/",
     items: [
-      { label: "Data Anak & Keluarga", icon: "users", color: "teal", url: "https://script.google.com/macros/s/PLACEHOLDER_PM/exec" },
-      { label: "Santunan", icon: "gift", color: "coral", url: "https://script.google.com/macros/s/PLACEHOLDER_PM/exec?view=santunan" },
-      { label: "Distribusi Bantuan", icon: "package", color: "purple", url: "https://script.google.com/macros/s/PLACEHOLDER_PM/exec?view=distribusi" },
+      { label: "Dashboard & Laporan", icon: "chart", color: "teal", tab: "dashboard" },
+      { label: "Program & Donasi", icon: "piggy", color: "blue", tab: "programDonasi" },
+      { label: "Data Penerima", icon: "users", color: "coral", tab: "penerima" },
+      { label: "Distribusi Bantuan", icon: "package", color: "purple", tab: "distribusi" },
     ],
   },
 };
