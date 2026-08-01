@@ -34,6 +34,11 @@
   .menu-icon { width: 52px; height: 52px; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
   .menu-label { font-size: 11px; font-weight: 500; color: #1F2933; text-align: center; line-height: 1.25; }
 
+  .single-app-card { width: 100%; background: #fff; border: none; border-radius: 18px; padding: 18px; display: flex; gap: 14px; align-items: flex-start; text-align: left; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .single-app-icon { width: 52px; height: 52px; border-radius: 16px; background: #E7F4EC; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .single-app-title { font-size: 15px; font-weight: 600; color: #1F2933; margin-bottom: 4px; }
+  .single-app-desc { font-size: 12px; color: #6B7280; line-height: 1.5; }
+
   .bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #EEF0EC; display: flex; padding: 8px 4px; box-shadow: 0 -2px 8px rgba(0,0,0,.04); }
   .nav-btn { flex: 1; background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 2px; cursor: pointer; }
   .nav-label { font-size: 10px; text-align: center; line-height: 1.2; }
@@ -153,16 +158,9 @@ const MENUS = {
   },
   awg: {
     title: "AWG (Ahli Waris Gojek)",
-    // Sesuai 5 tab internal index.html AWG: dashboard, registrasi, penyelesaian, antrian, export.
-    // "tab" dipakai buat deep-link -> baseUrl + "?tab=" + tab
-    baseUrl: "https://yayasansalamsatuaspaldc-eng.github.io/AWG/",
-    items: [
-      { label: "Beranda AWG", icon: "home", color: "teal", tab: "dashboard" },
-      { label: "Data Baru", icon: "userplus", color: "blue", tab: "registrasi" },
-      { label: "Kontrol", icon: "shield", color: "coral", tab: "penyelesaian" },
-      { label: "List Antrian", icon: "list", color: "amber", tab: "antrian" },
-      { label: "Print Data", icon: "printer", color: "purple", tab: "export" },
-    ],
+    singleApp: true,
+    url: "https://yayasansalamsatuaspaldc-eng.github.io/AWG/?embed=1",
+    desc: "Kelola pendaftaran, kontrol kualifikasi, antrian, dan cetak dokumen ahli waris Gojek. Navigasi lengkap tersedia di dalam aplikasi.",
   },
   pm: {
     title: "Penerima Manfaat",
@@ -202,6 +200,19 @@ function renderContent() {
   }
 
   const menu = MENUS[active];
+
+  if (menu.singleApp) {
+    let html = '<div class="section-title">' + menu.title + '</div>' +
+      '<button class="single-app-card" onclick="openSingleApp()">' +
+      '<div class="single-app-icon">' + iconSvg("users", "#0B7A45", 26) + '</div>' +
+      '<div class="single-app-text">' +
+      '<div class="single-app-title">Buka Aplikasi AWG</div>' +
+      '<div class="single-app-desc">' + menu.desc + '</div>' +
+      '</div></button>';
+    el.innerHTML = html;
+    return;
+  }
+
   let html = '<div class="section-title">' + menu.title + '</div><div class="menu-panel"><div class="menu-grid">';
   menu.items.forEach((item, i) => {
     const c = ICON_COLORS[item.color] || ICON_COLORS.teal;
@@ -232,6 +243,13 @@ function renderBottomNav() {
 function setActive(key) {
   active = key;
   render();
+}
+
+function openSingleApp() {
+  const menu = MENUS[active];
+  document.getElementById("overlayTitle").textContent = menu.title;
+  document.getElementById("overlayFrame").src = menu.url;
+  document.getElementById("overlay").classList.add("open");
 }
 
 function openApp(index) {
