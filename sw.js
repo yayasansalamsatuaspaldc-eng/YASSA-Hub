@@ -3,7 +3,7 @@
 // bisa kebuka meski koneksi lagi jelek. Konten di dalam iframe (Kotak & Donasi,
 // Absensi, AWG, Penerima Manfaat) TETAP butuh internet karena itu app terpisah.
 
-const CACHE_NAME = "yassa-hub-shell-v2";
+const CACHE_NAME = "yassa-hub-shell-v3";
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -40,6 +40,34 @@ self.addEventListener("fetch", function (event) {
   if (event.request.method !== "GET") return;
   if (new URL(event.request.url).origin !== self.location.origin) return;
 
+  // NETWORK-FIRST khusus buat halaman HTML (index.html): selalu coba ambil
+  // versi terbaru dulu dari server tiap dibuka, biar update Hub langsung
+  // kepakai tanpa perlu clear cache manual. Baru fallback ke cache kalau
+  // lagi offline/gagal fetch.
+  const isHTMLRequest =
+    event.request.mode === "navigate" ||
+    (event.request.headers.get("accept") || "").includes("text/html");
+
+  if (isHTMLRequest) {
+    event.respondWith(
+      fetch(event.request)
+        .then(function (response) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(function (cache) {
+            cache.put(event.request, clone);
+          });
+          return response;
+        })
+        .catch(function () {
+          return caches.match(event.request).then(function (cached) {
+            return cached || caches.match("./index.html");
+          });
+        })
+    );
+    return;
+  }
+
+  // CACHE-FIRST buat aset statis (manifest, ikon): jarang berubah, aman diambil cepat dari cache.
   event.respondWith(
     caches.match(event.request).then(function (cached) {
       return (
