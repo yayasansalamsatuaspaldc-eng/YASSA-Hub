@@ -1,0 +1,220 @@
+import React, { useState } from "react";
+import {
+  Home,
+  Wallet,
+  ClipboardCheck,
+  Users,
+  HeartHandshake,
+  Bell,
+  X,
+  MoreHorizontal,
+  Receipt,
+  FileBarChart,
+  PiggyBank,
+  CalendarCheck,
+  History,
+  UserPlus,
+  FileText,
+  Gift,
+  Package,
+  ShieldCheck,
+  ListOrdered,
+  Printer,
+} from "lucide-react";
+
+const TABS = [
+  { key: "beranda", label: "Beranda", icon: Home },
+  { key: "donasi", label: "Kotak & Donasi", icon: Wallet },
+  { key: "absensi", label: "Absensi", icon: ClipboardCheck },
+  { key: "awg", label: "AWG", icon: Users },
+  { key: "pm", label: "Penerima Manfaat", icon: HeartHandshake },
+];
+
+// Palet warna ikon ala Gopay: tiap kategori menu punya warna beda
+// biar grid-nya gampang dibedain sekilas.
+const ICON_COLORS = {
+  teal: { bg: "#E1F5EE", fg: "#0F6E56" },
+  blue: { bg: "#E6F1FB", fg: "#185FA5" },
+  coral: { bg: "#FAECE7", fg: "#993C1D" },
+  amber: { bg: "#FAEEDA", fg: "#854F0B" },
+  purple: { bg: "#EEEDFE", fg: "#534AB7" },
+};
+
+// Placeholder URL deployment GAS masing-masing app.
+// Ganti dengan URL /exec asli tiap aplikasi.
+const MENUS = {
+  beranda: {
+    title: "Beranda",
+    items: [],
+  },
+  donasi: {
+    title: "Kotak & Donasi",
+    items: [
+      { label: "Monitoring GOPAY", icon: PiggyBank, color: "teal", url: "https://script.google.com/macros/s/PLACEHOLDER_KOTAK/exec" },
+      { label: "Kirim Nota", icon: Receipt, color: "blue", url: "https://script.google.com/macros/s/PLACEHOLDER_NOTA/exec" },
+      { label: "Laporan Donasi", icon: FileBarChart, color: "amber", url: "https://script.google.com/macros/s/PLACEHOLDER_LAPORAN/exec" },
+    ],
+  },
+  absensi: {
+    title: "Absensi",
+    items: [
+      { label: "Absen Sekarang", icon: CalendarCheck, color: "teal", url: "https://script.google.com/macros/s/PLACEHOLDER_ABSENSI/exec" },
+      { label: "Riwayat Absensi", icon: History, color: "blue", url: "https://script.google.com/macros/s/PLACEHOLDER_ABSENSI/exec?view=riwayat" },
+    ],
+  },
+  awg: {
+    title: "AWG (Ahli Waris Gojek)",
+    // Cocok dengan 5 tab internal yang sudah ada di index.html AWG:
+    // dashboard, registrasi, penyelesaian, antrian, export.
+    // "tab" dipakai buat deep-link ke halaman GitHub Pages, mis. ?tab=registrasi
+    items: [
+      { label: "Beranda AWG", icon: Home, color: "teal", tab: "dashboard" },
+      { label: "Data Baru", icon: UserPlus, color: "blue", tab: "registrasi" },
+      { label: "Kontrol", icon: ShieldCheck, color: "coral", tab: "penyelesaian" },
+      { label: "List Antrian", icon: ListOrdered, color: "amber", tab: "antrian" },
+      { label: "Print Data", icon: Printer, color: "purple", tab: "export" },
+    ],
+    baseUrl: "https://PLACEHOLDER-USERNAME.github.io/PLACEHOLDER-REPO/",
+  },
+  pm: {
+    title: "Penerima Manfaat",
+    items: [
+      { label: "Data Anak & Keluarga", icon: Users, color: "teal", url: "https://script.google.com/macros/s/PLACEHOLDER_PM/exec" },
+      { label: "Santunan", icon: Gift, color: "coral", url: "https://script.google.com/macros/s/PLACEHOLDER_PM/exec?view=santunan" },
+      { label: "Distribusi Bantuan", icon: Package, color: "purple", url: "https://script.google.com/macros/s/PLACEHOLDER_PM/exec?view=distribusi" },
+    ],
+  },
+};
+
+export default function YassaHub() {
+  const [active, setActive] = useState("beranda");
+  const [openApp, setOpenApp] = useState(null);
+
+  const current = MENUS[active];
+
+  return (
+    <div style={{ maxWidth: 420, margin: "0 auto", minHeight: 700, background: "#F6F7F3", display: "flex", flexDirection: "column", fontFamily: "'Segoe UI', system-ui, sans-serif", position: "relative" }}>
+      {/* Header */}
+      <div style={{ background: "#0B7A45", padding: "20px 20px 28px", color: "#fff", borderBottomLeftRadius: 20, borderBottomRightRadius: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <div style={{ fontSize: 13, opacity: 0.85 }}>Selamat datang,</div>
+            <div style={{ fontSize: 18, fontWeight: 600 }}>Pengurus YASSA</div>
+          </div>
+          <div style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Bell size={18} />
+          </div>
+        </div>
+        {active === "beranda" && (
+          <div style={{ marginTop: 18, background: "#fff", borderRadius: 14, padding: "14px 16px", color: "#1F2933", display: "flex", justifyContent: "space-between" }}>
+            <div>
+              <div style={{ fontSize: 12, color: "#6B7280" }}>Total Donasi Bulan Ini</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: "#0B7A45" }}>Rp 12.450.000</div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: 12, color: "#6B7280" }}>Anak Terdaftar</div>
+              <div style={{ fontSize: 20, fontWeight: 700 }}>812</div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <div style={{ flex: 1, padding: "20px 16px 90px" }}>
+        {active === "beranda" ? (
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#1F2933" }}>Akses Cepat</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              {TABS.filter((t) => t.key !== "beranda").map((t) => {
+                const Icon = t.icon;
+                return (
+                  <button
+                    key={t.key}
+                    onClick={() => setActive(t.key)}
+                    style={{ background: "#fff", border: "none", borderRadius: 14, padding: "16px 12px", display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-start", cursor: "pointer", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
+                  >
+                    <div style={{ width: 34, height: 34, borderRadius: 10, background: "#E7F4EC", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Icon size={18} color="#0B7A45" />
+                    </div>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: "#1F2933", textAlign: "left" }}>{t.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#1F2933" }}>{current.title}</div>
+            <div style={{ background: "#fff", borderRadius: 18, padding: "18px 12px 14px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", rowGap: 18, columnGap: 4 }}>
+                {current.items.map((item) => {
+                  const Icon = item.icon;
+                  const c = ICON_COLORS[item.color] || ICON_COLORS.teal;
+                  return (
+                    <button
+                      key={item.label}
+                      onClick={() => setOpenApp(item)}
+                      style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", padding: 0 }}
+                    >
+                      <div style={{ width: 52, height: 52, borderRadius: 16, background: c.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Icon size={22} color={c.fg} />
+                      </div>
+                      <span style={{ fontSize: 11, fontWeight: 500, color: "#1F2933", textAlign: "center", lineHeight: 1.25 }}>{item.label}</span>
+                    </button>
+                  );
+                })}
+                <button
+                  onClick={() => {}}
+                  style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", padding: 0 }}
+                >
+                  <div style={{ width: 52, height: 52, borderRadius: 16, background: "#F1F2ED", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <MoreHorizontal size={22} color="#6B7280" />
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 500, color: "#1F2933", textAlign: "center" }}>Lihat semua</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Bottom nav */}
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#fff", borderTop: "1px solid #EEF0EC", display: "flex", padding: "8px 4px", boxShadow: "0 -2px 8px rgba(0,0,0,0.04)" }}>
+        {TABS.map((t) => {
+          const Icon = t.icon;
+          const isActive = active === t.key;
+          return (
+            <button
+              key={t.key}
+              onClick={() => setActive(t.key)}
+              style={{ flex: 1, background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "6px 2px", cursor: "pointer" }}
+            >
+              <Icon size={20} color={isActive ? "#0B7A45" : "#9CA3AF"} />
+              <span style={{ fontSize: 10, fontWeight: isActive ? 600 : 400, color: isActive ? "#0B7A45" : "#9CA3AF", textAlign: "center", lineHeight: 1.2 }}>
+                {t.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Overlay buka app anak via iframe */}
+      {openApp && (() => {
+        const resolvedUrl = openApp.url || `${current.baseUrl}?tab=${openApp.tab}`;
+        return (
+          <div style={{ position: "absolute", inset: 0, background: "#fff", display: "flex", flexDirection: "column", zIndex: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", borderBottom: "1px solid #EEF0EC" }}>
+              <button onClick={() => setOpenApp(null)} style={{ background: "none", border: "none", cursor: "pointer" }}>
+                <X size={20} color="#1F2933" />
+              </button>
+              <span style={{ fontSize: 15, fontWeight: 600, color: "#1F2933" }}>{openApp.label}</span>
+            </div>
+            <div style={{ flex: 1, padding: 16, color: "#6B7280", fontSize: 13 }}>
+              Di sini nanti dimuat <code>&lt;iframe src="{resolvedUrl}"&gt;</code>. Untuk item AWG, index.html-nya perlu baca parameter <code>?tab=</code> di URL lalu panggil <code>switchTab()</code> otomatis saat halaman dibuka, biar langsung nyasar ke tab yang benar.
+            </div>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
