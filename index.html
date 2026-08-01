@@ -155,10 +155,16 @@ const MENUS = {
   beranda: { title: "Beranda", items: [] },
   donasi: {
     title: "Kotak & Donasi",
+    // App utuh (React), 5 view internal via state currentView:
+    // dashboard, info-kotak, input-kotak, input-donasi, monitor.
+    // "info-kotak" & "monitor" cuma muncul buat role tertentu (diatur di app-nya sendiri).
+    baseUrl: "https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/",
     items: [
-      { label: "Monitoring GOPAY", icon: "piggy", color: "teal", url: "https://script.google.com/macros/s/PLACEHOLDER_KOTAK/exec" },
-      { label: "Kirim Nota", icon: "receipt", color: "blue", url: "https://script.google.com/macros/s/PLACEHOLDER_NOTA/exec" },
-      { label: "Laporan Donasi", icon: "chart", color: "amber", url: "https://script.google.com/macros/s/PLACEHOLDER_LAPORAN/exec" },
+      { label: "Dashboard", icon: "chart", color: "teal", tab: "dashboard" },
+      { label: "Informasi Kotak", icon: "piggy", color: "blue", tab: "info-kotak" },
+      { label: "Input Buka Kotak", icon: "receipt", color: "coral", tab: "input-kotak" },
+      { label: "Input Donasi", icon: "heart", color: "amber", tab: "input-donasi" },
+      { label: "Admin Hub", icon: "list", color: "purple", tab: "monitor" },
     ],
   },
   absensi: {
