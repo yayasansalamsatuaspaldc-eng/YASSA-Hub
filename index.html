@@ -98,7 +98,7 @@
       </button>
       <span class="overlay-title" id="overlayTitle"></span>
     </div>
-    <iframe id="overlayFrame" src="about:blank"></iframe>
+    <iframe id="overlayFrame" src="about:blank" allow="camera; geolocation"></iframe>
   </div>
 
 </div>
@@ -168,10 +168,16 @@ const MENUS = {
     ],
   },
   absensi: {
-    title: "Absensi",
+    title: "Absensi & Kegiatan",
+    // Bukan SPA (beda dari AWG/PM/Buku Besar/Kotak&Donasi) — ini beberapa file
+    // .html terpisah, jadi link langsung ke tiap file, gak pakai baseUrl+tab.
     items: [
-      { label: "Absen Sekarang", icon: "calendar", color: "teal", url: "https://script.google.com/macros/s/PLACEHOLDER_ABSENSI/exec" },
-      { label: "Riwayat Absensi", icon: "history", color: "blue", url: "https://script.google.com/macros/s/PLACEHOLDER_ABSENSI/exec?view=riwayat" },
+      { label: "Beranda", icon: "home", color: "teal", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/index.html" },
+      { label: "Dashboard", icon: "chart", color: "blue", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Dashboard.html" },
+      { label: "Kegiatan", icon: "calendar", color: "coral", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Kegiatan.html" },
+      { label: "Notulen", icon: "clipboard", color: "amber", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Notulen.html" },
+      { label: "Arsip", icon: "package", color: "purple", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Arsip.html" },
+      { label: "Absen Sekarang", icon: "userplus", color: "teal", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Absensi.html" },
     ],
   },
   awg: {
