@@ -1284,7 +1284,29 @@ function handleUserMenuClick(action) {
     
     showModal("Profil Saya", kontenProfil);
   } else if (action === "pengurus") {
-    showModal("Pengurus", "Fitur daftar pengurus belum tersambung ke data asli — masih tampilan placeholder.");
+    showModal("Susunan Pengurus", '<div style="text-align:center;color:#9CA3AF;font-size:13px;padding:10px 0;">Memuat data pengurus...</div>');
+    callGAS("getPengurusList", [authToken])
+      .then(function (list) {
+        if (!list.length) {
+          showModal("Susunan Pengurus", '<div style="text-align:center;color:#9CA3AF;font-size:13px;padding:10px 0;">Belum ada data pengurus.</div>');
+          return;
+        }
+        const html = list.map(function (u) {
+          const initial = (u.nama || "?").charAt(0).toUpperCase();
+          const jabatanText = u.jabatan ? escapeHtmlHub(u.jabatan) : roleLabel(u.role);
+          const wilayahText = u.wilayahAkses === "ALL" ? "Semua wilayah" : (u.wilayahAkses || "-");
+          return '<div class="user-row" style="cursor:default;">' +
+            '<div class="user-row-avatar">' + initial + '</div>' +
+            '<div class="user-row-info">' +
+            '<div class="user-row-name">' + escapeHtmlHub(u.nama || "-") + '</div>' +
+            '<div class="user-row-email">' + jabatanText + ' &middot; ' + escapeHtmlHub(wilayahText) + '</div>' +
+            '</div></div>';
+        }).join("");
+        showModal("Susunan Pengurus", '<div class="user-table-wrap" style="box-shadow:none;margin-bottom:0;text-align:left;max-height:50vh;overflow-y:auto;">' + html + '</div>');
+      })
+      .catch(function (err) {
+        showModal("Gagal Memuat", escapeHtmlHub(err.message));
+      });
   } else if (action === "pengaturan") {
     setActive("pengaturan");
   } else if (action === "logout") {
