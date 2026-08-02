@@ -289,13 +289,34 @@
   .role-WAKORWIL { background: #E1F5EE; color: #0D8458; }
 
   /* Bagan Susunan Pengurus */
-  .orgchart { display: flex; flex-direction: column; align-items: center; }
-  .orgchart-connector { width: 2px; height: 16px; background: #0B7A45; }
   .orgchart-tier { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; padding: 6px 0; }
   .orgchart-card { display: flex; flex-direction: column; align-items: center; width: 78px; }
   .orgchart-photo { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #0B7A45; background: #F3F4F6; }
   .orgchart-jabatan { background: #0B7A45; color: #fff; font-size: 9.5px; font-weight: 700; padding: 2px 7px; border-radius: 8px; margin-top: 5px; text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .orgchart-nama { font-size: 10.5px; font-weight: 600; color: #111827; margin-top: 3px; text-align: center; line-height: 1.2; }
+  .orgchart-jabatan-empty { background: #D1D5DB !important; }
+  .orgchart-nama-empty { color: #9CA3AF; font-style: italic; }
+
+  /* Bagan pohon (garis bercabang) buat Susunan Pengurus */
+  .orgtree-wrap { overflow-x: auto; padding: 4px 2px 10px; }
+  .orgtree { display: flex; justify-content: center; min-width: max-content; }
+  .orgtree ul { display: flex; margin: 0; padding: 20px 0 0; position: relative; }
+  .orgtree li { display: flex; flex-direction: column; align-items: center; list-style-type: none; position: relative; padding: 20px 8px 0 8px; margin: 0; }
+  .orgtree li::before, .orgtree li::after {
+    content: ''; position: absolute; top: 0; right: 50%;
+    border-top: 2px solid #0B7A45; width: 50%; height: 20px;
+  }
+  .orgtree li::after { right: auto; left: 50%; border-left: 2px solid #0B7A45; }
+  .orgtree li:only-child::after, .orgtree li:only-child::before { display: none; }
+  .orgtree li:only-child { padding-top: 0; }
+  .orgtree li:first-child::before, .orgtree li:last-child::after { border: 0 none; }
+  .orgtree li:last-child::before { border-right: 2px solid #0B7A45; border-radius: 0 6px 0 0; }
+  .orgtree li:first-child::after { border-radius: 6px 0 0 0; }
+  .orgtree ul ul::before {
+    content: ''; position: absolute; top: 0; left: 50%;
+    border-left: 2px solid #0B7A45; width: 0; height: 20px;
+  }
+  .orgtree-members { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
   .status-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 99px; }
   .status-AKTIF { background: #E1F5EE; color: #0D8458; }
   .status-NONAKTIF { background: #F3F4F6; color: #6B7280; }
@@ -1317,44 +1338,111 @@ function handleUserMenuClick(action) {
 let userListCache = [];
 let editingEmail = null;
 
-// Urutan tingkatan bagan pengurus DIAMBIL OTOMATIS dari Role (gak perlu
-// input manual apa-apa) — dari yang paling atas sampai paling bawah.
-// SUPERADMIN & ADMIN sengaja gak dimasukin ke bagan (itu role teknis
-// buat akses sistem, bukan bagian dari susunan pengurus organisasi).
-const ORG_ROLE_ORDER = ["PENGURUS", "KORWIL", "WAKORWIL"];
+// Bentuk bagan pengurus DIAMBIL OTOMATIS dari kolom Jabatan (bukan Role
+// akses sistem) — susunannya mengikuti bagan resmi YASSA:
+// Pembina di atas, lalu Dewan Pengawas & Ketua, lalu Sekretaris &
+// Bendahara, lalu divisi-divisi di bawah masing-masing, dan Sosial /
+// Kesehatan di baris paling bawah. Jabatan dicocokkan tanpa peduli
+// besar-kecil huruf/spasi/tanda kurung, jadi isi kolom Jabatan di form
+// User cukup salah satu dari alias di bawah.
+const ORG_CHART_TREE = {
+  aliases: ["pembina"], label: "Pembina",
+  children: [
+    { aliases: ["dewan pengawas", "pengawas"], label: "Dewan Pengawas", children: [] },
+    {
+      aliases: ["ketua", "pengurus ketua", "pengurus", "ketua umum"], label: "Pengurus (Ketua)",
+      children: [
+        {
+          aliases: ["sekretaris"], label: "Sekretaris",
+          children: [
+            {
+              aliases: ["pendidikan"], label: "Pendidikan",
+              children: [
+                { aliases: ["sosial"], label: "Sosial", children: [] }
+              ]
+            },
+            { aliases: ["lingkungan hidup", "lingkungan"], label: "Lingkungan Hidup", children: [] },
+            { aliases: ["fundraising", "penggalangan dana"], label: "Fundraising", children: [] }
+          ]
+        },
+        {
+          aliases: ["bendahara"], label: "Bendahara",
+          children: [
+            {
+              aliases: ["ekonomi"], label: "Ekonomi",
+              children: [
+                { aliases: ["kesehatan"], label: "Kesehatan", children: [] }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+};
 const FOTO_DEFAULT = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
 
-function buildOrgChartHtml(list) {
-  // Kelompokkan per Role sesuai ORG_ROLE_ORDER. Role yang gak ada
-  // anggotanya otomatis dilewati (gak bikin tingkatan kosong).
-  const tiers = ORG_ROLE_ORDER
-    .map(function (role) {
-      return { role: role, members: list.filter(function (u) { return u.role === role; }) };
-    })
-    .filter(function (t) { return t.members.length > 0; });
+function normalizeJabatan(str) {
+  return String(str || "").toLowerCase().replace(/[()]/g, "").replace(/\s+/g, " ").trim();
+}
 
-  if (!tiers.length) {
-    return '<div style="text-align:center;color:#9CA3AF;font-size:13px;padding:10px 0;">Belum ada user dengan Role Pengurus/Korwil/WA Korwil. Tambah atau edit Role user lewat tab Pengaturan dulu.</div>';
+function orgCardHtml(jabatanLabel, u) {
+  const foto = u && u.fotoUrl ? u.fotoUrl : FOTO_DEFAULT;
+  if (!u) {
+    return '<div class="orgchart-card">' +
+      '<img class="orgchart-photo" src="' + FOTO_DEFAULT + '" alt="">' +
+      '<div class="orgchart-jabatan orgchart-jabatan-empty">' + escapeHtmlHub(jabatanLabel) + '</div>' +
+      '<div class="orgchart-nama orgchart-nama-empty">Belum diisi</div>' +
+      '</div>';
+  }
+  return '<div class="orgchart-card">' +
+    '<img class="orgchart-photo" src="' + foto + '" alt="">' +
+    '<div class="orgchart-jabatan">' + escapeHtmlHub(jabatanLabel) + '</div>' +
+    '<div class="orgchart-nama">' + escapeHtmlHub(u.nama || "-") + '</div>' +
+    '</div>';
+}
+
+function renderOrgNode(node, list) {
+  const members = list.filter(function (u) {
+    return node.aliases.indexOf(normalizeJabatan(u.jabatan)) !== -1;
+  });
+
+  const cardsHtml = members.length
+    ? members.map(function (u) { return orgCardHtml(node.label, u); }).join("")
+    : orgCardHtml(node.label, null);
+
+  let html = '<li><div class="orgtree-members">' + cardsHtml + '</div>';
+  if (node.children && node.children.length) {
+    html += '<ul>' + node.children.map(function (child) { return renderOrgNode(child, list); }).join("") + '</ul>';
+  }
+  html += '</li>';
+  return html;
+}
+
+function buildOrgChartHtml(list) {
+  const matchedAliases = {};
+  (function collect(node) {
+    node.aliases.forEach(function (a) { matchedAliases[a] = true; });
+    (node.children || []).forEach(collect);
+  })(ORG_CHART_TREE);
+
+  const lainnya = list.filter(function (u) {
+    return matchedAliases[normalizeJabatan(u.jabatan)] !== true;
+  });
+
+  let html = '<div class="orgtree-wrap"><div class="orgtree"><ul>' +
+    renderOrgNode(ORG_CHART_TREE, list) +
+    '</ul></div></div>';
+
+  if (lainnya.length) {
+    html += '<div style="font-size:12px;font-weight:700;color:#6B7280;margin:14px 0 8px;text-align:center;">Lainnya</div>';
+    html += '<div class="orgchart-tier">' + lainnya.map(function (u) {
+      const jabatanText = u.jabatan ? escapeHtmlHub(u.jabatan) : roleLabel(u.role);
+      return orgCardHtml(jabatanText, u);
+    }).join("") + '</div>';
   }
 
-  let html = '<div class="orgchart">';
-  tiers.forEach(function (tier, tIdx) {
-    if (tIdx > 0) html += '<div class="orgchart-connector"></div>';
-    html += '<div class="orgchart-tier">';
-    tier.members.forEach(function (u) {
-      const foto = u.fotoUrl ? u.fotoUrl : FOTO_DEFAULT;
-      const jabatanText = u.jabatan ? escapeHtmlHub(u.jabatan) : roleLabel(u.role);
-      html += '<div class="orgchart-card">' +
-        '<img class="orgchart-photo" src="' + foto + '" alt="">' +
-        '<div class="orgchart-jabatan">' + jabatanText + '</div>' +
-        '<div class="orgchart-nama">' + escapeHtmlHub(u.nama || "-") + '</div>' +
-        '</div>';
-    });
-    html += '</div>';
-  });
-  html += '</div>';
-
-  return '<div style="max-height:55vh;overflow-y:auto;overflow-x:hidden;">' + html + '</div>';
+  return '<div style="max-height:60vh;overflow-y:auto;">' + html + '</div>';
 }
 
 function renderPengaturanPanel(el) {
