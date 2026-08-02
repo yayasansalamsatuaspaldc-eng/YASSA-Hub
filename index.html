@@ -783,7 +783,11 @@ function initGoogleSignIn() {
   google.accounts.id.initialize({
     client_id: GOOGLE_CLIENT_ID,
     callback: handleGoogleCredential,
-    hd: "yayasansalamsatuaspal.com",
+    // Catatan: 'hd' sengaja TIDAK dipakai di sini. Kalau di-set, Google
+    // cuma nyoba akun yang domainnya cocok & sering "nolak diam-diam" di HP
+    // yang banyak akun. Validasi domain @yayasansalamsatuaspal.com tetap
+    // dilakukan server-side di loginGoogle() (Code.gs) — lebih aman & UX
+    // lebih jelas (user bisa pilih akun apa saja, baru divalidasi).
   });
   google.accounts.id.renderButton(document.getElementById("googleSignInBtn"), {
     theme: "outline", size: "large", width: 280, text: "continue_with", logo_alignment: "left"
