@@ -756,7 +756,7 @@ function initGoogleSignIn() {
     hd: "yayasansalamsatuaspal.com",
   });
   google.accounts.id.renderButton(document.getElementById("googleSignInBtn"), {
-    theme: "outline", size: "large", width: 280, text: "signin_with",
+    theme: "outline", size: "large", width: 280, text: "continue_with", logo_alignment: "left"
   });
 }
 
@@ -893,13 +893,23 @@ function handleUserMenuClick(action) {
   if (action === "profile") {
     const wilayahText = currentUser.wilayahAkses === "ALL" ? "Semua wilayah" : currentUser.wilayahAkses;
     const printText = currentUser.bolehPrint ? "Ya" : "Tidak";
-    showModal(
-      "Profil",
-      currentUser.nama + " (" + roleLabel(currentUser.role) + ")\n" +
-      currentUser.email + "\n\n" +
-      "Akses wilayah: " + wilayahText + "\n" +
-      "Boleh print: " + printText
-    );
+    
+    // Cek foto profil, jika kosong pakai gambar avatar standar
+    const fotoProfil = currentUser.fotoUrl ? currentUser.fotoUrl : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
+    
+    const kontenProfil = `
+      <div style="text-align: center; margin-bottom: 15px;">
+        <img src="${fotoProfil}" alt="Foto Profil" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #0B7A45; margin-bottom: 10px;"><br>
+        <label id="labelUploadFoto" for="inputFotoProfile" style="background: #E1F5EE; color: #0D8458; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer;">Pilih Foto Baru</label>
+        <input type="file" id="inputFotoProfile" accept="image/*" style="display: none;" onchange="uploadFoto(this)">
+      </div>
+      <strong>${currentUser.nama}</strong> (${roleLabel(currentUser.role)})<br>
+      ${currentUser.email}<br><br>
+      Akses wilayah: ${wilayahText}<br>
+      Boleh print: ${printText}
+    `;
+    
+    showModal("Profil Saya", kontenProfil);
   } else if (action === "pengurus") {
     showModal("Pengurus", "Fitur daftar pengurus belum tersambung ke data asli — masih tampilan placeholder.");
   } else if (action === "logout") {
@@ -1045,6 +1055,33 @@ function toggleUserStatus() {
     .catch(function (err) { showModal("Gagal", err.message); });
 }
 
+function uploadFoto(input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const reader = new FileReader();
+  
+  const labelUpload = document.getElementById("labelUploadFoto");
+  labelUpload.textContent = "Mengunggah..."; // Ubah teks tombol saat sedang proses loading
+  
+  reader.onload = function(e) {
+    const base64Data = e.target.result.split(',')[1];
+    const mimeType = file.type;
+    
+    callGAS("uploadProfilePhoto", [authToken, base64Data, mimeType])
+      .then(function(res) {
+        currentUser.fotoUrl = res.fotoUrl; // Simpan tautan foto terbaru ke sesi lokal
+        sessionStorage.setItem("yassa_user", JSON.stringify(currentUser));
+        closeModal();
+        showModal("Sukses", "Foto profil berhasil diperbarui! Silakan buka profil lagi untuk melihatnya.");
+      })
+      .catch(function(err) {
+        closeModal();
+        showModal("Gagal", "Gagal mengunggah foto: " + err.message);
+      });
+  };
+  reader.readAsDataURL(file);
+}
+
 function openApp(index) {
   const menu = MENUS[active];
   const item = menu.items[index];
@@ -1062,7 +1099,7 @@ document.getElementById("overlayClose").addEventListener("click", function () {
 function showModal(title, message, isConfirm = false, onConfirm = null) {
   const modal = document.getElementById('customModalOverlay');
   document.getElementById('customModalTitle').textContent = title;
-  document.getElementById('customModalMessage').textContent = message;
+  document.getElementById('customModalMessage').innerHTML = message; // Ubah textContent jadi innerHTML agar bisa menampilkan gambar
   
   const actionsContainer = document.getElementById('customModalActions');
   actionsContainer.innerHTML = ''; // Reset buttons
