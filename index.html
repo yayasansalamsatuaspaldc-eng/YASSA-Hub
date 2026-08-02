@@ -748,6 +748,11 @@
           <input type="text" id="ufNama" class="user-form-input" required>
         </div>
         <div class="user-form-field">
+          <label class="user-form-label">Jabatan</label>
+          <input type="text" id="ufJabatan" class="user-form-input" placeholder="Misal: Ketua, Sekretaris, Bendahara">
+          <div class="user-form-hint">Cuma buat data organisasi/tampilan, gak ngaruh ke hak akses (itu diatur lewat Role).</div>
+        </div>
+        <div class="user-form-field">
           <label class="user-form-label">No. HP (Awali 628)</label>
           <input type="tel" id="ufEmail" class="user-form-input" placeholder="628xxxxxxxxx">
           <div class="user-form-hint">Buat login manual (No. HP + Password). Boleh kosong kalau user cuma pakai Login Otomatis.</div>
@@ -1006,7 +1011,7 @@ function showApp() {
   document.getElementById("loginScreen").style.display = "none";
   document.getElementById("app").style.display = "flex";
   document.getElementById("greetName").textContent = currentUser.nama || currentUser.email || currentUser.emailGoogle;
-  document.getElementById("greetRole").textContent = "Selamat datang, " + roleLabel(currentUser.role);
+  document.getElementById("greetRole").textContent = "Selamat datang, " + (currentUser.jabatan ? currentUser.jabatan : roleLabel(currentUser.role));
   active = "beranda";
   render();
 }
@@ -1270,6 +1275,7 @@ function handleUserMenuClick(action) {
         <input type="file" id="inputFotoProfile" accept="image/*" style="display: none;" onchange="uploadFoto(this)">
       </div>
       <strong>${currentUser.nama}</strong> (${roleLabel(currentUser.role)})<br>
+      ${currentUser.jabatan ? "Jabatan: " + currentUser.jabatan + "<br>" : ""}
       ${[currentUser.email, currentUser.emailGoogle].filter(Boolean).join(" &middot; ")}<br><br>
       Akses wilayah: ${wilayahText}<br>
       Boleh print: ${printText}
@@ -1313,10 +1319,11 @@ function loadUserListIntoPanel() {
         const initial = (u.nama || u.email || u.emailGoogle || "?").charAt(0).toUpperCase();
         const wilayahText = u.wilayahAkses === "ALL" ? "Semua wilayah" : (u.wilayahAkses || "-");
         const identText = [u.email, u.emailGoogle].filter(Boolean).map(escapeHtmlHub).join(" &middot; ");
+        const jabatanText = u.jabatan ? ' &middot; ' + escapeHtmlHub(u.jabatan) : '';
         return '<div class="user-row" onclick="openUserForm(' + i + ')">' +
           '<div class="user-row-avatar">' + initial + '</div>' +
           '<div class="user-row-info">' +
-          '<div class="user-row-name">' + escapeHtmlHub(u.nama || "-") + '</div>' +
+          '<div class="user-row-name">' + escapeHtmlHub(u.nama || "-") + jabatanText + '</div>' +
           '<div class="user-row-email">' + identText + ' &middot; ' + escapeHtmlHub(wilayahText) + '</div>' +
           '<div class="user-row-meta">' +
           '<span class="role-badge role-' + u.role + '">' + roleLabel(u.role) + '</span>' +
@@ -1342,6 +1349,7 @@ function openUserForm(indexOrNull) {
 
   document.getElementById("userFormTitle").textContent = isEdit ? "Edit User" : "Tambah User";
   document.getElementById("ufNama").value = isEdit ? user.nama : "";
+  document.getElementById("ufJabatan").value = isEdit ? (user.jabatan || "") : "";
   document.getElementById("ufEmail").value = isEdit ? (user.email || "") : "";
   document.getElementById("ufEmail").disabled = isEdit; 
   document.getElementById("ufEmailGoogle").value = isEdit ? (user.emailGoogle || "") : "";
@@ -1372,6 +1380,7 @@ function submitUserForm(event) {
   const btn = document.getElementById("ufSaveBtn");
   const data = {
     nama: document.getElementById("ufNama").value.trim(),
+    jabatan: document.getElementById("ufJabatan").value.trim(),
     email: document.getElementById("ufEmail").value.trim(),
     emailGoogle: document.getElementById("ufEmailGoogle").value.trim(),
     password: document.getElementById("ufPassword").value,
