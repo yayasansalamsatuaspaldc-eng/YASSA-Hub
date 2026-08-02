@@ -264,37 +264,45 @@
   .login-screen {
     min-height: 100vh; min-height: 100dvh;
     display: flex; align-items: center; justify-content: center;
-    padding: 24px; background: linear-gradient(135deg, #0B7A45 0%, #11995E 100%);
+    padding: 24px; background: linear-gradient(135deg, #096B3C 0%, #11995E 100%);
   }
   .login-card {
-    width: 100%; max-width: 360px; background: #fff; border-radius: 24px;
-    padding: 32px 26px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+    width: 100%; max-width: 380px; background: #fff; border-radius: 28px;
+    padding: 36px 30px; text-align: center; 
+    box-shadow: 0 24px 48px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.2);
   }
-  .login-logo { width: 64px; height: 64px; border-radius: 50%; object-fit: contain; margin-bottom: 14px; }
-  .login-title { font-size: 20px; font-weight: 800; color: #111827; }
-  .login-subtitle { font-size: 13px; color: #6B7280; margin-top: 4px; margin-bottom: 24px; }
+  .login-logo { 
+    width: 72px; height: 72px; border-radius: 50%; object-fit: contain; 
+    margin-bottom: 16px; box-shadow: 0 8px 16px rgba(11, 122, 69, 0.15);
+  }
+  .login-title { font-size: 22px; font-weight: 800; color: #111827; letter-spacing: -0.5px; }
+  .login-subtitle { font-size: 13.5px; color: #6B7280; margin-top: 6px; margin-bottom: 28px; }
   .login-error {
     background: #FDEAE6; color: #B91C1C; font-size: 12.5px; font-weight: 600;
-    padding: 10px 12px; border-radius: 10px; margin-bottom: 16px; text-align: left;
+    padding: 12px 14px; border-radius: 12px; margin-bottom: 20px; text-align: left;
   }
-  .login-field { text-align: left; margin-bottom: 14px; }
-  .login-label { display: block; font-size: 12.5px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+  .login-field { text-align: left; margin-bottom: 16px; }
+  .login-label { display: block; font-size: 12.5px; font-weight: 700; color: #374151; margin-bottom: 8px; }
   .login-input {
-    width: 100%; padding: 12px 14px; border-radius: 12px; border: 1.5px solid #E5E7EB;
-    font-size: 14px; font-family: inherit; outline: none; transition: border-color .2s;
+    width: 100%; padding: 14px 16px; border-radius: 14px; border: 1.5px solid transparent;
+    background: #F3F4F6; font-size: 14px; font-family: inherit; outline: none; 
+    transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .login-input:focus { border-color: #0B7A45; }
+  .login-input:focus { 
+    background: #fff; border-color: #0B7A45; 
+    box-shadow: 0 0 0 4px rgba(11, 122, 69, 0.15); 
+  }
   .login-btn {
-    width: 100%; padding: 13px; border: none; border-radius: 12px; background: #0B7A45;
-    color: #fff; font-size: 14.5px; font-weight: 700; cursor: pointer; margin-top: 4px;
-    transition: opacity .2s;
+    width: 100%; padding: 14px; border: none; border-radius: 14px; background: #0B7A45;
+    color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px;
+    box-shadow: 0 8px 20px rgba(11, 122, 69, 0.25); transition: all .2s;
   }
-  .login-btn:active { opacity: .85; }
-  .login-btn:disabled { opacity: .6; cursor: not-allowed; }
-  .login-divider { display: flex; align-items: center; gap: 10px; margin: 20px 0 16px; color: #9CA3AF; font-size: 12px; }
+  .login-btn:active { transform: translateY(2px); box-shadow: 0 4px 10px rgba(11, 122, 69, 0.2); }
+  .login-btn:disabled { opacity: .6; cursor: not-allowed; box-shadow: none; transform: none; }
+  .login-divider { display: flex; align-items: center; gap: 12px; margin: 24px 0 20px; color: #9CA3AF; font-size: 12px; font-weight: 600; }
   .login-divider::before, .login-divider::after { content: ""; flex: 1; height: 1px; background: #E5E7EB; }
-  .google-btn-wrap { display: flex; justify-content: center; min-height: 40px; }
-  .login-google-note { font-size: 11px; color: #9CA3AF; margin-top: 10px; }
+  .google-btn-wrap { display: flex; justify-content: center; min-height: 44px; margin-bottom: 8px;}
+  .login-google-note { font-size: 12px; font-weight: 600; color: #9CA3AF; margin-top: 16px; }
 
   /* ---- PANEL PENGATURAN (manajemen user) ---- */
   .settings-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
@@ -367,8 +375,8 @@
 
     <form id="loginForm" onsubmit="handleLoginSubmit(event)">
       <div class="login-field">
-        <label class="login-label">Email</label>
-        <input type="email" id="loginEmail" class="login-input" placeholder="nama@yayasansalamsatuaspal.com" required autocomplete="username">
+        <label class="login-label">No. HP (Awali 628)</label>
+        <input type="tel" id="loginEmail" class="login-input" placeholder="628xxxxxxxxx" required autocomplete="tel">
       </div>
       <div class="login-field">
         <label class="login-label">Password</label>
@@ -377,10 +385,7 @@
       <button type="submit" id="loginSubmitBtn" class="login-btn">Masuk</button>
     </form>
 
-    <div class="login-divider"><span>atau</span></div>
-
-    <div id="googleSignInBtn" class="google-btn-wrap"></div>
-    <div class="login-google-note">Khusus email @yayasansalamsatuaspal.com</div>
+    <div class="login-google-note" id="loginAppVersion" style="margin-top: 24px;">Memuat versi...</div>
   </div>
 </div>
 
@@ -470,8 +475,8 @@
           <input type="text" id="ufNama" class="user-form-input" required>
         </div>
         <div class="user-form-field">
-          <label class="user-form-label">Email</label>
-          <input type="email" id="ufEmail" class="user-form-input" placeholder="nama@yayasansalamsatuaspal.com" required>
+          <label class="user-form-label">No. HP (Awali 628)</label>
+          <input type="tel" id="ufEmail" class="user-form-input" placeholder="628xxxxxxxxx" required>
         </div>
         <div class="user-form-field" id="ufPasswordField">
           <label class="user-form-label">Password Awal</label>
@@ -697,6 +702,7 @@ function initAuth() {
 function showLoginScreen() {
   document.getElementById("loginScreen").style.display = "flex";
   document.getElementById("app").style.display = "none";
+  document.getElementById("loginAppVersion").textContent = "Versi " + APP_VERSION;
   initGoogleSignIn();
 }
 
@@ -732,6 +738,13 @@ function handleLoginSubmit(event) {
   const email = document.getElementById("loginEmail").value.trim();
   const password = document.getElementById("loginPassword").value;
   const btn = document.getElementById("loginSubmitBtn");
+  
+  // Pengecekan wajib diawali 628
+  if (!email.startsWith("628")) {
+    showLoginError("Nomor HP harus diawali dengan awalan 628 (contoh: 62812345678)");
+    return;
+  }
+
   btn.disabled = true;
   btn.textContent = "Memproses...";
 
