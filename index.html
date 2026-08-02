@@ -17,6 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -250,7 +251,7 @@
   }
   .custom-modal-overlay.open .custom-modal { transform: scale(1); }
   .custom-modal-title { font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 10px; }
-  .custom-modal-message { font-size: 14px; color: #4B5563; line-height: 1.5; margin-bottom: 24px; }
+  .custom-modal-message { font-size: 14px; color: #4B5563; line-height: 1.5; margin-bottom: 24px; white-space: pre-line; }
   .custom-modal-actions { display: flex; gap: 12px; justify-content: center; }
   .btn-modal {
     flex: 1; padding: 12px; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer;
@@ -258,10 +259,132 @@
   .btn-cancel { background: #F3F4F6; color: #374151; }
   .btn-confirm { background: #0B7A45; color: #fff; }
   .btn-confirm.danger { background: #DC2626; color: #fff; }
+
+  /* ---- LAYAR LOGIN ---- */
+  .login-screen {
+    min-height: 100vh; min-height: 100dvh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px; background: linear-gradient(135deg, #0B7A45 0%, #11995E 100%);
+  }
+  .login-card {
+    width: 100%; max-width: 360px; background: #fff; border-radius: 24px;
+    padding: 32px 26px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+  }
+  .login-logo { width: 64px; height: 64px; border-radius: 50%; object-fit: contain; margin-bottom: 14px; }
+  .login-title { font-size: 20px; font-weight: 800; color: #111827; }
+  .login-subtitle { font-size: 13px; color: #6B7280; margin-top: 4px; margin-bottom: 24px; }
+  .login-error {
+    background: #FDEAE6; color: #B91C1C; font-size: 12.5px; font-weight: 600;
+    padding: 10px 12px; border-radius: 10px; margin-bottom: 16px; text-align: left;
+  }
+  .login-field { text-align: left; margin-bottom: 14px; }
+  .login-label { display: block; font-size: 12.5px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+  .login-input {
+    width: 100%; padding: 12px 14px; border-radius: 12px; border: 1.5px solid #E5E7EB;
+    font-size: 14px; font-family: inherit; outline: none; transition: border-color .2s;
+  }
+  .login-input:focus { border-color: #0B7A45; }
+  .login-btn {
+    width: 100%; padding: 13px; border: none; border-radius: 12px; background: #0B7A45;
+    color: #fff; font-size: 14.5px; font-weight: 700; cursor: pointer; margin-top: 4px;
+    transition: opacity .2s;
+  }
+  .login-btn:active { opacity: .85; }
+  .login-btn:disabled { opacity: .6; cursor: not-allowed; }
+  .login-divider { display: flex; align-items: center; gap: 10px; margin: 20px 0 16px; color: #9CA3AF; font-size: 12px; }
+  .login-divider::before, .login-divider::after { content: ""; flex: 1; height: 1px; background: #E5E7EB; }
+  .google-btn-wrap { display: flex; justify-content: center; min-height: 40px; }
+  .login-google-note { font-size: 11px; color: #9CA3AF; margin-top: 10px; }
+
+  /* ---- PANEL PENGATURAN (manajemen user) ---- */
+  .settings-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .btn-add-user {
+    background: #0B7A45; color: #fff; border: none; border-radius: 10px;
+    padding: 9px 14px; font-size: 12.5px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .user-table-wrap { background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.06); margin-bottom: 16px; }
+  .user-row {
+    display: flex; align-items: center; gap: 10px; padding: 13px 14px;
+    border-bottom: 1px solid #F3F4F6; cursor: pointer;
+  }
+  .user-row:last-child { border-bottom: none; }
+  .user-row:active { background: #FAFAF9; }
+  .user-row-avatar {
+    width: 36px; height: 36px; border-radius: 50%; background: #E1F5EE; color: #0D8458;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0;
+  }
+  .user-row-info { flex: 1; min-width: 0; }
+  .user-row-name { font-size: 13.5px; font-weight: 700; color: #111827; }
+  .user-row-email { font-size: 11.5px; color: #9CA3AF; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .user-row-meta { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+  .role-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 99px; }
+  .role-SUPERADMIN { background: #FDEAE6; color: #DC2626; }
+  .role-ADMIN { background: #FEF3C7; color: #D97706; }
+  .role-PENGURUS { background: #EBF3FA; color: #2563EB; }
+  .role-KORWIL { background: #F3E8FF; color: #7E22CE; }
+  .role-WAKORWIL { background: #E1F5EE; color: #0D8458; }
+  .status-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 99px; }
+  .status-AKTIF { background: #E1F5EE; color: #0D8458; }
+  .status-NONAKTIF { background: #F3F4F6; color: #6B7280; }
+
+  .user-form-overlay {
+    position: absolute; inset: 0; z-index: 40; display: none;
+    background: rgba(0,0,0,.4); align-items: flex-end; justify-content: center;
+  }
+  .user-form-overlay.open { display: flex; }
+  .user-form-sheet {
+    width: 100%; max-width: 420px; background: #fff; border-radius: 20px 20px 0 0;
+    padding: 22px 20px calc(20px + env(safe-area-inset-bottom, 0px)); max-height: 85vh; overflow-y: auto;
+  }
+  .user-form-title { font-size: 16px; font-weight: 700; color: #111827; margin-bottom: 16px; }
+  .user-form-field { margin-bottom: 13px; text-align: left; }
+  .user-form-label { display: block; font-size: 12.5px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+  .user-form-input, .user-form-select {
+    width: 100%; padding: 11px 13px; border-radius: 10px; border: 1.5px solid #E5E7EB;
+    font-size: 13.5px; font-family: inherit; outline: none;
+  }
+  .user-form-hint { font-size: 11px; color: #9CA3AF; margin-top: 5px; }
+  .user-form-checkbox { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; color: #374151; }
+  .user-form-actions { display: flex; gap: 10px; margin-top: 18px; }
+  .user-form-actions button { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 13.5px; font-weight: 700; cursor: pointer; }
+  .btn-form-cancel { background: #F3F4F6; color: #374151; }
+  .btn-form-save { background: #0B7A45; color: #fff; }
+  .user-form-danger-zone { margin-top: 18px; padding-top: 16px; border-top: 1px solid #F3F4F6; display: flex; gap: 10px; }
+  .btn-form-reset, .btn-form-toggle { flex: 1; padding: 10px; border: 1.5px solid #E5E7EB; background: #fff; border-radius: 10px; font-size: 12.5px; font-weight: 600; color: #374151; cursor: pointer; }
 </style>
 </head>
 <body>
-<div id="app">
+
+<!-- ============ LAYAR LOGIN ============ -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <img src="logo_yassa.png" alt="YASSA" class="login-logo">
+    <div class="login-title">YASSA Hub</div>
+    <div class="login-subtitle">Masuk buat akses semua aplikasi YASSA</div>
+
+    <div id="loginError" class="login-error" style="display:none;"></div>
+
+    <form id="loginForm" onsubmit="handleLoginSubmit(event)">
+      <div class="login-field">
+        <label class="login-label">Email</label>
+        <input type="email" id="loginEmail" class="login-input" placeholder="nama@yayasansalamsatuaspal.com" required autocomplete="username">
+      </div>
+      <div class="login-field">
+        <label class="login-label">Password</label>
+        <input type="password" id="loginPassword" class="login-input" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      <button type="submit" id="loginSubmitBtn" class="login-btn">Masuk</button>
+    </form>
+
+    <div class="login-divider"><span>atau</span></div>
+
+    <div id="googleSignInBtn" class="google-btn-wrap"></div>
+    <div class="login-google-note">Khusus email @yayasansalamsatuaspal.com</div>
+  </div>
+</div>
+
+<div id="app" style="display:none;">
 
   <!-- Bagian Header -->
   <div class="header">
@@ -282,8 +405,8 @@
           </svg>
         </button>
         <div>
-          <div class="header-greet-sub">Selamat datang,</div>
-          <div class="header-greet-name">Pengurus YASSA</div>
+          <div class="header-greet-sub" id="greetRole">Selamat datang,</div>
+          <div class="header-greet-name" id="greetName">Pengurus YASSA</div>
         </div>
       </div>
       <div class="bell" onclick="showModal('Notifikasi', 'Tidak ada notifikasi baru hari ini.')">
@@ -337,6 +460,56 @@
     <iframe id="overlayFrame" src="about:blank" allow="camera; geolocation"></iframe>
   </div>
 
+  <!-- Form Tambah/Edit User (Pengaturan) -->
+  <div class="user-form-overlay" id="userFormOverlay" onclick="if(event.target===this) closeUserForm()">
+    <div class="user-form-sheet">
+      <div class="user-form-title" id="userFormTitle">Tambah User</div>
+      <form id="userForm" onsubmit="submitUserForm(event)">
+        <div class="user-form-field">
+          <label class="user-form-label">Nama</label>
+          <input type="text" id="ufNama" class="user-form-input" required>
+        </div>
+        <div class="user-form-field">
+          <label class="user-form-label">Email</label>
+          <input type="email" id="ufEmail" class="user-form-input" placeholder="nama@yayasansalamsatuaspal.com" required>
+        </div>
+        <div class="user-form-field" id="ufPasswordField">
+          <label class="user-form-label">Password Awal</label>
+          <input type="text" id="ufPassword" class="user-form-input" placeholder="Minimal 6 karakter">
+        </div>
+        <div class="user-form-field">
+          <label class="user-form-label">Role</label>
+          <select id="ufRole" class="user-form-select">
+            <option value="SUPERADMIN">Super Admin</option>
+            <option value="ADMIN">Admin</option>
+            <option value="PENGURUS">Pengurus</option>
+            <option value="KORWIL">Korwil</option>
+            <option value="WAKORWIL">WA Korwil</option>
+          </select>
+        </div>
+        <div class="user-form-field">
+          <label class="user-form-label">Akses Wilayah</label>
+          <input type="text" id="ufWilayah" class="user-form-input" placeholder="ALL, atau: Jakarta, Bandung, Bekasi">
+          <div class="user-form-hint">Isi <strong>ALL</strong> buat semua wilayah, atau nama wilayah dipisah koma (maks 3) buat dibatasi.</div>
+        </div>
+        <div class="user-form-field">
+          <label class="user-form-checkbox">
+            <input type="checkbox" id="ufPrint">
+            Boleh cetak / print laporan
+          </label>
+        </div>
+        <div class="user-form-actions">
+          <button type="button" class="btn-form-cancel" onclick="closeUserForm()">Batal</button>
+          <button type="submit" class="btn-form-save" id="ufSaveBtn">Simpan</button>
+        </div>
+        <div class="user-form-danger-zone" id="ufDangerZone" style="display:none;">
+          <button type="button" class="btn-form-reset" onclick="resetUserPassword()">Reset Password</button>
+          <button type="button" class="btn-form-toggle" id="ufToggleStatusBtn" onclick="toggleUserStatus()">Nonaktifkan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Custom Modal Pengganti Alert/Confirm -->
   <div class="custom-modal-overlay" id="customModalOverlay">
     <div class="custom-modal">
@@ -351,8 +524,14 @@
 </div>
 
 <script>
-const APP_VERSION = "1.3.0 (Responsive & Stable Fix)";
+const APP_VERSION = "1.4.0 (Login & Manajemen Akses)";
 const APP_BUILD_DATE = "2026-08-02";
+
+// =================================================================================
+// KONFIGURASI AUTH — GANTI 2 nilai di bawah setelah Code.gs di-deploy
+// =================================================================================
+const GAS_AUTH_URL = "GANTI_DENGAN_URL_DEPLOY_CODE_GS/exec";
+const GOOGLE_CLIENT_ID = "GANTI_DENGAN_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
 
 const ICONS = {
   home: '<path d="m3 9 9-7 9 7"/><path d="M9 22V12h6v10"/><path d="M21 9v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9"/>',
@@ -374,6 +553,10 @@ const ICONS = {
   more: '<circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/><circle cx="5" cy="12" r="1.5"/>',
   cloud: '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h.79a4.5 4.5 0 1 1 0 9Z"/>',
   bookopen: '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3Z"/>',
+  settings: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2Z"/><circle cx="12" cy="12" r="3"/>',
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
+  mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  lock: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
 };
 
 function iconSvg(name, color, size) {
@@ -396,7 +579,16 @@ const TABS = [
   { key: "awg", label: "AWG", icon: "users" },
   { key: "pm", label: "Penerima Manfaat", icon: "heart" },
   { key: "bukubesar", label: "Cloud Buku", icon: "cloud" },
+  { key: "pengaturan", label: "Pengaturan", icon: "settings" },
 ];
+
+// Tab yang boleh dilihat sesuai role user yang login. "pengaturan" cuma buat SUPERADMIN.
+function visibleTabs() {
+  return TABS.filter((t) => {
+    if (t.key === "pengaturan") return currentUser && currentUser.role === "SUPERADMIN";
+    return true;
+  });
+}
 
 const MENUS = {
   beranda: { title: "Beranda", items: [] },
@@ -454,9 +646,150 @@ const MENUS = {
       { label: "Aset & Lokasi", icon: "package", color: "purple", tab: "aset" },
     ],
   },
+  pengaturan: { title: "Pengaturan" }, // dirender khusus lewat renderPengaturanPanel(), bukan menu-grid biasa
 };
 
 let active = "beranda";
+let currentUser = null;
+let authToken = null;
+
+// =================================================================================
+// AUTH — LOGIN, SESSION, GOOGLE SIGN-IN
+// =================================================================================
+
+function callGAS(action, args) {
+  return fetch(GAS_AUTH_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },
+    body: JSON.stringify({ action: action, args: args || [] }),
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (res) {
+      if (res.success === false) throw new Error(res.message || "Terjadi kesalahan.");
+      return res._dibungkus ? res.data : res;
+    });
+}
+
+function initAuth() {
+  const savedToken = sessionStorage.getItem("yassa_token");
+  const savedUser = sessionStorage.getItem("yassa_user");
+  if (!savedToken || !savedUser) {
+    showLoginScreen();
+    return;
+  }
+  authToken = savedToken;
+  currentUser = JSON.parse(savedUser);
+
+  // Verifikasi ulang ke server — jangan percaya data lokal begitu saja.
+  callGAS("checkSession", [authToken])
+    .then(function (session) {
+      currentUser = session;
+      sessionStorage.setItem("yassa_user", JSON.stringify(currentUser));
+      showApp();
+    })
+    .catch(function () {
+      sessionStorage.removeItem("yassa_token");
+      sessionStorage.removeItem("yassa_user");
+      showLoginScreen();
+    });
+}
+
+function showLoginScreen() {
+  document.getElementById("loginScreen").style.display = "flex";
+  document.getElementById("app").style.display = "none";
+  initGoogleSignIn();
+}
+
+function showApp() {
+  document.getElementById("loginScreen").style.display = "none";
+  document.getElementById("app").style.display = "flex";
+  document.getElementById("greetName").textContent = currentUser.nama || currentUser.email;
+  document.getElementById("greetRole").textContent = "Selamat datang, " + roleLabel(currentUser.role);
+  active = "beranda";
+  render();
+}
+
+function roleLabel(role) {
+  const map = {
+    SUPERADMIN: "Super Admin",
+    ADMIN: "Admin",
+    PENGURUS: "Pengurus",
+    KORWIL: "Korwil",
+    WAKORWIL: "WA Korwil",
+  };
+  return map[role] || role;
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById("loginError");
+  el.textContent = msg;
+  el.style.display = "block";
+}
+
+function handleLoginSubmit(event) {
+  event.preventDefault();
+  document.getElementById("loginError").style.display = "none";
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value;
+  const btn = document.getElementById("loginSubmitBtn");
+  btn.disabled = true;
+  btn.textContent = "Memproses...";
+
+  callGAS("login", [email, password])
+    .then(function (res) { onLoginSuccess(res); })
+    .catch(function (err) { showLoginError(err.message); })
+    .finally(function () {
+      btn.disabled = false;
+      btn.textContent = "Masuk";
+    });
+}
+
+function initGoogleSignIn() {
+  if (typeof google === "undefined" || !google.accounts || !google.accounts.id) {
+    // Library GSI belum siap (baru dimuat async), coba lagi sebentar.
+    setTimeout(initGoogleSignIn, 300);
+    return;
+  }
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleGoogleCredential,
+    hd: "yayasansalamsatuaspal.com",
+  });
+  google.accounts.id.renderButton(document.getElementById("googleSignInBtn"), {
+    theme: "outline", size: "large", width: 280, text: "signin_with",
+  });
+}
+
+function handleGoogleCredential(response) {
+  document.getElementById("loginError").style.display = "none";
+  callGAS("loginGoogle", [response.credential])
+    .then(function (res) { onLoginSuccess(res); })
+    .catch(function (err) { showLoginError(err.message); });
+}
+
+function onLoginSuccess(res) {
+  authToken = res.token;
+  currentUser = {
+    email: res.email,
+    nama: res.nama,
+    role: res.role,
+    wilayahAkses: res.wilayahAkses,
+    bolehPrint: res.bolehPrint,
+  };
+  sessionStorage.setItem("yassa_token", authToken);
+  sessionStorage.setItem("yassa_user", JSON.stringify(currentUser));
+  document.getElementById("loginForm").reset();
+  showApp();
+}
+
+function doLogout() {
+  callGAS("logoutSession", [authToken]).catch(function () {});
+  sessionStorage.removeItem("yassa_token");
+  sessionStorage.removeItem("yassa_user");
+  authToken = null;
+  currentUser = null;
+}
+
 
 function render() {
   renderContent();
@@ -475,7 +808,7 @@ function renderContent() {
 
   if (active === "beranda") {
     let html = `<div class="section-title">Akses Cepat Aplikasi</div><div class="quick-grid">`;
-    TABS.filter((t) => t.key !== "beranda").forEach((t) => {
+    visibleTabs().filter((t) => t.key !== "beranda").forEach((t) => {
       html += `<button class="quick-card" onclick="setActive('${t.key}')">
         <div class="quick-icon">${iconSvg(t.icon, "#0B7A45", 20)}</div>
         <span class="quick-label">${t.label}</span>
@@ -483,6 +816,11 @@ function renderContent() {
     });
     html += `</div><div class="app-version-footer">YASSA Hub v${APP_VERSION}</div>`;
     el.innerHTML = html;
+    return;
+  }
+
+  if (active === "pengaturan") {
+    renderPengaturanPanel(el);
     return;
   }
 
@@ -510,7 +848,7 @@ function renderBottomNav() {
   const el = document.getElementById("bottomNav");
   let html = "";
   
-  TABS.forEach((t) => {
+  visibleTabs().forEach((t) => {
     const isActive = active === t.key;
     const color = isActive ? "#0B7A45" : "#6B7280";
     const activeClass = isActive ? "active" : "";
@@ -553,18 +891,158 @@ function closeUserMenu() {
 function handleUserMenuClick(action) {
   closeUserMenu();
   if (action === "profile") {
-    showModal("Profil", "Fitur Profil belum tersambung ke data asli — masih tampilan placeholder.");
+    const wilayahText = currentUser.wilayahAkses === "ALL" ? "Semua wilayah" : currentUser.wilayahAkses;
+    const printText = currentUser.bolehPrint ? "Ya" : "Tidak";
+    showModal(
+      "Profil",
+      currentUser.nama + " (" + roleLabel(currentUser.role) + ")\n" +
+      currentUser.email + "\n\n" +
+      "Akses wilayah: " + wilayahText + "\n" +
+      "Boleh print: " + printText
+    );
   } else if (action === "pengurus") {
-    showModal("Pengurus", "Fitur Pengurus belum tersambung ke data asli — masih tampilan placeholder.");
+    showModal("Pengurus", "Fitur daftar pengurus belum tersambung ke data asli — masih tampilan placeholder.");
   } else if (action === "logout") {
     showModal("Logout", "Yakin ingin keluar dari YASSA Hub?", true, function() {
-      try {
-        localStorage.clear();
-        sessionStorage.clear();
-      } catch (e) {}
-      showModal("Sukses", "Berhasil keluar dari sesi saat ini.");
+      doLogout();
     });
   }
+}
+
+// =================================================================================
+// PANEL PENGATURAN — MANAJEMEN USER (khusus SUPERADMIN)
+// =================================================================================
+let userListCache = [];
+let editingEmail = null;
+
+function renderPengaturanPanel(el) {
+  el.innerHTML =
+    '<div class="section-title">Pengaturan</div>' +
+    '<div class="settings-toolbar">' +
+    '<span style="font-size:12.5px;color:#6B7280;">Manajemen akun & akses wilayah</span>' +
+    '<button class="btn-add-user" onclick="openUserForm(null)">' + iconSvg("userplus", "#fff", 14) + ' Tambah User</button>' +
+    '</div>' +
+    '<div class="user-table-wrap" id="userTableWrap"><div style="padding:20px;text-align:center;color:#9CA3AF;font-size:13px;">Memuat data user...</div></div>';
+  loadUserListIntoPanel();
+}
+
+function loadUserListIntoPanel() {
+  callGAS("getUserList", [authToken])
+    .then(function (users) {
+      userListCache = users;
+      const wrap = document.getElementById("userTableWrap");
+      if (!wrap) return; // user udah pindah tab sebelum data selesai dimuat
+      if (!users.length) {
+        wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#9CA3AF;font-size:13px;">Belum ada user terdaftar.</div>';
+        return;
+      }
+      wrap.innerHTML = users.map(function (u, i) {
+        const initial = (u.nama || u.email || "?").charAt(0).toUpperCase();
+        const wilayahText = u.wilayahAkses === "ALL" ? "Semua wilayah" : (u.wilayahAkses || "-");
+        return '<div class="user-row" onclick="openUserForm(' + i + ')">' +
+          '<div class="user-row-avatar">' + initial + '</div>' +
+          '<div class="user-row-info">' +
+          '<div class="user-row-name">' + escapeHtmlHub(u.nama || "-") + '</div>' +
+          '<div class="user-row-email">' + escapeHtmlHub(u.email) + ' &middot; ' + escapeHtmlHub(wilayahText) + '</div>' +
+          '<div class="user-row-meta">' +
+          '<span class="role-badge role-' + u.role + '">' + roleLabel(u.role) + '</span>' +
+          '<span class="status-badge status-' + String(u.status).toUpperCase() + '">' + escapeHtmlHub(u.status) + '</span>' +
+          (String(u.bolehPrint).toUpperCase() === "TRUE" ? '<span class="status-badge status-AKTIF">Boleh Print</span>' : '') +
+          '</div></div></div>';
+      }).join("");
+    })
+    .catch(function (err) {
+      const wrap = document.getElementById("userTableWrap");
+      if (wrap) wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#DC2626;font-size:13px;">' + escapeHtmlHub(err.message) + '</div>';
+    });
+}
+
+function escapeHtmlHub(str) {
+  return String(str == null ? "" : str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function openUserForm(indexOrNull) {
+  const isEdit = indexOrNull !== null && indexOrNull !== undefined;
+  const user = isEdit ? userListCache[indexOrNull] : null;
+  editingEmail = isEdit ? user.email : null;
+
+  document.getElementById("userFormTitle").textContent = isEdit ? "Edit User" : "Tambah User";
+  document.getElementById("ufNama").value = isEdit ? user.nama : "";
+  document.getElementById("ufEmail").value = isEdit ? user.email : "";
+  document.getElementById("ufEmail").disabled = isEdit; // email gak bisa diubah setelah dibuat
+  document.getElementById("ufPassword").placeholder = isEdit ? "Kosongkan kalau gak diubah" : "Minimal 6 karakter";
+  document.getElementById("ufPassword").required = !isEdit;
+  document.getElementById("ufRole").value = isEdit ? user.role : "PENGURUS";
+  document.getElementById("ufWilayah").value = isEdit ? user.wilayahAkses : "ALL";
+  document.getElementById("ufPrint").checked = isEdit ? String(user.bolehPrint).toUpperCase() === "TRUE" : false;
+
+  const dangerZone = document.getElementById("ufDangerZone");
+  dangerZone.style.display = isEdit ? "flex" : "none";
+  if (isEdit) {
+    const isActive = String(user.status).toUpperCase() === "AKTIF";
+    document.getElementById("ufToggleStatusBtn").textContent = isActive ? "Nonaktifkan" : "Aktifkan";
+  }
+
+  document.getElementById("userFormOverlay").classList.add("open");
+}
+
+function closeUserForm() {
+  document.getElementById("userFormOverlay").classList.remove("open");
+  editingEmail = null;
+}
+
+function submitUserForm(event) {
+  event.preventDefault();
+  const btn = document.getElementById("ufSaveBtn");
+  const data = {
+    nama: document.getElementById("ufNama").value.trim(),
+    email: document.getElementById("ufEmail").value.trim(),
+    password: document.getElementById("ufPassword").value,
+    role: document.getElementById("ufRole").value,
+    wilayahAkses: document.getElementById("ufWilayah").value.trim() || "ALL",
+    bolehPrint: document.getElementById("ufPrint").checked,
+  };
+
+  btn.disabled = true;
+  btn.textContent = "Menyimpan...";
+
+  const request = editingEmail
+    ? callGAS("updateUser", [authToken, editingEmail, data])
+    : callGAS("addUser", [authToken, data]);
+
+  request
+    .then(function () {
+      closeUserForm();
+      loadUserListIntoPanel();
+      showModal("Sukses", editingEmail ? "User berhasil diupdate." : "User baru berhasil ditambahkan.");
+    })
+    .catch(function (err) {
+      showModal("Gagal", err.message);
+    })
+    .finally(function () {
+      btn.disabled = false;
+      btn.textContent = "Simpan";
+    });
+}
+
+function resetUserPassword() {
+  const newPassword = prompt("Masukkan password baru buat " + editingEmail + " (minimal 6 karakter):");
+  if (!newPassword) return;
+  callGAS("resetPassword", [authToken, editingEmail, newPassword])
+    .then(function () { showModal("Sukses", "Password berhasil direset."); })
+    .catch(function (err) { showModal("Gagal", err.message); });
+}
+
+function toggleUserStatus() {
+  const user = userListCache.find(function (u) { return u.email === editingEmail; });
+  const newStatus = String(user.status).toUpperCase() === "AKTIF" ? "NONAKTIF" : "AKTIF";
+  callGAS("setUserStatus", [authToken, editingEmail, newStatus])
+    .then(function () {
+      closeUserForm();
+      loadUserListIntoPanel();
+      showModal("Sukses", "Status user diupdate jadi " + newStatus + ".");
+    })
+    .catch(function (err) { showModal("Gagal", err.message); });
 }
 
 function openApp(index) {
@@ -629,8 +1107,8 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-// Initial render
-render();
+// Initial: cek sesi login dulu sebelum render Hub
+initAuth();
 </script>
 </body>
 </html>
