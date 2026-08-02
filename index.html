@@ -317,6 +317,21 @@
     border-left: 2px solid #0B7A45; width: 0; height: 20px;
   }
   .orgtree-members { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+
+  /* Kartu Profil Saya (gaya "Akun" Gojek Driver) */
+  .profile-card-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+  .profile-avatar-wrap { position: relative; flex-shrink: 0; }
+  .profile-avatar { width: 64px; height: 64px; border-radius: 16px; object-fit: cover; border: 2px solid #0B7A45; background: #F3F4F6; }
+  .profile-avatar-edit { position: absolute; bottom: -4px; right: -4px; width: 22px; height: 22px; border-radius: 50%; background: #0B7A45; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #fff; }
+  .profile-avatar-edit input { display: none; }
+  .profile-name { font-size: 16.5px; font-weight: 700; color: #111827; margin-bottom: 6px; }
+  .profile-badge { display: inline-flex; align-items: center; gap: 5px; background: #FEF3C7; color: #92400E; font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+  .profile-info-list { display: flex; flex-direction: column; gap: 10px; }
+  .profile-info-row { display: flex; align-items: center; gap: 10px; }
+  .profile-info-icon { width: 30px; height: 30px; border-radius: 10px; background: #E1F5EE; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .profile-info-text { font-size: 13px; color: #374151; font-weight: 500; line-height: 1.3; }
+  .profile-info-label { font-size: 10.5px; color: #9CA3AF; font-weight: 500; margin-bottom: 1px; }
+  .profile-divider { height: 1px; background: #F3F4F6; margin: 14px 0; }
   .status-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 99px; }
   .status-AKTIF { background: #E1F5EE; color: #0D8458; }
   .status-NONAKTIF { background: #F3F4F6; color: #6B7280; }
@@ -902,6 +917,10 @@ const ICONS = {
   logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
   mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
   lock: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  phone: '<path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/>',
+  award: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+  mapPin: '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+  edit: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497Z"/><path d="m15 5 3 3"/>',
 };
 
 function iconSvg(name, color, size) {
@@ -1295,23 +1314,52 @@ function handleUserMenuClick(action) {
   closeUserMenu();
   if (action === "profile") {
     const wilayahText = currentUser.wilayahAkses === "ALL" ? "Semua wilayah" : currentUser.wilayahAkses;
-    const printText = currentUser.bolehPrint ? "Ya" : "Tidak";
-    
     const fotoProfil = currentUser.fotoUrl ? currentUser.fotoUrl : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
-    
+    const badgeLabel = currentUser.jabatan ? currentUser.jabatan : roleLabel(currentUser.role);
+    const kontakList = [currentUser.email, currentUser.emailGoogle].filter(Boolean);
+
+    let infoRows = "";
+    kontakList.forEach(function (k) {
+      infoRows += `
+        <div class="profile-info-row">
+          <div class="profile-info-icon">${iconSvg("phone", "#0D8458", 15)}</div>
+          <div class="profile-info-text">${escapeHtmlHub(k)}</div>
+        </div>`;
+    });
+    infoRows += `
+        <div class="profile-info-row">
+          <div class="profile-info-icon">${iconSvg("mapPin", "#0D8458", 15)}</div>
+          <div class="profile-info-text">
+            <div class="profile-info-label">Akses wilayah</div>
+            ${escapeHtmlHub(wilayahText)}
+          </div>
+        </div>`;
+    if (currentUser.bolehPrint) {
+      infoRows += `
+        <div class="profile-info-row">
+          <div class="profile-info-icon">${iconSvg("printer", "#0D8458", 15)}</div>
+          <div class="profile-info-text">Boleh print dokumen</div>
+        </div>`;
+    }
+
     const kontenProfil = `
-      <div style="text-align: center; margin-bottom: 15px;">
-        <img src="${fotoProfil}" alt="Foto Profil" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #0B7A45; margin-bottom: 10px;"><br>
-        <label id="labelUploadFoto" for="inputFotoProfile" style="background: #E1F5EE; color: #0D8458; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer;">Pilih Foto Baru</label>
-        <input type="file" id="inputFotoProfile" accept="image/*" style="display: none;" onchange="uploadFoto(this)">
+      <div class="profile-card-head">
+        <div class="profile-avatar-wrap">
+          <img class="profile-avatar" src="${fotoProfil}" alt="Foto Profil">
+          <label class="profile-avatar-edit" for="inputFotoProfile" id="labelUploadFoto">
+            ${iconSvg("edit", "#fff", 12)}
+          </label>
+          <input type="file" id="inputFotoProfile" accept="image/*" style="display: none;" onchange="uploadFoto(this)">
+        </div>
+        <div>
+          <div class="profile-name">${escapeHtmlHub(currentUser.nama)}</div>
+          <span class="profile-badge">${iconSvg("award", "#92400E", 13)} ${escapeHtmlHub(badgeLabel)}</span>
+        </div>
       </div>
-      <strong>${currentUser.nama}</strong> (${roleLabel(currentUser.role)})<br>
-      ${currentUser.jabatan ? "Jabatan: " + currentUser.jabatan + "<br>" : ""}
-      ${[currentUser.email, currentUser.emailGoogle].filter(Boolean).join(" &middot; ")}<br><br>
-      Akses wilayah: ${wilayahText}<br>
-      Boleh print: ${printText}
+      <div class="profile-divider"></div>
+      <div class="profile-info-list">${infoRows}</div>
     `;
-    
+
     showModal("Profil Saya", kontenProfil);
   } else if (action === "pengurus") {
     showModal("Susunan Pengurus", '<div style="text-align:center;color:#9CA3AF;font-size:13px;padding:10px 0;">Memuat data pengurus...</div>');
