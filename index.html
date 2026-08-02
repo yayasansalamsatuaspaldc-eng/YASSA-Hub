@@ -287,6 +287,15 @@
   .role-PENGURUS { background: #EBF3FA; color: #2563EB; }
   .role-KORWIL { background: #F3E8FF; color: #7E22CE; }
   .role-WAKORWIL { background: #E1F5EE; color: #0D8458; }
+
+  /* Bagan Susunan Pengurus */
+  .orgchart { display: flex; flex-direction: column; align-items: center; }
+  .orgchart-connector { width: 2px; height: 16px; background: #0B7A45; }
+  .orgchart-tier { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; padding: 6px 0; }
+  .orgchart-card { display: flex; flex-direction: column; align-items: center; width: 78px; }
+  .orgchart-photo { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #0B7A45; background: #F3F4F6; }
+  .orgchart-jabatan { background: #0B7A45; color: #fff; font-size: 9.5px; font-weight: 700; padding: 2px 7px; border-radius: 8px; margin-top: 5px; text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .orgchart-nama { font-size: 10.5px; font-weight: 600; color: #111827; margin-top: 3px; text-align: center; line-height: 1.2; }
   .status-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 99px; }
   .status-AKTIF { background: #E1F5EE; color: #0D8458; }
   .status-NONAKTIF { background: #F3F4F6; color: #6B7280; }
@@ -1291,18 +1300,7 @@ function handleUserMenuClick(action) {
           showModal("Susunan Pengurus", '<div style="text-align:center;color:#9CA3AF;font-size:13px;padding:10px 0;">Belum ada data pengurus.</div>');
           return;
         }
-        const html = list.map(function (u) {
-          const initial = (u.nama || "?").charAt(0).toUpperCase();
-          const jabatanText = u.jabatan ? escapeHtmlHub(u.jabatan) : roleLabel(u.role);
-          const wilayahText = u.wilayahAkses === "ALL" ? "Semua wilayah" : (u.wilayahAkses || "-");
-          return '<div class="user-row" style="cursor:default;">' +
-            '<div class="user-row-avatar">' + initial + '</div>' +
-            '<div class="user-row-info">' +
-            '<div class="user-row-name">' + escapeHtmlHub(u.nama || "-") + '</div>' +
-            '<div class="user-row-email">' + jabatanText + ' &middot; ' + escapeHtmlHub(wilayahText) + '</div>' +
-            '</div></div>';
-        }).join("");
-        showModal("Susunan Pengurus", '<div class="user-table-wrap" style="box-shadow:none;margin-bottom:0;text-align:left;max-height:50vh;overflow-y:auto;">' + html + '</div>');
+        showModal("Susunan Pengurus", buildOrgChartHtml(list));
       })
       .catch(function (err) {
         showModal("Gagal Memuat", escapeHtmlHub(err.message));
@@ -1318,6 +1316,42 @@ function handleUserMenuClick(action) {
 
 let userListCache = [];
 let editingEmail = null;
+
+// Urutan tingkatan bagan pengurus DIAMBIL OTOMATIS dari Role (gak perlu
+// input manual apa-apa) — dari yang paling atas sampai paling bawah.
+// SUPERADMIN & ADMIN sengaja gak dimasukin ke bagan (itu role teknis
+// buat akses sistem, bukan bagian dari susunan pengurus organisasi).
+const ORG_ROLE_ORDER = ["PENGURUS", "KORWIL", "WAKORWIL"];
+const FOTO_DEFAULT = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
+
+function buildOrgChartHtml(list) {
+  // Kelompokkan per Role sesuai ORG_ROLE_ORDER. Role yang gak ada
+  // anggotanya otomatis dilewati (gak bikin tingkatan kosong).
+  const tiers = ORG_ROLE_ORDER
+    .map(function (role) {
+      return { role: role, members: list.filter(function (u) { return u.role === role; }) };
+    })
+    .filter(function (t) { return t.members.length > 0; });
+
+  let html = '<div class="orgchart">';
+  tiers.forEach(function (tier, tIdx) {
+    if (tIdx > 0) html += '<div class="orgchart-connector"></div>';
+    html += '<div class="orgchart-tier">';
+    tier.members.forEach(function (u) {
+      const foto = u.fotoUrl ? u.fotoUrl : FOTO_DEFAULT;
+      const jabatanText = u.jabatan ? escapeHtmlHub(u.jabatan) : roleLabel(u.role);
+      html += '<div class="orgchart-card">' +
+        '<img class="orgchart-photo" src="' + foto + '" alt="">' +
+        '<div class="orgchart-jabatan">' + jabatanText + '</div>' +
+        '<div class="orgchart-nama">' + escapeHtmlHub(u.nama || "-") + '</div>' +
+        '</div>';
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+
+  return '<div style="max-height:55vh;overflow-y:auto;overflow-x:hidden;">' + html + '</div>';
+}
 
 function renderPengaturanPanel(el) {
   el.innerHTML =
