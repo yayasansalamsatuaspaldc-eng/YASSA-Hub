@@ -1333,6 +1333,10 @@ function buildOrgChartHtml(list) {
     })
     .filter(function (t) { return t.members.length > 0; });
 
+  if (!tiers.length) {
+    return '<div style="text-align:center;color:#9CA3AF;font-size:13px;padding:10px 0;">Belum ada user dengan Role Pengurus/Korwil/WA Korwil. Tambah atau edit Role user lewat tab Pengaturan dulu.</div>';
+  }
+
   let html = '<div class="orgchart">';
   tiers.forEach(function (tier, tIdx) {
     if (tIdx > 0) html += '<div class="orgchart-connector"></div>';
