@@ -71,8 +71,10 @@
     overflow: hidden;
   }
 
-  /* Tablet ke atas: body jadi kanvas ambient penuh, #app tampil sebagai kartu perangkat terpusat */
-  @media (min-width: 640px) {
+  /* Tablet ke atas: body jadi kanvas ambient penuh, #app tampil sebagai kartu perangkat terpusat.
+     Breakpoint sengaja diset di 1280px supaya HP dan TABLET (termasuk landscape) tetap full-screen,
+     dan hanya layar Laptop/Desktop asli yang menampilkan mode kartu terpusat. */
+  @media (min-width: 1280px) {
     body {
       padding: 40px 20px;
       display: flex;
@@ -85,28 +87,12 @@
         var(--bg-navy-deep);
     }
     #app {
-      max-width: 420px;
-      border-radius: 32px;
-      box-shadow: var(--shadow-deep), 0 0 80px rgba(59,130,246,0.08);
-      min-height: 85vh;
-      height: 85vh;
-      border: 1px solid var(--glass-border);
-    }
-  }
-
-  /* Tablet (>=768px): sedikit lebih lega */
-  @media (min-width: 768px) {
-    #app { max-width: 460px; height: 88vh; min-height: 88vh; }
-  }
-
-  /* Laptop/Desktop (>=1024px): kartu perangkat proporsional dengan aksen glow lebih terasa */
-  @media (min-width: 1024px) {
-    body { padding: 56px 20px; }
-    #app {
       max-width: 480px;
-      height: 90vh;
-      min-height: 90vh;
+      border-radius: 32px;
       box-shadow: var(--shadow-deep), 0 0 120px rgba(59,130,246,0.1), 0 0 60px rgba(168,85,247,0.08);
+      min-height: 90vh;
+      height: 90vh;
+      border: 1px solid var(--glass-border);
     }
   }
 
@@ -474,10 +460,11 @@
     overflow: hidden;
   }
 
-  /* Tablet ke atas: layar login jadi kanvas ambient penuh, kartu login terpusat */
-  @media (min-width: 640px) {
+  /* Laptop/Desktop asli ke atas: layar login jadi kanvas ambient penuh, kartu login terpusat.
+     HP dan TABLET (termasuk landscape, hingga 1279px) tetap full-screen seperti mode mobile. */
+  @media (min-width: 1280px) {
     .login-screen {
-      padding: 40px 20px;
+      padding: 56px 20px;
       background:
         radial-gradient(circle at 18% 15%, rgba(59,130,246,0.16), transparent 45%),
         radial-gradient(circle at 82% 20%, rgba(168,85,247,0.14), transparent 48%),
@@ -485,26 +472,11 @@
         var(--bg-navy-deep);
     }
     .login-card {
-      max-width: 400px;
-      min-height: 700px;
-      border-radius: 32px;
-      box-shadow: var(--shadow-deep), 0 0 80px rgba(59,130,246,0.1);
-      border: 1px solid var(--glass-border);
-    }
-  }
-
-  /* Tablet (>=768px): kartu login sedikit lebih besar */
-  @media (min-width: 768px) {
-    .login-card { max-width: 440px; min-height: 740px; }
-  }
-
-  /* Laptop/Desktop (>=1024px): proporsi nyaman + glow lebih terasa di kanvas sekitarnya */
-  @media (min-width: 1024px) {
-    .login-screen { padding: 56px 20px; }
-    .login-card {
       max-width: 460px;
       min-height: 760px;
+      border-radius: 32px;
       box-shadow: var(--shadow-deep), 0 0 120px rgba(59,130,246,0.12), 0 0 60px rgba(168,85,247,0.08);
+      border: 1px solid var(--glass-border);
     }
   }
 
