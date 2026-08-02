@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>YASSA Hub</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0B7A45">
+<meta name="theme-color" content="#3B82F6">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -23,7 +23,7 @@
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   
   html, body { 
-    margin: 0; padding: 0; background: #E5E7EB; 
+    margin: 0; padding: 0; background: #F3F4F6; 
     font-family: 'Inter', system-ui, -apple-system, sans-serif; 
     color: #1F2933;
     min-height: 100vh;
@@ -260,53 +260,6 @@
   .btn-confirm { background: #0B7A45; color: #fff; }
   .btn-confirm.danger { background: #DC2626; color: #fff; }
 
-  /* ---- LAYAR LOGIN ---- */
-  .login-screen {
-    min-height: 100vh; min-height: 100dvh;
-    display: flex; align-items: center; justify-content: center;
-    padding: 24px; background: linear-gradient(135deg, #096B3C 0%, #11995E 100%);
-  }
-  .login-card {
-    width: 100%; max-width: 380px; background: #fff; border-radius: 28px;
-    padding: 36px 30px; text-align: center; 
-    box-shadow: 0 24px 48px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.2);
-  }
-  .login-logo { 
-    width: 72px; height: 72px; border-radius: 50%; object-fit: contain; 
-    margin-bottom: 16px; box-shadow: 0 8px 16px rgba(11, 122, 69, 0.15);
-  }
-  .login-title { font-size: 22px; font-weight: 800; color: #111827; letter-spacing: -0.5px; }
-  .login-subtitle { font-size: 13.5px; color: #6B7280; margin-top: 6px; margin-bottom: 28px; }
-  .login-error {
-    background: #FDEAE6; color: #B91C1C; font-size: 12.5px; font-weight: 600;
-    padding: 12px 14px; border-radius: 12px; margin-bottom: 20px; text-align: left;
-  }
-  .login-field { text-align: left; margin-bottom: 16px; }
-  .login-label { display: block; font-size: 12.5px; font-weight: 700; color: #374151; margin-bottom: 8px; }
-  .login-input {
-    width: 100%; padding: 14px 16px; border-radius: 14px; border: 1.5px solid transparent;
-    background: #F3F4F6; font-size: 14px; font-family: inherit; outline: none; 
-    transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .login-input:focus { 
-    background: #fff; border-color: #0B7A45; 
-    box-shadow: 0 0 0 4px rgba(11, 122, 69, 0.15); 
-  }
-  .login-btn {
-    width: 100%; padding: 14px; border: none; border-radius: 14px; background: #0B7A45;
-    color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px;
-    box-shadow: 0 8px 20px rgba(11, 122, 69, 0.25); transition: all .2s;
-  }
-  .login-btn:active { transform: translateY(2px); box-shadow: 0 4px 10px rgba(11, 122, 69, 0.2); }
-  .login-btn:disabled { opacity: .6; cursor: not-allowed; box-shadow: none; transform: none; }
-  .login-divider { display: flex; align-items: center; gap: 12px; margin: 24px 0 20px; color: #9CA3AF; font-size: 12px; font-weight: 600; }
-  .login-divider::before, .login-divider::after { content: ""; flex: 1; height: 1px; background: #E5E7EB; }
-  .google-btn-wrap { display: flex; justify-content: center; min-height: 44px; margin-bottom: 8px;}
-  .login-google-note { font-size: 12px; font-weight: 600; color: #9CA3AF; margin-top: 16px; }
-  .login-app-version { font-size: 12px; font-weight: 600; color: #9CA3AF; margin-top: 20px; text-align: center; }
-  .login-copyright { font-size: 11px; font-weight: 500; color: #C1C6CE; margin-top: 4px; text-align: center; }
-
-  /* ---- PANEL PENGATURAN (manajemen user) ---- */
   .settings-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
   .btn-add-user {
     background: #0B7A45; color: #fff; border: none; border-radius: 10px;
@@ -375,6 +328,239 @@
   .btn-form-save { background: #0B7A45; color: #fff; }
   .user-form-danger-zone { margin-top: 18px; padding-top: 16px; border-top: 1px solid #F3F4F6; display: flex; gap: 10px; }
   .btn-form-reset, .btn-form-toggle { flex: 1; padding: 10px; border: 1.5px solid #E5E7EB; background: #fff; border-radius: 10px; font-size: 12.5px; font-weight: 600; color: #374151; cursor: pointer; }
+
+  .login-screen {
+    min-height: 100vh; min-height: 100dvh;
+    display: flex; align-items: center; justify-content: center;
+    background: #F3F4F6; /* Fallback */
+  }
+  
+  .login-card {
+    width: 100%; max-width: 400px; 
+    background: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  @media (min-width: 640px) {
+    .login-card {
+      min-height: 700px;
+      border-radius: 32px;
+      box-shadow: 0 24px 48px rgba(0,0,0,0.1);
+    }
+  }
+
+  .login-header-bg {
+    background: 
+      repeating-linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.03) 0px,
+        rgba(255, 255, 255, 0.03) 1px,
+        transparent 1px,
+        transparent 10px
+      ),
+      linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+    height: 35%;
+    min-height: 250px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 40px;
+    overflow: hidden;
+  }
+  
+  .login-header-wave {
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23ffffff' fill-opacity='1' d='M0,224L60,202.7C120,181,240,139,360,149.3C480,160,600,224,720,240C840,256,960,224,1080,202.7C1200,181,1320,171,1380,165.3L1440,160L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    z-index: 5;
+  }
+
+  .decor-blob {
+    position: absolute;
+    z-index: 1;
+    filter: blur(1px);
+  }
+  
+  .decor-blob-1 {
+    width: 180px; height: 180px;
+    top: -40px; left: -40px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 100%);
+    border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+    animation: morphBlob 10s ease-in-out infinite alternate;
+  }
+  
+  .decor-blob-2 {
+    width: 220px; height: 220px;
+    bottom: -20px; right: -60px;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+    animation: morphBlob 12s ease-in-out infinite alternate-reverse;
+  }
+
+  .decor-iso {
+    position: absolute;
+    opacity: 0.2;
+    z-index: 2;
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes morphBlob {
+    0% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; transform: rotate(0deg) scale(1); }
+    100% { border-radius: 70% 30% 50% 70% / 30% 70% 50% 50%; transform: rotate(45deg) scale(1.1); }
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .login-logo { 
+    width: 80px; height: 80px; border-radius: 50%; object-fit: contain; 
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    background: #000;
+    padding: 6px;
+    z-index: 10;
+  }
+
+  .login-title { 
+    font-size: 24px; font-weight: 800; color: #fff; 
+    letter-spacing: -0.5px; 
+    margin-top: 16px;
+    z-index: 10;
+  }
+
+  .login-form-container {
+    padding: 30px 40px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+  }
+
+  .login-error {
+    background: #FDEAE6; color: #B91C1C; font-size: 12.5px; font-weight: 600;
+    padding: 12px 14px; border-radius: 12px; margin-bottom: 20px; text-align: left;
+  }
+  
+  .login-field { 
+    margin-bottom: 24px; 
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  .login-field-icon {
+    position: absolute;
+    left: 0;
+    color: #9CA3AF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 100%;
+  }
+
+  .login-input {
+    width: 100%; 
+    padding: 12px 12px 12px 36px; 
+    border: none;
+    border-bottom: 1.5px solid #E5E7EB;
+    background: transparent;
+    font-size: 15px; 
+    font-family: inherit; 
+    outline: none; 
+    color: #374151;
+    transition: all .2s;
+  }
+  
+  .login-input::placeholder {
+    color: #9CA3AF;
+  }
+  
+  .login-input:focus { 
+    border-bottom-color: #3B82F6; 
+  }
+  
+  .login-input:focus + .login-field-icon svg {
+    stroke: #3B82F6;
+  }
+
+  .login-btn {
+    width: 100%; padding: 14px; border: none; border-radius: 99px; background: #3B82F6;
+    color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 12px;
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4); transition: all .2s;
+    letter-spacing: 0.5px;
+  }
+  .login-btn:active { transform: translateY(2px); box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4); }
+  .login-btn:disabled { opacity: .6; cursor: not-allowed; box-shadow: none; transform: none; }
+  
+  .login-links {
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
+  }
+  
+  .login-link {
+    font-size: 13px;
+    color: #3B82F6;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .login-divider { 
+    display: flex; align-items: center; gap: 12px; margin: 30px 0 20px; color: #9CA3AF; font-size: 12px; font-weight: 500; 
+  }
+  .login-divider::before, .login-divider::after { content: ""; flex: 1; height: 1px; background: #E5E7EB; }
+  
+  .google-btn-wrap { display: flex; justify-content: center; min-height: 44px; margin-bottom: 20px;}
+  
+  .login-footer-icons {
+    display: flex;
+    justify-content: space-around;
+    margin-top: auto;
+    padding-top: 20px;
+  }
+  
+  .login-footer-icon-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .login-footer-icon-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    background: #fff;
+    border: 1px solid #F3F4F6;
+  }
+  
+  .login-footer-icon-label {
+    font-size: 11px;
+    color: #6B7280;
+  }
+
+  .login-app-version { font-size: 11px; font-weight: 500; color: #D1D5DB; margin-top: 10px; text-align: center; }
 </style>
 </head>
 <body>
@@ -382,40 +568,97 @@
 <!-- ============ LAYAR LOGIN ============ -->
 <div id="loginScreen" class="login-screen">
   <div class="login-card">
-    <svg viewBox="0 0 100 100" class="login-logo" aria-label="YASSA Logo" style="background: #111827; padding: 6px;">
-      <circle cx="28" cy="38" r="6" fill="#4ca746"/>
-      <path d="M13 56 a 15 15 0 0 1 30 0" fill="none" stroke="#4ca746" stroke-width="5" stroke-linecap="round"/>
-      <circle cx="72" cy="38" r="6" fill="#4ca746"/>
-      <path d="M57 56 a 15 15 0 0 1 30 0" fill="none" stroke="#4ca746" stroke-width="5" stroke-linecap="round"/>
-      <circle cx="50" cy="28" r="7.5" fill="#4ca746"/>
-      <path d="M30 53 a 20 20 0 0 1 40 0" fill="none" stroke="#4ca746" stroke-width="6.5" stroke-linecap="round"/>
-      <text x="50" y="76" font-family="'Inter', sans-serif" font-weight="900" font-size="24" text-anchor="middle" letter-spacing="-0.5">
-        <tspan fill="#ffffff">YAS</tspan><tspan fill="#4ca746">SA</tspan>
-      </text>
-    </svg>
-    <div class="login-title">YASSA Hub</div>
-    <div class="login-subtitle">Masuk buat akses semua aplikasi YASSA</div>
+    <div class="login-header-bg">
+      <!-- Background Decorations -->
+      <div class="decor-blob decor-blob-1"></div>
+      <div class="decor-blob decor-blob-2"></div>
+      
+      <!-- Isometric Shapes for Tech Vibe -->
+      <svg class="decor-iso" viewBox="0 0 100 100" style="width: 50px; top: 15%; left: 10%;">
+         <polygon points="50,10 90,30 90,70 50,90 10,70 10,30" fill="rgba(255,255,255,0.1)" stroke="#fff" stroke-width="3"/>
+         <polyline points="10,30 50,50 90,30" fill="none" stroke="#fff" stroke-width="3"/>
+         <line x1="50" y1="50" x2="50" y2="90" stroke="#fff" stroke-width="3"/>
+      </svg>
+      <svg class="decor-iso" viewBox="0 0 100 100" style="width: 35px; top: 40%; right: 12%; animation-delay: 1s;">
+         <polygon points="50,10 90,30 90,70 50,90 10,70 10,30" fill="rgba(255,255,255,0.05)" stroke="#fff" stroke-width="4"/>
+         <polyline points="10,30 50,50 90,30" fill="none" stroke="#fff" stroke-width="4"/>
+         <line x1="50" y1="50" x2="50" y2="90" stroke="#fff" stroke-width="4"/>
+      </svg>
+      
+      <!-- Floating Particles -->
+      <div style="position: absolute; width: 6px; height: 6px; background: #fff; border-radius: 50%; top: 25%; right: 30%; opacity: 0.4; animation: float 4s infinite; z-index: 2;"></div>
+      <div style="position: absolute; width: 4px; height: 4px; background: #fff; border-radius: 50%; top: 60%; left: 25%; opacity: 0.3; animation: float 5s infinite 2s; z-index: 2;"></div>
+      <div style="position: absolute; width: 8px; height: 8px; background: #fff; border-radius: 50%; top: 70%; right: 20%; opacity: 0.2; animation: float 7s infinite 1s; z-index: 2;"></div>
 
-    <div id="loginError" class="login-error" style="display:none;"></div>
+      <svg viewBox="0 0 100 100" class="login-logo" aria-label="YASSA Logo">
+        <circle cx="28" cy="38" r="6" fill="#4ca746"/>
+        <path d="M13 56 a 15 15 0 0 1 30 0" fill="none" stroke="#4ca746" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="72" cy="38" r="6" fill="#4ca746"/>
+        <path d="M57 56 a 15 15 0 0 1 30 0" fill="none" stroke="#4ca746" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="50" cy="28" r="7.5" fill="#4ca746"/>
+        <path d="M30 53 a 20 20 0 0 1 40 0" fill="none" stroke="#4ca746" stroke-width="6.5" stroke-linecap="round"/>
+        <text x="50" y="76" font-family="'Inter', sans-serif" font-weight="900" font-size="24" text-anchor="middle" letter-spacing="-0.5">
+          <tspan fill="#ffffff">YAS</tspan><tspan fill="#4ca746">SA</tspan>
+        </text>
+      </svg>
+      <!-- Title is optional here since it's already in the logo, but kept for balance -->
+      
+      <div class="login-header-wave"></div>
+    </div>
 
-    <form id="loginForm" onsubmit="handleLoginSubmit(event)">
-      <div class="login-field">
-        <label class="login-label">No. HP (Awali 628)</label>
-        <input type="tel" id="loginEmail" class="login-input" placeholder="628xxxxxxxxx" required autocomplete="tel">
+    <div class="login-form-container">
+      <div id="loginError" class="login-error" style="display:none;"></div>
+
+      <form id="loginForm" onsubmit="handleLoginSubmit(event)">
+        <div class="login-field">
+          <div class="login-field-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <input type="tel" id="loginEmail" class="login-input" placeholder="No. HP (Awali 628)" required autocomplete="tel">
+        </div>
+        
+        <div class="login-field">
+          <div class="login-field-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <input type="password" id="loginPassword" class="login-input" placeholder="Password" required autocomplete="current-password">
+        </div>
+        
+        <button type="submit" id="loginSubmitBtn" class="login-btn">Masuk</button>
+        
+        <div class="login-links">
+          <a href="#" class="login-link" onclick="showModal('Lupa Password', 'Silakan hubungi Super Admin untuk mereset password Anda.'); return false;">Lupa Password?</a>
+        </div>
+      </form>
+
+      <div class="login-divider"><span>atau Login Otomatis</span></div>
+
+      <div id="googleSignInBtn" class="google-btn-wrap"></div>
+
+      <!-- Additional footer icons mirroring the reference design -->
+      <div class="login-footer-icons">
+        <button class="login-footer-icon-btn" onclick="showModal('Info', 'Fitur bantuan sedang dikembangkan')">
+          <div class="login-footer-icon-circle">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <span class="login-footer-icon-label">Bantuan</span>
+        </button>
+        <button class="login-footer-icon-btn" onclick="showModal('Info', 'Pusat keamanan sedang dikembangkan')">
+          <div class="login-footer-icon-circle">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <span class="login-footer-icon-label">Keamanan</span>
+        </button>
+        <button class="login-footer-icon-btn" onclick="showModal('Info', 'Pusat keluhan sedang dikembangkan')">
+          <div class="login-footer-icon-circle">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          </div>
+          <span class="login-footer-icon-label">Keluhan</span>
+        </button>
       </div>
-      <div class="login-field">
-        <label class="login-label">Password</label>
-        <input type="password" id="loginPassword" class="login-input" placeholder="••••••••" required autocomplete="current-password">
-      </div>
-      <button type="submit" id="loginSubmitBtn" class="login-btn">Masuk</button>
-    </form>
 
-    <div class="login-divider"><span>atau Login Otomatis</span></div>
-
-    <div id="googleSignInBtn" class="google-btn-wrap"></div>
-
-    <div id="loginAppVersion" class="login-app-version"></div>
-    <div class="login-copyright">&copy; 2026 Yayasan Salam Satu Aspal</div>
+      <div id="loginAppVersion" class="login-app-version"></div>
+    </div>
   </div>
 </div>
 
@@ -587,7 +830,7 @@
 </div>
 
 <script>
-const APP_VERSION = "1.4.0 (Login & Manajemen Akses)";
+const APP_VERSION = "1.4.1 (Login Redesign)";
 const APP_BUILD_DATE = "2026-08-02";
 
 // =================================================================================
@@ -645,7 +888,6 @@ const TABS = [
   { key: "pengaturan", label: "Pengaturan", icon: "settings" },
 ];
 
-// Tab yang boleh dilihat sesuai role user yang login. "pengaturan" cuma buat SUPERADMIN.
 function visibleTabs() {
   return TABS.filter((t) => {
     if (t.key === "pengaturan") return currentUser && currentUser.role === "SUPERADMIN";
@@ -715,11 +957,7 @@ const MENUS = {
 let active = "beranda";
 let currentUser = null;
 let authToken = null;
-let pendingOldPassword = null; // sementara nyimpen password lama, dipakai kalau mustChangePassword
-
-// =================================================================================
-// AUTH — LOGIN, SESSION, GOOGLE SIGN-IN
-// =================================================================================
+let pendingOldPassword = null; 
 
 function callGAS(action, args) {
   return fetch(GAS_AUTH_URL, {
@@ -744,7 +982,6 @@ function initAuth() {
   authToken = savedToken;
   currentUser = JSON.parse(savedUser);
 
-  // Verifikasi ulang ke server — jangan percaya data lokal begitu saja.
   callGAS("checkSession", [authToken])
     .then(function (session) {
       currentUser = session;
@@ -798,7 +1035,6 @@ function handleLoginSubmit(event) {
   const password = document.getElementById("loginPassword").value;
   const btn = document.getElementById("loginSubmitBtn");
   
-  // Pengecekan wajib diawali 628
   if (!email.startsWith("628")) {
     showLoginError("Nomor HP harus diawali dengan awalan 628 (contoh: 62812345678)");
     return;
@@ -809,7 +1045,7 @@ function handleLoginSubmit(event) {
 
   callGAS("login", [email, password])
     .then(function (res) {
-      pendingOldPassword = password; // dipakai kalau ternyata mustChangePassword
+      pendingOldPassword = password; 
       onLoginSuccess(res);
     })
     .catch(function (err) { showLoginError(err.message); })
@@ -821,21 +1057,21 @@ function handleLoginSubmit(event) {
 
 function initGoogleSignIn() {
   if (typeof google === "undefined" || !google.accounts || !google.accounts.id) {
-    // Library GSI belum siap (baru dimuat async), coba lagi sebentar.
     setTimeout(initGoogleSignIn, 300);
     return;
   }
   google.accounts.id.initialize({
     client_id: GOOGLE_CLIENT_ID,
     callback: handleGoogleCredential,
-    // Catatan: 'hd' sengaja TIDAK dipakai di sini. Kalau di-set, Google
-    // cuma nyoba akun yang domainnya cocok & sering "nolak diam-diam" di HP
-    // yang banyak akun. Validasi domain @yayasansalamsatuaspal.com tetap
-    // dilakukan server-side di loginGoogle() (Code.gs) — lebih aman & UX
-    // lebih jelas (user bisa pilih akun apa saja, baru divalidasi).
   });
+  
+  // Custom styling parameter to match new design
   google.accounts.id.renderButton(document.getElementById("googleSignInBtn"), {
-    theme: "outline", size: "large", width: 280, text: "continue_with", logo_alignment: "left"
+    theme: "outline", 
+    size: "large", 
+    width: 320, 
+    text: "continue_with", 
+    shape: "pill"
   });
 }
 
@@ -919,8 +1155,8 @@ function doLogout() {
   sessionStorage.removeItem("yassa_user");
   authToken = null;
   currentUser = null;
+  showLoginScreen();
 }
-
 
 function render() {
   renderContent();
@@ -1025,7 +1261,6 @@ function handleUserMenuClick(action) {
     const wilayahText = currentUser.wilayahAkses === "ALL" ? "Semua wilayah" : currentUser.wilayahAkses;
     const printText = currentUser.bolehPrint ? "Ya" : "Tidak";
     
-    // Cek foto profil, jika kosong pakai gambar avatar standar
     const fotoProfil = currentUser.fotoUrl ? currentUser.fotoUrl : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
     
     const kontenProfil = `
@@ -1050,9 +1285,6 @@ function handleUserMenuClick(action) {
   }
 }
 
-// =================================================================================
-// PANEL PENGATURAN — MANAJEMEN USER (khusus SUPERADMIN)
-// =================================================================================
 let userListCache = [];
 let editingEmail = null;
 
@@ -1072,7 +1304,7 @@ function loadUserListIntoPanel() {
     .then(function (users) {
       userListCache = users;
       const wrap = document.getElementById("userTableWrap");
-      if (!wrap) return; // user udah pindah tab sebelum data selesai dimuat
+      if (!wrap) return; 
       if (!users.length) {
         wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#9CA3AF;font-size:13px;">Belum ada user terdaftar.</div>';
         return;
@@ -1111,9 +1343,9 @@ function openUserForm(indexOrNull) {
   document.getElementById("userFormTitle").textContent = isEdit ? "Edit User" : "Tambah User";
   document.getElementById("ufNama").value = isEdit ? user.nama : "";
   document.getElementById("ufEmail").value = isEdit ? (user.email || "") : "";
-  document.getElementById("ufEmail").disabled = isEdit; // identitas gak bisa diubah setelah dibuat
+  document.getElementById("ufEmail").disabled = isEdit; 
   document.getElementById("ufEmailGoogle").value = isEdit ? (user.emailGoogle || "") : "";
-  document.getElementById("ufEmailGoogle").disabled = isEdit; // identitas gak bisa diubah setelah dibuat
+  document.getElementById("ufEmailGoogle").disabled = isEdit; 
   document.getElementById("ufPassword").placeholder = isEdit ? "Kosongkan kalau gak diubah" : "Minimal 6 karakter (kalau isi No. HP)";
   document.getElementById("ufPassword").required = false;
   document.getElementById("ufRole").value = isEdit ? user.role : "PENGURUS";
@@ -1176,11 +1408,14 @@ function submitUserForm(event) {
 }
 
 function resetUserPassword() {
-  const newPassword = prompt("Masukkan password baru buat " + editingEmail + " (minimal 6 karakter):");
-  if (!newPassword) return;
-  callGAS("resetPassword", [authToken, editingEmail, newPassword])
-    .then(function () { showModal("Sukses", "Password berhasil direset."); })
-    .catch(function (err) { showModal("Gagal", err.message); });
+  showModal("Reset Password", "Masukkan password baru buat " + editingEmail + " (minimal 6 karakter):", true, function() {
+      // In a real app we'd use a custom input modal here, but fallback to prompt for simplicity in this flow if we really need it
+      const newPassword = prompt("Password Baru:");
+      if (!newPassword) return;
+      callGAS("resetPassword", [authToken, editingEmail, newPassword])
+        .then(function () { showModal("Sukses", "Password berhasil direset."); })
+        .catch(function (err) { showModal("Gagal", err.message); });
+  });
 }
 
 function toggleUserStatus() {
@@ -1201,7 +1436,7 @@ function uploadFoto(input) {
   const reader = new FileReader();
   
   const labelUpload = document.getElementById("labelUploadFoto");
-  labelUpload.textContent = "Mengunggah..."; // Ubah teks tombol saat sedang proses loading
+  labelUpload.textContent = "Mengunggah..."; 
   
   reader.onload = function(e) {
     const base64Data = e.target.result.split(',')[1];
@@ -1209,7 +1444,7 @@ function uploadFoto(input) {
     
     callGAS("uploadProfilePhoto", [authToken, base64Data, mimeType])
       .then(function(res) {
-        currentUser.fotoUrl = res.fotoUrl; // Simpan tautan foto terbaru ke sesi lokal
+        currentUser.fotoUrl = res.fotoUrl; 
         sessionStorage.setItem("yassa_user", JSON.stringify(currentUser));
         closeModal();
         showModal("Sukses", "Foto profil berhasil diperbarui! Silakan buka profil lagi untuk melihatnya.");
@@ -1239,10 +1474,10 @@ document.getElementById("overlayClose").addEventListener("click", function () {
 function showModal(title, message, isConfirm = false, onConfirm = null) {
   const modal = document.getElementById('customModalOverlay');
   document.getElementById('customModalTitle').textContent = title;
-  document.getElementById('customModalMessage').innerHTML = message; // Ubah textContent jadi innerHTML agar bisa menampilkan gambar
+  document.getElementById('customModalMessage').innerHTML = message; 
   
   const actionsContainer = document.getElementById('customModalActions');
-  actionsContainer.innerHTML = ''; // Reset buttons
+  actionsContainer.innerHTML = ''; 
 
   if (isConfirm) {
     const btnCancel = document.createElement('button');
@@ -1275,7 +1510,6 @@ function closeModal() {
   document.getElementById('customModalOverlay').classList.remove('open');
 }
 
-// Service Worker Registration
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
     navigator.serviceWorker.register("sw.js").catch(function (err) {
@@ -1284,7 +1518,6 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-// Initial: cek sesi login dulu sebelum render Hub
 initAuth();
 </script>
 </body>
