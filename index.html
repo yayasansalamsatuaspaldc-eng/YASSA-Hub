@@ -13,144 +13,347 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: #F6F7F3; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-  #app { max-width: 420px; margin: 0 auto; min-height: 100vh; min-height: 100dvh; background: #F6F7F3; position: relative; display: flex; flex-direction: column; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  
+  html, body { 
+    margin: 0; padding: 0; background: #E5E7EB; 
+    font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+    color: #1F2933;
+    min-height: 100vh;
+  }
+  
+  /* Container App (Penuh di Mobile, Terpusat di Desktop/Tablet) */
+  #app { 
+    width: 100%;
+    margin: 0 auto; 
+    min-height: 100vh; 
+    min-height: 100dvh; 
+    background: #F4F6F4; 
+    position: relative; 
+    display: flex; 
+    flex-direction: column; 
+    overflow: hidden;
+  }
 
-  .header { background: #0B7A45; padding: 20px 20px 28px; color: #fff; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; }
+  @media (min-width: 640px) {
+    body { padding: 40px 20px; display: flex; align-items: center; justify-content: center; }
+    #app { 
+      max-width: 480px; 
+      border-radius: 32px; 
+      box-shadow: 0 20px 50px rgba(0,0,0,0.15); 
+      min-height: 85vh;
+      height: 85vh; 
+      border: 1px solid rgba(255,255,255,0.5);
+    }
+  }
+
+  .header { 
+    background: linear-gradient(135deg, #0B7A45 0%, #11995E 100%); 
+    padding: 24px 24px 50px; 
+    color: #fff; 
+    border-bottom-left-radius: 28px; 
+    border-bottom-right-radius: 28px; 
+  }
   .header-top { display: flex; justify-content: space-between; align-items: center; }
-  .header-greet-sub { font-size: 13px; opacity: .85; }
-  .header-greet-name { font-size: 18px; font-weight: 600; }
-  .bell { width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,.15); display: flex; align-items: center; justify-content: center; }
-  .header-version { font-size: 10px; opacity: .65; text-align: right; margin-top: 4px; }
-  .header-user { display: flex; align-items: center; gap: 10px; }
-  .header-logo-btn { width: 42px; height: 42px; border-radius: 50%; overflow: hidden; border: none; background: transparent; padding: 0; cursor: pointer; flex-shrink: 0; }
-  .header-logo-img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  
+  .header-user { display: flex; align-items: center; gap: 12px; }
+  .header-greet-sub { font-size: 13px; font-weight: 400; opacity: 0.9; margin-bottom: 2px; }
+  .header-greet-name { font-size: 19px; font-weight: 700; letter-spacing: -0.3px; }
+  
+  .bell { 
+    width: 42px; 
+    height: 42px; 
+    border-radius: 50%; 
+    background: rgba(255,255,255,0.2); 
+    backdrop-filter: blur(4px);
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .bell:active { transform: scale(0.92); background: rgba(255,255,255,0.3); }
+  
+  .header-logo-btn { 
+    width: 46px; 
+    height: 46px; 
+    border-radius: 50%; 
+    border: 2px solid rgba(255,255,255,0.3); 
+    background: #000; 
+    padding: 0; 
+    cursor: pointer; 
+    flex-shrink: 0;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .header-logo-btn:active { transform: scale(0.92); }
+  .header-logo-svg { width: 90%; height: 90%; display: block; }
 
-  .user-menu-overlay { position: absolute; inset: 0; z-index: 15; display: none; }
-  .user-menu-overlay.open { display: block; }
-  .user-menu { position: absolute; top: 64px; left: 20px; background: #fff; border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.18); min-width: 190px; z-index: 16; display: none; overflow: hidden; padding: 6px; }
-  .user-menu.open { display: block; }
-  .user-menu-item { display: flex; align-items: center; gap: 10px; width: 100%; background: none; border: none; padding: 11px 12px; font-size: 13.5px; font-weight: 500; color: #1F2933; cursor: pointer; border-radius: 10px; text-align: left; }
-  .user-menu-item:hover { background: #F1F2ED; }
-  .user-menu-item.danger { color: #DC2626; }
-  .user-menu-divider { height: 1px; background: #EEF0EC; margin: 6px 4px; }
-
-  .summary-card { margin-top: 18px; background: #fff; border-radius: 14px; padding: 14px 16px; color: #1F2933; display: flex; justify-content: space-between; }
-  .summary-label { font-size: 12px; color: #6B7280; }
-  .summary-value { font-size: 20px; font-weight: 700; color: #0B7A45; }
+  .summary-card { 
+    margin: -30px 20px 0; 
+    background: #fff; 
+    border-radius: 18px; 
+    padding: 18px 20px; 
+    display: flex; 
+    justify-content: space-between; 
+    position: relative;
+    z-index: 2;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+    border: 1px solid rgba(0,0,0,0.02);
+  }
+  .summary-label { font-size: 12px; color: #6B7280; font-weight: 500; margin-bottom: 4px; }
+  .summary-value { font-size: 20px; font-weight: 800; color: #0B7A45; letter-spacing: -0.5px; }
   .summary-value.plain { color: #1F2933; }
 
-  .content { flex: 1; padding: 20px 16px 90px; }
-  .section-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; color: #1F2933; }
+  .content { flex: 1; padding: 24px 20px 100px; overflow-y: auto; }
+  .section-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: #111827; letter-spacing: -0.2px; }
 
-  .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .quick-card { background: #fff; border: none; border-radius: 14px; padding: 16px 12px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.06); text-align: left; }
-  .quick-icon { width: 34px; height: 34px; border-radius: 10px; background: #E7F4EC; display: flex; align-items: center; justify-content: center; }
-  .quick-label { font-size: 13px; font-weight: 500; color: #1F2933; }
+  .animate-fade-up { animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 
-  .menu-panel { background: #fff; border-radius: 18px; padding: 18px 12px 14px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
-  .menu-grid { display: grid; grid-template-columns: repeat(4, 1fr); row-gap: 18px; column-gap: 4px; }
-  .menu-item { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; padding: 0; }
-  .menu-icon { width: 52px; height: 52px; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
-  .menu-label { font-size: 11px; font-weight: 500; color: #1F2933; text-align: center; line-height: 1.25; }
-  .app-version-footer { text-align: center; font-size: 11px; color: #9CA3AF; margin-top: 24px; padding-top: 16px; }
+  .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .quick-card { 
+    background: #fff; 
+    border: none; 
+    border-radius: 16px; 
+    padding: 16px; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 12px; 
+    align-items: flex-start; 
+    cursor: pointer; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
+    border: 1px solid rgba(0,0,0,0.02);
+    transition: all 0.2s ease; 
+    text-align: left; 
+  }
+  .quick-card:active { transform: scale(0.96); box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+  .quick-icon { width: 38px; height: 38px; border-radius: 12px; background: #E1F5EE; display: flex; align-items: center; justify-content: center; }
+  .quick-label { font-size: 13.5px; font-weight: 600; color: #374151; }
 
-  .single-app-card { width: 100%; background: #fff; border: none; border-radius: 18px; padding: 18px; display: flex; gap: 14px; align-items: flex-start; text-align: left; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
-  .single-app-icon { width: 52px; height: 52px; border-radius: 16px; background: #E7F4EC; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .single-app-title { font-size: 15px; font-weight: 600; color: #1F2933; margin-bottom: 4px; }
-  .single-app-desc { font-size: 12px; color: #6B7280; line-height: 1.5; }
+  .menu-panel { 
+    background: #fff; 
+    border-radius: 20px; 
+    padding: 24px 16px; 
+    box-shadow: 0 4px 16px rgba(0,0,0,0.04); 
+    border: 1px solid rgba(0,0,0,0.02);
+  }
+  .menu-grid { display: grid; grid-template-columns: repeat(4, 1fr); row-gap: 24px; column-gap: 8px; }
+  .menu-item { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; padding: 0; transition: transform 0.2s; }
+  .menu-item:active { transform: scale(0.92); }
+  .menu-icon { width: 54px; height: 54px; border-radius: 18px; display: flex; align-items: center; justify-content: center; }
+  .menu-label { font-size: 11.5px; font-weight: 500; color: #4B5563; text-align: center; line-height: 1.3; max-width: 60px;}
 
-  .bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #EEF0EC; display: flex; padding: 8px 4px; box-shadow: 0 -2px 8px rgba(0,0,0,.04); }
-  .nav-btn { flex: 1; background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 2px; cursor: pointer; }
-  .nav-label { font-size: 10px; text-align: center; line-height: 1.2; }
+  .bottom-nav { 
+    position: absolute; 
+    bottom: 0; left: 0; right: 0; 
+    background: rgba(255, 255, 255, 0.95); 
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(0,0,0,0.05); 
+    display: flex; 
+    padding: 10px 8px; 
+    padding-bottom: env(safe-area-inset-bottom, 10px);
+    justify-content: space-around;
+  }
+  .nav-btn { 
+    flex: 1; 
+    background: none; 
+    border: none; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    gap: 4px; 
+    cursor: pointer; 
+    position: relative;
+    padding: 4px 0;
+  }
+  .nav-icon-wrap {
+    padding: 6px 16px;
+    border-radius: 20px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .nav-btn.active .nav-icon-wrap {
+    background: #E1F5EE;
+  }
+  .nav-label { font-size: 10.5px; text-align: center; line-height: 1; transition: color 0.3s, font-weight 0.3s; margin-top: 2px;}
 
-  .overlay { position: absolute; inset: 0; background: #fff; display: none; flex-direction: column; z-index: 10; }
-  .overlay.open { display: flex; }
-  .overlay-header { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid #EEF0EC; }
-  .overlay-title { font-size: 15px; font-weight: 600; color: #1F2933; }
-  .overlay-close { background: none; border: none; cursor: pointer; padding: 4px; }
-  .overlay iframe { flex: 1; width: 100%; border: none; }
+  .user-menu-overlay { position: absolute; inset: 0; z-index: 20; display: none; background: rgba(0,0,0,0.1); backdrop-filter: blur(2px); animation: fadeIn 0.2s forwards; }
+  .user-menu-overlay.open { display: block; }
+  .user-menu { 
+    position: absolute; top: 80px; left: 24px; 
+    background: #fff; border-radius: 16px; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
+    min-width: 200px; z-index: 21; 
+    display: none; padding: 8px; 
+    transform-origin: top left;
+  }
+  .user-menu.open { display: block; animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  
+  @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-  svg { display: block; }
+  .user-menu-item { 
+    display: flex; align-items: center; gap: 12px; width: 100%; 
+    background: none; border: none; padding: 12px 14px; 
+    font-size: 14px; font-weight: 600; color: #374151; 
+    cursor: pointer; border-radius: 10px; text-align: left; 
+    transition: background 0.2s;
+  }
+  .user-menu-item:active, .user-menu-item:hover { background: #F3F4F6; }
+  .user-menu-item.danger { color: #DC2626; }
+  .user-menu-divider { height: 1px; background: #E5E7EB; margin: 6px; }
+
+  .overlay { position: absolute; inset: 0; background: #fff; display: none; flex-direction: column; z-index: 30; }
+  .overlay.open { display: flex; animation: slideUpApp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  @keyframes slideUpApp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  
+  .overlay-header { 
+    display: flex; align-items: center; gap: 12px; padding: 16px 20px; 
+    border-bottom: 1px solid #F3F4F6; background: #fff; 
+  }
+  .overlay-title { font-size: 16px; font-weight: 700; color: #111827; }
+  .overlay-close { 
+    background: #F3F4F6; border: none; cursor: pointer; padding: 8px; 
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+  }
+  .overlay-close:active { background: #E5E7EB; }
+  .overlay iframe { flex: 1; width: 100%; border: none; background: #F9FAFB; }
+
+  .app-version-footer { text-align: center; font-size: 11px; color: #9CA3AF; margin-top: 32px; padding-top: 16px; font-weight: 500; }
+
+  .custom-modal-overlay {
+    position: absolute; inset: 0; z-index: 999; display: none;
+    background: rgba(0,0,0,0.4); backdrop-filter: blur(3px);
+    align-items: center; justify-content: center;
+  }
+  .custom-modal-overlay.open { display: flex; animation: fadeIn 0.2s forwards; }
+  .custom-modal {
+    background: #fff; width: 85%; max-width: 320px; border-radius: 20px;
+    padding: 24px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    transform: scale(0.9); transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .custom-modal-overlay.open .custom-modal { transform: scale(1); }
+  .custom-modal-title { font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 10px; }
+  .custom-modal-message { font-size: 14px; color: #4B5563; line-height: 1.5; margin-bottom: 24px; }
+  .custom-modal-actions { display: flex; gap: 12px; justify-content: center; }
+  .btn-modal {
+    flex: 1; padding: 12px; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  .btn-cancel { background: #F3F4F6; color: #374151; }
+  .btn-confirm { background: #0B7A45; color: #fff; }
+  .btn-confirm.danger { background: #DC2626; color: #fff; }
 </style>
 </head>
 <body>
 <div id="app">
 
+  <!-- Bagian Header -->
   <div class="header">
     <div class="header-top">
       <div class="header-user">
         <button class="header-logo-btn" onclick="toggleUserMenu()" aria-label="Menu Akun">
-          <img src="logo_yassa.png" alt="YASSA" class="header-logo-img">
+          <!-- LOGO SVG YASSA -->
+          <svg viewBox="0 0 100 100" class="header-logo-svg" aria-label="YASSA Logo">
+            <circle cx="28" cy="38" r="6" fill="#4ca746"/>
+            <path d="M13 56 a 15 15 0 0 1 30 0" fill="none" stroke="#4ca746" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="72" cy="38" r="6" fill="#4ca746"/>
+            <path d="M57 56 a 15 15 0 0 1 30 0" fill="none" stroke="#4ca746" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="50" cy="28" r="7.5" fill="#4ca746"/>
+            <path d="M30 53 a 20 20 0 0 1 40 0" fill="none" stroke="#4ca746" stroke-width="6.5" stroke-linecap="round"/>
+            <text x="50" y="76" font-family="'Inter', sans-serif" font-weight="900" font-size="24" text-anchor="middle" letter-spacing="-0.5">
+              <tspan fill="#ffffff">YAS</tspan><tspan fill="#4ca746">SA</tspan>
+            </text>
+          </svg>
         </button>
         <div>
           <div class="header-greet-sub">Selamat datang,</div>
           <div class="header-greet-name">Pengurus YASSA</div>
         </div>
       </div>
-      <div class="bell">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-      </div>
-    </div>
-    <div class="header-version" id="headerVersion"></div>
-    <div class="summary-card" id="summaryCard">
-      <div>
-        <div class="summary-label">Total Donasi Bulan Ini</div>
-        <div class="summary-value">Rp 12.450.000</div>
-      </div>
-      <div style="text-align:right;">
-        <div class="summary-label">Anak Terdaftar</div>
-        <div class="summary-value plain">812</div>
+      <div class="bell" onclick="showModal('Notifikasi', 'Tidak ada notifikasi baru hari ini.')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
       </div>
     </div>
   </div>
 
-  <!-- Dropdown menu akun (dibuka lewat tombol logo) -->
+  <!-- Kartu Mengambang -->
+  <div class="summary-card" id="summaryCard">
+    <div>
+      <div class="summary-label">Total Donasi</div>
+      <div class="summary-value">Rp 12.450.000</div>
+    </div>
+    <div style="text-align:right;">
+      <div class="summary-label">Anak Terdaftar</div>
+      <div class="summary-value plain">812</div>
+    </div>
+  </div>
+
+  <!-- Dropdown Menu Akun -->
   <div class="user-menu-overlay" id="userMenuOverlay" onclick="closeUserMenu()"></div>
   <div class="user-menu" id="userMenu">
     <button class="user-menu-item" onclick="handleUserMenuClick('profile')">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      Profil
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Profil Saya
     </button>
     <button class="user-menu-item" onclick="handleUserMenuClick('pengurus')">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      Pengurus
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Daftar Pengurus
     </button>
     <div class="user-menu-divider"></div>
     <button class="user-menu-item danger" onclick="handleUserMenuClick('logout')">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      Logout
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Keluar (Logout)
     </button>
   </div>
 
+  <!-- Konten Utama dan Footer Dinamis -->
   <div class="content" id="content"></div>
-
   <div class="bottom-nav" id="bottomNav"></div>
 
+  <!-- Overlay Aplikasi (Iframe) -->
   <div class="overlay" id="overlay">
     <div class="overlay-header">
       <button class="overlay-close" id="overlayClose">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1F2933" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
       </button>
-      <span class="overlay-title" id="overlayTitle"></span>
+      <span class="overlay-title" id="overlayTitle">Aplikasi</span>
     </div>
     <iframe id="overlayFrame" src="about:blank" allow="camera; geolocation"></iframe>
+  </div>
+
+  <!-- Custom Modal Pengganti Alert/Confirm -->
+  <div class="custom-modal-overlay" id="customModalOverlay">
+    <div class="custom-modal">
+      <div class="custom-modal-title" id="customModalTitle">Informasi</div>
+      <div class="custom-modal-message" id="customModalMessage">Pesan informasi disini.</div>
+      <div class="custom-modal-actions" id="customModalActions">
+        <!-- Tombol akan dirender via JS -->
+      </div>
+    </div>
   </div>
 
 </div>
 
 <script>
-// =================================================================================
-// VERSI APLIKASI
-// =================================================================================
-const APP_VERSION = "1.1.0";
-const APP_BUILD_DATE = "2026-08-01"; // update tiap kali deploy versi baru
+const APP_VERSION = "1.3.0 (Responsive & Stable Fix)";
+const APP_BUILD_DATE = "2026-08-02";
 
-// =================================================================================
-// KONFIGURASI ICON (inline SVG, gak butuh library luar)
-// =================================================================================
 const ICONS = {
   home: '<path d="m3 9 9-7 9 7"/><path d="M9 22V12h6v10"/><path d="M21 9v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9"/>',
   wallet: '<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>',
@@ -168,21 +371,22 @@ const ICONS = {
   printer: '<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/><path d="M6 9V3h12v6"/>',
   gift: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8Z"/><path d="M16.5 8a2.5 2.5 0 0 0 0-5C13 3 12 8 12 8Z"/>',
   package: '<path d="M16.5 9.4 7.5 4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.29 7.29 12 12l8.71-4.71"/><path d="M12 22V12"/>',
-  more: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+  more: '<circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/><circle cx="5" cy="12" r="1.5"/>',
   cloud: '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h.79a4.5 4.5 0 1 1 0 9Z"/>',
   bookopen: '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3Z"/>',
 };
+
 function iconSvg(name, color, size) {
-  size = size || 20;
-  return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="' + color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + ICONS[name] + '</svg>';
+  size = size || 22;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</svg>`;
 }
 
 const ICON_COLORS = {
-  teal:   { bg: "#E1F5EE", fg: "#0F6E56" },
-  blue:   { bg: "#E6F1FB", fg: "#185FA5" },
-  coral:  { bg: "#FAECE7", fg: "#993C1D" },
-  amber:  { bg: "#FAEEDA", fg: "#854F0B" },
-  purple: { bg: "#EEEDFE", fg: "#534AB7" },
+  teal:   { bg: "#E1F5EE", fg: "#0D8458" },
+  blue:   { bg: "#EBF3FA", fg: "#2563EB" },
+  coral:  { bg: "#FDEAE6", fg: "#DC2626" },
+  amber:  { bg: "#FEF3C7", fg: "#D97706" },
+  purple: { bg: "#F3E8FF", fg: "#7E22CE" },
 };
 
 const TABS = [
@@ -191,17 +395,13 @@ const TABS = [
   { key: "absensi", label: "Absensi", icon: "clipboard" },
   { key: "awg", label: "AWG", icon: "users" },
   { key: "pm", label: "Penerima Manfaat", icon: "heart" },
-  { key: "bukubesar", label: "Cloud Buku Besar", icon: "cloud" },
+  { key: "bukubesar", label: "Cloud Buku", icon: "cloud" },
 ];
 
-// GANTI semua PLACEHOLDER di bawah ini dengan URL asli tiap aplikasi.
 const MENUS = {
   beranda: { title: "Beranda", items: [] },
   donasi: {
     title: "Kotak & Donasi",
-    // App utuh (React), 5 view internal via state currentView:
-    // dashboard, info-kotak, input-kotak, input-donasi, monitor.
-    // "info-kotak" & "monitor" cuma muncul buat role tertentu (diatur di app-nya sendiri).
     baseUrl: "https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/",
     items: [
       { label: "Dashboard", icon: "chart", color: "teal", tab: "dashboard" },
@@ -213,9 +413,6 @@ const MENUS = {
   },
   absensi: {
     title: "Absensi & Kegiatan",
-    // Bukan SPA (beda dari AWG/PM/Buku Besar/Kotak&Donasi) — ini beberapa file
-    // .html terpisah, jadi link langsung ke tiap file, gak pakai baseUrl+tab.
-    // ?embed=1 dibaca script.js (SiRapat) buat nyembunyiin sidebar & topbar bawaan.
     items: [
       { label: "Beranda", icon: "home", color: "teal", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/index.html?embed=1" },
       { label: "Dashboard", icon: "chart", color: "blue", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Dashboard.html?embed=1" },
@@ -227,8 +424,6 @@ const MENUS = {
   },
   awg: {
     title: "AWG (Ahli Waris Gojek)",
-    // Sesuai 5 tab internal index.html AWG: dashboard, registrasi, penyelesaian, antrian, export.
-    // "tab" dipakai buat deep-link -> baseUrl + "?embed=1&tab=" + tab
     baseUrl: "https://yayasansalamsatuaspaldc-eng.github.io/AWG/",
     items: [
       { label: "Beranda AWG", icon: "home", color: "teal", tab: "dashboard" },
@@ -240,37 +435,30 @@ const MENUS = {
   },
   pm: {
     title: "Penerima Manfaat",
-    // App utuh (sama kaya AWG), 4 tab internal: dashboard, programDonasi, penerima, distribusi.
-    // "tab" dipakai buat deep-link -> baseUrl + "?embed=1&tab=" + tab
     baseUrl: "https://yayasansalamsatuaspaldc-eng.github.io/Penerima-Manfaat/",
     items: [
-      { label: "Dashboard & Laporan", icon: "chart", color: "teal", tab: "dashboard" },
-      { label: "Program & Donasi", icon: "piggy", color: "blue", tab: "programDonasi" },
-      { label: "Data Penerima", icon: "users", color: "coral", tab: "penerima" },
-      { label: "Distribusi Bantuan", icon: "package", color: "purple", tab: "distribusi" },
+      { label: "Dashboard", icon: "chart", color: "teal", tab: "dashboard" },
+      { label: "Program", icon: "piggy", color: "blue", tab: "programDonasi" },
+      { label: "Penerima", icon: "users", color: "coral", tab: "penerima" },
+      { label: "Distribusi", icon: "package", color: "purple", tab: "distribusi" },
     ],
   },
   bukubesar: {
     title: "Cloud Buku Besar",
-    // App utuh (sama kaya AWG & PM), 5 tab internal: dashboard, input, data, laporan, aset.
     baseUrl: "https://yayasansalamsatuaspaldc-eng.github.io/Buku-Besar/",
     items: [
       { label: "Dashboard", icon: "chart", color: "teal", tab: "dashboard" },
       { label: "Input Jurnal", icon: "receipt", color: "blue", tab: "input" },
       { label: "Buku Besar", icon: "bookopen", color: "coral", tab: "data" },
-      { label: "Laporan ISAK 35", icon: "printer", color: "amber", tab: "laporan" },
+      { label: "Laporan", icon: "printer", color: "amber", tab: "laporan" },
       { label: "Aset & Lokasi", icon: "package", color: "purple", tab: "aset" },
     ],
   },
 };
 
-// =================================================================================
-// STATE & RENDER
-// =================================================================================
 let active = "beranda";
 
 function render() {
-  document.getElementById("headerVersion").textContent = "YASSA Hub v" + APP_VERSION;
   renderContent();
   renderBottomNav();
 }
@@ -278,59 +466,66 @@ function render() {
 function renderContent() {
   const el = document.getElementById("content");
   const summary = document.getElementById("summaryCard");
+  
+  el.classList.remove("animate-fade-up");
+  void el.offsetWidth;
+  el.classList.add("animate-fade-up");
+
   summary.style.display = active === "beranda" ? "flex" : "none";
 
   if (active === "beranda") {
-    let html = '<div class="section-title">Akses Cepat</div><div class="quick-grid">';
+    let html = `<div class="section-title">Akses Cepat Aplikasi</div><div class="quick-grid">`;
     TABS.filter((t) => t.key !== "beranda").forEach((t) => {
-      html += '<button class="quick-card" onclick="setActive(\'' + t.key + '\')">' +
-        '<div class="quick-icon">' + iconSvg(t.icon, "#0B7A45", 18) + '</div>' +
-        '<span class="quick-label">' + t.label + '</span></button>';
+      html += `<button class="quick-card" onclick="setActive('${t.key}')">
+        <div class="quick-icon">${iconSvg(t.icon, "#0B7A45", 20)}</div>
+        <span class="quick-label">${t.label}</span>
+      </button>`;
     });
-    html += '</div>';
-    html += '<div class="app-version-footer">YASSA Hub v' + APP_VERSION + ' &middot; build ' + APP_BUILD_DATE + '</div>';
+    html += `</div><div class="app-version-footer">YASSA Hub v${APP_VERSION}</div>`;
     el.innerHTML = html;
     return;
   }
 
   const menu = MENUS[active];
-
-  if (menu.singleApp) {
-    let html = '<div class="section-title">' + menu.title + '</div>' +
-      '<button class="single-app-card" onclick="openSingleApp()">' +
-      '<div class="single-app-icon">' + iconSvg("users", "#0B7A45", 26) + '</div>' +
-      '<div class="single-app-text">' +
-      '<div class="single-app-title">Buka Aplikasi AWG</div>' +
-      '<div class="single-app-desc">' + menu.desc + '</div>' +
-      '</div></button>';
-    el.innerHTML = html;
-    return;
-  }
-
-  let html = '<div class="section-title">' + menu.title + '</div><div class="menu-panel"><div class="menu-grid">';
+  let html = `<div class="section-title">${menu.title}</div><div class="menu-panel"><div class="menu-grid">`;
+  
   menu.items.forEach((item, i) => {
     const c = ICON_COLORS[item.color] || ICON_COLORS.teal;
-    html += '<button class="menu-item" onclick="openApp(' + i + ')">' +
-      '<div class="menu-icon" style="background:' + c.bg + '">' + iconSvg(item.icon, c.fg, 22) + '</div>' +
-      '<span class="menu-label">' + item.label + '</span></button>';
+    html += `<button class="menu-item" onclick="openApp(${i})">
+      <div class="menu-icon" style="background:${c.bg}">${iconSvg(item.icon, c.fg, 24)}</div>
+      <span class="menu-label">${item.label}</span>
+    </button>`;
   });
-  html += '<button class="menu-item" onclick="void(0)">' +
-    '<div class="menu-icon" style="background:#F1F2ED">' + iconSvg("more", "#6B7280", 22) + '</div>' +
-    '<span class="menu-label">Lihat semua</span></button>';
-  html += '</div></div>';
+  
+  html += `<button class="menu-item" onclick="showModal('Lainnya', 'Fitur selengkapnya sedang dikembangkan.')">
+    <div class="menu-icon" style="background:#F3F4F6">${iconSvg("more", "#6B7280", 24)}</div>
+    <span class="menu-label">Lainnya</span>
+  </button>`;
+  html += `</div></div>`;
+  
   el.innerHTML = html;
 }
 
 function renderBottomNav() {
   const el = document.getElementById("bottomNav");
   let html = "";
+  
   TABS.forEach((t) => {
     const isActive = active === t.key;
-    const color = isActive ? "#0B7A45" : "#9CA3AF";
-    html += '<button class="nav-btn" onclick="setActive(\'' + t.key + '\')">' +
-      iconSvg(t.icon, color, 20) +
-      '<span class="nav-label" style="color:' + color + ';font-weight:' + (isActive ? 600 : 400) + '">' + t.label + '</span></button>';
+    const color = isActive ? "#0B7A45" : "#6B7280";
+    const activeClass = isActive ? "active" : "";
+    const fontWeight = isActive ? "700" : "500";
+    
+    html += `
+      <button class="nav-btn ${activeClass}" onclick="setActive('${t.key}')">
+        <div class="nav-icon-wrap">
+          ${iconSvg(t.icon, color, 22)}
+        </div>
+        <span class="nav-label" style="color: ${color}; font-weight: ${fontWeight};">${t.label}</span>
+      </button>
+    `;
   });
+  
   el.innerHTML = html;
 }
 
@@ -340,9 +535,6 @@ function setActive(key) {
   render();
 }
 
-// =================================================================================
-// MENU AKUN (dropdown lewat tombol logo YASSA di header)
-// =================================================================================
 function toggleUserMenu() {
   const menu = document.getElementById("userMenu");
   if (menu.classList.contains("open")) {
@@ -361,30 +553,18 @@ function closeUserMenu() {
 function handleUserMenuClick(action) {
   closeUserMenu();
   if (action === "profile") {
-    // TODO: sambungkan ke halaman/data profil pengguna yang sebenarnya.
-    alert("Fitur Profil belum tersambung ke data asli — masih tampilan placeholder.");
+    showModal("Profil", "Fitur Profil belum tersambung ke data asli — masih tampilan placeholder.");
   } else if (action === "pengurus") {
-    // TODO: sambungkan ke daftar pengurus (misal dari Google Sheet/AWG).
-    alert("Fitur Pengurus belum tersambung ke data asli — masih tampilan placeholder.");
+    showModal("Pengurus", "Fitur Pengurus belum tersambung ke data asli — masih tampilan placeholder.");
   } else if (action === "logout") {
-    const konfirmasi = confirm("Yakin ingin logout dari YASSA Hub?");
-    if (!konfirmasi) return;
-    try {
-      localStorage.clear();
-      sessionStorage.clear();
-    } catch (e) {}
-    // TODO: Hub belum punya sistem login sungguhan, jadi ini baru bersihin
-    // storage lokal. Kalau nanti Hub dipasangin login (misal Google Sign-In
-    // @yayasansalamsatuaspal.com), arahkan ke halaman login di sini.
-    alert("Berhasil logout dari YASSA Hub.");
+    showModal("Logout", "Yakin ingin keluar dari YASSA Hub?", true, function() {
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch (e) {}
+      showModal("Sukses", "Berhasil keluar dari sesi saat ini.");
+    });
   }
-}
-
-function openSingleApp() {
-  const menu = MENUS[active];
-  document.getElementById("overlayTitle").textContent = menu.title;
-  document.getElementById("overlayFrame").src = menu.url;
-  document.getElementById("overlay").classList.add("open");
 }
 
 function openApp(index) {
@@ -401,8 +581,46 @@ document.getElementById("overlayClose").addEventListener("click", function () {
   document.getElementById("overlayFrame").src = "about:blank";
 });
 
-// Daftarkan service worker supaya app ini bisa "Add to Home Screen" / diinstall
-// sebagai PWA di HP. Kalau browser tidak mendukung (jarang), diabaikan saja.
+function showModal(title, message, isConfirm = false, onConfirm = null) {
+  const modal = document.getElementById('customModalOverlay');
+  document.getElementById('customModalTitle').textContent = title;
+  document.getElementById('customModalMessage').textContent = message;
+  
+  const actionsContainer = document.getElementById('customModalActions');
+  actionsContainer.innerHTML = ''; // Reset buttons
+
+  if (isConfirm) {
+    const btnCancel = document.createElement('button');
+    btnCancel.className = 'btn-modal btn-cancel';
+    btnCancel.textContent = 'Batal';
+    btnCancel.onclick = () => closeModal();
+    
+    const btnConfirm = document.createElement('button');
+    btnConfirm.className = 'btn-modal btn-confirm danger';
+    btnConfirm.textContent = 'Ya, Lanjutkan';
+    btnConfirm.onclick = () => {
+      closeModal();
+      if (onConfirm) onConfirm();
+    };
+    
+    actionsContainer.appendChild(btnCancel);
+    actionsContainer.appendChild(btnConfirm);
+  } else {
+    const btnOk = document.createElement('button');
+    btnOk.className = 'btn-modal btn-confirm';
+    btnOk.textContent = 'Mengerti';
+    btnOk.onclick = () => closeModal();
+    actionsContainer.appendChild(btnOk);
+  }
+  
+  modal.classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('customModalOverlay').classList.remove('open');
+}
+
+// Service Worker Registration
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
     navigator.serviceWorker.register("sw.js").catch(function (err) {
@@ -411,6 +629,7 @@ if ("serviceWorker" in navigator) {
   });
 }
 
+// Initial render
 render();
 </script>
 </body>
