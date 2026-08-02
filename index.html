@@ -235,6 +235,8 @@
   }
   .overlay-close:active { background: #E5E7EB; }
   .overlay iframe { flex: 1; width: 100%; border: none; background: #F9FAFB; }
+  .akun-content { flex: 1; overflow-y: auto; padding: 20px; background: #F4F6F4; }
+  .akun-card { background: #fff; border-radius: 18px; padding: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.02); }
 
   .app-version-footer { text-align: center; font-size: 11px; color: #9CA3AF; margin-top: 32px; padding-top: 16px; font-weight: 500; }
 
@@ -785,6 +787,17 @@
       <span class="overlay-title" id="overlayTitle">Aplikasi</span>
     </div>
     <iframe id="overlayFrame" src="about:blank" allow="camera; geolocation"></iframe>
+  </div>
+
+  <!-- Halaman Penuh: Akun -->
+  <div class="overlay" id="akunPage">
+    <div class="overlay-header">
+      <button class="overlay-close" id="akunPageClose">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <span class="overlay-title">Akun</span>
+    </div>
+    <div class="akun-content" id="akunContent"></div>
   </div>
 
   <!-- Form Tambah/Edit User (Pengaturan) -->
@@ -1360,7 +1373,8 @@ function handleUserMenuClick(action) {
       <div class="profile-info-list">${infoRows}</div>
     `;
 
-    showModal("Profil Saya", kontenProfil);
+    document.getElementById("akunContent").innerHTML = '<div class="akun-card">' + kontenProfil + '</div>';
+    document.getElementById("akunPage").classList.add("open");
   } else if (action === "pengurus") {
     showModal("Susunan Pengurus", '<div style="text-align:center;color:#9CA3AF;font-size:13px;padding:10px 0;">Memuat data pengurus...</div>');
     callGAS("getPengurusList", [authToken])
@@ -1644,7 +1658,8 @@ function uploadFoto(input) {
   const reader = new FileReader();
   
   const labelUpload = document.getElementById("labelUploadFoto");
-  labelUpload.textContent = "Mengunggah..."; 
+  labelUpload.style.opacity = "0.4";
+  labelUpload.style.pointerEvents = "none";
   
   reader.onload = function(e) {
     const base64Data = e.target.result.split(',')[1];
@@ -1654,11 +1669,15 @@ function uploadFoto(input) {
       .then(function(res) {
         currentUser.fotoUrl = res.fotoUrl; 
         sessionStorage.setItem("yassa_user", JSON.stringify(currentUser));
-        closeModal();
-        showModal("Sukses", "Foto profil berhasil diperbarui! Silakan buka profil lagi untuk melihatnya.");
+        const avatarImg = document.querySelector("#akunContent .profile-avatar");
+        if (avatarImg) avatarImg.src = res.fotoUrl;
+        labelUpload.style.opacity = "1";
+        labelUpload.style.pointerEvents = "auto";
+        showModal("Sukses", "Foto profil berhasil diperbarui!");
       })
       .catch(function(err) {
-        closeModal();
+        labelUpload.style.opacity = "1";
+        labelUpload.style.pointerEvents = "auto";
         showModal("Gagal", "Gagal mengunggah foto: " + err.message);
       });
   };
@@ -1677,6 +1696,10 @@ function openApp(index) {
 document.getElementById("overlayClose").addEventListener("click", function () {
   document.getElementById("overlay").classList.remove("open");
   document.getElementById("overlayFrame").src = "about:blank";
+});
+
+document.getElementById("akunPageClose").addEventListener("click", function () {
+  document.getElementById("akunPage").classList.remove("open");
 });
 
 function showModal(title, message, isConfirm = false, onConfirm = null) {
