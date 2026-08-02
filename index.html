@@ -358,6 +358,19 @@
   .user-form-checkbox { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; color: #374151; }
   .user-form-actions { display: flex; gap: 10px; margin-top: 18px; }
   .user-form-actions button { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 13.5px; font-weight: 700; cursor: pointer; }
+
+  .force-pw-overlay {
+    position: absolute; inset: 0; z-index: 1000; display: none;
+    background: rgba(11,122,69,.92); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .force-pw-overlay.open { display: flex; }
+  .force-pw-sheet {
+    width: 100%; max-width: 380px; background: #fff; border-radius: 20px;
+    padding: 26px 22px; box-shadow: 0 20px 40px rgba(0,0,0,.25);
+  }
+  .force-pw-title { font-size: 17px; font-weight: 800; color: #111827; margin-bottom: 8px; }
+  .force-pw-desc { font-size: 13px; color: #6B7280; line-height: 1.5; margin-bottom: 18px; }
   .btn-form-cancel { background: #F3F4F6; color: #374151; }
   .btn-form-save { background: #0B7A45; color: #fff; }
   .user-form-danger-zone { margin-top: 18px; padding-top: 16px; border-top: 1px solid #F3F4F6; display: flex; gap: 10px; }
@@ -538,6 +551,28 @@
     </div>
   </div>
 
+  <!-- Wajib Ganti Password (muncul kalau login masih pakai password bawaan) -->
+  <div class="force-pw-overlay" id="forcePwOverlay">
+    <div class="force-pw-sheet">
+      <div class="force-pw-title">Ganti Password Dulu, Yuk</div>
+      <div class="force-pw-desc">Akun ini masih pakai password bawaan. Demi keamanan, wajib ganti password dulu sebelum lanjut pakai YASSA Hub.</div>
+      <div id="forcePwError" class="login-error" style="display:none;"></div>
+      <form id="forcePwForm" onsubmit="submitForceChangePassword(event)">
+        <div class="user-form-field">
+          <label class="user-form-label">Password Baru</label>
+          <input type="password" id="fpNewPassword" class="user-form-input" placeholder="Minimal 6 karakter" required autocomplete="new-password">
+        </div>
+        <div class="user-form-field">
+          <label class="user-form-label">Ulangi Password Baru</label>
+          <input type="password" id="fpConfirmPassword" class="user-form-input" placeholder="Ulangi password baru" required autocomplete="new-password">
+        </div>
+        <div class="user-form-actions">
+          <button type="submit" class="btn-form-save" id="fpSaveBtn" style="flex:1;">Simpan & Lanjutkan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Custom Modal Pengganti Alert/Confirm -->
   <div class="custom-modal-overlay" id="customModalOverlay">
     <div class="custom-modal">
@@ -680,6 +715,7 @@ const MENUS = {
 let active = "beranda";
 let currentUser = null;
 let authToken = null;
+let pendingOldPassword = null; // sementara nyimpen password lama, dipakai kalau mustChangePassword
 
 // =================================================================================
 // AUTH — LOGIN, SESSION, GOOGLE SIGN-IN
@@ -772,7 +808,10 @@ function handleLoginSubmit(event) {
   btn.textContent = "Memproses...";
 
   callGAS("login", [email, password])
-    .then(function (res) { onLoginSuccess(res); })
+    .then(function (res) {
+      pendingOldPassword = password; // dipakai kalau ternyata mustChangePassword
+      onLoginSuccess(res);
+    })
     .catch(function (err) { showLoginError(err.message); })
     .finally(function () {
       btn.disabled = false;
@@ -811,15 +850,67 @@ function onLoginSuccess(res) {
   authToken = res.token;
   currentUser = {
     email: res.email,
+    emailGoogle: res.emailGoogle || "",
     nama: res.nama,
     role: res.role,
     wilayahAkses: res.wilayahAkses,
     bolehPrint: res.bolehPrint,
+    fotoUrl: res.fotoUrl || "",
   };
   sessionStorage.setItem("yassa_token", authToken);
   sessionStorage.setItem("yassa_user", JSON.stringify(currentUser));
   document.getElementById("loginForm").reset();
   showApp();
+  if (res.mustChangePassword) {
+    openForceChangePasswordModal();
+  } else {
+    pendingOldPassword = null;
+  }
+}
+
+function openForceChangePasswordModal() {
+  document.getElementById("forcePwError").style.display = "none";
+  document.getElementById("forcePwForm").reset();
+  document.getElementById("forcePwOverlay").classList.add("open");
+}
+
+function submitForceChangePassword(event) {
+  event.preventDefault();
+  const errEl = document.getElementById("forcePwError");
+  errEl.style.display = "none";
+
+  const newPassword = document.getElementById("fpNewPassword").value;
+  const confirmPassword = document.getElementById("fpConfirmPassword").value;
+
+  if (newPassword.length < 6) {
+    errEl.textContent = "Password baru minimal 6 karakter.";
+    errEl.style.display = "block";
+    return;
+  }
+  if (newPassword !== confirmPassword) {
+    errEl.textContent = "Konfirmasi password gak cocok.";
+    errEl.style.display = "block";
+    return;
+  }
+
+  const btn = document.getElementById("fpSaveBtn");
+  btn.disabled = true;
+  btn.textContent = "Menyimpan...";
+
+  callGAS("changeOwnPassword", [authToken, pendingOldPassword, newPassword])
+    .then(function () {
+      pendingOldPassword = null;
+      document.getElementById("forcePwOverlay").classList.remove("open");
+      showModal("Sukses", "Password berhasil diganti. Ingat-ingat password barumu ya.");
+    })
+    .catch(function (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = "block";
+    })
+    .finally(function () {
+      btn.disabled = false;
+      btn.textContent = "Simpan & Lanjutkan";
+    });
 }
 
 function doLogout() {
