@@ -372,8 +372,8 @@
   .orgchart-nama-empty { color: var(--text-muted); font-style: italic; font-weight: 500; }
 
   /* Bagan pohon (garis bercabang) buat Susunan Pengurus */
-  .orgtree-wrap { overflow-x: auto; overflow-y: hidden; padding: 4px 4px 8px; display: flex; justify-content: center; }
-  .orgtree { display: flex; justify-content: center; min-width: max-content; transform-origin: top center; }
+  .orgtree-wrap { overflow: hidden; padding: 4px 4px 8px; display: flex; justify-content: center; position: relative; touch-action: none; -webkit-user-select: none; user-select: none; }
+  .orgtree { display: flex; justify-content: center; min-width: max-content; transform-origin: top center; will-change: transform; }
   .orgtree ul { display: flex; margin: 0; padding: 10px 0 0; position: relative; }
   .orgtree li { display: flex; flex-direction: column; align-items: center; list-style-type: none; position: relative; padding: 10px 4px 0 4px; margin: 0; }
   .orgtree li::before, .orgtree li::after {
@@ -458,6 +458,35 @@
     display: flex; align-items: center; justify-content: center;
     background: var(--bg-navy-deep);
   }
+
+  /* Splash / loading awal pas aplikasi dibuka (bersihin cache + refresh data) */
+  .app-splash {
+    position: fixed; inset: 0; z-index: 9999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+    background: var(--bg-navy-deep);
+    transition: opacity 0.35s ease;
+  }
+  .app-splash.hide { opacity: 0; pointer-events: none; }
+  .app-splash-logo { width: 84px; height: 84px; }
+  .app-splash-spinner {
+    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+    border: 3px solid rgba(34,211,238,0.2); border-top-color: var(--neon-cyan);
+    animation: appSplashSpin 0.8s linear infinite;
+  }
+  @keyframes appSplashSpin { to { transform: rotate(360deg); } }
+  .app-splash-status { font-size: 13px; color: var(--text-muted); font-weight: 600; letter-spacing: 0.2px; }
+
+  /* Status "sedang masuk" pas proses login Google */
+  .google-login-status {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-top: 12px; font-size: 12.5px; font-weight: 600; color: var(--text-muted);
+  }
+  .google-login-status-spinner {
+    width: 15px; height: 15px; border-radius: 50%; flex-shrink: 0;
+    border: 2px solid rgba(34,211,238,0.25); border-top-color: var(--neon-cyan);
+    animation: appSplashSpin 0.7s linear infinite; display: inline-block;
+  }
+  .google-btn-wrap.is-loading { opacity: 0.5; pointer-events: none; }
 
   .login-card {
     width: 100%; max-width: 400px;
@@ -725,6 +754,23 @@
 </head>
 <body>
 
+<!-- ============ SPLASH / LOADING AWAL ============ -->
+<div id="appSplash" class="app-splash">
+  <svg viewBox="0 0 100 100" class="app-splash-logo" aria-label="YASSA Logo">
+    <circle cx="28" cy="38" r="6" fill="#4ca746"/>
+    <path d="M13 56 a 15 15 0 0 1 30 0" fill="none" stroke="#4ca746" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="72" cy="38" r="6" fill="#4ca746"/>
+    <path d="M57 56 a 15 15 0 0 1 30 0" fill="none" stroke="#4ca746" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="50" cy="28" r="7.5" fill="#4ca746"/>
+    <path d="M30 53 a 20 20 0 0 1 40 0" fill="none" stroke="#4ca746" stroke-width="6.5" stroke-linecap="round"/>
+    <text x="50" y="76" font-family="'Inter', sans-serif" font-weight="900" font-size="24" text-anchor="middle" letter-spacing="-0.5">
+      <tspan fill="#ffffff">YAS</tspan><tspan fill="#4ca746">SA</tspan>
+    </text>
+  </svg>
+  <div class="app-splash-spinner"></div>
+  <div class="app-splash-status" id="appSplashStatus">Menyiapkan aplikasi...</div>
+</div>
+
 <!-- ============ LAYAR LOGIN ============ -->
 <div id="loginScreen" class="login-screen">
   <div class="login-card">
@@ -797,6 +843,10 @@
       <div class="login-divider"><span>atau Login Otomatis</span></div>
 
       <div id="googleSignInBtn" class="google-btn-wrap"></div>
+      <div id="googleLoginStatus" class="google-login-status" style="display:none;">
+        <span class="google-login-status-spinner"></span>
+        <span>Sedang masuk dengan Google...</span>
+      </div>
 
       <!-- Additional footer icons mirroring the reference design -->
       <div class="login-footer-icons">
@@ -1176,26 +1226,30 @@ function togglePasswordVisibility(inputId, btn) {
 }
 
 function initAuth() {
-  const savedToken = sessionStorage.getItem("yassa_token");
-  const savedUser = sessionStorage.getItem("yassa_user");
-  if (!savedToken || !savedUser) {
-    showLoginScreen();
-    return;
-  }
-  authToken = savedToken;
-  currentUser = JSON.parse(savedUser);
-
-  callGAS("checkSession", [authToken])
-    .then(function (session) {
-      currentUser = session;
-      sessionStorage.setItem("yassa_user", JSON.stringify(currentUser));
-      showApp();
-    })
-    .catch(function () {
-      sessionStorage.removeItem("yassa_token");
-      sessionStorage.removeItem("yassa_user");
+  return new Promise(function (resolve) {
+    const savedToken = sessionStorage.getItem("yassa_token");
+    const savedUser = sessionStorage.getItem("yassa_user");
+    if (!savedToken || !savedUser) {
       showLoginScreen();
-    });
+      resolve();
+      return;
+    }
+    authToken = savedToken;
+    currentUser = JSON.parse(savedUser);
+
+    callGAS("checkSession", [authToken])
+      .then(function (session) {
+        currentUser = session;
+        sessionStorage.setItem("yassa_user", JSON.stringify(currentUser));
+        showApp();
+      })
+      .catch(function () {
+        sessionStorage.removeItem("yassa_token");
+        sessionStorage.removeItem("yassa_user");
+        showLoginScreen();
+      })
+      .finally(function () { resolve(); });
+  });
 }
 
 function showLoginScreen() {
@@ -1279,11 +1333,22 @@ function initGoogleSignIn() {
   });
 }
 
+function setGoogleLoginLoading(isLoading) {
+  const statusEl = document.getElementById("googleLoginStatus");
+  const btnWrap = document.getElementById("googleSignInBtn");
+  const submitBtn = document.getElementById("loginSubmitBtn");
+  if (statusEl) statusEl.style.display = isLoading ? "flex" : "none";
+  if (btnWrap) btnWrap.classList.toggle("is-loading", isLoading);
+  if (submitBtn) submitBtn.disabled = isLoading;
+}
+
 function handleGoogleCredential(response) {
   document.getElementById("loginError").style.display = "none";
+  setGoogleLoginLoading(true);
   callGAS("loginGoogle", [response.credential])
     .then(function (res) { onLoginSuccess(res); })
-    .catch(function (err) { showLoginError(err.message); });
+    .catch(function (err) { showLoginError(err.message); })
+    .finally(function () { setGoogleLoginLoading(false); });
 }
 
 function onLoginSuccess(res) {
@@ -1625,7 +1690,11 @@ function renderOrgNode(node, list) {
 
 // Nyusut-in bagan pengurus otomatis (transform: scale) biar seluruh
 // bagan, sepanjang apa pun jumlah tier/orangnya, tetep muat dalam satu
-// layar tanpa perlu di-scroll ke bawah.
+// layar tanpa perlu di-scroll ke bawah. Setelah itu bagan bisa
+// di-cubit (pinch) buat diperbesar/dikecilin, digeser pas lagi zoom,
+// dan diketuk 2x buat toggle zoom in/reset.
+let orgChartZoomState = null;
+
 function fitOrgChartToScreen() {
   requestAnimationFrame(function () {
     const wrap = document.querySelector("#akunContent .orgtree-wrap");
@@ -1636,19 +1705,145 @@ function fitOrgChartToScreen() {
     tree.style.transform = "none";
     wrap.style.height = "auto";
 
-    const availableH = container.clientHeight - 16; // sisa padding vertikal
+    const containerRect = container.getBoundingClientRect();
+    const wrapRect = wrap.getBoundingClientRect();
+    const availableH = containerRect.bottom - wrapRect.top - 8; // sisa ruang vertikal di bawah teks hint
     const availableW = container.clientWidth - 16;
     const treeH = tree.scrollHeight;
     const treeW = tree.scrollWidth;
     if (treeH <= 0 || treeW <= 0) return;
 
-    const scale = Math.min(1, availableH / treeH, availableW / treeW);
-    if (scale < 1) {
-      tree.style.transform = "scale(" + scale.toFixed(3) + ")";
-      wrap.style.height = (treeH * scale) + "px";
-    }
+    const baseScale = Math.min(1, availableH / treeH, availableW / treeW);
+
+    wrap.style.height = availableH + "px";
+    orgChartZoomState = {
+      scale: baseScale,
+      baseScale: baseScale,
+      minScale: baseScale,
+      maxScale: Math.max(baseScale * 3.5, 1),
+      tx: 0,
+      ty: 0
+    };
+    applyOrgChartTransform();
+    initOrgChartZoomGestures(wrap, tree);
   });
 }
+
+function applyOrgChartTransform() {
+  const tree = document.querySelector("#akunContent .orgtree");
+  if (!tree || !orgChartZoomState) return;
+  tree.style.transform = "translate(" + orgChartZoomState.tx + "px," + orgChartZoomState.ty + "px) scale(" + orgChartZoomState.scale + ")";
+}
+
+function clampOrgChartPan(wrap, tree) {
+  if (!orgChartZoomState) return;
+  const s = orgChartZoomState.scale;
+  const wrapW = wrap.clientWidth, wrapH = wrap.clientHeight;
+  const halfExtraW = Math.max(0, (tree.offsetWidth * s - wrapW) / 2);
+  const halfExtraH = Math.max(0, (tree.offsetHeight * s - wrapH) / 2);
+  orgChartZoomState.tx = Math.min(halfExtraW, Math.max(-halfExtraW, orgChartZoomState.tx));
+  orgChartZoomState.ty = Math.min(halfExtraH, Math.max(-halfExtraH, orgChartZoomState.ty));
+}
+
+function initOrgChartZoomGestures(wrap, tree) {
+  if (wrap.dataset.zoomInit) return; // elemen ini udah punya listener, jangan dobel
+  wrap.dataset.zoomInit = "1";
+
+  const pointers = new Map();
+  let lastDist = 0;
+  let lastMid = null;
+  let lastPanPoint = null;
+  let lastTapTime = 0;
+  let movedWhileDown = false;
+
+  wrap.addEventListener("pointerdown", function (e) {
+    wrap.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    movedWhileDown = false;
+    if (pointers.size === 1) {
+      lastPanPoint = { x: e.clientX, y: e.clientY };
+    } else if (pointers.size === 2) {
+      const pts = Array.from(pointers.values());
+      lastDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      lastMid = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+    }
+  });
+
+  wrap.addEventListener("pointermove", function (e) {
+    if (!pointers.has(e.pointerId) || !orgChartZoomState) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    movedWhileDown = true;
+
+    if (pointers.size === 2) {
+      const pts = Array.from(pointers.values());
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      const mid = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+      if (lastDist > 0) {
+        const factor = dist / lastDist;
+        orgChartZoomState.scale = Math.min(orgChartZoomState.maxScale, Math.max(orgChartZoomState.minScale, orgChartZoomState.scale * factor));
+        orgChartZoomState.tx += (mid.x - lastMid.x);
+        orgChartZoomState.ty += (mid.y - lastMid.y);
+        clampOrgChartPan(wrap, tree);
+        applyOrgChartTransform();
+      }
+      lastDist = dist;
+      lastMid = mid;
+    } else if (pointers.size === 1 && lastPanPoint && orgChartZoomState.scale > orgChartZoomState.baseScale + 0.001) {
+      const dx = e.clientX - lastPanPoint.x;
+      const dy = e.clientY - lastPanPoint.y;
+      orgChartZoomState.tx += dx;
+      orgChartZoomState.ty += dy;
+      lastPanPoint = { x: e.clientX, y: e.clientY };
+      clampOrgChartPan(wrap, tree);
+      applyOrgChartTransform();
+    }
+  });
+
+  function endPointer(e) {
+    const wasSingleTap = pointers.size === 1 && !movedWhileDown;
+    pointers.delete(e.pointerId);
+    lastDist = 0;
+    lastMid = null;
+    if (pointers.size === 1) {
+      const remaining = Array.from(pointers.values())[0];
+      lastPanPoint = { x: remaining.x, y: remaining.y };
+    } else {
+      lastPanPoint = null;
+    }
+
+    if (wasSingleTap && pointers.size === 0) {
+      const now = Date.now();
+      if (now - lastTapTime < 300) {
+        toggleOrgChartZoom();
+        lastTapTime = 0;
+      } else {
+        lastTapTime = now;
+      }
+    }
+  }
+
+  wrap.addEventListener("pointerup", endPointer);
+  wrap.addEventListener("pointercancel", endPointer);
+}
+
+function toggleOrgChartZoom() {
+  if (!orgChartZoomState) return;
+  const wrap = document.querySelector("#akunContent .orgtree-wrap");
+  const tree = document.querySelector("#akunContent .orgtree");
+  if (!wrap || !tree) return;
+  tree.style.transition = "transform 0.18s ease-out";
+  if (orgChartZoomState.scale <= orgChartZoomState.baseScale + 0.001) {
+    orgChartZoomState.scale = Math.min(orgChartZoomState.maxScale, orgChartZoomState.baseScale * 2.2);
+  } else {
+    orgChartZoomState.scale = orgChartZoomState.baseScale;
+    orgChartZoomState.tx = 0;
+    orgChartZoomState.ty = 0;
+  }
+  clampOrgChartPan(wrap, tree);
+  applyOrgChartTransform();
+  setTimeout(function () { tree.style.transition = ""; }, 200);
+}
+
 window.addEventListener("resize", function () {
   if (document.getElementById("akunPage").classList.contains("open") &&
       document.querySelector("#akunContent .orgtree-wrap")) {
@@ -1657,27 +1852,10 @@ window.addEventListener("resize", function () {
 });
 
 function buildOrgChartHtml(list) {
-  const matchedAliases = {};
-  (function collect(node) {
-    node.aliases.forEach(function (a) { matchedAliases[a] = true; });
-    (node.children || []).forEach(collect);
-  })(ORG_CHART_TREE);
-
-  const lainnya = list.filter(function (u) {
-    return matchedAliases[normalizeJabatan(u.jabatan)] !== true;
-  });
-
-  let html = '<div class="orgtree-wrap"><div class="orgtree"><ul>' +
+  let html = '<div style="text-align:center;font-size:10.5px;color:var(--text-muted);margin-bottom:4px;">Cubit atau ketuk 2x buat memperbesar/mengecilkan</div>' +
+    '<div class="orgtree-wrap"><div class="orgtree"><ul>' +
     renderOrgNode(ORG_CHART_TREE, list) +
     '</ul></div></div>';
-
-  if (lainnya.length) {
-    html += '<div style="font-size:12px;font-weight:700;color:#94A3B8;margin:14px 0 8px;text-align:center;">Lainnya</div>';
-    html += '<div class="orgchart-tier">' + lainnya.map(function (u) {
-      const jabatanText = u.jabatan ? escapeHtmlHub(u.jabatan) : roleLabel(u.role);
-      return orgCardHtml(jabatanText, u);
-    }).join("") + '</div>';
-  }
 
   return '<div style="height:100%; overflow:auto; padding-bottom:100px;">' + html + '</div>';
 }
@@ -1874,6 +2052,7 @@ document.getElementById("overlayClose").addEventListener("click", function () {
 
 document.getElementById("akunPageClose").addEventListener("click", function () {
   document.getElementById("akunPage").classList.remove("open");
+  orgChartZoomState = null;
 });
 
 function showModal(title, message, isConfirm = false, onConfirm = null) {
@@ -1915,15 +2094,59 @@ function closeModal() {
   document.getElementById('customModalOverlay').classList.remove('open');
 }
 
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", function () {
-    navigator.serviceWorker.register("sw.js").catch(function (err) {
-      console.warn("Gagal daftar service worker:", err);
-    });
+function setSplashStatus(msg) {
+  const el = document.getElementById("appSplashStatus");
+  if (el) el.textContent = msg;
+}
+
+function hideSplash() {
+  const el = document.getElementById("appSplash");
+  if (!el) return;
+  el.classList.add("hide");
+  setTimeout(function () { el.remove(); }, 400);
+}
+
+// Beneran bersihin Cache Storage lama & minta service worker cek versi
+// terbaru (bukan cuma kosmetik) — ini yang jalan di balik layar pas
+// splash "Membersihkan cache..." muncul.
+function cleanupCacheAndUpdate() {
+  const tasks = [];
+
+  if ("caches" in window) {
+    tasks.push(
+      caches.keys()
+        .then(function (keys) { return Promise.all(keys.map(function (k) { return caches.delete(k); })); })
+        .catch(function () {})
+    );
+  }
+
+  if ("serviceWorker" in navigator) {
+    tasks.push(
+      navigator.serviceWorker.register("sw.js")
+        .then(function (reg) { return reg.update ? reg.update().catch(function () {}) : null; })
+        .catch(function (err) { console.warn("Gagal daftar service worker:", err); })
+    );
+  }
+
+  return Promise.all(tasks).then(function () {
+    // Jeda dikit biar transisi status kerasa, bukan cuma kedip sekilas
+    return new Promise(function (resolve) { setTimeout(resolve, 350); });
   });
 }
 
-initAuth();
+function bootApp() {
+  setSplashStatus("Membersihkan cache...");
+  cleanupCacheAndUpdate()
+    .then(function () {
+      setSplashStatus("Memperbarui data...");
+      return initAuth();
+    })
+    .then(function () {
+      hideSplash();
+    });
+}
+
+bootApp();
 </script>
 </body>
 </html>
