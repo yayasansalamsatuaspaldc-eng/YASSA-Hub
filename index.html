@@ -353,32 +353,32 @@
   .role-KORWIL { background: rgba(168,85,247,0.15); color: #D8B4FE; border-color: rgba(168,85,247,0.35); }
   .role-WAKORWIL { background: rgba(34,211,238,0.15); color: #67E8F9; border-color: rgba(34,211,238,0.35); }
 
-  /* Bagan Susunan Pengurus */
-  .orgchart-tier { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; padding: 10px 0; }
+  /* Bagan Susunan Pengurus (versi ringkas biar muat 1 layar) */
+  .orgchart-tier { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 6px 0; }
   .orgchart-card { 
     display: flex; flex-direction: column; align-items: center; 
-    width: 95px; /* Sedikit diperlebar agar teks muat */
+    width: 64px;
     background: rgba(255, 255, 255, 0.03); /* Latar belakang kaca */
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    padding: 12px 6px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    border-radius: 10px;
+    padding: 5px 3px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     transition: transform 0.2s;
   }
-  .orgchart-photo { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; border: 2px solid var(--neon-cyan); background: rgba(255,255,255,0.05); box-shadow: 0 0 14px rgba(34,211,238,0.4); }
-  .orgchart-jabatan { background: var(--grad-primary); color: #fff; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 10px; margin-top: 8px; text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
-  .orgchart-nama { font-size: 11px; font-weight: 600; color: var(--text-primary); margin-top: 6px; text-align: center; line-height: 1.3; word-break: break-word; }
+  .orgchart-photo { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--neon-cyan); background: rgba(255,255,255,0.05); box-shadow: 0 0 8px rgba(34,211,238,0.4); }
+  .orgchart-jabatan { background: var(--grad-primary); color: #fff; font-size: 7px; font-weight: 700; padding: 2px 4px; border-radius: 7px; margin-top: 4px; text-align: center; max-width: 100%; line-height: 1.15; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+  .orgchart-nama { font-size: 8px; font-weight: 600; color: var(--text-primary); margin-top: 3px; text-align: center; line-height: 1.15; word-break: break-word; max-width: 100%; }
   .orgchart-jabatan-empty { background: rgba(255,255,255,0.08) !important; color: var(--text-muted) !important; box-shadow: none; }
   .orgchart-nama-empty { color: var(--text-muted); font-style: italic; font-weight: 500; }
 
   /* Bagan pohon (garis bercabang) buat Susunan Pengurus */
-  .orgtree-wrap { overflow-x: auto; padding: 10px 4px 20px; }
-  .orgtree { display: flex; justify-content: center; min-width: max-content; }
-  .orgtree ul { display: flex; margin: 0; padding: 24px 0 0; position: relative; }
-  .orgtree li { display: flex; flex-direction: column; align-items: center; list-style-type: none; position: relative; padding: 24px 10px 0 10px; margin: 0; }
+  .orgtree-wrap { overflow-x: auto; overflow-y: hidden; padding: 4px 4px 8px; display: flex; justify-content: center; }
+  .orgtree { display: flex; justify-content: center; min-width: max-content; transform-origin: top center; }
+  .orgtree ul { display: flex; margin: 0; padding: 10px 0 0; position: relative; }
+  .orgtree li { display: flex; flex-direction: column; align-items: center; list-style-type: none; position: relative; padding: 10px 4px 0 4px; margin: 0; }
   .orgtree li::before, .orgtree li::after {
     content: ''; position: absolute; top: 0; right: 50%;
-    border-top: 2px solid rgba(34,211,238,0.75); width: 50%; height: 24px;
+    border-top: 2px solid rgba(34,211,238,0.75); width: 50%; height: 10px;
   }
   .orgtree li::after { right: auto; left: 50%; border-left: 2px solid rgba(34,211,238,0.75); }
   .orgtree li:only-child::after, .orgtree li:only-child::before { display: none; }
@@ -388,9 +388,9 @@
   .orgtree li:first-child::after { border-radius: 8px 0 0 0; }
   .orgtree ul ul::before {
     content: ''; position: absolute; top: 0; left: 50%;
-    border-left: 2px solid rgba(34,211,238,0.75); width: 0; height: 24px;
+    border-left: 2px solid rgba(34,211,238,0.75); width: 0; height: 10px;
   }
-  .orgtree-members { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .orgtree-members { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
 
   /* Kartu Profil Saya (gaya "Akun" Gojek Driver) */
   .profile-card-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
@@ -1524,6 +1524,7 @@ function handleUserMenuClick(action) {
               return;
             }
             document.getElementById("akunContent").innerHTML = buildOrgChartHtml(list);
+            fitOrgChartToScreen();
           })
           .catch(function (err) {
             document.getElementById("akunContent").innerHTML = '<div style="text-align:center;color:#F87171;font-size:13px;padding:20px 0;">Gagal memuat: ' + escapeHtmlHub(err.message) + '</div>';
@@ -1621,6 +1622,39 @@ function renderOrgNode(node, list) {
   html += '</li>';
   return html;
 }
+
+// Nyusut-in bagan pengurus otomatis (transform: scale) biar seluruh
+// bagan, sepanjang apa pun jumlah tier/orangnya, tetep muat dalam satu
+// layar tanpa perlu di-scroll ke bawah.
+function fitOrgChartToScreen() {
+  requestAnimationFrame(function () {
+    const wrap = document.querySelector("#akunContent .orgtree-wrap");
+    const tree = document.querySelector("#akunContent .orgtree");
+    const container = document.getElementById("akunContent");
+    if (!wrap || !tree || !container) return;
+
+    tree.style.transform = "none";
+    wrap.style.height = "auto";
+
+    const availableH = container.clientHeight - 16; // sisa padding vertikal
+    const availableW = container.clientWidth - 16;
+    const treeH = tree.scrollHeight;
+    const treeW = tree.scrollWidth;
+    if (treeH <= 0 || treeW <= 0) return;
+
+    const scale = Math.min(1, availableH / treeH, availableW / treeW);
+    if (scale < 1) {
+      tree.style.transform = "scale(" + scale.toFixed(3) + ")";
+      wrap.style.height = (treeH * scale) + "px";
+    }
+  });
+}
+window.addEventListener("resize", function () {
+  if (document.getElementById("akunPage").classList.contains("open") &&
+      document.querySelector("#akunContent .orgtree-wrap")) {
+    fitOrgChartToScreen();
+  }
+});
 
 function buildOrgChartHtml(list) {
   const matchedAliases = {};
