@@ -831,7 +831,7 @@
           <div class="login-field-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           </div>
-          <input type="tel" id="loginEmail" class="login-input" placeholder="No. HP (Awali 628)" required autocomplete="tel">
+          <input type="tel" id="loginEmail" class="login-input" placeholder="Username (628xxxxxxxxx)" required autocomplete="tel">
         </div>
         
         <div class="login-field">
@@ -992,9 +992,9 @@
           <div class="user-form-hint">Cuma buat data organisasi/tampilan, gak ngaruh ke hak akses (itu diatur lewat Role).</div>
         </div>
         <div class="user-form-field">
-          <label class="user-form-label">No. HP (Awali 628)</label>
+          <label class="user-form-label">Username</label>
           <input type="tel" id="ufEmail" class="user-form-input" placeholder="628xxxxxxxxx">
-          <div class="user-form-hint">Buat login manual (No. HP + Password). Boleh kosong kalau user cuma pakai Login Otomatis.</div>
+          <div class="user-form-hint">Wajib diawali 628 — dipakai juga sebagai nomor WA buat kirim pesan. Buat login manual (Username + Password). Boleh kosong kalau user cuma pakai Login Otomatis.</div>
         </div>
         <div class="user-form-field" id="ufPasswordField">
           <label class="user-form-label">Password Awal</label>
@@ -1003,7 +1003,7 @@
         <div class="user-form-field">
           <label class="user-form-label">Email Google</label>
           <input type="email" id="ufEmailGoogle" class="user-form-input" placeholder="nama@yayasansalamsatuaspal.com">
-          <div class="user-form-hint">Buat tombol Login Otomatis (Google). Boleh kosong kalau user cuma pakai No. HP.</div>
+          <div class="user-form-hint">Buat tombol Login Otomatis (Google). Boleh kosong kalau user cuma pakai Username.</div>
         </div>
         <div class="user-form-field">
           <label class="user-form-label">Role</label>
@@ -1304,8 +1304,12 @@ function handleLoginSubmit(event) {
   const password = document.getElementById("loginPassword").value;
   const btn = document.getElementById("loginSubmitBtn");
   
+  if (!email) {
+    showLoginError("Username wajib diisi.");
+    return;
+  }
   if (!email.startsWith("628")) {
-    showLoginError("Nomor HP harus diawali dengan awalan 628 (contoh: 62812345678)");
+    showLoginError("Username harus diawali dengan 628 (dipakai juga sebagai nomor WA, contoh: 62812345678)");
     return;
   }
 
@@ -1999,7 +2003,7 @@ function openUserForm(indexOrNull) {
   document.getElementById("ufEmail").disabled = isEdit; 
   document.getElementById("ufEmailGoogle").value = isEdit ? (user.emailGoogle || "") : "";
   document.getElementById("ufEmailGoogle").disabled = isEdit; 
-  document.getElementById("ufPassword").placeholder = isEdit ? "Kosongkan kalau gak diubah" : "Minimal 6 karakter (kalau isi No. HP)";
+  document.getElementById("ufPassword").placeholder = isEdit ? "Kosongkan kalau gak diubah" : "Minimal 6 karakter (kalau isi Username)";
   document.getElementById("ufPassword").required = false;
   document.getElementById("ufRole").value = isEdit ? user.role : "PENGURUS";
   document.getElementById("ufWilayah").value = isEdit ? user.wilayahAkses : "ALL";
@@ -2035,7 +2039,12 @@ function submitUserForm(event) {
   };
 
   if (!editingEmail && !data.email && !data.emailGoogle) {
-    showModal("Gagal", "Isi minimal salah satu: No. HP atau Email Google.");
+    showModal("Gagal", "Isi minimal salah satu: Username atau Email Google.");
+    return;
+  }
+
+  if (data.email && !data.email.startsWith("628")) {
+    showModal("Gagal", "Username harus diawali dengan 628 (dipakai juga sebagai nomor WA, contoh: 62812345678).");
     return;
   }
 
