@@ -1492,40 +1492,44 @@ function handleUserMenuClick(action) {
     }
 
     const kontenProfil = `
-      <div class="profile-card-head">
-        <div class="profile-avatar-wrap">
-          <img class="profile-avatar" src="${fotoProfil}" alt="Foto Profil">
-          <label class="profile-avatar-edit" for="inputFotoProfile" id="labelUploadFoto">
-            ${iconSvg("edit", "#fff", 12)}
-          </label>
-          <input type="file" id="inputFotoProfile" accept="image/*" style="display: none;" onchange="uploadFoto(this)">
-        </div>
-        <div>
-          <div class="profile-name">${escapeHtmlHub(currentUser.nama)}</div>
-          <span class="profile-badge">${iconSvg("award", "#92400E", 13)} ${escapeHtmlHub(badgeLabel)}</span>
-        </div>
-      </div>
-      <div class="profile-divider"></div>
-      <div class="profile-info-list">${infoRows}</div>
-    `;
+          <div class="profile-card-head">
+            <div class="profile-avatar-wrap">
+              <img class="profile-avatar" src="${fotoProfil}" alt="Foto Profil">
+              <label class="profile-avatar-edit" for="inputFotoProfile" id="labelUploadFoto">
+                ${iconSvg("edit", "#fff", 12)}
+              </label>
+              <input type="file" id="inputFotoProfile" accept="image/*" style="display: none;" onchange="uploadFoto(this)">
+            </div>
+            <div>
+              <div class="profile-name">${escapeHtmlHub(currentUser.nama)}</div>
+              <span class="profile-badge">${iconSvg("award", "#92400E", 13)} ${escapeHtmlHub(badgeLabel)}</span>
+            </div>
+          </div>
+          <div class="profile-divider"></div>
+          <div class="profile-info-list">${infoRows}</div>
+        `;
 
-    document.getElementById("akunContent").innerHTML = '<div class="akun-card">' + kontenProfil + '</div>';
-    document.getElementById("akunPage").classList.add("open");
-  } else if (action === "pengurus") {
-    showModal("Susunan Pengurus", '<div style="text-align:center;color:#94A3B8;font-size:13px;padding:10px 0;">Memuat data pengurus...</div>');
-    callGAS("getPengurusList", [authToken])
-      .then(function (list) {
-        if (!list.length) {
-          showModal("Susunan Pengurus", '<div style="text-align:center;color:#94A3B8;font-size:13px;padding:10px 0;">Belum ada data pengurus.</div>');
-          return;
-        }
-        showModal("Susunan Pengurus", buildOrgChartHtml(list));
-      })
-      .catch(function (err) {
-        showModal("Gagal Memuat", escapeHtmlHub(err.message));
-      });
-  } else if (action === "pengaturan") {
-    setActive("pengaturan");
+        document.querySelector('#akunPage .overlay-title').textContent = "Profil Saya";
+        document.getElementById("akunContent").innerHTML = '<div class="akun-card">' + kontenProfil + '</div>';
+        document.getElementById("akunPage").classList.add("open");
+      } else if (action === "pengurus") {
+        document.querySelector('#akunPage .overlay-title').textContent = "Susunan Pengurus";
+        document.getElementById("akunContent").innerHTML = '<div style="text-align:center;color:#94A3B8;font-size:13px;padding:20px 0;">Memuat data pengurus...</div>';
+        document.getElementById("akunPage").classList.add("open");
+
+        callGAS("getPengurusList", [authToken])
+          .then(function (list) {
+            if (!list.length) {
+              document.getElementById("akunContent").innerHTML = '<div style="text-align:center;color:#94A3B8;font-size:13px;padding:20px 0;">Belum ada data pengurus.</div>';
+              return;
+            }
+            document.getElementById("akunContent").innerHTML = buildOrgChartHtml(list);
+          })
+          .catch(function (err) {
+            document.getElementById("akunContent").innerHTML = '<div style="text-align:center;color:#F87171;font-size:13px;padding:20px 0;">Gagal memuat: ' + escapeHtmlHub(err.message) + '</div>';
+          });
+      } else if (action === "pengaturan") {
+        setActive("pengaturan");
   } else if (action === "logout") {
     showModal("Logout", "Yakin ingin keluar dari YASSA Hub?", true, function() {
       doLogout();
@@ -1544,32 +1548,32 @@ let editingEmail = null;
 // besar-kecil huruf/spasi/tanda kurung, jadi isi kolom Jabatan di form
 // User cukup salah satu dari alias di bawah.
 const ORG_CHART_TREE = {
-  aliases: ["pembina"], label: "Pembina",
+  aliases: ["pembina", "dewan pembina"], label: "Pembina",
   children: [
     { aliases: ["dewan pengawas", "pengawas"], label: "Dewan Pengawas", children: [] },
     {
-      aliases: ["ketua", "pengurus ketua", "pengurus", "ketua umum"], label: "Pengurus (Ketua)",
+      aliases: ["ketua", "pengurus ketua", "pengurus", "ketua umum", "wakil ketua"], label: "Pengurus (Ketua)",
       children: [
         {
-          aliases: ["sekretaris"], label: "Sekretaris",
+          aliases: ["sekretaris", "sekretaris 1", "sekretaris umum"], label: "Sekretaris",
           children: [
             {
-              aliases: ["pendidikan"], label: "Pendidikan",
+              aliases: ["pendidikan", "divisi pendidikan"], label: "Pendidikan",
               children: [
-                { aliases: ["sosial"], label: "Sosial", children: [] }
+                { aliases: ["sosial", "divisi sosial"], label: "Sosial", children: [] }
               ]
             },
-            { aliases: ["lingkungan hidup", "lingkungan"], label: "Lingkungan Hidup", children: [] },
-            { aliases: ["fundraising", "penggalangan dana"], label: "Fundraising", children: [] }
+            { aliases: ["lingkungan hidup", "lingkungan", "divisi lingkungan"], label: "Lingkungan Hidup", children: [] },
+            { aliases: ["fundraising", "penggalangan dana", "divisi fundraising"], label: "Fundraising", children: [] }
           ]
         },
         {
-          aliases: ["bendahara"], label: "Bendahara",
+          aliases: ["bendahara", "bendahara 1", "bendahara umum"], label: "Bendahara",
           children: [
             {
-              aliases: ["ekonomi"], label: "Ekonomi",
+              aliases: ["ekonomi", "divisi ekonomi"], label: "Ekonomi",
               children: [
-                { aliases: ["kesehatan"], label: "Kesehatan", children: [] }
+                { aliases: ["kesehatan", "divisi kesehatan"], label: "Kesehatan", children: [] }
               ]
             }
           ]
