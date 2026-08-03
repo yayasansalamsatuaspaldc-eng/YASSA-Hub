@@ -1548,9 +1548,11 @@ let editingEmail = null;
 // besar-kecil huruf/spasi/tanda kurung, jadi isi kolom Jabatan di form
 // User cukup salah satu dari alias di bawah.
 const ORG_CHART_TREE = {
-  aliases: ["pembina", "dewan pembina"], label: "Pembina",
+  aliases: ["pembina", "dewan pembina", "pembina yayasan", "pendiri yayasan", "anggota pembina"], label: "Pembina",
   children: [
-    { aliases: ["dewan pengawas", "pengawas"], label: "Dewan Pengawas", children: [] },
+    { aliases: ["dewan pengawas", "pengawas", "ketua pengawas", "anggota pengawas", "anggota pengawas/humas", "anggota pengawas/media"], label: "Dewan Pengawas", children: [] },
+    {
+      aliases: ["ketua", "pengurus ketua", "pengurus", "ketua umum", "wakil ketua"], label: "Pengurus (Ketua)",
     {
       aliases: ["ketua", "pengurus ketua", "pengurus", "ketua umum", "wakil ketua"], label: "Pengurus (Ketua)",
       children: [
