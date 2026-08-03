@@ -1644,9 +1644,8 @@ function buildOrgChartHtml(list) {
     }).join("") + '</div>';
   }
 
-  return '<div style="max-height:60vh;overflow-y:auto;">' + html + '</div>';
+  return '<div style="height:100%; overflow:auto; padding-bottom:100px;">' + html + '</div>';
 }
-
 function renderPengaturanPanel(el) {
   el.innerHTML =
     '<div class="section-title">Pengaturan</div>' +
