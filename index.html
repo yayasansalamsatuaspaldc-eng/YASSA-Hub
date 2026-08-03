@@ -2119,7 +2119,13 @@ function uploadFoto(input) {
 function openApp(index) {
   const menu = MENUS[active];
   const item = menu.items[index];
-  const resolvedUrl = item.url || (menu.baseUrl + "?embed=1&tab=" + item.tab);
+  let resolvedUrl = item.url || (menu.baseUrl + "?embed=1&tab=" + item.tab);
+  // Oper token sesi Hub ke app yang dibuka, biar dia bisa auto-login
+  // (SSO) tanpa nyuruh user login manual lagi di dalam app tersebut.
+  if (authToken) {
+    const sep = resolvedUrl.indexOf("?") === -1 ? "?" : "&";
+    resolvedUrl += sep + "hubToken=" + encodeURIComponent(authToken);
+  }
   document.getElementById("overlayTitle").textContent = item.label;
   document.getElementById("overlayFrame").src = resolvedUrl;
   document.getElementById("overlay").classList.add("open");
