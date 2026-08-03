@@ -374,6 +374,17 @@
   /* Bagan pohon (garis bercabang) buat Susunan Pengurus */
   .orgtree-wrap { overflow: hidden; padding: 4px 4px 8px; display: flex; justify-content: center; position: relative; touch-action: none; -webkit-user-select: none; user-select: none; }
   .orgtree { display: flex; justify-content: center; min-width: max-content; transform-origin: top center; will-change: transform; }
+  .orgtree-inner { display: flex; flex-direction: column; align-items: center; }
+  .orgchart-footer { display: flex; flex-direction: column; align-items: center; margin-top: 4px; }
+  .orgchart-footer-connector { width: 2px; height: 12px; background: rgba(34,211,238,0.75); }
+  .orgchart-footer-card {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    background: linear-gradient(135deg, rgba(34,211,238,0.14), rgba(59,130,246,0.14));
+    border: 1px solid rgba(34,211,238,0.35);
+    border-radius: 12px; padding: 8px 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+  }
+  .orgchart-footer-card span { font-size: 9px; font-weight: 800; color: var(--text-primary); letter-spacing: 0.3px; }
   .orgtree ul { display: flex; margin: 0; padding: 10px 0 0; position: relative; }
   .orgtree li { display: flex; flex-direction: column; align-items: center; list-style-type: none; position: relative; padding: 10px 4px 0 4px; margin: 0; }
   .orgtree li::before, .orgtree li::after {
@@ -1613,34 +1624,94 @@ let editingEmail = null;
 // Kesehatan di baris paling bawah. Jabatan dicocokkan tanpa peduli
 // besar-kecil huruf/spasi/tanda kurung, jadi isi kolom Jabatan di form
 // User cukup salah satu dari alias di bawah.
+// Susunan baru sesuai bagan resmi yang dikirim: Pembimbing di puncak,
+// lalu Pembina & Penasehat nyabang ke samping, rantai utama Ketua Umum
+// -> Waketum -> Sekretaris -> Bendahara -> (Media, Humas, Media) ->
+// 6 Korwil DKI + turunannya masing-masing. Jabatan dicocokkan tanpa
+// peduli besar-kecil huruf/spasi, jadi isi kolom Jabatan di form User
+// cukup salah satu dari alias di bawah.
 const ORG_CHART_TREE = {
-  aliases: ["pembina", "dewan pembina", "pembina yayasan", "pendiri yayasan", "anggota pembina"], label: "Pembina",
+  aliases: ["pembimbing", "dewan pembimbing"], label: "Pembimbing",
   children: [
-    { aliases: ["dewan pengawas", "pengawas", "ketua pengawas", "anggota pengawas", "anggota pengawas/humas", "anggota pengawas/media"], label: "Dewan Pengawas", children: [] },
+    { aliases: ["pembina", "dewan pembina", "anggota pembina"], label: "Pembina", children: [] },
+    { aliases: ["penasehat", "penasihat", "dewan penasehat"], label: "Penasehat", children: [] },
     {
-      aliases: ["ketua", "pengurus ketua", "pengurus", "ketua umum", "wakil ketua"], label: "Pengurus (Ketua)",
-      aliases: ["ketua", "pengurus ketua", "pengurus", "ketua umum", "wakil ketua"], label: "Pengurus (Ketua)",
+      aliases: ["ketua umum", "ketua", "ketum"], label: "Ketua Umum",
       children: [
         {
-          aliases: ["sekretaris", "sekretaris 1", "sekretaris umum"], label: "Sekretaris",
+          aliases: ["waketum", "wakil ketua umum", "wakil ketua"], label: "Waketum",
           children: [
             {
-              aliases: ["pendidikan", "divisi pendidikan"], label: "Pendidikan",
+              aliases: ["sekretaris", "sekretaris umum", "sekretaris 1"], label: "Sekretaris",
               children: [
-                { aliases: ["sosial", "divisi sosial"], label: "Sosial", children: [] }
-              ]
-            },
-            { aliases: ["lingkungan hidup", "lingkungan", "divisi lingkungan"], label: "Lingkungan Hidup", children: [] },
-            { aliases: ["fundraising", "penggalangan dana", "divisi fundraising"], label: "Fundraising", children: [] }
-          ]
-        },
-        {
-          aliases: ["bendahara", "bendahara 1", "bendahara umum"], label: "Bendahara",
-          children: [
-            {
-              aliases: ["ekonomi", "divisi ekonomi"], label: "Ekonomi",
-              children: [
-                { aliases: ["kesehatan", "divisi kesehatan"], label: "Kesehatan", children: [] }
+                {
+                  aliases: ["bendahara", "bendahara umum", "bendahara 1"], label: "Bendahara",
+                  children: [
+                    { aliases: ["media", "divisi media", "media 1"], label: "Media", children: [] },
+                    {
+                      aliases: ["humas", "divisi humas"], label: "Humas",
+                      children: [
+                        {
+                          aliases: ["korwil depok"], label: "Korwil Depok",
+                          children: [
+                            { aliases: ["korwil jakbar", "korwil jakarta barat"], label: "Korwil Jakbar", children: [] }
+                          ]
+                        },
+                        {
+                          aliases: ["korwil bogor"], label: "Korwil Bogor",
+                          children: [
+                            {
+                              aliases: ["korwil bekasi kabupaten", "korwil bek kabupaten", "korwil bekasi kab"], label: "Korwil Bek Kabupaten",
+                              children: [
+                                { aliases: ["korwil gresik"], label: "Korwil Gresik", children: [] }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          aliases: ["korwil jaktim", "korwil jakarta timur"], label: "Korwil Jaktim",
+                          children: [
+                            {
+                              aliases: ["korwil bekasi kota", "korwil bek kota"], label: "Korwil Bek Kota",
+                              children: [
+                                { aliases: ["korwil surabaya"], label: "Korwil Surabaya", children: [] }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          aliases: ["korwil jaksel", "korwil jakarta selatan"], label: "Korwil Jaksel",
+                          children: [
+                            {
+                              aliases: ["korwil tangkot", "korwil tangerang kota"], label: "Korwil Tangkot",
+                              children: [
+                                { aliases: ["korwil sidoarjo"], label: "Korwil Sidoarjo", children: [] }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          aliases: ["korwil jakpus", "korwil jakarta pusat"], label: "Korwil Jakpus",
+                          children: [
+                            {
+                              aliases: ["korwil tangkab", "korwil tangerang kabupaten"], label: "Korwil Tangkab",
+                              children: [
+                                { aliases: ["korwil tasikmalaya"], label: "Korwil Tasikmalaya", children: [] }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          aliases: ["korwil jakut", "korwil jakarta utara"], label: "Korwil Jakut",
+                          children: [
+                            { aliases: ["korwil tangsel", "korwil tangerang selatan"], label: "Korwil Tangsel", children: [] }
+                          ]
+                        }
+                      ]
+                    },
+                    { aliases: ["media 2", "divisi media 2"], label: "Media", children: [] }
+                  ]
+                }
               ]
             }
           ]
@@ -1852,10 +1923,19 @@ window.addEventListener("resize", function () {
 });
 
 function buildOrgChartHtml(list) {
+  const footerHtml =
+    '<div class="orgchart-footer">' +
+      '<div class="orgchart-footer-connector"></div>' +
+      '<div class="orgchart-footer-card">' +
+        iconSvg("users", "#22D3EE", 20) +
+        '<span>TEAM KERJA ALL</span>' +
+      '</div>' +
+    '</div>';
+
   let html = '<div style="text-align:center;font-size:10.5px;color:var(--text-muted);margin-bottom:4px;">Cubit atau ketuk 2x buat memperbesar/mengecilkan</div>' +
-    '<div class="orgtree-wrap"><div class="orgtree"><ul>' +
+    '<div class="orgtree-wrap"><div class="orgtree"><div class="orgtree-inner"><ul>' +
     renderOrgNode(ORG_CHART_TREE, list) +
-    '</ul></div></div>';
+    '</ul>' + footerHtml + '</div></div></div>';
 
   return '<div style="height:100%; overflow:auto; padding-bottom:100px;">' + html + '</div>';
 }
