@@ -17,6 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <style>
@@ -43,6 +44,19 @@
     --shadow-glow-blue: 0 0 0 1px rgba(59,130,246,0.15), 0 8px 28px rgba(59,130,246,0.18);
     --shadow-glow-cyan: 0 0 0 1px rgba(34,211,238,0.18), 0 8px 28px rgba(34,211,238,0.18);
     --shadow-glow-purple: 0 0 0 1px rgba(168,85,247,0.18), 0 8px 28px rgba(168,85,247,0.18);
+
+    /* Palet baru bento/Material Symbols khusus Beranda (dan komponen bersama: header + bottom nav) */
+    --bento-primary: #4EDEA3;
+    --bento-primary-rgb: 78,222,163;
+    --bento-tertiary: #71A1FF;
+    --bento-tertiary-rgb: 113,161,255;
+    --bento-secondary: #7EDC73;
+    --bento-secondary-rgb: 126,220,115;
+    --bento-amber: #FBBF24;
+    --bento-amber-rgb: 251,191,36;
+    --bento-error: #F87171;
+    --bento-error-rgb: 248,113,113;
+    --bento-on-surface-variant: #9AA8C7;
   }
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -97,7 +111,7 @@
   }
 
   .header {
-    background: linear-gradient(135deg, rgba(59,130,246,0.35) 0%, rgba(139,92,246,0.30) 55%, rgba(168,85,247,0.30) 100%);
+    background: linear-gradient(135deg, rgba(var(--bento-primary-rgb),0.30) 0%, rgba(59,130,246,0.28) 55%, rgba(var(--bento-tertiary-rgb),0.28) 100%);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     padding: 24px 24px 50px;
@@ -105,7 +119,7 @@
     border-bottom-left-radius: 28px;
     border-bottom-right-radius: 28px;
     border-bottom: 1px solid var(--glass-border-strong);
-    box-shadow: 0 8px 32px rgba(59,130,246,0.15), inset 0 1px 0 rgba(255,255,255,0.08);
+    box-shadow: 0 8px 32px rgba(var(--bento-primary-rgb),0.15), inset 0 1px 0 rgba(255,255,255,0.08);
     position: relative;
   }
   .header-top { display: flex; justify-content: space-between; align-items: center; }
@@ -133,7 +147,7 @@
     width: 46px;
     height: 46px;
     border-radius: 50%;
-    border: 2px solid rgba(34,211,238,0.45);
+    border: 2px solid rgba(var(--bento-primary-rgb),0.45);
     background: #050810;
     padding: 0;
     cursor: pointer;
@@ -143,7 +157,7 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    box-shadow: 0 0 16px rgba(34,211,238,0.35);
+    box-shadow: 0 0 16px rgba(var(--bento-primary-rgb),0.35);
   }
   .header-logo-btn:active { transform: scale(0.92); }
   .header-logo-svg { width: 90%; height: 90%; display: block; }
@@ -153,18 +167,49 @@
     background: var(--glass-strong);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-radius: 20px;
-    padding: 18px 20px;
-    display: flex;
-    justify-content: space-between;
+    border-radius: 22px;
+    padding: 20px;
     position: relative;
     z-index: 2;
-    box-shadow: var(--shadow-deep), var(--shadow-glow-blue);
+    overflow: hidden;
+    box-shadow: var(--shadow-deep), 0 0 0 1px rgba(var(--bento-primary-rgb),0.12);
     border: 1px solid var(--glass-border-strong);
   }
-  .summary-label { font-size: 12px; color: var(--text-secondary); font-weight: 500; margin-bottom: 4px; }
-  .summary-value { font-size: 20px; font-weight: 800; color: var(--neon-cyan); letter-spacing: -0.5px; text-shadow: 0 0 18px rgba(34,211,238,0.45); }
-  .summary-value.plain { color: var(--text-primary); text-shadow: none; }
+  .summary-card::before {
+    content: "";
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 130px; height: 130px;
+    background: rgba(var(--bento-primary-rgb),0.16);
+    border-radius: 50%;
+    filter: blur(28px);
+    pointer-events: none;
+  }
+  .summary-top { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; position: relative; z-index: 1; }
+  .summary-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(var(--bento-primary-rgb),0.18);
+    color: var(--bento-primary);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .summary-icon .material-symbols-outlined { font-size: 19px; }
+  .summary-label { font-size: 11px; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 4px; }
+  .summary-value { font-size: 26px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; position: relative; z-index: 1; }
+  .summary-sub-row {
+    margin-top: 16px; padding-top: 14px;
+    border-top: 1px solid var(--glass-border);
+    display: flex; align-items: center; gap: 10px; position: relative; z-index: 1;
+  }
+  .summary-sub-icon {
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(var(--bento-tertiary-rgb),0.18);
+    color: var(--bento-tertiary);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .summary-sub-icon .material-symbols-outlined { font-size: 15px; }
+  .summary-sub-label { font-size: 12.5px; color: var(--text-secondary); font-weight: 500; flex: 1; }
+  .summary-sub-value { font-size: 15px; color: var(--text-primary); font-weight: 700; }
 
   .content { flex: 1; padding: 24px 20px 100px; overflow-y: auto; }
   .section-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--text-primary); letter-spacing: -0.2px; }
@@ -175,26 +220,56 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .quick-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
   .quick-card {
     background: var(--glass);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
     border-radius: 18px;
-    padding: 16px;
+    padding: 14px 8px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    align-items: flex-start;
+    gap: 10px;
+    align-items: center;
     cursor: pointer;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.35);
     border: 1px solid var(--glass-border);
     transition: all 0.2s ease;
-    text-align: left;
+    text-align: center;
   }
-  .quick-card:active { transform: scale(0.96); box-shadow: var(--shadow-glow-purple); border-color: var(--glass-border-strong); }
-  .quick-icon { width: 38px; height: 38px; border-radius: 12px; background: linear-gradient(135deg, rgba(34,211,238,0.25), rgba(59,130,246,0.25)); border: 1px solid rgba(34,211,238,0.3); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 14px rgba(34,211,238,0.2); }
-  .quick-label { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+  .quick-card:active { transform: scale(0.94); border-color: var(--glass-border-strong); }
+  .quick-icon {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--surface-container-highest, rgba(255,255,255,0.06));
+    display: flex; align-items: center; justify-content: center;
+  }
+  .quick-icon .material-symbols-outlined { font-size: 22px; }
+  .quick-label { font-size: 12px; font-weight: 500; color: var(--text-primary); line-height: 1.25; }
+
+  /* Baris fitur full-width ala "Cloud Buku" pada mockup bento */
+  .feature-row {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    margin-top: 4px;
+    border-radius: 16px;
+    background: linear-gradient(90deg, var(--glass) 0%, rgba(var(--bento-primary-rgb),0.06) 100%);
+    border: 1px solid var(--glass-border);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .feature-row:active { transform: scale(0.98); border-color: var(--glass-border-strong); }
+  .feature-row-left { display: flex; align-items: center; gap: 12px; }
+  .feature-row-icon {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: rgba(var(--bento-primary-rgb),0.18); color: var(--bento-primary);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .feature-row-icon .material-symbols-outlined { font-size: 20px; }
+  .feature-row-title { font-size: 13.5px; font-weight: 600; color: var(--text-primary); display: block; }
+  .feature-row-sub { font-size: 11.5px; color: var(--text-secondary); display: block; margin-top: 1px; }
+  .feature-row .material-symbols-outlined.chevron { color: var(--text-secondary); font-size: 20px; }
 
   .menu-panel {
     background: var(--glass);
@@ -231,26 +306,23 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    justify-content: center;
+    gap: 3px;
     cursor: pointer;
     position: relative;
-    padding: 4px 0;
+    padding: 6px 0;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
+  .nav-btn.active { transform: scale(1.1); }
   .nav-icon-wrap {
-    padding: 6px 16px;
-    border-radius: 20px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: color 0.3s;
   }
-  .nav-btn.active .nav-icon-wrap {
-    background: linear-gradient(135deg, rgba(34,211,238,0.25), rgba(139,92,246,0.25));
-    box-shadow: 0 0 16px rgba(34,211,238,0.35);
-    border: 1px solid rgba(34,211,238,0.35);
-  }
-  .nav-label { font-size: 10.5px; text-align: center; line-height: 1; transition: color 0.3s, font-weight 0.3s; margin-top: 2px; color: var(--text-muted); }
-  .nav-btn.active .nav-label { color: var(--neon-cyan); }
+  .nav-icon-wrap .material-symbols-outlined { font-size: 22px; }
+  .nav-label { font-size: 10.5px; text-align: center; line-height: 1; transition: color 0.3s, font-weight 0.3s; margin-top: 1px; color: var(--text-muted); }
+  .nav-btn.active .nav-label { color: var(--bento-primary); }
 
   .user-menu-overlay { position: absolute; inset: 0; z-index: 20; display: none; background: rgba(2,6,20,0.5); backdrop-filter: blur(4px); animation: fadeIn 0.2s forwards; }
   .user-menu-overlay.open { display: block; }
@@ -919,13 +991,15 @@
 
   <!-- Kartu Mengambang -->
   <div class="summary-card" id="summaryCard">
-    <div>
+    <div class="summary-top">
+      <div class="summary-icon"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">account_balance_wallet</span></div>
       <div class="summary-label">Total Donasi</div>
-      <div class="summary-value">Rp 12.450.000</div>
     </div>
-    <div style="text-align:right;">
-      <div class="summary-label">Anak Terdaftar</div>
-      <div class="summary-value plain">812</div>
+    <div class="summary-value" id="summaryTotalDonasi">Rp 12.450.000</div>
+    <div class="summary-sub-row">
+      <div class="summary-sub-icon"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">face</span></div>
+      <div class="summary-sub-label">Anak Terdaftar</div>
+      <div class="summary-sub-value" id="summaryAnakTerdaftar">812</div>
     </div>
   </div>
 
@@ -1144,6 +1218,34 @@ const TABS = [
   { key: "pm", label: "Penerima Manfaat", icon: "heart" },
   { key: "bukubesar", label: "Cloud Buku", icon: "cloud" },
 ];
+
+// Pemetaan ikon lama (nama internal) -> Material Symbols, dipakai khusus
+// untuk tampilan bento baru di Beranda (Akses Cepat) dan Bottom Nav.
+// Menu-menu lain (donasi/absensi/awg/pm/bukubesar) tetap pakai iconSvg() lama, tidak diubah.
+const MATERIAL_ICONS = {
+  home: "home",
+  wallet: "payments",
+  clipboard: "how_to_reg",
+  users: "group",
+  heart: "favorite",
+  cloud: "cloud",
+};
+
+// Warna aksen per tab untuk kartu Akses Cepat & Bottom Nav (palet bento baru).
+const TAB_ACCENTS = {
+  home: "var(--bento-primary)",
+  donasi: "var(--bento-primary)",
+  absensi: "var(--bento-tertiary)",
+  awg: "var(--bento-secondary)",
+  pm: "var(--bento-error)",
+  bukubesar: "var(--bento-primary)",
+};
+
+function materialIconSpan(name, opts) {
+  opts = opts || {};
+  const style = `font-size:${opts.size || 22}px;` + (opts.color ? `color:${opts.color};` : "") + (opts.fill ? `font-variation-settings:'FILL' 1;` : "");
+  return `<span class="material-symbols-outlined" style="${style}">${MATERIAL_ICONS[name] || name}</span>`;
+}
 
 function visibleTabs() {
   return TABS;
@@ -1458,11 +1560,27 @@ function renderContent() {
   summary.style.display = active === "beranda" ? "flex" : "none";
 
   if (active === "beranda") {
+    const tabs = visibleTabs().filter((t) => t.key !== "beranda");
+    const gridTabs = tabs.filter((t) => t.key !== "bukubesar");
+    const featureTabs = tabs.filter((t) => t.key === "bukubesar");
+
     let html = `<div class="section-title">Akses Cepat Aplikasi</div><div class="quick-grid">`;
-    visibleTabs().filter((t) => t.key !== "beranda").forEach((t) => {
+    gridTabs.forEach((t) => {
       html += `<button class="quick-card" onclick="setActive('${t.key}')">
-        <div class="quick-icon">${iconSvg(t.icon, "#22D3EE", 20)}</div>
+        <div class="quick-icon">${materialIconSpan(t.icon, { size: 22, color: TAB_ACCENTS[t.icon] || "var(--bento-primary)", fill: true })}</div>
         <span class="quick-label">${t.label}</span>
+      </button>`;
+    });
+    featureTabs.forEach((t) => {
+      html += `<button class="feature-row" onclick="setActive('${t.key}')">
+        <div class="feature-row-left">
+          <div class="feature-row-icon">${materialIconSpan(t.icon, { size: 20 })}</div>
+          <div>
+            <span class="feature-row-title">${t.label}</span>
+            <span class="feature-row-sub">Akses materi digital</span>
+          </div>
+        </div>
+        <span class="material-symbols-outlined chevron">chevron_right</span>
       </button>`;
     });
     html += `</div><div class="app-version-footer">YASSA Hub v${APP_VERSION}</div>`;
@@ -1498,23 +1616,23 @@ function renderContent() {
 function renderBottomNav() {
   const el = document.getElementById("bottomNav");
   let html = "";
-  
+
   visibleTabs().forEach((t) => {
     const isActive = active === t.key;
-    const color = isActive ? "#22D3EE" : "#64748B";
+    const color = isActive ? (TAB_ACCENTS[t.icon] || "var(--bento-primary)") : "var(--text-muted)";
     const activeClass = isActive ? "active" : "";
     const fontWeight = isActive ? "700" : "500";
-    
+
     html += `
       <button class="nav-btn ${activeClass}" onclick="setActive('${t.key}')">
         <div class="nav-icon-wrap">
-          ${iconSvg(t.icon, color, 22)}
+          ${materialIconSpan(t.icon, { size: 22, color: color, fill: isActive })}
         </div>
         <span class="nav-label" style="color: ${color}; font-weight: ${fontWeight};">${t.label}</span>
       </button>
     `;
   });
-  
+
   el.innerHTML = html;
 }
 
