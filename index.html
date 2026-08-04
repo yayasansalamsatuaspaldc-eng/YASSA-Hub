@@ -1155,6 +1155,36 @@
     </div>
   </div>
 
+  <!-- Input Bottom Sheet (Menu Tengah) -->
+  <div class="user-form-overlay" id="inputOverlay" onclick="if(event.target===this) toggleInputSheet()" style="align-items: flex-end;">
+    <div class="user-form-sheet" style="padding-bottom: 40px; border-radius: 24px 24px 0 0;">
+      <div style="width: 48px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 4px; margin: 0 auto 16px;"></div>
+      <h3 style="text-align: center; font-size: 16px; font-weight: 700; margin-bottom: 16px;">Input Data</h3>
+      
+      <button style="width: 100%; display: flex; align-items: center; gap: 16px; background: var(--glass-strong); padding: 16px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 12px; cursor: pointer;" onclick="openAppUrl('https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/?embed=1&tab=input-kotak')">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(34, 197, 94, 0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center;">
+          <span class="material-symbols-outlined">box</span>
+        </div>
+        <div style="text-align: left;">
+          <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Input Buka Kotak</div>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Catat hasil buka kotak</div>
+        </div>
+      </button>
+      
+      <button style="width: 100%; display: flex; align-items: center; gap: 16px; background: var(--glass-strong); padding: 16px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 16px; cursor: pointer;" onclick="openAppUrl('https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/?embed=1&tab=input-donasi')">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(34, 197, 94, 0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center;">
+          <span class="material-symbols-outlined">payments</span>
+        </div>
+        <div style="text-align: left;">
+          <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Input Donasi</div>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Catat donasi yang masuk</div>
+        </div>
+      </button>
+      
+      <button style="width: 100%; padding: 14px; background: var(--glass); border-radius: 12px; font-size: 14px; font-weight: 600; color: var(--text-primary); border: 1px solid var(--glass-border); cursor: pointer;" onclick="toggleInputSheet()">Batal</button>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -1212,11 +1242,10 @@ const ICON_COLORS = {
 
 const TABS = [
   { key: "beranda", label: "Beranda", icon: "home" },
-  { key: "donasi", label: "Kotak & Donasi", icon: "wallet" },
-  { key: "absensi", label: "Absensi", icon: "clipboard" },
-  { key: "awg", label: "AWG", icon: "users" },
-  { key: "pm", label: "Penerima Manfaat", icon: "heart" },
-  { key: "bukubesar", label: "Cloud Buku", icon: "cloud" },
+  { key: "app", label: "App", icon: "grid_view" },
+  { key: "input", label: "Input", icon: "add", isFab: true },
+  { key: "keuangan", label: "Keuangan", icon: "account_balance_wallet" },
+  { key: "profil", label: "Profil", icon: "person" },
 ];
 
 // Pemetaan ikon lama (nama internal) -> Material Symbols, dipakai khusus
@@ -1224,6 +1253,10 @@ const TABS = [
 // Menu-menu lain (donasi/absensi/awg/pm/bukubesar) tetap pakai iconSvg() lama, tidak diubah.
 const MATERIAL_ICONS = {
   home: "home",
+  grid_view: "grid_view",
+  add: "add",
+  account_balance_wallet: "account_balance_wallet",
+  person: "person",
   wallet: "payments",
   clipboard: "how_to_reg",
   users: "group",
@@ -1657,7 +1690,187 @@ function renderContent() {
         </div>
       </div>
       
-      <div class="app-version-footer">YASSA Hub v${APP_VERSION}</div>
+      html += `</div><div class="app-version-footer">YASSA Hub v${APP_VERSION}</div>`;
+    el.innerHTML = html;
+    return;
+  }
+
+  if (active === "app") {
+    let html = `
+      <h2 style="text-align: center; font-weight: 600; font-size: 18px; margin-bottom: 24px; padding-top: 16px;">App</h2>
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+        <button onclick="openApp(0)" style="background: var(--glass-strong); padding: 24px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; border: 1px solid var(--glass-border); cursor: pointer;">
+          <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(34, 197, 94, 0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center;">
+            <span class="material-symbols-outlined" style="font-size: 32px; font-variation-settings: 'FILL' 1;">box</span>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">Kotak & Donasi</div>
+            <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.2;">Kelola kotak<br>dan donasi</div>
+          </div>
+        </button>
+        <button onclick="setActive('absensi')" style="background: var(--glass-strong); padding: 24px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; border: 1px solid var(--glass-border); cursor: pointer;">
+          <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(59, 130, 246, 0.15); color: #60A5FA; display: flex; align-items: center; justify-content: center;">
+            <span class="material-symbols-outlined" style="font-size: 32px; font-variation-settings: 'FILL' 1;">assignment</span>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">Absensi</div>
+            <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.2;">Catat kehadiran<br>kegiatan</div>
+          </div>
+        </button>
+        <button onclick="setActive('awg')" style="background: var(--glass-strong); padding: 24px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; border: 1px solid var(--glass-border); cursor: pointer;">
+          <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(168, 85, 247, 0.15); color: #C084FC; display: flex; align-items: center; justify-content: center;">
+            <span class="material-symbols-outlined" style="font-size: 32px; font-variation-settings: 'FILL' 1;">favorite</span>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">AWG</div>
+            <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.2;">Aktivitas<br>Wakaf & Gerakan</div>
+          </div>
+        </button>
+        <button onclick="setActive('pm')" style="background: var(--glass-strong); padding: 24px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; border: 1px solid var(--glass-border); cursor: pointer;">
+          <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(251, 191, 36, 0.15); color: #FBBF24; display: flex; align-items: center; justify-content: center;">
+            <span class="material-symbols-outlined" style="font-size: 32px; font-variation-settings: 'FILL' 1;">group</span>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">Penerima Manfaat</div>
+            <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.2;">Data penerima<br>manfaat</div>
+          </div>
+        </button>
+        <button onclick="setActive('bukubesar')" style="background: var(--glass-strong); padding: 24px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; border: 1px solid var(--glass-border); cursor: pointer;">
+          <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(34, 211, 238, 0.15); color: #22D3EE; display: flex; align-items: center; justify-content: center;">
+            <span class="material-symbols-outlined" style="font-size: 32px; font-variation-settings: 'FILL' 1;">menu_book</span>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">Cloud Buku</div>
+            <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.2;">Perpustakaan digital<br>yayasan</div>
+          </div>
+        </button>
+      </div>
+    `;
+    el.innerHTML = html;
+    return;
+  }
+
+  if (active === "keuangan") {
+    const wilayahText = currentUser.wilayahAkses === "ALL" ? "Semua Wilayah" : (currentUser.wilayahAkses || "-");
+    let html = `
+      <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-top: 16px;">
+        <h2 style="font-weight: 600; font-size: 18px;">Keuangan</h2>
+        <button style="background: var(--glass-strong); padding: 6px 12px; border-radius: 99px; font-size: 12px; display: flex; align-items: center; gap: 4px; border: 1px solid var(--glass-border);">
+          ${escapeHtmlHub(wilayahText)} <span class="material-symbols-outlined" style="font-size: 14px;">expand_more</span>
+        </button>
+      </header>
+
+      <div style="background: var(--glass-strong); border-radius: 20px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--glass-border);">
+        <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">1. Jumlah Anak Yatim</div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <div style="font-size: 24px; font-weight: 700; color: white;"><span style="font-size: 30px;">65</span> Anak</div>
+            <div style="font-size: 10px; color: var(--text-secondary); margin-top: 4px;">Wilayah ${escapeHtmlHub(wilayahText)} - Bulan Ini</div>
+          </div>
+          <div style="width: 48px; height: 48px; border-radius: 16px; background: rgba(34, 197, 94, 0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center;">
+            <span class="material-symbols-outlined" style="font-size: 24px; font-variation-settings: 'FILL' 1;">groups</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: var(--glass-strong); border-radius: 20px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--glass-border);">
+        <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">2. Kebutuhan Donasi Bulan Ini</div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">65 anak x Rp100.000</div>
+        <div style="font-size: 24px; font-weight: 700; margin-bottom: 4px;">Rp6.500.000</div>
+        <div style="font-size: 10px; color: var(--bento-primary);">Total kebutuhan donasi</div>
+        <div style="width: 100%; height: 1px; background: rgba(255,255,255,0.1); margin: 16px 0;"></div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
+          <div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Realisasi Donasi</div>
+            <div style="font-size: 20px; font-weight: 700;">Rp5.200.000</div>
+            <div style="font-size: 10px; color: var(--text-secondary);">Terkumpul</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 14px; font-weight: 600;">63%</div>
+            <div style="font-size: 10px; color: var(--text-secondary);">Tercapai</div>
+          </div>
+        </div>
+        <div style="width: 100%; background: rgba(0,0,0,0.3); border-radius: 99px; height: 8px; margin-bottom: 24px; overflow: hidden; border: 1px solid var(--glass-border);">
+          <div style="background: var(--bento-primary); height: 8px; border-radius: 99px; width: 63%;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 18px; font-weight: 700; color: #EF4444;">Rp1.300.000</div>
+            <div style="font-size: 10px; color: rgba(239, 68, 68, 0.8);">Kekurangan dari target</div>
+          </div>
+          <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(239, 68, 68, 0.1); color: #EF4444; display: flex; align-items: center; justify-content: center;">
+            <span class="material-symbols-outlined" style="font-size: 14px;">arrow_downward</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: var(--glass-strong); border-radius: 20px; padding: 20px; margin-bottom: 8px; border: 1px solid var(--glass-border);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+          <div style="font-size: 12px; color: var(--text-secondary);">3. Histori Donasi <span style="font-size: 10px;">(Wilayah ${escapeHtmlHub(wilayahText)})</span></div>
+        </div>
+        <div style="display: flex; flex-direction: column; font-size: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <span>Bulan Ini</span>
+            <div style="display: flex; align-items: center; gap: 8px; color: var(--bento-primary);">
+              Rp5.200.000 <span class="material-symbols-outlined" style="font-size: 14px;">chevron_right</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    el.innerHTML = html;
+    return;
+  }
+
+  if (active === "profil") {
+    const fotoProfil = currentUser.fotoUrl ? currentUser.fotoUrl : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
+    const badgeLabel = currentUser.jabatan ? currentUser.jabatan : roleLabel(currentUser.role);
+    
+    let html = `
+      <h2 style="text-align: center; font-weight: 600; font-size: 18px; margin-bottom: 24px; padding-top: 16px;">Profil</h2>
+      <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 24px;">
+        <div style="width: 96px; height: 96px; border-radius: 50%; overflow: hidden; border: 2px solid rgba(34, 197, 94, 0.3); margin-bottom: 12px; background: var(--bg-navy);">
+          <img src="${fotoProfil}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+        <h1 style="font-size: 20px; font-weight: 700;">${escapeHtmlHub(currentUser.nama)}</h1>
+        <p style="font-size: 14px; color: var(--text-secondary);">${escapeHtmlHub(badgeLabel)}</p>
+      </div>
+
+      <div style="background: var(--glass-strong); border-radius: 20px; margin-bottom: 24px; display: flex; flex-direction: column; border: 1px solid var(--glass-border);">
+        <div style="display: flex; align-items: center; gap: 16px; padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;">
+          <span class="material-symbols-outlined" style="color: var(--text-secondary); font-size: 18px;">call</span>
+          <span style="font-size: 14px; flex: 1;">${escapeHtmlHub(currentUser.email)}</span>
+          <span class="material-symbols-outlined" style="color: var(--text-muted); font-size: 18px;">chevron_right</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px; padding: 16px; cursor: pointer;">
+          <span class="material-symbols-outlined" style="color: var(--text-secondary); font-size: 18px;">mail</span>
+          <span style="font-size: 14px; flex: 1; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(currentUser.emailGoogle || "Belum ditautkan")}</span>
+          <span class="material-symbols-outlined" style="color: var(--text-muted); font-size: 18px;">chevron_right</span>
+        </div>
+      </div>
+
+      <h3 style="font-weight: 600; font-size: 14px; margin-bottom: 12px; padding: 0 4px;">Tim & Organisasi</h3>
+      <div style="background: var(--glass-strong); border-radius: 20px; display: flex; flex-direction: column; border: 1px solid var(--glass-border);">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;" onclick="handleUserMenuClick('pengurus')">
+          <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(34, 197, 94, 0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center;">
+            <span class="material-symbols-outlined">account_tree</span>
+          </div>
+          <div style="flex: 1;">
+            <div style="font-size: 14px; font-weight: 600;">Struktur Pengurus</div>
+            <div style="font-size: 10px; color: var(--text-secondary);">Lihat daftar tim kerja</div>
+          </div>
+          <span class="material-symbols-outlined" style="color: var(--text-muted);">chevron_right</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; padding: 16px; cursor: pointer;" onclick="handleUserMenuClick('logout')">
+          <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(239, 68, 68, 0.15); color: #EF4444; display: flex; align-items: center; justify-content: center;">
+            <span class="material-symbols-outlined">logout</span>
+          </div>
+          <div style="flex: 1;">
+            <div style="font-size: 14px; font-weight: 600; color: #FCA5A5;">Keluar Akun</div>
+          </div>
+        </div>
+      </div>
     `;
     el.innerHTML = html;
     return;
@@ -1693,28 +1906,62 @@ function renderBottomNav() {
   let html = "";
 
   visibleTabs().forEach((t) => {
-    const isActive = active === t.key;
-    const color = isActive ? (TAB_ACCENTS[t.icon] || "var(--bento-primary)") : "var(--text-muted)";
-    const activeClass = isActive ? "active" : "";
-    const fontWeight = isActive ? "700" : "500";
-
-    html += `
-      <button class="nav-btn ${activeClass}" onclick="setActive('${t.key}')">
-        <div class="nav-icon-wrap">
-          ${materialIconSpan(t.icon, { size: 22, color: color, fill: isActive })}
+    if (t.isFab) {
+      html += `
+        <div style="position: relative; width: 64px; display: flex; justify-content: center; top: -16px;">
+          <button onclick="setActive('${t.key}')" style="width: 52px; height: 52px; border-radius: 50%; background: var(--bento-primary); display: flex; align-items: center; justify-content: center; border: none; box-shadow: 0 4px 20px rgba(34, 197, 94, 0.4); cursor: pointer; transition: transform 0.2s;">
+            ${materialIconSpan(t.icon, { size: 30, color: "white" })}
+          </button>
         </div>
-        <span class="nav-label" style="color: ${color}; font-weight: ${fontWeight};">${t.label}</span>
-      </button>
-    `;
+      `;
+    } else {
+      const isActive = active === t.key;
+      const color = isActive ? "var(--bento-primary)" : "var(--text-muted)";
+      const activeClass = isActive ? "active" : "";
+      const fontWeight = isActive ? "700" : "500";
+
+      html += `
+        <button class="nav-btn ${activeClass}" onclick="setActive('${t.key}')">
+          <div class="nav-icon-wrap">
+            ${materialIconSpan(t.icon, { size: 24, color: color, fill: isActive })}
+          </div>
+          <span class="nav-label" style="color: ${color}; font-weight: ${fontWeight};">${t.label}</span>
+        </button>
+      `;
+    }
   });
 
   el.innerHTML = html;
 }
-
 function setActive(key) {
+  if (key === 'input') {
+    toggleInputSheet();
+    return;
+  }
   active = key;
   closeUserMenu();
   render();
+}
+
+function toggleInputSheet() {
+  const sheet = document.getElementById('inputOverlay');
+  if (sheet.classList.contains('open')) {
+    sheet.classList.remove('open');
+  } else {
+    sheet.classList.add('open');
+  }
+}
+
+function openAppUrl(url) {
+  toggleInputSheet();
+  let resolvedUrl = url;
+  if (authToken) {
+    const sep = resolvedUrl.indexOf("?") === -1 ? "?" : "&";
+    resolvedUrl += sep + "hubToken=" + encodeURIComponent(authToken);
+  }
+  document.getElementById("overlayTitle").textContent = "Input Data";
+  document.getElementById("overlayFrame").src = resolvedUrl;
+  document.getElementById("overlay").classList.add("open");
 }
 
 function toggleUserMenu() {
