@@ -1232,6 +1232,7 @@ const ICONS = {
   award: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
   mapPin: '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
   edit: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497Z"/><path d="m15 5 3 3"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
 };
 
 function iconSvg(name, color, size) {
@@ -1349,11 +1350,17 @@ const MENUS = {
   },
   mobile: {
     title: "YASSA Mobile",
+    // YASSA Mobile masih pakai sistem login & data sendiri (belum SSO dengan Hub),
+    // tapi sesi login-nya (localStorage origin yassa-mobile.github.io) bertahan
+    // 8 jam lintas reload iframe, jadi user cuma diminta login sekali walau
+    // gonta-ganti tab di bawah ini (tiap tab = reload iframe dengan ?tab= beda).
+    baseUrl: "https://yassa-mobile.github.io/yassamobile/",
     items: [
-      // YASSA Mobile masih pakai sistem login & data sendiri (belum SSO dengan Hub),
-      // jadi cukup 1 item yang buka seluruh app-nya lewat iframe dengan ?embed=1
-      // (Mobile akan sembunyiin header/nav bawaannya sendiri saat embed=1).
-      { label: "Buka YASSA Mobile", icon: "phone", color: "teal", url: "https://yassa-mobile.github.io/yassamobile/?embed=1" },
+      { label: "Beranda", icon: "home", color: "teal", tab: "home" },
+      { label: "Data KK", icon: "list", color: "blue", tab: "keluarga" },
+      { label: "Kontrol", icon: "shield", color: "coral", tab: "perisai" },
+      { label: "Data Anak", icon: "users", color: "amber", tab: "anak" },
+      { label: "Profil", icon: "user", color: "purple", tab: "aksi" },
     ],
   },
   pengaturan: { title: "Pengaturan" }, // dirender khusus lewat renderPengaturanPanel(), bukan menu-grid biasa
