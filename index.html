@@ -164,7 +164,7 @@
 
   .summary-card {
     margin: -30px 20px 0;
-    background: var(--glass-strong);
+    background: linear-gradient(135deg, #1A3B35 0%, #0F2220 100%);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-radius: 22px;
@@ -172,8 +172,8 @@
     position: relative;
     z-index: 2;
     overflow: hidden;
-    box-shadow: var(--shadow-deep), 0 0 0 1px rgba(var(--bento-primary-rgb),0.12);
-    border: 1px solid var(--glass-border-strong);
+    box-shadow: var(--shadow-deep), 0 0 0 1px rgba(var(--bento-primary-rgb),0.2);
+    border: 1px solid rgba(34, 197, 94, 0.2);
   }
   .summary-card::before {
     content: "";
@@ -1560,30 +1560,105 @@ function renderContent() {
   summary.style.display = active === "beranda" ? "flex" : "none";
 
   if (active === "beranda") {
-    const tabs = visibleTabs().filter((t) => t.key !== "beranda");
-    const gridTabs = tabs.filter((t) => t.key !== "bukubesar");
-    const featureTabs = tabs.filter((t) => t.key === "bukubesar");
+    let html = `
+      <!-- Baris Pencarian -->
+      <div style="background: var(--glass-strong); border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; margin-bottom: 20px; border: 1px solid var(--glass-border);">
+        <span class="material-symbols-outlined" style="color: var(--text-muted); font-size: 20px;">search</span>
+        <input type="text" placeholder="Cari anggota, donasi, laporan..." style="background: transparent; border: none; outline: none; color: var(--text-primary); font-size: 13.5px; width: 100%;">
+      </div>
 
-    let html = `<div class="section-title">Akses Cepat Aplikasi</div><div class="quick-grid">`;
-    gridTabs.forEach((t) => {
-      html += `<button class="quick-card" onclick="setActive('${t.key}')">
-        <div class="quick-icon">${materialIconSpan(t.icon, { size: 22, color: TAB_ACCENTS[t.icon] || "var(--bento-primary)", fill: true })}</div>
-        <span class="quick-label">${t.label}</span>
-      </button>`;
-    });
-    featureTabs.forEach((t) => {
-      html += `<button class="feature-row" onclick="setActive('${t.key}')">
-        <div class="feature-row-left">
-          <div class="feature-row-icon">${materialIconSpan(t.icon, { size: 20 })}</div>
-          <div>
-            <span class="feature-row-title">${t.label}</span>
-            <span class="feature-row-sub">Akses materi digital</span>
+      <!-- Ringkasan Angka (Anak, Wilayah, Pengurus) -->
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+        <div style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); cursor: pointer;" onclick="setActive('pm')">
+          <span class="material-symbols-outlined" style="color: #60A5FA;">group</span>
+          <div><div style="font-size: 20px; font-weight: 700;">812</div><div style="font-size: 11px; color: var(--text-secondary);">Anak</div></div>
+        </div>
+        <div style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border);">
+          <span class="material-symbols-outlined" style="color: #C084FC;">location_on</span>
+          <div><div style="font-size: 20px; font-weight: 700;">12</div><div style="font-size: 11px; color: var(--text-secondary);">Wilayah</div></div>
+        </div>
+        <div style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); cursor: pointer;" onclick="handleUserMenuClick('pengurus')">
+          <span class="material-symbols-outlined" style="color: var(--bento-primary);">admin_panel_settings</span>
+          <div><div style="font-size: 20px; font-weight: 700;">24</div><div style="font-size: 11px; color: var(--text-secondary);">Pengurus</div></div>
+        </div>
+      </div>
+
+      <!-- Aktivitas Hari Ini -->
+      <div style="background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--glass-border);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <h3 style="font-size: 14px; font-weight: 600; margin: 0;">Aktivitas Hari Ini</h3>
+          <a href="#" style="font-size: 11.5px; color: var(--neon-blue); text-decoration: none;" onclick="showModal('Info', 'Fitur Log Aktivitas sedang dikembangkan.'); return false;">Lihat Semua</a>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(34, 197, 94, 0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800;">check</span></div>
+            <span style="font-size: 12.5px;">Donasi naik 12%</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(251, 191, 36, 0.15); color: #FBBF24; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800;">warning</span></div>
+            <span style="font-size: 12.5px;">3 wilayah belum update</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(59, 130, 246, 0.15); color: #60A5FA; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800;">lock</span></div>
+            <span style="font-size: 12.5px;">18 data perlu verifikasi</span>
           </div>
         </div>
-        <span class="material-symbols-outlined chevron">chevron_right</span>
-      </button>`;
-    });
-    html += `</div><div class="app-version-footer">YASSA Hub v${APP_VERSION}</div>`;
+      </div>
+
+      <!-- Aksi Cepat Menu Bawah -->
+      <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Aksi Cepat</h3>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 24px;">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="setActive('donasi')">
+          <div style="width: 50px; height: 50px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: var(--bento-primary);"><span class="material-symbols-outlined">add_box</span></div>
+          <span style="font-size: 10.5px; color: var(--text-secondary);">Donasi</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="setActive('pm')">
+          <div style="width: 50px; height: 50px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: #60A5FA;"><span class="material-symbols-outlined">person_add</span></div>
+          <span style="font-size: 10.5px; color: var(--text-secondary);">Anak</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="setActive('bukubesar')">
+          <div style="width: 50px; height: 50px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: #C084FC;"><span class="material-symbols-outlined">description</span></div>
+          <span style="font-size: 10.5px; color: var(--text-secondary);">Laporan</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="handleUserMenuClick('pengurus')">
+          <div style="width: 50px; height: 50px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: var(--bento-primary);"><span class="material-symbols-outlined">group_add</span></div>
+          <span style="font-size: 10.5px; color: var(--text-secondary);">Pengurus</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="showModal('Info', 'Fitur Scan QR sedang dikembangkan')">
+          <div style="width: 50px; height: 50px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: var(--neon-cyan);"><span class="material-symbols-outlined">qr_code_scanner</span></div>
+          <span style="font-size: 10.5px; color: var(--text-secondary);">QR Code</span>
+        </div>
+      </div>
+
+      <!-- Aktivitas Terbaru -->
+      <div style="background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--glass-border);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <h3 style="font-size: 14px; font-weight: 600; margin: 0;">Aktivitas Terbaru</h3>
+          <a href="#" style="font-size: 11.5px; color: var(--neon-blue); text-decoration: none;" onclick="showModal('Info', 'Fitur Riwayat sedang dikembangkan.'); return false;">Lihat Semua</a>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--glass); color: var(--bento-primary); display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 16px;">receipt_long</span></div>
+            <div style="flex: 1;"><div style="font-size: 12.5px; font-weight: 600;">Donasi ditambahkan</div><div style="font-size: 11px; color: var(--text-muted);">oleh Ahmad</div></div>
+            <span style="font-size: 11px; color: var(--text-muted);">09.30</span>
+          </div>
+          <div style="height: 1px; background: var(--glass-border);"></div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--glass); color: #60A5FA; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 16px;">person</span></div>
+            <div style="flex: 1;"><div style="font-size: 12.5px; font-weight: 600;">Anak baru didaftarkan</div></div>
+            <span style="font-size: 11px; color: var(--text-muted);">09.10</span>
+          </div>
+          <div style="height: 1px; background: var(--glass-border);"></div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--glass); color: #C084FC; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 16px;">location_on</span></div>
+            <div style="flex: 1;"><div style="font-size: 12.5px; font-weight: 600;">Wilayah Bandung update data</div></div>
+            <span style="font-size: 11px; color: var(--text-muted);">08.45</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="app-version-footer">YASSA Hub v${APP_VERSION}</div>
+    `;
     el.innerHTML = html;
     return;
   }
