@@ -375,17 +375,6 @@
   }
   .overlay-close:active { background: rgba(255,255,255,0.15); }
   .overlay iframe { flex: 1; width: 100%; border: none; background: #121A2F; }
-  
-  .overlay-mobile-nav {
-    display: flex;
-    background: rgba(15, 23, 42, 0.95);
-    backdrop-filter: blur(20px);
-    border-top: 1px solid var(--glass-border-strong);
-    padding: 10px 8px;
-    padding-bottom: env(safe-area-inset-bottom, 10px);
-    justify-content: space-around;
-  }
-  
   .akun-content { flex: 1; overflow-y: auto; padding: 20px; background: var(--bg-navy); }
   .akun-card { background: var(--glass-strong); backdrop-filter: blur(18px); border-radius: 18px; padding: 20px; box-shadow: 0 4px 24px rgba(0,0,0,0.35); border: 1px solid var(--glass-border); }
 
@@ -1056,7 +1045,6 @@
       <span class="overlay-title" id="overlayTitle">Aplikasi</span>
     </div>
     <iframe id="overlayFrame" src="about:blank" allow="camera; geolocation"></iframe>
-    <div class="overlay-mobile-nav" id="overlayMobileNav" style="display: none;"></div>
   </div>
 
   <!-- Halaman Penuh: Akun -->
@@ -1244,8 +1232,6 @@ const ICONS = {
   award: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
   mapPin: '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
   edit: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497Z"/><path d="m15 5 3 3"/>',
-  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
-  baby: '<path d="M9 12h.01"/><path d="M15 12h.01"/><path d="M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5"/><path d="M19 6.3a9 9 0 0 1 1.8 3.9 2 2 0 0 1 0 3.6 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.6A9 9 0 0 1 12 3c2 0 3.5.7 4.3 1.7"/><path d="M12 3c-1.5 0-3 1-3 1.5s1.5.5 3 .5 3-.5 3-1.5S13.5 3 12 3Z"/>',
 };
 
 function iconSvg(name, color, size) {
@@ -1364,11 +1350,10 @@ const MENUS = {
   mobile: {
     title: "YASSA Mobile",
     items: [
-      { label: "Beranda", icon: "home", color: "teal", url: "https://yassa-mobile.github.io/yassamobile/?embed=1&tab=home" },
-      { label: "Data KK", icon: "users", color: "blue", url: "https://yassa-mobile.github.io/yassamobile/?embed=1&tab=keluarga" },
-      { label: "Data Anak", icon: "baby", color: "coral", url: "https://yassa-mobile.github.io/yassamobile/?embed=1&tab=anak" },
-      { label: "Kontrol", icon: "shield", color: "purple", url: "https://yassa-mobile.github.io/yassamobile/?embed=1&tab=perisai" },
-      { label: "Profil", icon: "user", color: "amber", url: "https://yassa-mobile.github.io/yassamobile/?embed=1&tab=profil" },
+      // YASSA Mobile masih pakai sistem login & data sendiri (belum SSO dengan Hub),
+      // jadi cukup 1 item yang buka seluruh app-nya lewat iframe dengan ?embed=1
+      // (Mobile akan sembunyiin header/nav bawaannya sendiri saat embed=1).
+      { label: "Buka YASSA Mobile", icon: "phone", color: "teal", url: "https://yassa-mobile.github.io/yassamobile/?embed=1" },
     ],
   },
   pengaturan: { title: "Pengaturan" }, // dirender khusus lewat renderPengaturanPanel(), bukan menu-grid biasa
@@ -2635,42 +2620,7 @@ function openApp(index) {
   }
   document.getElementById("overlayTitle").textContent = item.label;
   document.getElementById("overlayFrame").src = resolvedUrl;
-  
-  // Deteksi jika yang dibuka adalah YASSA Mobile untuk menampilkan tab bawah
-  const overlayNav = document.getElementById("overlayMobileNav");
-  if (active === "mobile") {
-    overlayNav.style.display = "flex";
-    renderOverlayMobileNav(index);
-  } else {
-    overlayNav.style.display = "none";
-  }
-
   document.getElementById("overlay").classList.add("open");
-}
-
-function renderOverlayMobileNav(activeIndex) {
-  const el = document.getElementById("overlayMobileNav");
-  const items = MENUS.mobile.items;
-  let html = "";
-
-  items.forEach((item, i) => {
-    const isActive = i === activeIndex;
-    const color = isActive ? "var(--bento-primary)" : "var(--text-muted)";
-    const activeClass = isActive ? "active" : "";
-    const fontWeight = isActive ? "700" : "500";
-
-    // Gunakan fungsi iconSvg yang sudah ada di Hub.html
-    html += `
-      <button class="nav-btn ${activeClass}" onclick="openApp(${i})" style="flex: 1; background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer;">
-        <div class="nav-icon-wrap" style="color: ${color}">
-          ${iconSvg(item.icon, color, 24)}
-        </div>
-        <span class="nav-label" style="font-size: 10px; color: ${color}; font-weight: ${fontWeight};">${item.label}</span>
-      </button>
-    `;
-  });
-
-  el.innerHTML = html;
 }
 
 document.getElementById("overlayClose").addEventListener("click", function () {
