@@ -61,6 +61,8 @@
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
+  button, input, select, textarea { color: inherit; font-family: inherit; }
+
   html, body {
     margin: 0; padding: 0; background: var(--bg-navy-deep);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -121,7 +123,12 @@
     border-bottom: 1px solid var(--glass-border-strong);
     box-shadow: 0 8px 32px rgba(var(--bento-primary-rgb),0.15), inset 0 1px 0 rgba(255,255,255,0.08);
     position: relative;
+    transition: padding-bottom 0.2s ease;
   }
+  /* Padding bawah 50px hanya diperlukan di Beranda supaya summary-card bisa "mengambang"
+     menumpuk ke header. Di tab lain (App, Absensi, dll) tidak ada summary-card, jadi
+     header dipangkas biar tidak menyisakan area kosong yang membuatnya terlihat kegedean. */
+  .header.header-compact { padding-bottom: 22px; }
   .header-top { display: flex; justify-content: space-between; align-items: center; }
 
   .header-user { display: flex; align-items: center; gap: 12px; }
@@ -961,7 +968,7 @@
 <div id="app" style="display:none;">
 
   <!-- Bagian Header -->
-  <div class="header">
+  <div class="header" id="appHeader">
     <div class="header-top">
       <div class="header-user">
         <button class="header-logo-btn" onclick="toggleUserMenu()" aria-label="Menu Akun">
@@ -1591,6 +1598,7 @@ function renderContent() {
   el.classList.add("animate-fade-up");
 
   summary.style.display = active === "beranda" ? "flex" : "none";
+  document.getElementById("appHeader").classList.toggle("header-compact", active !== "beranda");
 
   if (active === "beranda") {
     let html = `
@@ -1700,7 +1708,7 @@ function renderContent() {
     let html = `
       <h2 style="text-align: center; font-weight: 600; font-size: 18px; margin-bottom: 24px; padding-top: 16px;">App</h2>
       <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
-        <button onclick="openApp(0)" style="background: var(--glass-strong); padding: 24px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; border: 1px solid var(--glass-border); cursor: pointer;">
+        <button onclick="setActive('donasi')" style="background: var(--glass-strong); padding: 24px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; border: 1px solid var(--glass-border); cursor: pointer;">
           <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(34, 197, 94, 0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center;">
             <span class="material-symbols-outlined" style="font-size: 32px; font-variation-settings: 'FILL' 1;">box</span>
           </div>
