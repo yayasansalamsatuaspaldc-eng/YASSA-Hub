@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>YASSA Hub</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#3B82F6">
+<meta name="theme-color" content="#121A2F">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -22,40 +22,40 @@
 
 <style>
   :root {
-    --bg-navy: #0F172A;
-    --bg-navy-deep: #0A101F;
-    --glass: rgba(255,255,255,0.045);
-    --glass-strong: rgba(255,255,255,0.08);
-    --glass-border: rgba(255,255,255,0.10);
-    --glass-border-strong: rgba(255,255,255,0.18);
+    --bg-navy: #121A2F;
+    --bg-navy-deep: #0B101E;
+    --glass: rgba(26,36,56,0.55);
+    --glass-strong: rgba(26,36,56,0.8);
+    --glass-border: rgba(255,255,255,0.06);
+    --glass-border-strong: rgba(255,255,255,0.14);
     --neon-blue: #3B82F6;
     --neon-cyan: #22D3EE;
     --neon-purple: #A855F7;
     --neon-pink: #EC4899;
     --neon-amber: #FBBF24;
-    --text-primary: #F1F5F9;
+    --text-primary: #F8FAFC;
     --text-secondary: #94A3B8;
     --text-muted: #64748B;
-    --danger: #F87171;
-    --success: #34D399;
-    --grad-primary: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
-    --grad-cool: linear-gradient(135deg, #22D3EE 0%, #3B82F6 60%, #A855F7 100%);
+    --danger: #EF4444;
+    --success: #22C55E;
+    --grad-primary: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
+    --grad-cool: linear-gradient(135deg, #22D3EE 0%, #22C55E 60%, #A855F7 100%);
     --shadow-deep: 0 20px 50px rgba(0,0,0,0.55);
-    --shadow-glow-blue: 0 0 0 1px rgba(59,130,246,0.15), 0 8px 28px rgba(59,130,246,0.18);
+    --shadow-glow-blue: 0 0 0 1px rgba(34,197,94,0.18), 0 8px 28px rgba(34,197,94,0.25);
     --shadow-glow-cyan: 0 0 0 1px rgba(34,211,238,0.18), 0 8px 28px rgba(34,211,238,0.18);
     --shadow-glow-purple: 0 0 0 1px rgba(168,85,247,0.18), 0 8px 28px rgba(168,85,247,0.18);
 
-    /* Palet baru bento/Material Symbols khusus Beranda (dan komponen bersama: header + bottom nav) */
-    --bento-primary: #4EDEA3;
-    --bento-primary-rgb: 78,222,163;
-    --bento-tertiary: #71A1FF;
-    --bento-tertiary-rgb: 113,161,255;
+    /* Palet bento/Material Symbols khusus Beranda (dan komponen bersama: header + bottom nav) — navy + hijau neon ala ui.txt */
+    --bento-primary: #22C55E;
+    --bento-primary-rgb: 34,197,94;
+    --bento-tertiary: #22D3EE;
+    --bento-tertiary-rgb: 34,211,238;
     --bento-secondary: #7EDC73;
     --bento-secondary-rgb: 126,220,115;
     --bento-amber: #FBBF24;
     --bento-amber-rgb: 251,191,36;
-    --bento-error: #F87171;
-    --bento-error-rgb: 248,113,113;
+    --bento-error: #EF4444;
+    --bento-error-rgb: 239,68,68;
     --bento-on-surface-variant: #9AA8C7;
   }
 
@@ -148,7 +148,7 @@
     height: 46px;
     border-radius: 50%;
     border: 2px solid rgba(var(--bento-primary-rgb),0.45);
-    background: #050810;
+    background: #0B101E;
     padding: 0;
     cursor: pointer;
     flex-shrink: 0;
@@ -328,7 +328,7 @@
   .user-menu-overlay.open { display: block; }
   .user-menu {
     position: absolute; top: 80px; left: 24px;
-    background: #131c2e; border-radius: 16px;
+    background: #1A2438; border-radius: 16px;
     border: 1px solid var(--glass-border-strong);
     box-shadow: var(--shadow-deep), var(--shadow-glow-purple);
     min-width: 200px; z-index: 21;
@@ -367,7 +367,7 @@
     transition: background 0.2s;
   }
   .overlay-close:active { background: rgba(255,255,255,0.15); }
-  .overlay iframe { flex: 1; width: 100%; border: none; background: #0F172A; }
+  .overlay iframe { flex: 1; width: 100%; border: none; background: #121A2F; }
   .akun-content { flex: 1; overflow-y: auto; padding: 20px; background: var(--bg-navy); }
   .akun-card { background: var(--glass-strong); backdrop-filter: blur(18px); border-radius: 18px; padding: 20px; box-shadow: 0 4px 24px rgba(0,0,0,0.35); border: 1px solid var(--glass-border); }
 
@@ -380,7 +380,7 @@
   }
   .custom-modal-overlay.open { display: flex; animation: fadeIn 0.2s forwards; }
   .custom-modal {
-    background: #131c2e; width: 85%; max-width: 320px; border-radius: 20px;
+    background: #1A2438; width: 85%; max-width: 320px; border-radius: 20px;
     padding: 24px; text-align: center; box-shadow: var(--shadow-deep), var(--shadow-glow-blue);
     border: 1px solid var(--glass-border-strong);
     transform: scale(0.9); transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -499,7 +499,7 @@
   }
   .user-form-overlay.open { display: flex; }
   .user-form-sheet {
-    width: 100%; max-width: 420px; background: #131c2e; border-radius: 20px 20px 0 0;
+    width: 100%; max-width: 420px; background: #1A2438; border-radius: 20px 20px 0 0;
     border-top: 1px solid var(--glass-border-strong);
     box-shadow: 0 -12px 40px rgba(0,0,0,0.5);
     padding: 22px 20px calc(20px + env(safe-area-inset-bottom, 0px)); max-height: 85vh; overflow-y: auto;
@@ -525,7 +525,7 @@
   }
   .force-pw-overlay.open { display: flex; }
   .force-pw-sheet {
-    width: 100%; max-width: 380px; background: #131c2e; border-radius: 20px;
+    width: 100%; max-width: 380px; background: #1A2438; border-radius: 20px;
     border: 1px solid var(--glass-border-strong);
     padding: 26px 22px; box-shadow: var(--shadow-deep), var(--shadow-glow-purple);
   }
@@ -610,7 +610,7 @@
         transparent 1px,
         transparent 10px
       ),
-      linear-gradient(135deg, #0F172A 0%, #1e3a8a 45%, #6d28d9 100%);
+      linear-gradient(135deg, #0B101E 0%, #14532D 45%, #052E16 100%);
     height: 35%;
     min-height: 250px;
     position: relative;
@@ -677,7 +677,7 @@
   .login-logo {
     width: 80px; height: 80px; border-radius: 50%; object-fit: contain;
     box-shadow: 0 0 30px rgba(34,211,238,0.4);
-    background: #050810;
+    background: #0B101E;
     padding: 6px;
     z-index: 10;
     border: 2px solid rgba(34,211,238,0.4);
@@ -840,14 +840,14 @@
 <!-- ============ SPLASH / LOADING AWAL ============ -->
 <div id="appSplash" class="app-splash">
   <svg viewBox="0 0 100 100" class="app-splash-logo" aria-label="YASSA Logo">
-    <circle cx="28" cy="38" r="6" fill="#4ca746"/>
-    <path d="M13 56 a 15 15 0 0 1 30 0" fill="none" stroke="#4ca746" stroke-width="5" stroke-linecap="round"/>
-    <circle cx="72" cy="38" r="6" fill="#4ca746"/>
-    <path d="M57 56 a 15 15 0 0 1 30 0" fill="none" stroke="#4ca746" stroke-width="5" stroke-linecap="round"/>
-    <circle cx="50" cy="28" r="7.5" fill="#4ca746"/>
-    <path d="M30 53 a 20 20 0 0 1 40 0" fill="none" stroke="#4ca746" stroke-width="6.5" stroke-linecap="round"/>
+    <circle cx="28" cy="38" r="6" fill="#22C55E"/>
+    <path d="M13 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="72" cy="38" r="6" fill="#22C55E"/>
+    <path d="M57 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="50" cy="28" r="7.5" fill="#22C55E"/>
+    <path d="M30 53 a 20 20 0 0 1 40 0" fill="none" stroke="#22C55E" stroke-width="6.5" stroke-linecap="round"/>
     <text x="50" y="76" font-family="'Inter', sans-serif" font-weight="900" font-size="24" text-anchor="middle" letter-spacing="-0.5">
-      <tspan fill="#ffffff">YAS</tspan><tspan fill="#4ca746">SA</tspan>
+      <tspan fill="#ffffff">YAS</tspan><tspan fill="#22C55E">SA</tspan>
     </text>
   </svg>
   <div class="app-splash-spinner"></div>
@@ -880,14 +880,14 @@
       <div style="position: absolute; width: 8px; height: 8px; background: #fff; border-radius: 50%; top: 70%; right: 20%; opacity: 0.2; animation: float 7s infinite 1s; z-index: 2;"></div>
 
       <svg viewBox="0 0 100 100" class="login-logo" aria-label="YASSA Logo">
-        <circle cx="28" cy="38" r="6" fill="#4ca746"/>
-        <path d="M13 56 a 15 15 0 0 1 30 0" fill="none" stroke="#4ca746" stroke-width="5" stroke-linecap="round"/>
-        <circle cx="72" cy="38" r="6" fill="#4ca746"/>
-        <path d="M57 56 a 15 15 0 0 1 30 0" fill="none" stroke="#4ca746" stroke-width="5" stroke-linecap="round"/>
-        <circle cx="50" cy="28" r="7.5" fill="#4ca746"/>
-        <path d="M30 53 a 20 20 0 0 1 40 0" fill="none" stroke="#4ca746" stroke-width="6.5" stroke-linecap="round"/>
+        <circle cx="28" cy="38" r="6" fill="#22C55E"/>
+        <path d="M13 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="72" cy="38" r="6" fill="#22C55E"/>
+        <path d="M57 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="50" cy="28" r="7.5" fill="#22C55E"/>
+        <path d="M30 53 a 20 20 0 0 1 40 0" fill="none" stroke="#22C55E" stroke-width="6.5" stroke-linecap="round"/>
         <text x="50" y="76" font-family="'Inter', sans-serif" font-weight="900" font-size="24" text-anchor="middle" letter-spacing="-0.5">
-          <tspan fill="#ffffff">YAS</tspan><tspan fill="#4ca746">SA</tspan>
+          <tspan fill="#ffffff">YAS</tspan><tspan fill="#22C55E">SA</tspan>
         </text>
       </svg>
       <!-- Title is optional here since it's already in the logo, but kept for balance -->
@@ -967,14 +967,14 @@
         <button class="header-logo-btn" onclick="toggleUserMenu()" aria-label="Menu Akun">
           <!-- LOGO SVG YASSA -->
           <svg viewBox="0 0 100 100" class="header-logo-svg" aria-label="YASSA Logo">
-            <circle cx="28" cy="38" r="6" fill="#4ca746"/>
-            <path d="M13 56 a 15 15 0 0 1 30 0" fill="none" stroke="#4ca746" stroke-width="5" stroke-linecap="round"/>
-            <circle cx="72" cy="38" r="6" fill="#4ca746"/>
-            <path d="M57 56 a 15 15 0 0 1 30 0" fill="none" stroke="#4ca746" stroke-width="5" stroke-linecap="round"/>
-            <circle cx="50" cy="28" r="7.5" fill="#4ca746"/>
-            <path d="M30 53 a 20 20 0 0 1 40 0" fill="none" stroke="#4ca746" stroke-width="6.5" stroke-linecap="round"/>
+            <circle cx="28" cy="38" r="6" fill="#22C55E"/>
+            <path d="M13 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="72" cy="38" r="6" fill="#22C55E"/>
+            <path d="M57 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="50" cy="28" r="7.5" fill="#22C55E"/>
+            <path d="M30 53 a 20 20 0 0 1 40 0" fill="none" stroke="#22C55E" stroke-width="6.5" stroke-linecap="round"/>
             <text x="50" y="76" font-family="'Inter', sans-serif" font-weight="900" font-size="24" text-anchor="middle" letter-spacing="-0.5">
-              <tspan fill="#ffffff">YAS</tspan><tspan fill="#4ca746">SA</tspan>
+              <tspan fill="#ffffff">YAS</tspan><tspan fill="#22C55E">SA</tspan>
             </text>
           </svg>
         </button>
