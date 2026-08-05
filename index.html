@@ -1688,14 +1688,45 @@ function loadBerandaStats() {
       const elP = document.getElementById("statTotalPengurus");
       if (elW) elW.textContent = data.totalWilayah;
       if (elP) elP.textContent = data.totalPengurus;
+
+      // Aktivitas Hari Ini -> Pengurus belum login lama
+      window._daftarPengurusBelumLoginLama = data.daftarPengurusBelumLoginLama || [];
+      const elAkt = document.getElementById("aktPengurusLamaText");
+      if (elAkt) {
+        const jumlah = data.totalPengurusBelumLoginLama || 0;
+        elAkt.textContent = jumlah > 0
+          ? jumlah + " pengurus belum login lama"
+          : "Semua pengurus aktif login";
+      }
     })
     .catch(function () {
       const elW = document.getElementById("statTotalWilayah");
       const elP = document.getElementById("statTotalPengurus");
       if (elW) elW.textContent = "-";
       if (elP) elP.textContent = "-";
+      const elAkt = document.getElementById("aktPengurusLamaText");
+      if (elAkt) elAkt.textContent = "Gagal memuat data pengurus";
     });
 }
+
+// Nampilin daftar nama pengurus yang belum login lama (dipanggil pas kartu
+// "Aktivitas Hari Ini" bagian pengurus di-klik). Pakai modal Info yang udah
+// ada di app ini (showModal), gak perlu bikin UI baru.
+function showDaftarPengurusBelumLoginLama() {
+  const daftar = window._daftarPengurusBelumLoginLama || [];
+  if (daftar.length === 0) {
+    showModal("Pengurus Belum Login Lama", "Semua pengurus aktif login dalam " + HARI_AMBANG_LOGIN_LAMA_FE + " hari terakhir.");
+    return;
+  }
+  const isiHtml = daftar
+    .map(function (p) {
+      const ket = p.hariBerlalu === null ? "belum pernah login" : (p.hariBerlalu + " hari lalu");
+      return "<div style=\"padding: 6px 0; border-bottom: 1px solid var(--glass-border);\">" + p.nama + " <span style=\"color: var(--text-muted); font-size: 11px;\">(" + ket + ")</span></div>";
+    })
+    .join("");
+  showModal("Pengurus Belum Login Lama", isiHtml);
+}
+const HARI_AMBANG_LOGIN_LAMA_FE = 14; // cuma buat teks di modal, samakan sama HARI_AMBANG_LOGIN_LAMA di backend
 
 function renderContent() {
   const el = document.getElementById("content");
@@ -1743,9 +1774,9 @@ function renderContent() {
             <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(34, 197, 94, 0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800;">check</span></div>
             <span style="font-size: 12.5px;">Donasi naik 12%</span>
           </div>
-          <div style="display: flex; align-items: center; gap: 12px;">
+          <div id="aktPengurusLamaWrap" style="display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="showDaftarPengurusBelumLoginLama()">
             <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(251, 191, 36, 0.15); color: #FBBF24; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800;">warning</span></div>
-            <span style="font-size: 12.5px;">3 wilayah belum update</span>
+            <span id="aktPengurusLamaText" style="font-size: 12.5px;">Memuat data pengurus…</span>
           </div>
           <div style="display: flex; align-items: center; gap: 12px;">
             <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(59, 130, 246, 0.15); color: #60A5FA; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800;">lock</span></div>
