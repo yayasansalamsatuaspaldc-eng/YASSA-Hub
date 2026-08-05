@@ -1786,29 +1786,26 @@ function renderContent() {
       </div>
 
       <!-- Aksi Cepat Menu Bawah -->
-      <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Aksi Cepat</h3>
+      <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Aksi Cepat Donasi</h3>
       <div style="display: flex; justify-content: space-between; margin-bottom: 24px;">
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="setActive('donasi')">
-          <div style="width: 50px; height: 50px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: var(--bento-primary);"><span class="material-symbols-outlined">add_box</span></div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="window.open('https://kitabisa.com/campaign/gojekbantuyatim', '_blank')">
+          <div style="width: 50px; height: 50px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: var(--bento-primary);"><span class="material-symbols-outlined">volunteer_activism</span></div>
           <span style="font-size: 10.5px; color: var(--text-secondary);">Donasi</span>
         </div>
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="setActive('pm')">
-          <div style="width: 50px; height: 50px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: #60A5FA;"><span class="material-symbols-outlined">person_add</span></div>
-          <span style="font-size: 10.5px; color: var(--text-secondary);">Anak</span>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="openAppUrl('https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/?embed=1&tab=input-kotak')">
+          <div style="width: 50px; height: 50px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: #FBBF24;"><span class="material-symbols-outlined">savings</span></div>
+          <span style="font-size: 10.5px; color: var(--text-secondary);">Kotak Gopay</span>
         </div>
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="setActive('bukubesar')">
-          <div style="width: 50px; height: 50px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: #C084FC;"><span class="material-symbols-outlined">description</span></div>
-          <span style="font-size: 10.5px; color: var(--text-secondary);">Laporan</span>
-        </div>
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="handleUserMenuClick('pengurus')">
-          <div style="width: 50px; height: 50px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: var(--bento-primary);"><span class="material-symbols-outlined">group_add</span></div>
-          <span style="font-size: 10.5px; color: var(--text-secondary);">Pengurus</span>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="openAppUrl('https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/?embed=1&tab=input-donasi')">
+          <div style="width: 50px; height: 50px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: #C084FC;"><span class="material-symbols-outlined">add_box</span></div>
+          <span style="font-size: 10.5px; color: var(--text-secondary);">Donasi</span>
         </div>
         <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="showModal('Info', 'Fitur Scan QR sedang dikembangkan')">
           <div style="width: 50px; height: 50px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: var(--neon-cyan);"><span class="material-symbols-outlined">qr_code_scanner</span></div>
           <span style="font-size: 10.5px; color: var(--text-secondary);">QR Code</span>
         </div>
       </div>
+
 
       <!-- Aktivitas Terbaru -->
       <div style="background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--glass-border);">
