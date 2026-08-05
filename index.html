@@ -1498,7 +1498,7 @@ function showLoginScreen() {
 function showApp() {
   document.getElementById("loginScreen").style.display = "none";
   document.getElementById("app").style.display = "flex";
-  document.getElementById("greetName").textContent = currentUser.nama || currentUser.email || currentUser.emailGoogle;
+  document.getElementById("greetName").textContent = currentUser.nama || currentUser.username || currentUser.email;
   document.getElementById("greetRole").textContent = "Selamat datang,";
 
   // Jabatan & Wilayah ditampilkan di bawah nama (dipisah titik kalau dua-duanya ada).
@@ -1631,8 +1631,7 @@ function onLoginSuccess(res) {
   authToken = res.token;
   currentUser = {
     username: res.username || "",
-    email: res.email,
-    emailGoogle: res.emailGoogle || "",
+    email: res.email || "",
     nama: res.nama,
     jabatan: res.jabatan || "",
     role: res.role,
@@ -2662,7 +2661,7 @@ function handleUserMenuClick(action) {
     const wilayahText = currentUser.wilayahAkses === "ALL" ? "Semua wilayah" : currentUser.wilayahAkses;
     const fotoProfil = currentUser.fotoUrl ? currentUser.fotoUrl : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
     const badgeLabel = currentUser.jabatan ? currentUser.jabatan : roleLabel(currentUser.role);
-    const kontakList = [currentUser.email, currentUser.emailGoogle].filter(Boolean);
+    const kontakList = [currentUser.username, currentUser.email].filter(Boolean);
 
     let infoRows = "";
     kontakList.forEach(function (k) {
@@ -2734,7 +2733,7 @@ function handleUserMenuClick(action) {
 }
 
 let userListCache = [];
-let editingEmail = null;
+let editingUserKey = null;
 
 // Bentuk bagan pengurus DIAMBIL OTOMATIS dari kolom Jabatan (bukan Role
 // akses sistem) — susunannya mengikuti bagan resmi YASSA:
@@ -3219,9 +3218,9 @@ function loadUserListIntoPanel() {
         return;
       }
       wrap.innerHTML = users.map(function (u, i) {
-        const initial = (u.nama || u.email || u.emailGoogle || "?").charAt(0).toUpperCase();
+        const initial = (u.nama || u.username || u.email || "?").charAt(0).toUpperCase();
         const wilayahText = u.wilayahAkses === "ALL" ? "Semua wilayah" : (u.wilayahAkses || "-");
-        const identText = [u.email, u.emailGoogle].filter(Boolean).map(escapeHtmlHub).join(" &middot; ");
+        const identText = [u.username, u.email].filter(Boolean).map(escapeHtmlHub).join(" &middot; ");
         const jabatanText = u.jabatan ? ' &middot; ' + escapeHtmlHub(u.jabatan) : '';
         return '<div class="user-row" onclick="openUserForm(' + i + ')">' +
           '<div class="user-row-avatar">' + initial + '</div>' +
@@ -3334,14 +3333,14 @@ document.addEventListener("click", function (e) {
 function openUserForm(indexOrNull) {
   const isEdit = indexOrNull !== null && indexOrNull !== undefined;
   const user = isEdit ? userListCache[indexOrNull] : null;
-  editingEmail = isEdit ? (user.email || user.emailGoogle) : null;
+  editingUserKey = isEdit ? (user.username || user.email) : null;
 
   document.getElementById("userFormTitle").textContent = isEdit ? "Edit User" : "Tambah User";
   document.getElementById("ufNama").value = isEdit ? user.nama : "";
   document.getElementById("ufJabatan").value = isEdit ? (user.jabatan || "") : "";
-  document.getElementById("ufEmail").value = isEdit ? (user.email || "") : "";
+  document.getElementById("ufEmail").value = isEdit ? (user.username || "") : "";
   document.getElementById("ufEmail").disabled = isEdit; 
-  document.getElementById("ufEmailGoogle").value = isEdit ? (user.emailGoogle || "") : "";
+  document.getElementById("ufEmailGoogle").value = isEdit ? (user.email || "") : "";
   document.getElementById("ufEmailGoogle").disabled = isEdit; 
   document.getElementById("ufPassword").placeholder = isEdit ? "Kosongkan kalau gak diubah" : "Minimal 6 karakter (kalau isi Username)";
   document.getElementById("ufPassword").required = false;
@@ -3363,7 +3362,7 @@ function openUserForm(indexOrNull) {
 
 function closeUserForm() {
   document.getElementById("userFormOverlay").classList.remove("open");
-  editingEmail = null;
+  editingUserKey = null;
 }
 
 function submitUserForm(event) {
@@ -3372,20 +3371,20 @@ function submitUserForm(event) {
   const data = {
     nama: document.getElementById("ufNama").value.trim(),
     jabatan: document.getElementById("ufJabatan").value.trim(),
-    email: document.getElementById("ufEmail").value.trim(),
-    emailGoogle: document.getElementById("ufEmailGoogle").value.trim(),
+    username: document.getElementById("ufEmail").value.trim(),
+    email: document.getElementById("ufEmailGoogle").value.trim(),
     password: document.getElementById("ufPassword").value,
     role: document.getElementById("ufRole").value,
     wilayahAkses: document.getElementById("ufWilayah").value.trim() || "ALL",
     bolehPrint: document.getElementById("ufPrint").checked,
   };
 
-  if (!editingEmail && !data.email && !data.emailGoogle) {
+  if (!editingUserKey && !data.username && !data.email) {
     showModal("Gagal", "Isi minimal salah satu: Username atau Email Google.");
     return;
   }
 
-  if (data.email && !data.email.startsWith("628")) {
+  if (data.username && !data.username.startsWith("628")) {
     showModal("Gagal", "Username harus diawali dengan 628 (dipakai juga sebagai nomor WA, contoh: 62812345678).");
     return;
   }
@@ -3393,15 +3392,15 @@ function submitUserForm(event) {
   btn.disabled = true;
   btn.textContent = "Menyimpan...";
 
-  const request = editingEmail
-    ? callGAS("updateUser", [authToken, editingEmail, data])
+  const request = editingUserKey
+    ? callGAS("updateUser", [authToken, editingUserKey, data])
     : callGAS("addUser", [authToken, data]);
 
   request
     .then(function () {
       closeUserForm();
       loadUserListIntoPanel();
-      showModal("Sukses", editingEmail ? "User berhasil diupdate." : "User baru berhasil ditambahkan.");
+      showModal("Sukses", editingUserKey ? "User berhasil diupdate." : "User baru berhasil ditambahkan.");
     })
     .catch(function (err) {
       showModal("Gagal", err.message);
@@ -3413,20 +3412,20 @@ function submitUserForm(event) {
 }
 
 function resetUserPassword() {
-  showModal("Reset Password", "Masukkan password baru buat " + editingEmail + " (minimal 6 karakter):", true, function() {
+  showModal("Reset Password", "Masukkan password baru buat " + editingUserKey + " (minimal 6 karakter):", true, function() {
       // In a real app we'd use a custom input modal here, but fallback to prompt for simplicity in this flow if we really need it
       const newPassword = prompt("Password Baru:");
       if (!newPassword) return;
-      callGAS("resetPassword", [authToken, editingEmail, newPassword])
+      callGAS("resetPassword", [authToken, editingUserKey, newPassword])
         .then(function () { showModal("Sukses", "Password berhasil direset."); })
         .catch(function (err) { showModal("Gagal", err.message); });
   });
 }
 
 function toggleUserStatus() {
-  const user = userListCache.find(function (u) { return u.email === editingEmail || u.emailGoogle === editingEmail; });
+  const user = userListCache.find(function (u) { return u.username === editingUserKey || u.email === editingUserKey; });
   const newStatus = String(user.status).toUpperCase() === "AKTIF" ? "NONAKTIF" : "AKTIF";
-  callGAS("setUserStatus", [authToken, editingEmail, newStatus])
+  callGAS("setUserStatus", [authToken, editingUserKey, newStatus])
     .then(function () {
       closeUserForm();
       loadUserListIntoPanel();
