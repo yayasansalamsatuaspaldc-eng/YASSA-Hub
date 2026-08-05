@@ -1993,12 +1993,32 @@ function openMobileApp() {
 // iframe Hub seperti biasa.
 // ============================================================
 function renderMobileNotifButton() {
-  const alreadyPrompted = localStorage.getItem("yassa_mobile_notif_prompted") === "1";
-  const label = alreadyPrompted ? "Aktifkan Ulang Notifikasi" : "Aktifkan Notifikasi";
+  const status = localStorage.getItem("yassa_mobile_notif_status"); // 'granted' | 'denied' | 'default' | 'error' | null
+
+  if (status === "granted") {
+    return `
+      <div style="width:100%; max-width:320px; padding:12px; border-radius:16px; background:rgba(34,197,94,0.12); color:var(--bento-primary); font-weight:600; font-size:12.5px; border:1px solid rgba(34,197,94,0.3); display:flex; align-items:center; justify-content:center; gap:6px;">
+        <span class="material-symbols-outlined" style="font-size:16px;">check_circle</span>
+        Notifikasi Aktif
+      </div>
+      <button onclick="openMobileAppForNotif()" style="background:none; border:none; color:var(--text-muted); font-size:10.5px; text-decoration:underline; cursor:pointer; margin-top:-4px;">Aktifkan ulang / ganti perangkat</button>`;
+  }
+
+  if (status === "denied") {
+    return `
+      <button onclick="openMobileAppForNotif()" style="width:100%; max-width:320px; padding:12px; border-radius:16px; background:rgba(239,68,68,0.12); color:#F87171; font-weight:600; font-size:12.5px; border:1px solid rgba(239,68,68,0.3); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+        <span class="material-symbols-outlined" style="font-size:16px;">notifications_off</span>
+        Notifikasi Diblokir — Coba Lagi
+      </button>
+      <div style="font-size:10.5px; color:var(--text-muted); text-align:center; max-width:280px; line-height:1.4; margin-top:-8px;">
+        Sepertinya izin notifikasi pernah ditolak. Aktifkan manual lewat pengaturan browser di halaman YASSA Mobile, atau tekan tombol ini lagi.
+      </div>`;
+  }
+
   return `
     <button onclick="openMobileAppForNotif()" style="width:100%; max-width:320px; padding:12px; border-radius:16px; background:transparent; color:var(--text-secondary); font-weight:600; font-size:12.5px; border:1px dashed var(--glass-border-strong); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
       <span class="material-symbols-outlined" style="font-size:16px;">notifications_active</span>
-      ${label}
+      Aktifkan Notifikasi
     </button>
     <div style="font-size:10.5px; color:var(--text-muted); text-align:center; max-width:280px; line-height:1.4; margin-top:-8px;">
       Membuka YASSA Mobile di tab baru untuk minta izin notifikasi.
@@ -2007,7 +2027,6 @@ function renderMobileNotifButton() {
 }
 
 function openMobileAppForNotif() {
-  localStorage.setItem("yassa_mobile_notif_prompted", "1");
   // Sengaja pakai window.open (top-level, BUKAN iframe overlay), karena
   // Notification.requestPermission() hanya boleh dipanggil dari konteks
   // top-level, tidak dari iframe cross-origin.
@@ -2017,6 +2036,18 @@ function openMobileAppForNotif() {
     "Tab baru YASSA Mobile sudah dibuka. Silakan login seperti biasa, lalu tekan \"Allow\" saat browser minta izin notifikasi. Setelah itu tab tersebut boleh ditutup — notifikasi akan tetap aktif meski selanjutnya kamu pakai YASSA Mobile lewat Hub."
   );
 }
+
+// Dengarkan laporan status notifikasi dari tab YASSA Mobile yang dibuka
+// lewat openMobileAppForNotif() (window.open, punya window.opener ke Hub
+// ini). Sengaja tidak membatasi event.origin secara ketat ke satu domain
+// supaya tetap jalan walau YASSA Mobile pindah domain/custom domain nanti;
+// validasi utama ada di e.data.type sebagai tanda pesan ini memang dari
+// YASSA Mobile, bukan skrip pihak ketiga sembarangan.
+window.addEventListener("message", function (e) {
+  if (!e.data || e.data.type !== "yassa-mobile-notif-status") return;
+  localStorage.setItem("yassa_mobile_notif_status", e.data.status);
+  if (active === "mobile") render();
+});
 
 function renderBottomNav() {
   const el = document.getElementById("bottomNav");
