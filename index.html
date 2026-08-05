@@ -1944,6 +1944,7 @@ function renderContent() {
           <span class="material-symbols-outlined" style="font-size:20px;">login</span>
           Masuk App
         </button>
+        ${renderMobileNotifButton()}
       </div>`;
     el.innerHTML = html;
     return;
@@ -1976,6 +1977,45 @@ function openMobileApp() {
   document.getElementById("overlayTitle").textContent = menu.title;
   document.getElementById("overlayFrame").src = menu.baseUrl;
   document.getElementById("overlay").classList.add("open");
+}
+
+// ============================================================
+// 🔔 Notifikasi YASSA Mobile lewat Hub
+// Browser (Chrome & Firefox) memang sengaja memblokir permintaan izin
+// notifikasi (Notification.requestPermission) kalau dipanggil dari
+// dalam iframe cross-origin, dan ini TIDAK bisa dibuka lewat atribut
+// allow="notifications" karena Notifications API tidak punya
+// Permissions Policy feature sama sekali (beda dari camera/geolocation).
+// Solusinya: buka YASSA Mobile di TAB BARU (top-level, bukan iframe)
+// sekali saja supaya browser mau menampilkan prompt izin notifikasi.
+// Setelah izin "granted" tersimpan utk origin yassa-mobile.github.io,
+// notifikasi akan tetap berfungsi walau selanjutnya dipakai lewat
+// iframe Hub seperti biasa.
+// ============================================================
+function renderMobileNotifButton() {
+  const alreadyPrompted = localStorage.getItem("yassa_mobile_notif_prompted") === "1";
+  const label = alreadyPrompted ? "Aktifkan Ulang Notifikasi" : "Aktifkan Notifikasi";
+  return `
+    <button onclick="openMobileAppForNotif()" style="width:100%; max-width:320px; padding:12px; border-radius:16px; background:transparent; color:var(--text-secondary); font-weight:600; font-size:12.5px; border:1px dashed var(--glass-border-strong); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+      <span class="material-symbols-outlined" style="font-size:16px;">notifications_active</span>
+      ${label}
+    </button>
+    <div style="font-size:10.5px; color:var(--text-muted); text-align:center; max-width:280px; line-height:1.4; margin-top:-8px;">
+      Membuka YASSA Mobile di tab baru untuk minta izin notifikasi.
+      Cukup dilakukan sekali per perangkat/browser.
+    </div>`;
+}
+
+function openMobileAppForNotif() {
+  localStorage.setItem("yassa_mobile_notif_prompted", "1");
+  // Sengaja pakai window.open (top-level, BUKAN iframe overlay), karena
+  // Notification.requestPermission() hanya boleh dipanggil dari konteks
+  // top-level, tidak dari iframe cross-origin.
+  window.open(MENUS.mobile.baseUrl, "_blank");
+  showModal(
+    "Aktifkan Notifikasi",
+    "Tab baru YASSA Mobile sudah dibuka. Silakan login seperti biasa, lalu tekan \"Allow\" saat browser minta izin notifikasi. Setelah itu tab tersebut boleh ditutup — notifikasi akan tetap aktif meski selanjutnya kamu pakai YASSA Mobile lewat Hub."
+  );
 }
 
 function renderBottomNav() {
