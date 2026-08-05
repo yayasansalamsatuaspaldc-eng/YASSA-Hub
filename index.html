@@ -1199,6 +1199,40 @@
     </div>
   </div>
 
+  <!-- Form Donasi Online via Midtrans -->
+  <div class="user-form-overlay" id="midtransFormOverlay" onclick="if(event.target===this) toggleMidtransForm()" style="align-items: flex-end;">
+    <div class="user-form-sheet" style="padding-bottom: 40px; border-radius: 24px 24px 0 0;">
+      <div style="width: 48px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 4px; margin: 0 auto 16px;"></div>
+      <h3 style="text-align: center; font-size: 16px; font-weight: 700; margin-bottom: 4px;">Donasi Online</h3>
+      <p style="text-align: center; font-size: 11.5px; color: var(--text-secondary); margin: 0 0 16px;">Bikin link pembayaran (QRIS/VA/kartu) buat dikirim ke donatur</p>
+
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+        <div>
+          <label style="font-size: 11.5px; color: var(--text-secondary); margin-bottom: 4px; display: block;">Nama Donatur</label>
+          <input type="text" id="midtransNama" placeholder="Nama donatur" style="width: 100%; background: var(--glass-strong); border: 1px solid var(--glass-border); border-radius: 10px; padding: 12px; color: var(--text-primary); font-size: 13.5px; box-sizing: border-box;">
+        </div>
+        <div>
+          <label style="font-size: 11.5px; color: var(--text-secondary); margin-bottom: 4px; display: block;">Nomor HP (opsional)</label>
+          <input type="tel" id="midtransTelepon" placeholder="08xxxxxxxxxx" style="width: 100%; background: var(--glass-strong); border: 1px solid var(--glass-border); border-radius: 10px; padding: 12px; color: var(--text-primary); font-size: 13.5px; box-sizing: border-box;">
+        </div>
+        <div>
+          <label style="font-size: 11.5px; color: var(--text-secondary); margin-bottom: 4px; display: block;">Email (opsional)</label>
+          <input type="email" id="midtransEmail" placeholder="email@contoh.com" style="width: 100%; background: var(--glass-strong); border: 1px solid var(--glass-border); border-radius: 10px; padding: 12px; color: var(--text-primary); font-size: 13.5px; box-sizing: border-box;">
+        </div>
+        <div>
+          <label style="font-size: 11.5px; color: var(--text-secondary); margin-bottom: 4px; display: block;">Nominal Donasi (Rp)</label>
+          <input type="number" id="midtransNominal" placeholder="Minimal 10000" min="10000" style="width: 100%; background: var(--glass-strong); border: 1px solid var(--glass-border); border-radius: 10px; padding: 12px; color: var(--text-primary); font-size: 13.5px; box-sizing: border-box;">
+        </div>
+      </div>
+
+      <div id="midtransFormError" style="display: none; color: #F87171; font-size: 12px; margin-bottom: 12px; text-align: center;"></div>
+
+      <button id="midtransSubmitBtn" style="width: 100%; padding: 14px; background: var(--bento-primary); border-radius: 12px; font-size: 14px; font-weight: 700; color: #052e16; border: none; cursor: pointer; margin-bottom: 10px;" onclick="submitMidtransDonation()">Buat Link Pembayaran</button>
+      <button style="width: 100%; padding: 14px; background: var(--glass); border-radius: 12px; font-size: 14px; font-weight: 600; color: var(--text-primary); border: 1px solid var(--glass-border); cursor: pointer;" onclick="toggleMidtransForm()">Batal</button>
+    </div>
+  </div>
+
+
 </div>
 
 <script>
@@ -1800,6 +1834,10 @@ function renderContent() {
           <div style="width: 50px; height: 50px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: #C084FC;"><span class="material-symbols-outlined">add_box</span></div>
           <span style="font-size: 10.5px; color: var(--text-secondary);">Donasi</span>
         </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="toggleMidtransForm()">
+          <div style="width: 50px; height: 50px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: #60A5FA;"><span class="material-symbols-outlined">credit_card</span></div>
+          <span style="font-size: 10.5px; color: var(--text-secondary);">Donasi Online</span>
+        </div>
         <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="showModal('Info', 'Fitur Scan QR sedang dikembangkan')">
           <div style="width: 50px; height: 50px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: var(--neon-cyan);"><span class="material-symbols-outlined">qr_code_scanner</span></div>
           <span style="font-size: 10.5px; color: var(--text-secondary);">QR Code</span>
@@ -2249,8 +2287,59 @@ function toggleInputSheet() {
   }
 }
 
+function toggleMidtransForm() {
+  document.getElementById('midtransFormOverlay').classList.toggle('open');
+  const err = document.getElementById('midtransFormError');
+  if (err) err.style.display = 'none';
+}
+
+function submitMidtransDonation() {
+  const nama = document.getElementById('midtransNama').value.trim();
+  const telepon = document.getElementById('midtransTelepon').value.trim();
+  const email = document.getElementById('midtransEmail').value.trim();
+  const nominal = Number(document.getElementById('midtransNominal').value);
+  const errEl = document.getElementById('midtransFormError');
+  const btn = document.getElementById('midtransSubmitBtn');
+
+  if (!nominal || nominal < 10000) {
+    errEl.textContent = 'Nominal donasi minimal Rp10.000.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Memproses…';
+
+  callGAS('createMidtransDonation', [authToken, { nama: nama, telepon: telepon, email: email, nominal: nominal }])
+    .then(function (res) {
+      toggleMidtransForm();
+      // Buka halaman pembayaran Midtrans di tab baru (bukan iframe, karena
+      // halaman Snap biasanya nolak dibuka lewat iframe/X-Frame-Options).
+      window.open(res.redirectUrl, '_blank');
+      showModal('Link Pembayaran Dibuat', 'Link pembayaran (' + res.env + ') sudah dibuka di tab baru. Kirim link itu ke donatur, atau salin dari tab tersebut.');
+      document.getElementById('midtransNama').value = '';
+      document.getElementById('midtransTelepon').value = '';
+      document.getElementById('midtransEmail').value = '';
+      document.getElementById('midtransNominal').value = '';
+    })
+    .catch(function (err) {
+      errEl.textContent = err.message || 'Gagal membuat link pembayaran.';
+      errEl.style.display = 'block';
+    })
+    .finally(function () {
+      btn.disabled = false;
+      btn.textContent = 'Buat Link Pembayaran';
+    });
+}
+
 function openAppUrl(url) {
-  toggleInputSheet();
+  // Selalu TUTUP sheet "Input Data" (bukan toggle), soalnya fungsi ini juga
+  // dipanggil dari tombol di luar sheet itu (misal Aksi Cepat Donasi di
+  // Beranda). Kalau pakai toggle, sheet yang tadinya tertutup malah kebuka
+  // bareng overlay iframe di bawah ini -- itu bug yang bikin "Kotak Gopay"
+  // kelihatan ngarah ke 2 pilihan sekaligus.
+  document.getElementById('inputOverlay').classList.remove('open');
   let resolvedUrl = url;
   if (authToken) {
     const sep = resolvedUrl.indexOf("?") === -1 ? "?" : "&";
