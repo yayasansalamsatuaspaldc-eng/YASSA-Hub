@@ -2814,7 +2814,9 @@ function pengurusCardHtml(u) {
       <div style="width: 100%; height: 44px; background: linear-gradient(135deg, var(--bento-primary), #0B7A45); position: relative;">
         <span style="position: absolute; top: 6px; right: 8px; font-size: 9px; font-weight: 700; letter-spacing: 0.03em; color: #fff; background: rgba(0,0,0,0.25); padding: 3px 8px; border-radius: 999px;">${escapeHtmlHub(badgeWilayah)}</span>
       </div>
-      <img src="${foto}" alt="" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid var(--bg-navy); margin-top: -32px; background: var(--bg-navy);">
+      <div style="width: 100%; height: 32px; position: relative;">
+        <img src="${foto}" alt="" style="position: absolute; top: -32px; left: 50%; transform: translateX(-50%); width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid var(--bg-navy); background: var(--bg-navy); z-index: 2;">
+      </div>
       <div style="padding: 10px 12px 14px; text-align: center; width: 100%;">
         <div style="font-size: 13.5px; font-weight: 700; margin-bottom: 2px;">${escapeHtmlHub(u.nama || "-")}</div>
         <div style="font-size: 11.5px; color: var(--bento-primary); font-weight: 600; margin-bottom: 10px;">${escapeHtmlHub(jabatanTxt)}</div>
