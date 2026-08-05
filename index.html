@@ -528,6 +528,26 @@
   .user-form-actions { display: flex; gap: 10px; margin-top: 18px; }
   .user-form-actions button { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 13.5px; font-weight: 700; cursor: pointer; }
 
+  .wilayah-dropdown { position: relative; }
+  .wilayah-dropdown-trigger {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    cursor: pointer; text-align: left; color: var(--text-primary);
+  }
+  .wilayah-dropdown-trigger span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wilayah-dropdown-panel {
+    display: none; position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 50;
+    max-height: 220px; overflow-y: auto; background: #1F2A44; border: 1.5px solid var(--glass-border-strong);
+    border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.45); padding: 6px;
+  }
+  .wilayah-dropdown-panel.open { display: block; }
+  .wilayah-option {
+    display: flex; align-items: center; gap: 9px; padding: 9px 8px; border-radius: 8px;
+    font-size: 13.5px; color: var(--text-primary); cursor: pointer;
+  }
+  .wilayah-option:hover { background: rgba(255,255,255,0.06); }
+  .wilayah-option input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--neon-cyan); flex-shrink: 0; }
+  .wilayah-option-divider { height: 1px; background: var(--glass-border-strong); margin: 4px 2px; }
+
   .force-pw-overlay {
     position: absolute; inset: 0; z-index: 1000; display: none;
     background: rgba(15,23,42,.92); backdrop-filter: blur(8px);
@@ -1105,8 +1125,15 @@
         </div>
         <div class="user-form-field">
           <label class="user-form-label">Akses Wilayah</label>
-          <input type="text" id="ufWilayah" class="user-form-input" placeholder="ALL, atau: Jakarta, Bandung, Bekasi">
-          <div class="user-form-hint">Isi <strong>ALL</strong> buat semua wilayah, atau nama wilayah dipisah koma (maks 3) buat dibatasi.</div>
+          <div class="wilayah-dropdown" id="ufWilayahDropdown">
+            <button type="button" class="user-form-input wilayah-dropdown-trigger" id="ufWilayahTrigger" onclick="toggleWilayahDropdown()">
+              <span id="ufWilayahText">Semua Wilayah</span>
+              <span class="material-symbols-outlined" style="font-size: 18px;">expand_more</span>
+            </button>
+            <div class="wilayah-dropdown-panel" id="ufWilayahPanel"></div>
+          </div>
+          <input type="hidden" id="ufWilayah" value="ALL">
+          <div class="user-form-hint">Pilih <strong>Semua Wilayah</strong>, atau centang wilayah tertentu (maks 3).</div>
         </div>
         <div class="user-form-field">
           <label class="user-form-checkbox">
@@ -2185,19 +2212,17 @@ function renderContent() {
 
   if (active === "profil") {
     const fotoProfil = currentUser.fotoUrl ? currentUser.fotoUrl : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
-    const badgeLabel = currentUser.jabatan ? currentUser.jabatan : roleLabel(currentUser.role);
     const wilayahTxt = String(currentUser.wilayahAkses || "").toUpperCase() === "ALL"
       ? "Semua Wilayah"
       : (currentUser.wilayahAkses || "-");
 
     let html = `
       <h2 style="text-align: center; font-weight: 600; font-size: 18px; margin-bottom: 24px; padding-top: 16px;">Profil</h2>
-      <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 24px;">
-        <div style="width: 96px; height: 96px; border-radius: 50%; overflow: hidden; border: 2px solid rgba(34, 197, 94, 0.3); margin-bottom: 12px; background: var(--bg-navy);">
+      <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 28px;">
+        <div style="width: 96px; height: 96px; border-radius: 50%; overflow: hidden; border: 2px solid rgba(34, 197, 94, 0.3); margin-bottom: 14px; background: var(--bg-navy);">
           <img src="${fotoProfil}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
         </div>
-        <h1 style="font-size: 20px; font-weight: 700;">${escapeHtmlHub(currentUser.nama)}</h1>
-        <p style="font-size: 14px; color: var(--text-secondary);">${escapeHtmlHub(badgeLabel)}</p>
+        <h1 style="font-size: 20px; font-weight: 700; margin: 0;">${escapeHtmlHub(currentUser.nama)}</h1>
       </div>
 
       <div style="background: var(--glass-strong); border-radius: 20px; margin-bottom: 16px; display: flex; flex-direction: column; border: 1px solid var(--glass-border);">
@@ -2818,7 +2843,7 @@ function buildPengurusPanelHtml() {
   });
 
   const gridHtml = hasil.length
-    ? '<div style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">' + hasil.map(pengurusCardHtml).join("") + '</div>'
+    ? '<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">' + hasil.map(pengurusCardHtml).join("") + '</div>'
     : '<div style="text-align:center;color:#94A3B8;font-size:13px;padding:24px 0;">Gak ada pengurus yang cocok dengan filter ini.</div>';
 
   return `
@@ -2850,7 +2875,7 @@ function onPengurusFilterChange(val) {
       return true;
     });
     const gridHtml = hasil.length
-      ? '<div style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">' + hasil.map(pengurusCardHtml).join("") + '</div>'
+      ? '<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">' + hasil.map(pengurusCardHtml).join("") + '</div>'
       : '<div style="text-align:center;color:#94A3B8;font-size:13px;padding:24px 0;">Gak ada pengurus yang cocok dengan filter ini.</div>';
     return '<div id="pengurusGridWrap">' + gridHtml + '</div>';
   })();
@@ -3218,6 +3243,92 @@ function escapeHtmlHub(str) {
   return String(str == null ? "" : str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+// ============================================================
+// DROPDOWN "AKSES WILAYAH" (multi-pilih: ALL atau maks 3 wilayah)
+// Daftar wilayahnya diambil dari sheet "Wilayah" lewat getWilayahList().
+// ============================================================
+let wilayahListCache = null;
+
+function loadWilayahListIfNeeded() {
+  if (wilayahListCache) return Promise.resolve(wilayahListCache);
+  return callGAS("getWilayahList", [])
+    .then(function (list) {
+      wilayahListCache = (list && list.length) ? list : [];
+      return wilayahListCache;
+    })
+    .catch(function () {
+      wilayahListCache = [];
+      return wilayahListCache;
+    });
+}
+
+function renderWilayahOptions(selectedValue) {
+  const panel = document.getElementById("ufWilayahPanel");
+  const isAll = !selectedValue || String(selectedValue).trim().toUpperCase() === "ALL";
+  const selectedList = isAll ? [] : String(selectedValue).split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+
+  let html = '<label class="wilayah-option">' +
+    '<input type="checkbox" id="ufWilayahAll" onchange="onWilayahAllToggle(this)"' + (isAll ? " checked" : "") + '>' +
+    '<span>Semua Wilayah</span></label>';
+
+  if (wilayahListCache.length) {
+    html += '<div class="wilayah-option-divider"></div>';
+    html += wilayahListCache.map(function (w) {
+      const checked = selectedList.indexOf(w) !== -1;
+      return '<label class="wilayah-option">' +
+        '<input type="checkbox" class="ufWilayahItem" value="' + escapeHtmlHub(w) + '"' +
+        (checked ? " checked" : "") + (isAll ? " disabled" : "") + ' onchange="onWilayahItemToggle()">' +
+        '<span>' + escapeHtmlHub(w) + '</span></label>';
+    }).join("");
+  } else {
+    html += '<div style="padding:8px;font-size:11.5px;color:var(--text-muted);">Belum ada data wilayah di sheet "Wilayah".</div>';
+  }
+
+  panel.innerHTML = html;
+  updateWilayahDisplay();
+}
+
+function onWilayahAllToggle(checkboxEl) {
+  document.querySelectorAll(".ufWilayahItem").forEach(function (item) {
+    item.disabled = checkboxEl.checked;
+    if (checkboxEl.checked) item.checked = false;
+  });
+  updateWilayahDisplay();
+}
+
+function onWilayahItemToggle() {
+  const checkedItems = Array.from(document.querySelectorAll(".ufWilayahItem:checked"));
+  if (checkedItems.length > 3) {
+    checkedItems[checkedItems.length - 1].checked = false;
+    showModal("Gagal", "Maksimal 3 wilayah buat 1 user.");
+    return;
+  }
+  updateWilayahDisplay();
+}
+
+function updateWilayahDisplay() {
+  const allEl = document.getElementById("ufWilayahAll");
+  const allChecked = allEl ? allEl.checked : true;
+  const checkedItems = Array.from(document.querySelectorAll(".ufWilayahItem:checked")).map(function (i) { return i.value; });
+  const value = allChecked ? "ALL" : checkedItems.join(",");
+  document.getElementById("ufWilayah").value = value || "ALL";
+  document.getElementById("ufWilayahText").textContent = allChecked
+    ? "Semua Wilayah"
+    : (checkedItems.length ? checkedItems.join(", ") : "Pilih wilayah…");
+}
+
+function toggleWilayahDropdown() {
+  document.getElementById("ufWilayahPanel").classList.toggle("open");
+}
+
+document.addEventListener("click", function (e) {
+  const dropdown = document.getElementById("ufWilayahDropdown");
+  const panel = document.getElementById("ufWilayahPanel");
+  if (dropdown && panel && !dropdown.contains(e.target)) {
+    panel.classList.remove("open");
+  }
+});
+
 function openUserForm(indexOrNull) {
   const isEdit = indexOrNull !== null && indexOrNull !== undefined;
   const user = isEdit ? userListCache[indexOrNull] : null;
@@ -3233,8 +3344,10 @@ function openUserForm(indexOrNull) {
   document.getElementById("ufPassword").placeholder = isEdit ? "Kosongkan kalau gak diubah" : "Minimal 6 karakter (kalau isi Username)";
   document.getElementById("ufPassword").required = false;
   document.getElementById("ufRole").value = isEdit ? user.role : "PENGURUS";
-  document.getElementById("ufWilayah").value = isEdit ? user.wilayahAkses : "ALL";
   document.getElementById("ufPrint").checked = isEdit ? String(user.bolehPrint).toUpperCase() === "TRUE" : false;
+  loadWilayahListIfNeeded().then(function () {
+    renderWilayahOptions(isEdit ? user.wilayahAkses : "ALL");
+  });
 
   const dangerZone = document.getElementById("ufDangerZone");
   dangerZone.style.display = isEdit ? "flex" : "none";
