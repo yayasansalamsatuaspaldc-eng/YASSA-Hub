@@ -2761,9 +2761,13 @@ function showProfileQR() {
     const nama = currentUser.nama || "Pengurus";
     const telp = currentUser.username || ""; 
     const jabatan = currentUser.jabatan || roleLabel(currentUser.role);
+    const wilayah = String(currentUser.wilayahAkses || "").toUpperCase() === "ALL" 
+      ? "Semua Wilayah" 
+      : (currentUser.wilayahAkses || "-");
     
-    // Format vCard standar agar donatur/rekan bisa langsung save kontak ke HP
-    const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${nama}\nTITLE:${jabatan}\nTEL;TYPE=CELL:${telp}\nORG:YASSA Hub\nEND:VCARD`;
+    // Format vCard standar. Ditambahkan parameter NOTE (Catatan) berisi Jabatan & Wilayah
+    // agar data tersebut PASTI muncul di layar semua jenis scanner (termasuk Google Lens)
+    const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${nama}\nTITLE:${jabatan}\nORG:YASSA Hub\nTEL;TYPE=CELL:${telp}\nNOTE:Jabatan: ${jabatan} | Wilayah: ${wilayah}\nEND:VCARD`;
     
     // Menggunakan QuickChart API untuk render QR (stabil dan aman tanpa library tambahan)
     const qrUrl = "https://quickchart.io/qr?size=250&margin=2&text=" + encodeURIComponent(vcard);
