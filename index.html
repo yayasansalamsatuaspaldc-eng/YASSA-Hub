@@ -2685,18 +2685,16 @@ function handleUserMenuClick(action) {
         document.getElementById("akunContent").innerHTML = '<div class="akun-card">' + kontenProfil + '</div>';
         document.getElementById("akunPage").classList.add("open");
       } else if (action === "pengurus") {
-        document.querySelector('#akunPage .overlay-title').textContent = "Susunan Pengurus";
+        document.querySelector('#akunPage .overlay-title').textContent = "Struktur Pengurus";
         document.getElementById("akunContent").innerHTML = '<div style="text-align:center;color:#94A3B8;font-size:13px;padding:20px 0;">Memuat data pengurus...</div>';
         document.getElementById("akunPage").classList.add("open");
 
         callGAS("getPengurusList", [authToken])
           .then(function (list) {
-            if (!list.length) {
-              document.getElementById("akunContent").innerHTML = '<div style="text-align:center;color:#94A3B8;font-size:13px;padding:20px 0;">Belum ada data pengurus.</div>';
-              return;
-            }
-            document.getElementById("akunContent").innerHTML = buildOrgChartHtml(list);
-            fitOrgChartToScreen();
+            pengurusListCache = list;
+            pengurusSearchTerm = "";
+            pengurusFilterWilayah = defaultPengurusWilayahFilter();
+            document.getElementById("akunContent").innerHTML = buildPengurusPanelHtml();
           })
           .catch(function (err) {
             document.getElementById("akunContent").innerHTML = '<div style="text-align:center;color:#F87171;font-size:13px;padding:20px 0;">Gagal memuat: ' + escapeHtmlHub(err.message) + '</div>';
@@ -2726,6 +2724,143 @@ let editingEmail = null;
 // 6 Korwil DKI + turunannya masing-masing. Jabatan dicocokkan tanpa
 // peduli besar-kecil huruf/spasi, jadi isi kolom Jabatan di form User
 // cukup salah satu dari alias di bawah.
+// ============================================================
+// STRUKTUR PENGURUS -- tampilan grid kartu per wilayah (ganti bagan
+// pohon lama). Defaultnya kefilter otomatis sesuai wilayahAkses user
+// yang login (mis. user dgn akses "BOGOR" pas buka langsung kefilter ke
+// BOGOR aja), tapi user tetap bisa ganti dropdown wilayah kalau mau
+// lihat wilayah lain (berguna buat user dgn akses "ALL"/lebih dari 1
+// wilayah). Data diambil dari getPengurusList() yang sama kayak
+// sebelumnya, cuma sekarang backend juga ngirim "username" (nomor WA)
+// biar tombol "Hubungi WA" bisa langsung buka wa.me.
+// ============================================================
+let pengurusListCache = [];
+let pengurusFilterWilayah = "SEMUA";
+let pengurusSearchTerm = "";
+
+// Wilayah default yang ditampilin pas panel dibuka -- ambil dari wilayah
+// akses user yang login. "ALL" atau kosong -> tampilin semua wilayah.
+// Kalau user punya lebih dari 1 wilayah (dipisah koma), dipakai yang
+// pertama sebagai default (user tetap bisa ganti manual lewat dropdown).
+function defaultPengurusWilayahFilter() {
+  const wa = String((currentUser && currentUser.wilayahAkses) || "ALL").trim().toUpperCase();
+  if (wa === "ALL" || wa === "") return "SEMUA";
+  const first = wa.split(",")[0].trim();
+  return first || "SEMUA";
+}
+
+// Daftar nama wilayah unik, diambil dari data pengurus itu sendiri (bukan
+// query terpisah), jadi dropdown filter otomatis nyesuain -- cuma
+// nampilin wilayah yang beneran ada pengurusnya.
+function daftarWilayahDariPengurus(list) {
+  const set = {};
+  list.forEach(function (u) {
+    const wa = String(u.wilayahAkses || "").trim().toUpperCase();
+    if (!wa || wa === "ALL") return;
+    wa.split(",").forEach(function (w) {
+      w = w.trim();
+      if (w) set[w] = true;
+    });
+  });
+  return Object.keys(set).sort();
+}
+
+function pengurusCocokFilter(u, filterWilayah) {
+  if (filterWilayah === "SEMUA") return true;
+  const wa = String(u.wilayahAkses || "").trim().toUpperCase();
+  if (wa === "ALL") return true; // user dgn akses semua wilayah dianggap relevan di wilayah manapun
+  return wa.split(",").map(function (w) { return w.trim(); }).indexOf(filterWilayah) !== -1;
+}
+
+function waLinkPengurus(username) {
+  const digits = String(username || "").replace(/[^0-9]/g, "");
+  return digits ? "https://wa.me/" + digits : "";
+}
+
+function pengurusCardHtml(u) {
+  const foto = u.fotoUrl ? u.fotoUrl : FOTO_DEFAULT;
+  const waUrl = waLinkPengurus(u.username);
+  const badgeWilayah = String(u.wilayahAkses || "").trim().toUpperCase() === "ALL"
+    ? "SEMUA"
+    : String(u.wilayahAkses || "-").split(",")[0].trim();
+  const jabatanTxt = u.jabatan || roleLabel(u.role);
+  return `
+    <div style="background: var(--glass-strong); border: 1px solid var(--glass-border); border-radius: 18px; overflow: hidden; display: flex; flex-direction: column; align-items: center;">
+      <div style="width: 100%; height: 44px; background: linear-gradient(135deg, var(--bento-primary), #0B7A45); position: relative;">
+        <span style="position: absolute; top: 6px; right: 8px; font-size: 9px; font-weight: 700; letter-spacing: 0.03em; color: #fff; background: rgba(0,0,0,0.25); padding: 3px 8px; border-radius: 999px;">${escapeHtmlHub(badgeWilayah)}</span>
+      </div>
+      <img src="${foto}" alt="" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid var(--bg-navy); margin-top: -32px; background: var(--bg-navy);">
+      <div style="padding: 10px 12px 14px; text-align: center; width: 100%;">
+        <div style="font-size: 13.5px; font-weight: 700; margin-bottom: 2px;">${escapeHtmlHub(u.nama || "-")}</div>
+        <div style="font-size: 11.5px; color: var(--bento-primary); font-weight: 600; margin-bottom: 10px;">${escapeHtmlHub(jabatanTxt)}</div>
+        ${waUrl
+          ? `<a href="${waUrl}" target="_blank" rel="noopener" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; border-radius: 10px; background: rgba(34,197,94,0.12); color: var(--bento-primary); font-size: 11.5px; font-weight: 600; text-decoration: none;">
+              <span class="material-symbols-outlined" style="font-size: 14px;">chat</span> Hubungi WA
+            </a>`
+          : `<div style="padding: 8px; border-radius: 10px; background: var(--glass-border); color: var(--text-muted); font-size: 11px;">Nomor belum diisi</div>`
+        }
+      </div>
+    </div>`;
+}
+
+function buildPengurusPanelHtml() {
+  const daftarWilayah = daftarWilayahDariPengurus(pengurusListCache);
+  const optionsHtml = ['<option value="SEMUA"' + (pengurusFilterWilayah === "SEMUA" ? " selected" : "") + '>Semua Wilayah</option>']
+    .concat(daftarWilayah.map(function (w) {
+      return '<option value="' + escapeHtmlHub(w) + '"' + (pengurusFilterWilayah === w ? " selected" : "") + '>' + escapeHtmlHub(w) + '</option>';
+    })).join("");
+
+  const search = pengurusSearchTerm.trim().toLowerCase();
+  const hasil = pengurusListCache.filter(function (u) {
+    if (!pengurusCocokFilter(u, pengurusFilterWilayah)) return false;
+    if (search && String(u.nama || "").toLowerCase().indexOf(search) === -1) return false;
+    return true;
+  });
+
+  const gridHtml = hasil.length
+    ? '<div style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">' + hasil.map(pengurusCardHtml).join("") + '</div>'
+    : '<div style="text-align:center;color:#94A3B8;font-size:13px;padding:24px 0;">Gak ada pengurus yang cocok dengan filter ini.</div>';
+
+  return `
+    <p style="text-align:center; font-size: 12.5px; color: var(--text-secondary); margin: -4px 0 16px;">Database valid struktural perwakilan regional Yayasan.</p>
+    <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+      <div style="flex: 1;">
+        <label style="display:block; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; color: var(--text-muted); margin-bottom: 6px;">FILTER WILAYAH</label>
+        <select onchange="onPengurusFilterChange(this.value)" style="width: 100%; padding: 10px 12px; border-radius: 12px; background: var(--bg-navy); border: 1px solid var(--glass-border-strong); color: var(--text-primary); font-size: 13px;">
+          ${optionsHtml}
+        </select>
+      </div>
+      <div style="flex: 1;">
+        <label style="display:block; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; color: var(--text-muted); margin-bottom: 6px;">CARI NAMA</label>
+        <input type="text" value="${escapeHtmlHub(pengurusSearchTerm)}" oninput="onPengurusSearchInput(this.value)" placeholder="Ketik nama..." style="width: 100%; padding: 10px 12px; border-radius: 12px; background: var(--bg-navy); border: 1px solid var(--glass-border-strong); color: var(--text-primary); font-size: 13px;">
+      </div>
+    </div>
+    <div id="pengurusGridWrap">${gridHtml}</div>
+  `;
+}
+
+function onPengurusFilterChange(val) {
+  pengurusFilterWilayah = val;
+  document.getElementById("pengurusGridWrap").outerHTML = (function () {
+    const daftarWilayah = daftarWilayahDariPengurus(pengurusListCache);
+    const search = pengurusSearchTerm.trim().toLowerCase();
+    const hasil = pengurusListCache.filter(function (u) {
+      if (!pengurusCocokFilter(u, pengurusFilterWilayah)) return false;
+      if (search && String(u.nama || "").toLowerCase().indexOf(search) === -1) return false;
+      return true;
+    });
+    const gridHtml = hasil.length
+      ? '<div style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">' + hasil.map(pengurusCardHtml).join("") + '</div>'
+      : '<div style="text-align:center;color:#94A3B8;font-size:13px;padding:24px 0;">Gak ada pengurus yang cocok dengan filter ini.</div>';
+    return '<div id="pengurusGridWrap">' + gridHtml + '</div>';
+  })();
+}
+
+function onPengurusSearchInput(val) {
+  pengurusSearchTerm = val;
+  onPengurusFilterChange(pengurusFilterWilayah);
+}
+
 const ORG_CHART_TREE = {
   aliases: ["pembimbing", "dewan pembimbing"], label: "Pembimbing",
   children: [
