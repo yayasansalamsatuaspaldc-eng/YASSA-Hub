@@ -1013,7 +1013,7 @@
     <div class="summary-sub-row">
       <div class="summary-sub-icon"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">face</span></div>
       <div class="summary-sub-label">Anak Terdaftar</div>
-      <div class="summary-sub-value" id="summaryAnakTerdaftar">812</div>
+      <div class="summary-sub-value" id="summaryAnakTerdaftar">…</div>
     </div>
   </div>
 
@@ -1209,6 +1209,10 @@ const APP_BUILD_DATE = "2026-08-02";
 // KONFIGURASI AUTH — GANTI 2 nilai di bawah setelah Code.gs di-deploy
 // =================================================================================
 const GAS_AUTH_URL = "https://script.google.com/macros/s/AKfycbw0I5I6JiDSPJWiwYSsyY52lTcFFu1aSPsa0cPtQjhXGqXQjnf603kIQudX6o0lieaKNw/exec";
+// URL Web App YASSA Mobile -- dipakai buat ambil statistik publik (Total
+// Anak) lewat action 'getPublicStats', TANPA perlu login/token, karena
+// yang diambil cuma 1 angka agregat, bukan data pribadi apapun.
+const GAS_MOBILE_URL = "https://script.google.com/macros/s/AKfycbzAcz0lUypjUnzSIdpmsyg6KZNYQ3OATwnRNZchR7ukFo9-qZMlh3Wr8Tz8nQr0qUj2/exec";
 const GOOGLE_CLIENT_ID = "486322853600-bi8cq6k50ajcue26t3sss20mfqmg8me4.apps.googleusercontent.com";
 
 const ICONS = {
@@ -1643,6 +1647,56 @@ function render() {
   renderBottomNav();
 }
 
+// ============================================================
+// Ambil angka ASLI buat kartu Ringkasan Beranda (Anak, Wilayah, Pengurus):
+//   - Total Anak    -> dari YASSA Mobile (sheet "Anak", lewat action publik
+//                       'getPublicStats', gak butuh login/token karena cuma
+//                       balikin 1 angka agregat, bukan data pribadi).
+//   - Total Wilayah -> dihitung dari kolom WilayahAkses tiap user AKTIF di
+//                       sheet Akun Hub (nama wilayah unik, "ALL" gak dihitung).
+//   - Total Pengurus-> jumlah baris user AKTIF di sheet Akun Hub (1 Nama = 1 pengurus).
+// Dipanggil tiap kali tab Beranda dibuka. Kalau salah satu gagal (mis.
+// jaringan/Mobile down), yang lain tetap jalan -- gak saling blokir.
+// ============================================================
+function loadBerandaStats() {
+  // Total Anak (dari YASSA Mobile)
+  fetch(GAS_MOBILE_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },
+    body: JSON.stringify({ action: "getPublicStats" }),
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (res) {
+      if (!res || !res.success || !res.data) throw new Error("gagal");
+      const totalAnak = res.data.totalAnak;
+      const elA = document.getElementById("statTotalAnak");
+      const elB = document.getElementById("summaryAnakTerdaftar");
+      if (elA) elA.textContent = totalAnak;
+      if (elB) elB.textContent = totalAnak;
+    })
+    .catch(function () {
+      const elA = document.getElementById("statTotalAnak");
+      const elB = document.getElementById("summaryAnakTerdaftar");
+      if (elA) elA.textContent = "-";
+      if (elB) elB.textContent = "-";
+    });
+
+  // Total Wilayah & Total Pengurus (dari sheet Akun Hub sendiri)
+  callGAS("getDashboardStats", [authToken])
+    .then(function (data) {
+      const elW = document.getElementById("statTotalWilayah");
+      const elP = document.getElementById("statTotalPengurus");
+      if (elW) elW.textContent = data.totalWilayah;
+      if (elP) elP.textContent = data.totalPengurus;
+    })
+    .catch(function () {
+      const elW = document.getElementById("statTotalWilayah");
+      const elP = document.getElementById("statTotalPengurus");
+      if (elW) elW.textContent = "-";
+      if (elP) elP.textContent = "-";
+    });
+}
+
 function renderContent() {
   const el = document.getElementById("content");
   const summary = document.getElementById("summaryCard");
@@ -1666,15 +1720,15 @@ function renderContent() {
       <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
         <div style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); cursor: pointer;" onclick="setActive('pm')">
           <span class="material-symbols-outlined" style="color: #60A5FA;">group</span>
-          <div><div style="font-size: 20px; font-weight: 700;">812</div><div style="font-size: 11px; color: var(--text-secondary);">Anak</div></div>
+          <div><div style="font-size: 20px; font-weight: 700;" id="statTotalAnak">…</div><div style="font-size: 11px; color: var(--text-secondary);">Anak</div></div>
         </div>
         <div style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border);">
           <span class="material-symbols-outlined" style="color: #C084FC;">location_on</span>
-          <div><div style="font-size: 20px; font-weight: 700;">12</div><div style="font-size: 11px; color: var(--text-secondary);">Wilayah</div></div>
+          <div><div style="font-size: 20px; font-weight: 700;" id="statTotalWilayah">…</div><div style="font-size: 11px; color: var(--text-secondary);">Wilayah</div></div>
         </div>
         <div style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); cursor: pointer;" onclick="handleUserMenuClick('pengurus')">
           <span class="material-symbols-outlined" style="color: var(--bento-primary);">admin_panel_settings</span>
-          <div><div style="font-size: 20px; font-weight: 700;">24</div><div style="font-size: 11px; color: var(--text-secondary);">Pengurus</div></div>
+          <div><div style="font-size: 20px; font-weight: 700;" id="statTotalPengurus">…</div><div style="font-size: 11px; color: var(--text-secondary);">Pengurus</div></div>
         </div>
       </div>
 
@@ -1755,6 +1809,7 @@ function renderContent() {
     `;
     html += `<div class="app-version-footer">YASSA Hub v${APP_VERSION}</div>`;
     el.innerHTML = html;
+    loadBerandaStats();
     return;
   }
 
