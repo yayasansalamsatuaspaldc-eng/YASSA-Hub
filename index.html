@@ -132,8 +132,10 @@
   .header-top { display: flex; justify-content: space-between; align-items: center; }
 
   .header-user { display: flex; align-items: center; gap: 12px; }
+  .header-org-name { font-size: 10.5px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; opacity: 0.65; color: var(--text-secondary); margin-bottom: 3px; }
   .header-greet-sub { font-size: 13px; font-weight: 400; opacity: 0.85; margin-bottom: 2px; color: var(--text-secondary); }
   .header-greet-name { font-size: 19px; font-weight: 700; letter-spacing: -0.3px; color: var(--text-primary); }
+  .header-greet-meta { font-size: 12px; font-weight: 500; opacity: 0.8; color: var(--text-secondary); margin-top: 2px; }
 
   .bell {
     width: 42px;
@@ -168,6 +170,7 @@
   }
   .header-logo-btn:active { transform: scale(0.92); }
   .header-logo-svg { width: 90%; height: 90%; display: block; }
+  .header-avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
   .summary-card {
     margin: -30px 20px 0;
@@ -972,8 +975,11 @@
     <div class="header-top">
       <div class="header-user">
         <button class="header-logo-btn" onclick="toggleUserMenu()" aria-label="Menu Akun">
-          <!-- LOGO SVG YASSA -->
-          <svg viewBox="0 0 100 100" class="header-logo-svg" aria-label="YASSA Logo">
+          <!-- Foto profil user yang login (ditampilkan lewat JS kalau ada). Kalau
+               kosong / gagal dimuat, otomatis fallback ke logo YASSA di bawahnya. -->
+          <img id="headerAvatarImg" class="header-avatar-img" alt="Foto Profil" style="display:none;">
+          <!-- LOGO SVG YASSA (fallback default kalau user gak punya foto profil) -->
+          <svg id="headerLogoSvg" viewBox="0 0 100 100" class="header-logo-svg" aria-label="YASSA Logo">
             <circle cx="28" cy="38" r="6" fill="#22C55E"/>
             <path d="M13 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
             <circle cx="72" cy="38" r="6" fill="#22C55E"/>
@@ -986,8 +992,10 @@
           </svg>
         </button>
         <div>
+          <div class="header-org-name" id="greetOrg">Yayasan Salam Satu Aspal</div>
           <div class="header-greet-sub" id="greetRole">Selamat datang,</div>
           <div class="header-greet-name" id="greetName">Pengurus YASSA</div>
+          <div class="header-greet-meta" id="greetMeta"></div>
         </div>
       </div>
       <div class="bell" onclick="showModal('Notifikasi', 'Tidak ada notifikasi baru hari ini.')">
@@ -1427,10 +1435,46 @@ function showApp() {
   document.getElementById("loginScreen").style.display = "none";
   document.getElementById("app").style.display = "flex";
   document.getElementById("greetName").textContent = currentUser.nama || currentUser.email || currentUser.emailGoogle;
-  document.getElementById("greetRole").textContent = "Selamat datang, " + (currentUser.jabatan ? currentUser.jabatan : roleLabel(currentUser.role));
+  document.getElementById("greetRole").textContent = "Selamat datang,";
+
+  // Jabatan & Wilayah ditampilkan di bawah nama (dipisah titik kalau dua-duanya ada).
+  const jabatanTxt = currentUser.jabatan || roleLabel(currentUser.role);
+  const wilayahTxt = String(currentUser.wilayahAkses || "").toUpperCase() === "ALL"
+    ? "Semua Wilayah"
+    : (currentUser.wilayahAkses || "");
+  document.getElementById("greetMeta").textContent = [jabatanTxt, wilayahTxt].filter(Boolean).join(" • ");
+
+  updateHeaderAvatar();
+
   document.getElementById("userMenuPengaturanBtn").style.display = currentUser.role === "SUPERADMIN" ? "flex" : "none";
   active = "beranda";
   render();
+}
+
+// Tampilkan foto profil user yang login di tombol logo header. Kalau user
+// gak punya foto (fotoUrl kosong) ATAU fotonya gagal dimuat (link putus,
+// dst), otomatis balik ke logo YASSA seperti semula.
+function updateHeaderAvatar() {
+  const img = document.getElementById("headerAvatarImg");
+  const svg = document.getElementById("headerLogoSvg");
+  const foto = currentUser && currentUser.fotoUrl ? String(currentUser.fotoUrl).trim() : "";
+
+  if (!foto) {
+    img.style.display = "none";
+    img.removeAttribute("src");
+    svg.style.display = "block";
+    return;
+  }
+
+  img.onerror = function () {
+    img.style.display = "none";
+    svg.style.display = "block";
+  };
+  img.onload = function () {
+    img.style.display = "block";
+    svg.style.display = "none";
+  };
+  img.src = foto;
 }
 
 function roleLabel(role) {
@@ -2723,6 +2767,7 @@ function uploadFoto(input) {
         sessionStorage.setItem("yassa_user", JSON.stringify(currentUser));
         const avatarImg = document.querySelector("#akunContent .profile-avatar");
         if (avatarImg) avatarImg.src = res.fotoUrl;
+        updateHeaderAvatar();
         labelUpload.style.opacity = "1";
         labelUpload.style.pointerEvents = "auto";
         showModal("Sukses", "Foto profil berhasil diperbarui!");
