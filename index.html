@@ -1743,6 +1743,100 @@ function loadBerandaStats() {
     });
 }
 
+// ============================================================
+// Ambil angka ASLI buat tab "Keuangan" (Jumlah Anak Yatim, Yatim Piatu,
+// Disabilitas) -- dari YASSA Mobile (sheet "Anak"), lewat action publik
+// 'getKeuanganStats', gak butuh login/token karena cuma balikin angka
+// agregat, bukan data pribadi.
+// Dibatasi otomatis sesuai wilayah akses user Hub yang login (mis. Agus
+// dengan wilayahAkses "BOGOR" cuma lihat angka anak wilayah Bogor saja;
+// user dengan wilayahAkses "ALL" lihat semua wilayah).
+// "Jumlah Anak Yatim" diambil dari jumlah anak program Gopay (santunan
+// Gopay memang khusus utk anak yatim), bukan dari kolom YATIM langsung.
+// ============================================================
+function loadKeuanganStats() {
+  const elYatim = document.getElementById("keuanganJumlahYatim");
+  const elPiatu = document.getElementById("keuanganYatimPiatu");
+  const elDsb = document.getElementById("keuanganDisabilitas");
+  const elAnakXNominal = document.getElementById("keuanganAnakXNominal");
+  const elKebutuhan = document.getElementById("keuanganKebutuhanNominal");
+  const elRealisasi = document.getElementById("keuanganRealisasiNominal");
+  const elPersen = document.getElementById("keuanganPersenTercapai");
+  const elBar = document.getElementById("keuanganProgressBar");
+  const elSelisihNominal = document.getElementById("keuanganSelisihNominal");
+  const elSelisihLabel = document.getElementById("keuanganSelisihLabel");
+  const elSelisihIconWrap = document.getElementById("keuanganSelisihIconWrap");
+  const elSelisihIcon = document.getElementById("keuanganSelisihIcon");
+  const elHistoriBulanIni = document.getElementById("keuanganHistoriBulanIni");
+  const wilayahAkses = (currentUser && currentUser.wilayahAkses) ? currentUser.wilayahAkses : "ALL";
+  const NOMINAL_PER_ANAK = 100000; // Rp100.000 / anak / bulan
+
+  const gagalSemua = function () {
+    [elYatim, elPiatu, elDsb, elAnakXNominal, elKebutuhan, elRealisasi, elPersen, elSelisihNominal, elSelisihLabel, elHistoriBulanIni]
+      .forEach(function (el) { if (el) el.textContent = "-"; });
+  };
+
+  // 1) Statistik anak (Jumlah Anak Yatim, Yatim Piatu, Disabilitas) --
+  //    dari YASSA Mobile, difilter otomatis sesuai wilayah akses user login.
+  const pAnak = fetch(GAS_MOBILE_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },
+    body: JSON.stringify({ action: "getKeuanganStats", wilayah: wilayahAkses }),
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (res) {
+      if (!res || !res.success || !res.data) throw new Error("gagal");
+      return res.data;
+    });
+
+  // 2) Realisasi donasi bulan ini (semua wilayah, dari sheet Donasi_Midtrans di Hub).
+  const pDonasi = callGAS("getDonasiRealisasiBulanIni", [authToken]);
+
+  Promise.all([pAnak, pDonasi])
+    .then(function (hasil) {
+      const anak = hasil[0];
+      const donasi = hasil[1];
+
+      const jumlahYatim = Number(anak.jumlahAnakYatim || 0);
+      const kebutuhan = jumlahYatim * NOMINAL_PER_ANAK;
+      const realisasi = Number(donasi.totalRealisasi || 0);
+      const selisih = kebutuhan - realisasi;
+      const persen = kebutuhan > 0 ? Math.round((realisasi / kebutuhan) * 100) : 0;
+
+      if (elYatim) elYatim.textContent = jumlahYatim;
+      if (elPiatu) elPiatu.textContent = anak.jumlahYatimPiatu;
+      if (elDsb) elDsb.textContent = anak.jumlahDisabilitas;
+      if (elAnakXNominal) elAnakXNominal.textContent = jumlahYatim + " anak x " + formatRupiahHub(NOMINAL_PER_ANAK);
+      if (elKebutuhan) elKebutuhan.textContent = formatRupiahHub(kebutuhan);
+      if (elRealisasi) elRealisasi.textContent = formatRupiahHub(realisasi);
+      if (elPersen) elPersen.textContent = Math.max(0, persen) + "%";
+      if (elBar) elBar.style.width = Math.min(100, Math.max(0, persen)) + "%";
+      if (elHistoriBulanIni) elHistoriBulanIni.textContent = formatRupiahHub(realisasi);
+
+      const kurang = selisih > 0;
+      if (elSelisihNominal) {
+        elSelisihNominal.textContent = formatRupiahHub(Math.abs(selisih));
+        elSelisihNominal.style.color = kurang ? "#EF4444" : "var(--bento-primary)";
+      }
+      if (elSelisihLabel) {
+        elSelisihLabel.textContent = kurang ? "Kekurangan dari target" : "Melebihi target";
+        elSelisihLabel.style.color = kurang ? "rgba(239, 68, 68, 0.8)" : "var(--bento-primary)";
+      }
+      if (elSelisihIconWrap) {
+        elSelisihIconWrap.style.background = kurang ? "rgba(239, 68, 68, 0.1)" : "rgba(34, 197, 94, 0.15)";
+        elSelisihIconWrap.style.color = kurang ? "#EF4444" : "var(--bento-primary)";
+      }
+      if (elSelisihIcon) elSelisihIcon.textContent = kurang ? "arrow_downward" : "arrow_upward";
+    })
+    .catch(gagalSemua);
+}
+
+// Format angka jadi "RpX.XXX.XXX" ala Indonesia (dipakai di tab Keuangan).
+function formatRupiahHub(angka) {
+  const n = Math.round(Number(angka) || 0);
+  return "Rp" + n.toLocaleString("id-ID");
+}
+
 // Nampilin daftar nama pengurus yang belum login lama (dipanggil pas kartu
 // "Aktivitas Hari Ini" bagian pengurus di-klik). Pakai modal Info yang udah
 // ada di app ini (showModal), gak perlu bikin UI baru.
@@ -1963,65 +2057,77 @@ function renderContent() {
       </header>
 
       <div style="background: var(--glass-strong); border-radius: 20px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--glass-border);">
-        <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">1. Jumlah Anak Yatim</div>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">1. Jumlah Anak Yatim <span style="font-size: 10px;">(Program Gopay)</span></div>
         <div style="display: flex; justify-content: space-between; align-items: flex-end;">
           <div>
-            <div style="font-size: 24px; font-weight: 700; color: white;"><span style="font-size: 30px;">65</span> Anak</div>
+            <div style="font-size: 24px; font-weight: 700; color: white;"><span id="keuanganJumlahYatim" style="font-size: 30px;">...</span> Anak</div>
             <div style="font-size: 10px; color: var(--text-secondary); margin-top: 4px;">Wilayah ${escapeHtmlHub(wilayahText)} - Bulan Ini</div>
           </div>
           <div style="width: 48px; height: 48px; border-radius: 16px; background: rgba(34, 197, 94, 0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center;">
             <span class="material-symbols-outlined" style="font-size: 24px; font-variation-settings: 'FILL' 1;">groups</span>
           </div>
         </div>
+        <div style="width: 100%; height: 1px; background: rgba(255,255,255,0.1); margin: 16px 0;"></div>
+        <div style="display: flex; gap: 12px;">
+          <div style="flex: 1; background: rgba(0,0,0,0.2); border-radius: 14px; padding: 12px; border: 1px solid var(--glass-border);">
+            <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 4px;">Yatim Piatu</div>
+            <div style="font-size: 18px; font-weight: 700;" id="keuanganYatimPiatu">...</div>
+          </div>
+          <div style="flex: 1; background: rgba(0,0,0,0.2); border-radius: 14px; padding: 12px; border: 1px solid var(--glass-border);">
+            <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 4px;">Disabilitas</div>
+            <div style="font-size: 18px; font-weight: 700;" id="keuanganDisabilitas">...</div>
+          </div>
+        </div>
       </div>
 
       <div style="background: var(--glass-strong); border-radius: 20px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--glass-border);">
         <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">2. Kebutuhan Donasi Bulan Ini</div>
-        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">65 anak x Rp100.000</div>
-        <div style="font-size: 24px; font-weight: 700; margin-bottom: 4px;">Rp6.500.000</div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;"><span id="keuanganAnakXNominal">... anak x Rp100.000</span></div>
+        <div style="font-size: 24px; font-weight: 700; margin-bottom: 4px;" id="keuanganKebutuhanNominal">...</div>
         <div style="font-size: 10px; color: var(--bento-primary);">Total kebutuhan donasi</div>
         <div style="width: 100%; height: 1px; background: rgba(255,255,255,0.1); margin: 16px 0;"></div>
-        
+
         <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
           <div>
             <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Realisasi Donasi</div>
-            <div style="font-size: 20px; font-weight: 700;">Rp5.200.000</div>
-            <div style="font-size: 10px; color: var(--text-secondary);">Terkumpul</div>
+            <div style="font-size: 20px; font-weight: 700;" id="keuanganRealisasiNominal">...</div>
+            <div style="font-size: 10px; color: var(--text-secondary);">Terkumpul (semua wilayah)</div>
           </div>
           <div style="text-align: right;">
-            <div style="font-size: 14px; font-weight: 600;">63%</div>
+            <div style="font-size: 14px; font-weight: 600;" id="keuanganPersenTercapai">...</div>
             <div style="font-size: 10px; color: var(--text-secondary);">Tercapai</div>
           </div>
         </div>
         <div style="width: 100%; background: rgba(0,0,0,0.3); border-radius: 99px; height: 8px; margin-bottom: 24px; overflow: hidden; border: 1px solid var(--glass-border);">
-          <div style="background: var(--bento-primary); height: 8px; border-radius: 99px; width: 63%;"></div>
+          <div id="keuanganProgressBar" style="background: var(--bento-primary); height: 8px; border-radius: 99px; width: 0%; transition: width 0.4s ease;"></div>
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div>
-            <div style="font-size: 18px; font-weight: 700; color: #EF4444;">Rp1.300.000</div>
-            <div style="font-size: 10px; color: rgba(239, 68, 68, 0.8);">Kekurangan dari target</div>
+            <div style="font-size: 18px; font-weight: 700; color: #EF4444;" id="keuanganSelisihNominal">...</div>
+            <div style="font-size: 10px; color: rgba(239, 68, 68, 0.8);" id="keuanganSelisihLabel">...</div>
           </div>
-          <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(239, 68, 68, 0.1); color: #EF4444; display: flex; align-items: center; justify-content: center;">
-            <span class="material-symbols-outlined" style="font-size: 14px;">arrow_downward</span>
+          <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(239, 68, 68, 0.1); color: #EF4444; display: flex; align-items: center; justify-content: center;" id="keuanganSelisihIconWrap">
+            <span class="material-symbols-outlined" style="font-size: 14px;" id="keuanganSelisihIcon">arrow_downward</span>
           </div>
         </div>
       </div>
 
       <div style="background: var(--glass-strong); border-radius: 20px; padding: 20px; margin-bottom: 8px; border: 1px solid var(--glass-border);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-          <div style="font-size: 12px; color: var(--text-secondary);">3. Histori Donasi <span style="font-size: 10px;">(Wilayah ${escapeHtmlHub(wilayahText)})</span></div>
+          <div style="font-size: 12px; color: var(--text-secondary);">3. Histori Donasi <span style="font-size: 10px;">(Semua Wilayah)</span></div>
         </div>
         <div style="display: flex; flex-direction: column; font-size: 12px;">
           <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">
             <span>Bulan Ini</span>
             <div style="display: flex; align-items: center; gap: 8px; color: var(--bento-primary);">
-              Rp5.200.000 <span class="material-symbols-outlined" style="font-size: 14px;">chevron_right</span>
+              <span id="keuanganHistoriBulanIni">...</span> <span class="material-symbols-outlined" style="font-size: 14px;">chevron_right</span>
             </div>
           </div>
         </div>
       </div>
     `;
     el.innerHTML = html;
+    loadKeuanganStats();
     return;
   }
 
