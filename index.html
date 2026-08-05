@@ -1350,18 +1350,13 @@ const MENUS = {
   },
   mobile: {
     title: "YASSA Mobile",
-    // YASSA Mobile masih pakai sistem login & data sendiri (belum SSO dengan Hub),
-    // tapi sesi login-nya (localStorage origin yassa-mobile.github.io) bertahan
-    // 8 jam lintas reload iframe, jadi user cuma diminta login sekali walau
-    // gonta-ganti tab di bawah ini (tiap tab = reload iframe dengan ?tab= beda).
+    // YASSA Mobile masih pakai sistem login & data sendiri (belum SSO dengan Hub).
+    // Berbeda dari app lain: tidak lagi dipecah jadi 5 menu terpisah di Hub.
+    // Sekarang cukup 1 tombol "Masuk App" yang membuka YASSA Mobile TANPA
+    // mode embed, jadi header & bottom nav aslinya (tab-tab bawaan Mobile)
+    // tetap tampil dan dipakai seperti biasa di dalam iframe.
     baseUrl: "https://yassa-mobile.github.io/yassamobile/",
-    items: [
-      { label: "Beranda", icon: "home", color: "teal", tab: "home" },
-      { label: "Data KK", icon: "list", color: "blue", tab: "keluarga" },
-      { label: "Kontrol", icon: "shield", color: "coral", tab: "perisai" },
-      { label: "Data Anak", icon: "users", color: "amber", tab: "anak" },
-      { label: "Profil", icon: "user", color: "purple", tab: "aksi" },
-    ],
+    isFullApp: true,
   },
   pengaturan: { title: "Pengaturan" }, // dirender khusus lewat renderPengaturanPanel(), bukan menu-grid biasa
 };
@@ -1757,7 +1752,7 @@ function renderContent() {
           </div>
           <div style="text-align: center;">
             <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">AWG</div>
-            <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.2;">Aktivitas<br>Wakaf & Gerakan</div>
+            <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.2;">Ahli Waris<br>Akun</div>
           </div>
         </button>
         <button onclick="setActive('pm')" style="background: var(--glass-strong); padding: 24px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; border: 1px solid var(--glass-border); cursor: pointer;">
@@ -1775,7 +1770,7 @@ function renderContent() {
           </div>
           <div style="text-align: center;">
             <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">Cloud Buku</div>
-            <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.2;">Perpustakaan digital<br>yayasan</div>
+            <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.2;">Pembukuan Digital<br>Yayasan</div>
           </div>
         </button>
         <button onclick="setActive('mobile')" style="background: var(--glass-strong); padding: 24px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; border: 1px solid var(--glass-border); cursor: pointer;">
@@ -1931,9 +1926,31 @@ function renderContent() {
         <span class="material-symbols-outlined" style="font-size:20px;">arrow_back</span>
       </button>
       <div class="section-title" style="margin-bottom:0;">${menu.title}</div>
-    </div>
-    <div class="menu-panel"><div class="menu-grid">`;
-  
+    </div>`;
+
+  if (menu.isFullApp) {
+    // YASSA Mobile: bukan menu-grid biasa, cuma 1 tombol besar "Masuk App"
+    // yang membuka aplikasinya secara utuh (dengan tab navigasi sendiri).
+    html += `
+      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; padding:48px 16px;">
+        <div style="width:88px; height:88px; border-radius:28px; background:rgba(34,197,94,0.15); color:var(--bento-primary); display:flex; align-items:center; justify-content:center;">
+          <span class="material-symbols-outlined" style="font-size:44px; font-variation-settings:'FILL' 1;">smartphone</span>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-weight:700; font-size:16px; margin-bottom:6px;">YASSA Mobile</div>
+          <div style="font-size:13px; color:var(--text-secondary); line-height:1.4;">Buka aplikasi YASSA Mobile lengkap<br>dengan navigasi tab-nya sendiri</div>
+        </div>
+        <button onclick="openMobileApp()" style="width:100%; max-width:320px; padding:16px; border-radius:18px; background:var(--bento-primary); color:#0B1220; font-weight:700; font-size:15px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+          <span class="material-symbols-outlined" style="font-size:20px;">login</span>
+          Masuk App
+        </button>
+      </div>`;
+    el.innerHTML = html;
+    return;
+  }
+
+  html += `<div class="menu-panel"><div class="menu-grid">`;
+
   menu.items.forEach((item, i) => {
     const c = ICON_COLORS[item.color] || ICON_COLORS.teal;
     html += `<button class="menu-item" onclick="openApp(${i})">
@@ -1949,6 +1966,16 @@ function renderContent() {
   html += `</div></div>`;
   
   el.innerHTML = html;
+}
+
+function openMobileApp() {
+  // Buka YASSA Mobile TANPA ?embed=1 supaya header & bottom nav bawaan
+  // Mobile tetap muncul di dalam iframe, dan user login + navigasi
+  // pakai tab-tab aslinya sendiri seperti biasa.
+  const menu = MENUS.mobile;
+  document.getElementById("overlayTitle").textContent = menu.title;
+  document.getElementById("overlayFrame").src = menu.baseUrl;
+  document.getElementById("overlay").classList.add("open");
 }
 
 function renderBottomNav() {
