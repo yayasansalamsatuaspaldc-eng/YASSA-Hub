@@ -1758,7 +1758,9 @@ function loadKeuanganStats() {
   const elYatim = document.getElementById("keuanganJumlahYatim");
   const elPiatu = document.getElementById("keuanganYatimPiatu");
   const elDsb = document.getElementById("keuanganDisabilitas");
-  const elAnakXNominal = document.getElementById("keuanganAnakXNominal");
+  const elCatatan = document.getElementById("keuanganCatatanBendahara");
+  const elBelumDiisi = document.getElementById("keuanganBelumDiisi");
+  const elProgresWrap = document.getElementById("keuanganProgresWrap");
   const elKebutuhan = document.getElementById("keuanganKebutuhanNominal");
   const elRealisasi = document.getElementById("keuanganRealisasiNominal");
   const elPersen = document.getElementById("keuanganPersenTercapai");
@@ -1770,11 +1772,11 @@ function loadKeuanganStats() {
   const elStatusBanner = document.getElementById("keuanganStatusBanner");
   const elHistoriBulanIni = document.getElementById("keuanganHistoriBulanIni");
   const wilayahAkses = (currentUser && currentUser.wilayahAkses) ? currentUser.wilayahAkses : "ALL";
-  const NOMINAL_PER_ANAK = 100000; // Rp100.000 / anak / bulan
 
   const gagalSemua = function () {
-    [elYatim, elPiatu, elDsb, elAnakXNominal, elKebutuhan, elRealisasi, elPersen, elSelisihNominal, elSelisihLabel, elHistoriBulanIni]
+    [elYatim, elPiatu, elDsb, elKebutuhan, elRealisasi, elPersen, elSelisihNominal, elSelisihLabel, elHistoriBulanIni]
       .forEach(function (el) { if (el) el.textContent = "-"; });
+    if (elCatatan) elCatatan.textContent = "Gagal memuat data.";
   };
 
   // 1) Statistik anak (Jumlah Anak Yatim, Yatim Piatu, Disabilitas) --
@@ -1790,24 +1792,46 @@ function loadKeuanganStats() {
       return res.data;
     });
 
-  // 2) Realisasi donasi bulan ini (semua wilayah, dari sheet Donasi_Midtrans di Hub).
-  const pDonasi = callGAS("getDonasiRealisasiBulanIni", [authToken]);
+  // 2) Kebutuhan & Realisasi Donasi Bulan Ini -- DITULIS MANUAL oleh Bendahara
+  //    di spreadsheet terpisah (bukan lagi dihitung otomatis dari jumlah anak).
+  const pManual = callGAS("getKeuanganManual", [authToken]);
 
-  Promise.all([pAnak, pDonasi])
+  // 3) Histori donasi ONLINE lewat Midtrans bulan ini (buat kartu 3, terpisah
+  //    dari total manual Bendahara di kartu 2 -- Midtrans cuma nyatet donasi
+  //    yang masuk lewat Snap, belum tentu sama dgn total riil yg dipegang Bendahara).
+  const pMidtrans = callGAS("getDonasiRealisasiBulanIni", [authToken]);
+
+  Promise.all([pAnak, pManual, pMidtrans])
     .then(function (hasil) {
       const anak = hasil[0];
-      const donasi = hasil[1];
+      const manual = hasil[1];
+      const midtrans = hasil[2];
 
-      const jumlahYatim = Number(anak.jumlahAnakYatim || 0);
-      const kebutuhan = jumlahYatim * NOMINAL_PER_ANAK;
-      const realisasi = Number(donasi.totalRealisasi || 0);
+      if (elYatim) elYatim.textContent = Number(anak.jumlahAnakYatim || 0);
+      if (elPiatu) elPiatu.textContent = anak.jumlahYatimPiatu;
+      if (elDsb) elDsb.textContent = anak.jumlahDisabilitas;
+      if (elHistoriBulanIni) elHistoriBulanIni.textContent = formatRupiahHub(midtrans.totalRealisasi || 0);
+
+      if (!manual.ditemukan) {
+        // Bendahara belum isi baris bulan ini -- jangan tampilkan Rp0 yang menyesatkan.
+        if (elCatatan) elCatatan.textContent = "Ditentukan oleh Bendahara";
+        if (elKebutuhan) elKebutuhan.textContent = "Belum diisi";
+        if (elBelumDiisi) elBelumDiisi.style.display = "flex";
+        if (elProgresWrap) elProgresWrap.style.display = "none";
+        if (elStatusBanner) elStatusBanner.style.display = "none";
+        return;
+      }
+
+      if (elBelumDiisi) elBelumDiisi.style.display = "none";
+      if (elProgresWrap) elProgresWrap.style.display = "block";
+      if (elStatusBanner) elStatusBanner.style.display = "flex";
+      if (elCatatan) elCatatan.textContent = manual.catatan || "Ditentukan oleh Bendahara";
+
+      const kebutuhan = Number(manual.kebutuhanDonasi || 0);
+      const realisasi = Number(manual.realisasiDonasi || 0);
       const selisih = kebutuhan - realisasi;
       const persen = kebutuhan > 0 ? Math.round((realisasi / kebutuhan) * 100) : 0;
 
-      if (elYatim) elYatim.textContent = jumlahYatim;
-      if (elPiatu) elPiatu.textContent = anak.jumlahYatimPiatu;
-      if (elDsb) elDsb.textContent = anak.jumlahDisabilitas;
-      if (elAnakXNominal) elAnakXNominal.textContent = jumlahYatim + " anak x " + formatRupiahHub(NOMINAL_PER_ANAK);
       if (elKebutuhan) elKebutuhan.textContent = formatRupiahHub(kebutuhan);
       if (elRealisasi) elRealisasi.textContent = formatRupiahHub(realisasi);
       if (elPersen) elPersen.textContent = Math.max(0, persen) + "%";
@@ -1817,7 +1841,6 @@ function loadKeuanganStats() {
         // Warna progress bar berjenjang: merah (<30%) -> kuning (30-70%) -> hijau (>=70%)
         elBar.style.background = w < 30 ? "#EF4444" : (w < 70 ? "#FBBF24" : "var(--bento-primary)");
       }
-      if (elHistoriBulanIni) elHistoriBulanIni.textContent = formatRupiahHub(realisasi);
 
       const kurang = selisih > 0;
       if (elSelisihNominal) {
@@ -2098,23 +2121,30 @@ function renderContent() {
 
       <div style="background: var(--glass-strong); border-radius: 20px; padding: 22px 20px; margin-bottom: 16px; border: 1px solid var(--glass-border); border-left: 4px solid #3B82F6;">
         <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">2. Kebutuhan Donasi Bulan Ini</div>
-        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;"><span id="keuanganAnakXNominal">... anak x Rp100.000</span></div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;" id="keuanganCatatanBendahara">Ditentukan oleh Bendahara</div>
         <div style="font-size: 26px; font-weight: 800; margin-bottom: 4px; color: white;" id="keuanganKebutuhanNominal">...</div>
         <div style="font-size: 10px; color: var(--bento-primary); margin-bottom: 18px;">Total kebutuhan donasi</div>
 
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px;">
-          <div>
-            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Realisasi Donasi</div>
-            <div style="font-size: 22px; font-weight: 700;" id="keuanganRealisasiNominal">...</div>
-            <div style="font-size: 10px; color: var(--text-secondary);">Terkumpul (semua wilayah)</div>
-          </div>
-          <div style="text-align: right;">
-            <div style="font-size: 16px; font-weight: 700;" id="keuanganPersenTercapai">...</div>
-            <div style="font-size: 10px; color: var(--text-secondary);">Tercapai</div>
-          </div>
+        <div id="keuanganBelumDiisi" style="display: none; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; background: rgba(251, 191, 36, 0.10); border: 1px solid rgba(251, 191, 36, 0.3); margin-bottom: 16px;">
+          <span class="material-symbols-outlined" style="font-size: 18px; color: #FBBF24;">info</span>
+          <span style="font-size: 11px; color: #FDE68A;">Bendahara belum mengisi data keuangan bulan ini.</span>
         </div>
-        <div style="width: 100%; background: rgba(0,0,0,0.35); border-radius: 99px; height: 10px; margin-bottom: 8px; overflow: hidden; border: 1px solid var(--glass-border);">
-          <div id="keuanganProgressBar" style="background: var(--bento-primary); height: 10px; border-radius: 99px; width: 0%; transition: width 0.5s ease, background 0.5s ease;"></div>
+
+        <div id="keuanganProgresWrap">
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px;">
+            <div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Realisasi Donasi</div>
+              <div style="font-size: 22px; font-weight: 700;" id="keuanganRealisasiNominal">...</div>
+              <div style="font-size: 10px; color: var(--text-secondary);">Dicatat Bendahara</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 16px; font-weight: 700;" id="keuanganPersenTercapai">...</div>
+              <div style="font-size: 10px; color: var(--text-secondary);">Tercapai</div>
+            </div>
+          </div>
+          <div style="width: 100%; background: rgba(0,0,0,0.35); border-radius: 99px; height: 10px; margin-bottom: 8px; overflow: hidden; border: 1px solid var(--glass-border);">
+            <div id="keuanganProgressBar" style="background: var(--bento-primary); height: 10px; border-radius: 99px; width: 0%; transition: width 0.5s ease, background 0.5s ease;"></div>
+          </div>
         </div>
 
         <button onclick="toggleMidtransForm()" style="width: 100%; margin-top: 8px; padding: 11px; border-radius: 12px; border: 1px dashed rgba(var(--bento-primary-rgb),0.4); background: rgba(var(--bento-primary-rgb),0.08); color: var(--bento-primary); font-size: 12.5px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
@@ -2134,7 +2164,7 @@ function renderContent() {
 
       <div style="background: var(--glass-strong); border-radius: 20px; padding: 20px; margin-bottom: 8px; border: 1px solid var(--glass-border); border-left: 4px solid #A855F7;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-          <div style="font-size: 12px; color: var(--text-secondary);">3. Histori Donasi <span style="font-size: 10px;">(Semua Wilayah)</span></div>
+          <div style="font-size: 12px; color: var(--text-secondary);">3. Histori Donasi <span style="font-size: 10px;">(Online / Midtrans)</span></div>
         </div>
         <div style="display: flex; flex-direction: column; font-size: 12px;">
           <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">
