@@ -1603,9 +1603,11 @@ function handleGoogleCredential(response) {
 function onLoginSuccess(res) {
   authToken = res.token;
   currentUser = {
+    username: res.username || "",
     email: res.email,
     emailGoogle: res.emailGoogle || "",
     nama: res.nama,
+    jabatan: res.jabatan || "",
     role: res.role,
     wilayahAkses: res.wilayahAkses,
     bolehPrint: res.bolehPrint,
@@ -2184,7 +2186,10 @@ function renderContent() {
   if (active === "profil") {
     const fotoProfil = currentUser.fotoUrl ? currentUser.fotoUrl : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
     const badgeLabel = currentUser.jabatan ? currentUser.jabatan : roleLabel(currentUser.role);
-    
+    const wilayahTxt = String(currentUser.wilayahAkses || "").toUpperCase() === "ALL"
+      ? "Semua Wilayah"
+      : (currentUser.wilayahAkses || "-");
+
     let html = `
       <h2 style="text-align: center; font-weight: 600; font-size: 18px; margin-bottom: 24px; padding-top: 16px;">Profil</h2>
       <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 24px;">
@@ -2195,18 +2200,34 @@ function renderContent() {
         <p style="font-size: 14px; color: var(--text-secondary);">${escapeHtmlHub(badgeLabel)}</p>
       </div>
 
-      <div style="background: var(--glass-strong); border-radius: 20px; margin-bottom: 24px; display: flex; flex-direction: column; border: 1px solid var(--glass-border);">
-        <div style="display: flex; align-items: center; gap: 16px; padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;">
-          <span class="material-symbols-outlined" style="color: var(--text-secondary); font-size: 18px;">call</span>
-          <span style="font-size: 14px; flex: 1;">${escapeHtmlHub(currentUser.email)}</span>
-          <span class="material-symbols-outlined" style="color: var(--text-muted); font-size: 18px;">chevron_right</span>
+      <div style="background: var(--glass-strong); border-radius: 20px; margin-bottom: 16px; display: flex; flex-direction: column; border: 1px solid var(--glass-border);">
+        <div style="display: flex; align-items: center; gap: 16px; padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+          <span class="material-symbols-outlined" style="color: var(--text-secondary); font-size: 18px;">smartphone</span>
+          <div style="flex: 1;">
+            <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 2px;">No. HP</div>
+            <div style="font-size: 14px;">${escapeHtmlHub(currentUser.username || "-")}</div>
+          </div>
         </div>
-        <div style="display: flex; align-items: center; gap: 16px; padding: 16px; cursor: pointer;">
-          <span class="material-symbols-outlined" style="color: var(--text-secondary); font-size: 18px;">mail</span>
-          <span style="font-size: 14px; flex: 1; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(currentUser.emailGoogle || "Belum ditautkan")}</span>
-          <span class="material-symbols-outlined" style="color: var(--text-muted); font-size: 18px;">chevron_right</span>
+        <div style="display: flex; align-items: center; gap: 16px; padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+          <span class="material-symbols-outlined" style="color: var(--text-secondary); font-size: 18px;">badge</span>
+          <div style="flex: 1;">
+            <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 2px;">Jabatan</div>
+            <div style="font-size: 14px;">${escapeHtmlHub(currentUser.jabatan || roleLabel(currentUser.role))}</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px; padding: 16px;">
+          <span class="material-symbols-outlined" style="color: var(--text-secondary); font-size: 18px;">public</span>
+          <div style="flex: 1;">
+            <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 2px;">Wilayah</div>
+            <div style="font-size: 14px;">${escapeHtmlHub(wilayahTxt)}</div>
+          </div>
         </div>
       </div>
+
+      <button onclick="openChangePasswordPanel()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 16px; border-radius: 16px; background: var(--glass-strong); border: 1px solid var(--glass-border); color: var(--text-primary); font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 24px;">
+        <span class="material-symbols-outlined" style="font-size: 18px;">lock</span>
+        Ubah Password
+      </button>
 
       <h3 style="font-weight: 600; font-size: 14px; margin-bottom: 12px; padding: 0 4px;">Tim & Organisasi</h3>
       <div style="background: var(--glass-strong); border-radius: 20px; display: flex; flex-direction: column; border: 1px solid var(--glass-border);">
@@ -2519,6 +2540,95 @@ function toggleUserMenu() {
 function closeUserMenu() {
   document.getElementById("userMenu").classList.remove("open");
   document.getElementById("userMenuOverlay").classList.remove("open");
+}
+
+// ============================================================
+// UBAH PASSWORD (self-service, dari tab Profil) -- beda dari
+// submitForceChangePassword() yang cuma dipakai pas wajib ganti password
+// bawaan waktu login pertama kali. Ini dipanggil kapan aja oleh user yang
+// mau ganti password sendiri, jadi WAJIB minta Password Lama dulu buat
+// verifikasi (gak ada pendingOldPassword yang bisa dipakai lagi di sini).
+// Numpang di overlay "akunPage" yang sama dipakai "Profil Saya"/"Susunan
+// Pengurus", biar konsisten gayanya & gak perlu bikin overlay baru.
+// ============================================================
+function openChangePasswordPanel() {
+  const kontenUbahPw = `
+    <div id="cpError" class="login-error" style="display:none;"></div>
+    <form id="cpForm" onsubmit="submitChangePassword(event)">
+      <div class="user-form-field">
+        <label class="user-form-label">Password Lama</label>
+        <div class="password-input-wrap">
+          <input type="password" id="cpOldPassword" class="user-form-input" placeholder="Password saat ini" required autocomplete="current-password">
+          <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('cpOldPassword', this)" aria-label="Tampilkan/Sembunyikan Password">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="user-form-field">
+        <label class="user-form-label">Password Baru</label>
+        <div class="password-input-wrap">
+          <input type="password" id="cpNewPassword" class="user-form-input" placeholder="Minimal 6 karakter" required autocomplete="new-password">
+          <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('cpNewPassword', this)" aria-label="Tampilkan/Sembunyikan Password">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="user-form-field">
+        <label class="user-form-label">Ulangi Password Baru</label>
+        <div class="password-input-wrap">
+          <input type="password" id="cpConfirmPassword" class="user-form-input" placeholder="Ulangi password baru" required autocomplete="new-password">
+          <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('cpConfirmPassword', this)" aria-label="Tampilkan/Sembunyikan Password">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="user-form-actions">
+        <button type="submit" class="btn-form-save" id="cpSaveBtn" style="flex:1;">Simpan Password Baru</button>
+      </div>
+    </form>
+  `;
+  document.querySelector('#akunPage .overlay-title').textContent = "Ubah Password";
+  document.getElementById("akunContent").innerHTML = '<div class="akun-card">' + kontenUbahPw + '</div>';
+  document.getElementById("akunPage").classList.add("open");
+}
+
+function submitChangePassword(event) {
+  event.preventDefault();
+  const errEl = document.getElementById("cpError");
+  errEl.style.display = "none";
+
+  const oldPassword = document.getElementById("cpOldPassword").value;
+  const newPassword = document.getElementById("cpNewPassword").value;
+  const confirmPassword = document.getElementById("cpConfirmPassword").value;
+
+  if (newPassword.length < 6) {
+    errEl.textContent = "Password baru minimal 6 karakter.";
+    errEl.style.display = "block";
+    return;
+  }
+  if (newPassword !== confirmPassword) {
+    errEl.textContent = "Konfirmasi password gak cocok.";
+    errEl.style.display = "block";
+    return;
+  }
+
+  const btn = document.getElementById("cpSaveBtn");
+  btn.disabled = true;
+  btn.textContent = "Menyimpan...";
+
+  callGAS("changeOwnPassword", [authToken, oldPassword, newPassword])
+    .then(function () {
+      document.getElementById("akunPage").classList.remove("open");
+      showModal("Sukses", "Password berhasil diganti.");
+    })
+    .catch(function (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = "block";
+    })
+    .finally(function () {
+      btn.disabled = false;
+      btn.textContent = "Simpan Password Baru";
+    });
 }
 
 function handleUserMenuClick(action) {
