@@ -1996,12 +1996,8 @@ function renderMobileNotifButton() {
   const status = localStorage.getItem("yassa_mobile_notif_status"); // 'granted' | 'denied' | 'default' | 'error' | null
 
   if (status === "granted") {
-    return `
-      <div style="width:100%; max-width:320px; padding:12px; border-radius:16px; background:rgba(34,197,94,0.12); color:var(--bento-primary); font-weight:600; font-size:12.5px; border:1px solid rgba(34,197,94,0.3); display:flex; align-items:center; justify-content:center; gap:6px;">
-        <span class="material-symbols-outlined" style="font-size:16px;">check_circle</span>
-        Notifikasi Aktif
-      </div>
-      <button onclick="openMobileAppForNotif()" style="background:none; border:none; color:var(--text-muted); font-size:10.5px; text-decoration:underline; cursor:pointer; margin-top:-4px;">Aktifkan ulang / ganti perangkat</button>`;
+    // Sudah aktif -> tombol disembunyikan total, gak perlu ditampilkan lagi.
+    return "";
   }
 
   if (status === "denied") {
