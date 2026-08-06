@@ -434,6 +434,8 @@
   .role-PENGURUS { background: rgba(59,130,246,0.15); color: #93C5FD; border-color: rgba(59,130,246,0.35); }
   .role-KORWIL { background: rgba(168,85,247,0.15); color: #D8B4FE; border-color: rgba(168,85,247,0.35); }
   .role-WAKORWIL { background: rgba(34,211,238,0.15); color: #67E8F9; border-color: rgba(34,211,238,0.35); }
+  .role-TIM_KERJA { background: rgba(52,211,153,0.15); color: #6EE7B7; border-color: rgba(52,211,153,0.35); }
+  .role-RELAWAN { background: rgba(148,163,184,0.15); color: #CBD5E1; border-color: rgba(148,163,184,0.35); }
 
   /* Bagan Susunan Pengurus (versi ringkas biar muat 1 layar) */
   .orgchart-tier { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 6px 0; }
@@ -1131,7 +1133,6 @@
           <div class="user-form-hint">Buat tombol Login Otomatis (Google). Boleh kosong kalau user cuma pakai Username.</div>
         </div>
         <div class="user-form-field">
-          <div class="user-form-field">
           <label class="user-form-label">Role</label>
           <select id="ufRole" class="user-form-select">
             <option value="SUPERADMIN">Super Admin</option>
@@ -1139,7 +1140,7 @@
             <option value="PENGURUS">Pengurus</option>
             <option value="KORWIL">Korwil</option>
             <option value="WAKORWIL">WA Korwil</option>
-            <option value="TIM KERJA">Tim Kerja</option>
+            <option value="TIM_KERJA">Tim Kerja</option>
             <option value="RELAWAN">Relawan</option>
           </select>
         </div>
@@ -1325,6 +1326,7 @@ const ICONS = {
   mapPin: '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
   edit: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497Z"/><path d="m15 5 3 3"/>',
   user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
 };
 
 function iconSvg(name, color, size) {
@@ -1382,6 +1384,33 @@ function materialIconSpan(name, opts) {
 
 function visibleTabs() {
   return TABS;
+}
+
+// ============================================================
+// FILTER MENU BERDASARKAN currentUser.aksesMenu (dikirim backend saat login,
+// dari sheet Setting_Akses_Menu). Fail-open di semua kondisi "gak jelas"
+// (data belum ada / app belum terdaftar di sheet) supaya app baru yang
+// belum sempat di-setting SUPERADMIN gak tiba-tiba hilang dari Hub.
+// ============================================================
+function aksesMenuListUntuk(appKey) {
+  if (!currentUser || !currentUser.aksesMenu) return null;
+  return currentUser.aksesMenu[appKey] || null;
+}
+
+// Dipakai buat kartu app di tab "Semua Aplikasi": tampil kalau MINIMAL SATU
+// menu di dalam app itu "Ya" buat role user yang login.
+function isAppVisible(appKey) {
+  const list = aksesMenuListUntuk(appKey);
+  if (!list) return true; // app belum terdaftar di sheet -> defaultkan tampil
+  return list.some(function (m) { return m.ya; });
+}
+
+// Dipakai buat tiap tombol menu di dalam 1 app (menu.items[i]) -- index HARUS
+// sama persis urutannya dengan baris di sheet Setting_Akses_Menu utk app itu.
+function isMenuItemVisible(appKey, itemIndex) {
+  const list = aksesMenuListUntuk(appKey);
+  if (!list || !list[itemIndex]) return true; // gak ketemu datanya -> defaultkan tampil
+  return list[itemIndex].ya;
 }
 
 const MENUS = {
@@ -1568,6 +1597,8 @@ function roleLabel(role) {
     PENGURUS: "Pengurus",
     KORWIL: "Korwil",
     WAKORWIL: "WA Korwil",
+    TIM_KERJA: "Tim Kerja",
+    RELAWAN: "Relawan",
   };
   return map[role] || role;
 }
@@ -2098,62 +2129,32 @@ function renderContent() {
       </div>
       <div style="height:1px; background:linear-gradient(90deg, var(--glass-border-strong), transparent); margin: 16px 0 24px;"></div>
       <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
-        <button onclick="setActive('mobile')" style="background: var(--glass-strong); padding: 24px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; border: 1px solid var(--glass-border); cursor: pointer;">
-          <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(34, 197, 94, 0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center;">
-            <span class="material-symbols-outlined" style="font-size: 32px; font-variation-settings: 'FILL' 1;">smartphone</span>
-          </div>
-          <div style="text-align: center;">
-            <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">YASSA Mobile</div>
-            <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.2;">Data Base<br>YASSA</div>
-          </div>
-        </button>
-        <button onclick="setActive('donasi')" style="background: var(--glass-strong); padding: 24px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; border: 1px solid var(--glass-border); cursor: pointer;">
-          <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(34, 197, 94, 0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center;">
-            <span class="material-symbols-outlined" style="font-size: 32px; font-variation-settings: 'FILL' 1;">box</span>
-          </div>
-          <div style="text-align: center;">
-            <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">Kotak & Donasi</div>
-            <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.2;">Kelola kotak<br>dan donasi</div>
-          </div>
-        </button>
-        <button onclick="setActive('absensi')" style="background: var(--glass-strong); padding: 24px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; border: 1px solid var(--glass-border); cursor: pointer;">
-          <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(59, 130, 246, 0.15); color: #60A5FA; display: flex; align-items: center; justify-content: center;">
-            <span class="material-symbols-outlined" style="font-size: 32px; font-variation-settings: 'FILL' 1;">assignment</span>
-          </div>
-          <div style="text-align: center;">
-            <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">Absensi</div>
-            <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.2;">Catat kehadiran<br>kegiatan</div>
-          </div>
-        </button>
-        <button onclick="setActive('awg')" style="background: var(--glass-strong); padding: 24px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; border: 1px solid var(--glass-border); cursor: pointer;">
-          <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(168, 85, 247, 0.15); color: #C084FC; display: flex; align-items: center; justify-content: center;">
-            <span class="material-symbols-outlined" style="font-size: 32px; font-variation-settings: 'FILL' 1;">favorite</span>
-          </div>
-          <div style="text-align: center;">
-            <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">AWG</div>
-            <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.2;">Ahli Waris<br>Akun</div>
-          </div>
-        </button>
-        <button onclick="setActive('pm')" style="background: var(--glass-strong); padding: 24px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; border: 1px solid var(--glass-border); cursor: pointer;">
-          <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(251, 191, 36, 0.15); color: #FBBF24; display: flex; align-items: center; justify-content: center;">
-            <span class="material-symbols-outlined" style="font-size: 32px; font-variation-settings: 'FILL' 1;">group</span>
-          </div>
-          <div style="text-align: center;">
-            <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">Penerima Manfaat</div>
-            <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.2;">Data penerima<br>manfaat</div>
-          </div>
-        </button>
-        <button onclick="setActive('bukubesar')" style="background: var(--glass-strong); padding: 24px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; border: 1px solid var(--glass-border); cursor: pointer;">
-          <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(34, 211, 238, 0.15); color: #22D3EE; display: flex; align-items: center; justify-content: center;">
-            <span class="material-symbols-outlined" style="font-size: 32px; font-variation-settings: 'FILL' 1;">menu_book</span>
-          </div>
-          <div style="text-align: center;">
-            <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">Cloud Buku</div>
-            <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.2;">Pembukuan Digital<br>Yayasan</div>
-          </div>
-        </button>
-      </div>
     `;
+
+    const APP_CARDS = [
+      { key: "mobile", bg: "rgba(34, 197, 94, 0.15)", fg: "var(--bento-primary)", icon: "smartphone", title: "YASSA Mobile", desc: "Data Base<br>YASSA" },
+      { key: "donasi", bg: "rgba(34, 197, 94, 0.15)", fg: "var(--bento-primary)", icon: "box", title: "Kotak & Donasi", desc: "Kelola kotak<br>dan donasi" },
+      { key: "absensi", bg: "rgba(59, 130, 246, 0.15)", fg: "#60A5FA", icon: "assignment", title: "Absensi", desc: "Catat kehadiran<br>kegiatan" },
+      { key: "awg", bg: "rgba(168, 85, 247, 0.15)", fg: "#C084FC", icon: "favorite", title: "AWG", desc: "Ahli Waris<br>Akun" },
+      { key: "pm", bg: "rgba(251, 191, 36, 0.15)", fg: "#FBBF24", icon: "group", title: "Penerima Manfaat", desc: "Data penerima<br>manfaat" },
+      { key: "bukubesar", bg: "rgba(34, 211, 238, 0.15)", fg: "#22D3EE", icon: "menu_book", title: "Cloud Buku", desc: "Pembukuan Digital<br>Yayasan" },
+    ];
+
+    APP_CARDS.filter(function (c) { return isAppVisible(c.key); }).forEach(function (c) {
+      html += `
+        <button onclick="setActive('${c.key}')" style="background: var(--glass-strong); padding: 24px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; border: 1px solid var(--glass-border); cursor: pointer;">
+          <div style="width: 56px; height: 56px; border-radius: 50%; background: ${c.bg}; color: ${c.fg}; display: flex; align-items: center; justify-content: center;">
+            <span class="material-symbols-outlined" style="font-size: 32px; font-variation-settings: 'FILL' 1;">${c.icon}</span>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">${c.title}</div>
+            <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.2;">${c.desc}</div>
+          </div>
+        </button>
+      `;
+    });
+
+    html += `</div>`;
     el.innerHTML = html;
     return;
   }
@@ -2374,6 +2375,7 @@ function renderContent() {
   html += `<div class="menu-panel"><div class="menu-grid">`;
 
   menu.items.forEach((item, i) => {
+    if (!isMenuItemVisible(active, i)) return; // "tidak" di sheet Setting_Akses_Menu -> sembunyikan tombol ini
     const c = ICON_COLORS[item.color] || ICON_COLORS.teal;
     html += `<button class="menu-item" onclick="openApp(${i})">
       <div class="menu-icon" style="background:${c.bg}">${iconSvg(item.icon, c.fg, 24)}</div>
@@ -3292,130 +3294,38 @@ function buildOrgChartHtml(list) {
 
   return '<div style="height:100%; overflow:auto; padding-bottom:100px;">' + html + '</div>';
 }
+let pengaturanSubTab = "user"; // "user" | "aksesMenu"
+
 function renderPengaturanPanel(el) {
   el.innerHTML =
     '<div class="section-title">Pengaturan</div>' +
+    '<div style="display:flex;gap:8px;margin-bottom:16px;">' +
+    '<button onclick="setPengaturanSubTab(\'user\')" style="flex:1;padding:10px;border-radius:12px;border:1px solid var(--glass-border);cursor:pointer;font-size:12.5px;font-weight:700;background:' + (pengaturanSubTab === "user" ? "var(--bento-primary);color:#0B1220;" : "var(--glass-strong);color:var(--text-secondary);") + '">Manajemen User</button>' +
+    '<button onclick="setPengaturanSubTab(\'aksesMenu\')" style="flex:1;padding:10px;border-radius:12px;border:1px solid var(--glass-border);cursor:pointer;font-size:12.5px;font-weight:700;background:' + (pengaturanSubTab === "aksesMenu" ? "var(--bento-primary);color:#0B1220;" : "var(--glass-strong);color:var(--text-secondary);") + '">Akses Menu</button>' +
+    '</div>' +
+    '<div id="pengaturanSubContent"></div>';
+
+  if (pengaturanSubTab === "aksesMenu") {
+    renderAksesMenuPanel();
+  } else {
+    renderUserManagementPanel();
+  }
+}
+
+function setPengaturanSubTab(tab) {
+  pengaturanSubTab = tab;
+  renderPengaturanPanel(document.getElementById("content"));
+}
+
+function renderUserManagementPanel() {
+  const sub = document.getElementById("pengaturanSubContent");
+  sub.innerHTML =
     '<div class="settings-toolbar">' +
     '<span style="font-size:12.5px;color:#94A3B8;">Manajemen akun & akses wilayah</span>' +
     '<button class="btn-add-user" onclick="openUserForm(null)">' + iconSvg("userplus", "#fff", 14) + ' Tambah User</button>' +
     '</div>' +
-    '<div class="user-table-wrap" id="userTableWrap" style="margin-bottom: 24px;"><div style="padding:20px;text-align:center;color:#94A3B8;font-size:13px;">Memuat data user...</div></div>' +
-    '<div class="settings-toolbar" style="margin-top: 10px;">' +
-    '<span style="font-size:12.5px;color:#94A3B8;">Kontrol Akses Menu Aplikasi</span>' +
-    '<button class="btn-add-user" onclick="simpanAksesMenu()" id="btnSimpanAkses" style="background: var(--grad-cool); display: none;">' + iconSvg("shield", "#fff", 14) + ' Simpan Akses</button>' +
-    '</div>' +
-    '<div class="user-table-wrap" id="aksesMenuWrap" style="overflow-x: auto; -webkit-overflow-scrolling: touch;"><div style="padding:20px;text-align:center;color:#94A3B8;font-size:13px;">Memuat matriks akses menu...</div></div>';
+    '<div class="user-table-wrap" id="userTableWrap"><div style="padding:20px;text-align:center;color:#94A3B8;font-size:13px;">Memuat data user...</div></div>';
   loadUserListIntoPanel();
-  loadAksesMenuIntoPanel();
-}
-
-let aksesMenuCache = [];
-
-function loadAksesMenuIntoPanel() {
-  callGAS("getAksesMenuMatrix", [authToken])
-    .then(function(matrix) {
-      aksesMenuCache = matrix;
-      renderAksesMenuTable();
-      const btnSimpan = document.getElementById("btnSimpanAkses");
-      if(btnSimpan) btnSimpan.style.display = "flex";
-    })
-    .catch(function(err) {
-      const wrap = document.getElementById("aksesMenuWrap");
-      if (wrap) wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#F87171;font-size:13px;">Gagal memuat akses menu: ' + escapeHtmlHub(err.message) + '</div>';
-    });
-}
-
-function renderAksesMenuTable() {
-  const wrap = document.getElementById("aksesMenuWrap");
-  if (!wrap) return;
-  if (!aksesMenuCache || !aksesMenuCache.length) {
-    wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#94A3B8;font-size:13px;">Data akses menu kosong.</div>';
-    return;
-  }
-
-  const roles = ["Superadmin", "admin", "Pengurus", "Korwil", "Wakorwil", "Tim Kerja", "Relawan"];
-  
-  let html = '<table style="width: 100%; border-collapse: collapse; text-align: left; min-width: 650px;">';
-  html += '<thead><tr style="border-bottom: 1px solid var(--glass-border); background: rgba(255,255,255,0.05);">';
-  html += '<th style="padding: 12px; font-size: 12px; font-weight: 700; color: var(--text-secondary);">App / Menu</th>';
-  roles.forEach(function(r) {
-    html += '<th style="padding: 12px; font-size: 11px; font-weight: 700; color: var(--text-secondary); text-align: center;">' + r + '</th>';
-  });
-  html += '</tr></thead><tbody>';
-
-  let currentApp = "";
-  aksesMenuCache.forEach(function(row, rowIndex) {
-    if (row.app && row.app !== currentApp) {
-      currentApp = row.app;
-      html += '<tr style="background: rgba(34,211,238,0.1); border-bottom: 1px solid var(--glass-border);">';
-      html += '<td colspan="' + (roles.length + 1) + '" style="padding: 10px 12px; font-size: 12px; font-weight: 700; color: var(--neon-cyan);">' + escapeHtmlHub(currentApp) + '</td>';
-      html += '</tr>';
-    }
-    
-    html += '<tr style="border-bottom: 1px solid var(--glass-border);">';
-    html += '<td style="padding: 12px; font-size: 12.5px; font-weight: 600; color: var(--text-primary);">' + escapeHtmlHub(row.menu) + '</td>';
-    
-    roles.forEach(function(r) {
-      const val = row.roles[r] || "Tidak";
-      html += '<td style="padding: 6px; text-align: center;">';
-      html += getToggleHtml(rowIndex, r, val);
-      html += '</td>';
-    });
-    html += '</tr>';
-  });
-  html += '</tbody></table>';
-  wrap.innerHTML = html;
-}
-
-function getToggleHtml(rowIndex, role, val) {
-  const v = String(val).toLowerCase().trim();
-  let color = "rgba(255,255,255,0.05)";
-  let borderColor = "var(--glass-border)";
-  let textColor = "var(--text-muted)";
-  let text = "Tidak";
-  
-  if (v === "ya") {
-    color = "rgba(34, 197, 94, 0.15)";
-    borderColor = "rgba(34, 197, 94, 0.4)";
-    textColor = "var(--bento-primary)";
-    text = "Ya";
-  } else if (v.indexOf("proteck") !== -1 || v.indexOf("proteksi") !== -1) {
-    color = "rgba(34, 211, 238, 0.15)";
-    borderColor = "rgba(34, 211, 238, 0.4)";
-    textColor = "var(--neon-cyan)";
-    text = "Proteksi";
-  }
-
-  return '<button type="button" onclick="cycleAksesValue(' + rowIndex + ', \'' + role + '\')" style="width: 100%; min-width: 60px; padding: 6px 2px; border-radius: 8px; font-size: 10px; font-weight: 700; border: 1px solid ' + borderColor + '; background: ' + color + '; color: ' + textColor + '; cursor: pointer; transition: all 0.2s;">' + text + '</button>';
-}
-
-function cycleAksesValue(rowIndex, role) {
-  const current = String(aksesMenuCache[rowIndex].roles[role] || "tidak").toLowerCase().trim();
-  let next = "Ya";
-  if (current === "ya") next = "Ya (proteck wilayah)";
-  else if (current.indexOf("proteck") !== -1 || current.indexOf("proteksi") !== -1) next = "Tidak";
-  
-  aksesMenuCache[rowIndex].roles[role] = next;
-  renderAksesMenuTable();
-}
-
-function simpanAksesMenu() {
-  const btn = document.getElementById("btnSimpanAkses");
-  if(!btn) return;
-  btn.disabled = true;
-  btn.innerHTML = 'Menyimpan...';
-
-  callGAS("updateAksesMenuMatrix", [authToken, aksesMenuCache])
-    .then(function(res) {
-      showModal("Sukses", res.message || "Akses menu berhasil disimpan.");
-    })
-    .catch(function(err) {
-      showModal("Gagal", err.message);
-    })
-    .finally(function() {
-      btn.disabled = false;
-      btn.innerHTML = iconSvg("shield", "#fff", 14) + ' Simpan Akses';
-    });
 }
 
 function loadUserListIntoPanel() {
@@ -3453,6 +3363,118 @@ function loadUserListIntoPanel() {
 
 function escapeHtmlHub(str) {
   return String(str == null ? "" : str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// ============================================================
+// PANEL "AKSES MENU" -- superadmin atur langsung dari Hub (baca/tulis sheet
+// Setting_Akses_Menu lewat getAksesMenuMatrix / updateAksesMenuMatrix).
+// Tiap sel dirender sebagai <select> 3 opsi (Tidak / Ya / Ya + Proteksi
+// Wilayah) supaya gak ada lagi typo "ya" vs "Ya" kayak yang sempat kejadian
+// pas isi manual di spreadsheet. Cuma sel yang BERUBAH yang dikirim ke
+// backend pas Simpan (hemat request & gak nimpa sel lain yang gak disentuh).
+// ============================================================
+let aksesMenuGroupsCache = null;
+let aksesMenuEdits = {}; // key "row:col" -> { row, col, value } (nilai string sheet asli, mis. "Ya (proteck wilayah)")
+
+function renderAksesMenuPanel() {
+  const sub = document.getElementById("pengaturanSubContent");
+  sub.innerHTML =
+    '<div class="settings-toolbar">' +
+    '<span style="font-size:12.5px;color:#94A3B8;">Atur menu mana yang tampil per role, per app</span>' +
+    '<button class="btn-add-user" id="aksesMenuSaveBtn" onclick="saveAksesMenuMatrix()" style="opacity:0.4;pointer-events:none;">' + iconSvg("check", "#fff", 14) + ' Simpan Perubahan</button>' +
+    '</div>' +
+    '<div id="aksesMenuWrap"><div style="padding:20px;text-align:center;color:#94A3B8;font-size:13px;">Memuat data akses menu...</div></div>';
+
+  aksesMenuEdits = {};
+  callGAS("getAksesMenuMatrix", [authToken])
+    .then(function (groups) {
+      aksesMenuGroupsCache = groups;
+      const wrap = document.getElementById("aksesMenuWrap");
+      if (!wrap) return;
+      if (!groups.length) {
+        wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#94A3B8;font-size:13px;">Sheet Setting_Akses_Menu masih kosong.</div>';
+        return;
+      }
+      wrap.innerHTML = groups.map(renderAksesMenuGroupTable).join("");
+    })
+    .catch(function (err) {
+      const wrap = document.getElementById("aksesMenuWrap");
+      if (wrap) wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#F87171;font-size:13px;">' + escapeHtmlHub(err.message) + '</div>';
+    });
+}
+
+// Ubah nilai mentah dari sheet ("Ya (proteck wilayah)", "tidak", dst) jadi
+// value <select> yang dipakai UI ("tidak" / "ya" / "ya_wilayah").
+function aksesMenuRawToSelectValue(raw) {
+  const v = String(raw || "").trim().toLowerCase();
+  if (v.indexOf("tidak") !== -1 || v === "") return "tidak";
+  if (v.indexOf("proteck") !== -1 || v.indexOf("proteksi") !== -1) return "ya_wilayah";
+  return "ya";
+}
+
+// Kebalikannya: value <select> -> teks yang ditulis balik ke sheet.
+function aksesMenuSelectValueToRaw(selectValue) {
+  if (selectValue === "ya_wilayah") return "Ya (proteck wilayah)";
+  if (selectValue === "ya") return "Ya";
+  return "tidak";
+}
+
+function renderAksesMenuGroupTable(group) {
+  if (!group.roles || !group.roles.length) return "";
+  const headerCells = group.roles.map(function (r) {
+    return '<th style="padding:8px 6px;font-size:10.5px;font-weight:700;color:var(--text-secondary);text-align:center;white-space:nowrap;">' + escapeHtmlHub(r) + '</th>';
+  }).join("");
+
+  const bodyRows = group.menus.map(function (m) {
+    const cells = group.roleCols.map(function (col, idx) {
+      const roleName = group.roles[idx];
+      const raw = m.access[roleName];
+      const selVal = aksesMenuRawToSelectValue(raw);
+      return '<td style="padding:6px 4px;text-align:center;">' +
+        '<select data-row="' + m.row + '" data-col="' + col + '" onchange="onAksesMenuCellChange(this)" style="font-size:11px;padding:4px 2px;border-radius:8px;background:var(--glass);color:var(--text-primary);border:1px solid var(--glass-border);width:100%;">' +
+        '<option value="tidak"' + (selVal === "tidak" ? " selected" : "") + '>Tidak</option>' +
+        '<option value="ya"' + (selVal === "ya" ? " selected" : "") + '>Ya</option>' +
+        '<option value="ya_wilayah"' + (selVal === "ya_wilayah" ? " selected" : "") + '>Ya + Wilayah</option>' +
+        '</select></td>';
+    }).join("");
+    return '<tr><td style="padding:6px 8px;font-size:12px;font-weight:600;white-space:nowrap;">' + escapeHtmlHub(m.menu) + '</td>' + cells + '</tr>';
+  }).join("");
+
+  return '<div style="background:var(--glass);border-radius:16px;border:1px solid var(--glass-border);margin-bottom:16px;overflow:hidden;">' +
+    '<div style="padding:10px 14px;font-size:13px;font-weight:700;background:var(--glass-strong);border-bottom:1px solid var(--glass-border);">' + escapeHtmlHub(group.appName) + '</div>' +
+    '<div style="overflow-x:auto;"><table style="border-collapse:collapse;width:100%;"><thead><tr><th style="padding:8px 8px;font-size:10.5px;color:var(--text-secondary);text-align:left;">Menu</th>' + headerCells + '</tr></thead><tbody>' + bodyRows + '</tbody></table></div>' +
+    '</div>';
+}
+
+function onAksesMenuCellChange(selectEl) {
+  const row = Number(selectEl.getAttribute("data-row"));
+  const col = Number(selectEl.getAttribute("data-col"));
+  const rawValue = aksesMenuSelectValueToRaw(selectEl.value);
+  aksesMenuEdits[row + ":" + col] = { row: row, col: col, value: rawValue };
+
+  const btn = document.getElementById("aksesMenuSaveBtn");
+  if (btn) {
+    btn.style.opacity = "1";
+    btn.style.pointerEvents = "auto";
+  }
+}
+
+function saveAksesMenuMatrix() {
+  const edits = Object.values(aksesMenuEdits);
+  if (!edits.length) return;
+  const btn = document.getElementById("aksesMenuSaveBtn");
+  if (btn) { btn.style.opacity = "0.4"; btn.style.pointerEvents = "none"; btn.textContent = "Menyimpan..."; }
+
+  callGAS("updateAksesMenuMatrix", [authToken, edits])
+    .then(function () {
+      aksesMenuEdits = {};
+      showModal("Berhasil", "Perubahan akses menu tersimpan. Menu yang tampil ke user lain akan ikut berubah mulai sesi login berikutnya.");
+      renderAksesMenuPanel();
+    })
+    .catch(function (err) {
+      showModal("Gagal Menyimpan", err.message || "Terjadi kesalahan.");
+      if (btn) { btn.style.opacity = "1"; btn.style.pointerEvents = "auto"; btn.innerHTML = iconSvg("check", "#fff", 14) + ' Simpan Perubahan'; }
+    });
 }
 
 // ============================================================
