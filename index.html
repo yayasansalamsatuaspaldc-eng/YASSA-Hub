@@ -3296,8 +3296,123 @@ function renderPengaturanPanel(el) {
     '<span style="font-size:12.5px;color:#94A3B8;">Manajemen akun & akses wilayah</span>' +
     '<button class="btn-add-user" onclick="openUserForm(null)">' + iconSvg("userplus", "#fff", 14) + ' Tambah User</button>' +
     '</div>' +
-    '<div class="user-table-wrap" id="userTableWrap"><div style="padding:20px;text-align:center;color:#94A3B8;font-size:13px;">Memuat data user...</div></div>';
+    '<div class="user-table-wrap" id="userTableWrap" style="margin-bottom: 24px;"><div style="padding:20px;text-align:center;color:#94A3B8;font-size:13px;">Memuat data user...</div></div>' +
+    '<div class="settings-toolbar" style="margin-top: 10px;">' +
+    '<span style="font-size:12.5px;color:#94A3B8;">Kontrol Akses Menu Aplikasi</span>' +
+    '<button class="btn-add-user" onclick="simpanAksesMenu()" id="btnSimpanAkses" style="background: var(--grad-cool); display: none;">' + iconSvg("shield", "#fff", 14) + ' Simpan Akses</button>' +
+    '</div>' +
+    '<div class="user-table-wrap" id="aksesMenuWrap" style="overflow-x: auto; -webkit-overflow-scrolling: touch;"><div style="padding:20px;text-align:center;color:#94A3B8;font-size:13px;">Memuat matriks akses menu...</div></div>';
   loadUserListIntoPanel();
+  loadAksesMenuIntoPanel();
+}
+
+let aksesMenuCache = [];
+
+function loadAksesMenuIntoPanel() {
+  callGAS("getAksesMenuMatrix", [authToken])
+    .then(function(matrix) {
+      aksesMenuCache = matrix;
+      renderAksesMenuTable();
+      const btnSimpan = document.getElementById("btnSimpanAkses");
+      if(btnSimpan) btnSimpan.style.display = "flex";
+    })
+    .catch(function(err) {
+      const wrap = document.getElementById("aksesMenuWrap");
+      if (wrap) wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#F87171;font-size:13px;">Gagal memuat akses menu: ' + escapeHtmlHub(err.message) + '</div>';
+    });
+}
+
+function renderAksesMenuTable() {
+  const wrap = document.getElementById("aksesMenuWrap");
+  if (!wrap) return;
+  if (!aksesMenuCache || !aksesMenuCache.length) {
+    wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#94A3B8;font-size:13px;">Data akses menu kosong.</div>';
+    return;
+  }
+
+  const roles = ["Superadmin", "admin", "Pengurus", "Korwil", "Wakorwil", "Tim Kerja", "Relawan"];
+  
+  let html = '<table style="width: 100%; border-collapse: collapse; text-align: left; min-width: 650px;">';
+  html += '<thead><tr style="border-bottom: 1px solid var(--glass-border); background: rgba(255,255,255,0.05);">';
+  html += '<th style="padding: 12px; font-size: 12px; font-weight: 700; color: var(--text-secondary);">App / Menu</th>';
+  roles.forEach(function(r) {
+    html += '<th style="padding: 12px; font-size: 11px; font-weight: 700; color: var(--text-secondary); text-align: center;">' + r + '</th>';
+  });
+  html += '</tr></thead><tbody>';
+
+  let currentApp = "";
+  aksesMenuCache.forEach(function(row, rowIndex) {
+    if (row.app && row.app !== currentApp) {
+      currentApp = row.app;
+      html += '<tr style="background: rgba(34,211,238,0.1); border-bottom: 1px solid var(--glass-border);">';
+      html += '<td colspan="' + (roles.length + 1) + '" style="padding: 10px 12px; font-size: 12px; font-weight: 700; color: var(--neon-cyan);">' + escapeHtmlHub(currentApp) + '</td>';
+      html += '</tr>';
+    }
+    
+    html += '<tr style="border-bottom: 1px solid var(--glass-border);">';
+    html += '<td style="padding: 12px; font-size: 12.5px; font-weight: 600; color: var(--text-primary);">' + escapeHtmlHub(row.menu) + '</td>';
+    
+    roles.forEach(function(r) {
+      const val = row.roles[r] || "Tidak";
+      html += '<td style="padding: 6px; text-align: center;">';
+      html += getToggleHtml(rowIndex, r, val);
+      html += '</td>';
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function getToggleHtml(rowIndex, role, val) {
+  const v = String(val).toLowerCase().trim();
+  let color = "rgba(255,255,255,0.05)";
+  let borderColor = "var(--glass-border)";
+  let textColor = "var(--text-muted)";
+  let text = "Tidak";
+  
+  if (v === "ya") {
+    color = "rgba(34, 197, 94, 0.15)";
+    borderColor = "rgba(34, 197, 94, 0.4)";
+    textColor = "var(--bento-primary)";
+    text = "Ya";
+  } else if (v.indexOf("proteck") !== -1 || v.indexOf("proteksi") !== -1) {
+    color = "rgba(34, 211, 238, 0.15)";
+    borderColor = "rgba(34, 211, 238, 0.4)";
+    textColor = "var(--neon-cyan)";
+    text = "Proteksi";
+  }
+
+  return '<button type="button" onclick="cycleAksesValue(' + rowIndex + ', \'' + role + '\')" style="width: 100%; min-width: 60px; padding: 6px 2px; border-radius: 8px; font-size: 10px; font-weight: 700; border: 1px solid ' + borderColor + '; background: ' + color + '; color: ' + textColor + '; cursor: pointer; transition: all 0.2s;">' + text + '</button>';
+}
+
+function cycleAksesValue(rowIndex, role) {
+  const current = String(aksesMenuCache[rowIndex].roles[role] || "tidak").toLowerCase().trim();
+  let next = "Ya";
+  if (current === "ya") next = "Ya (proteck wilayah)";
+  else if (current.indexOf("proteck") !== -1 || current.indexOf("proteksi") !== -1) next = "Tidak";
+  
+  aksesMenuCache[rowIndex].roles[role] = next;
+  renderAksesMenuTable();
+}
+
+function simpanAksesMenu() {
+  const btn = document.getElementById("btnSimpanAkses");
+  if(!btn) return;
+  btn.disabled = true;
+  btn.innerHTML = 'Menyimpan...';
+
+  callGAS("updateAksesMenuMatrix", [authToken, aksesMenuCache])
+    .then(function(res) {
+      showModal("Sukses", res.message || "Akses menu berhasil disimpan.");
+    })
+    .catch(function(err) {
+      showModal("Gagal", err.message);
+    })
+    .finally(function() {
+      btn.disabled = false;
+      btn.innerHTML = iconSvg("shield", "#fff", 14) + ' Simpan Akses';
+    });
 }
 
 function loadUserListIntoPanel() {
