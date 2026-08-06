@@ -1778,6 +1778,15 @@ function loadBerandaStats() {
           ? jumlah + " pengurus belum login lama"
           : "Semua pengurus aktif login";
       }
+
+      // Aktivitas Hari Ini -> Pengurus login hari ini
+      const elLogin = document.getElementById("aktLoginHariIniText");
+      if (elLogin) {
+        const jumlahLogin = data.totalLoginHariIni || 0;
+        elLogin.textContent = jumlahLogin > 0
+          ? jumlahLogin + " pengurus login hari ini"
+          : "Belum ada pengurus login hari ini";
+      }
     })
     .catch(function () {
       const elW = document.getElementById("statTotalWilayah");
@@ -1786,6 +1795,25 @@ function loadBerandaStats() {
       if (elP) elP.textContent = "-";
       const elAkt = document.getElementById("aktPengurusLamaText");
       if (elAkt) elAkt.textContent = "Gagal memuat data pengurus";
+      const elLogin = document.getElementById("aktLoginHariIniText");
+      if (elLogin) elLogin.textContent = "Gagal memuat data login";
+    });
+
+  // Aktivitas Hari Ini -> Donasi Midtrans perlu verifikasi (PENDING /
+  // PERLU_DICEK_FRAUD)
+  callGAS("getDonasiPerluVerifikasi", [authToken])
+    .then(function (data) {
+      const elVer = document.getElementById("aktDonasiVerifikasiText");
+      if (elVer) {
+        const jumlah = (data && data.total) || 0;
+        elVer.textContent = jumlah > 0
+          ? jumlah + " donasi Midtrans perlu verifikasi"
+          : "Semua donasi Midtrans terverifikasi";
+      }
+    })
+    .catch(function () {
+      const elVer = document.getElementById("aktDonasiVerifikasiText");
+      if (elVer) elVer.textContent = "Gagal memuat data donasi";
     });
 }
 
@@ -1979,17 +2007,17 @@ function renderContent() {
           <a href="#" style="font-size: 11.5px; color: var(--neon-blue); text-decoration: none;" onclick="showModal('Info', 'Fitur Log Aktivitas sedang dikembangkan.'); return false;">Lihat Semua</a>
         </div>
         <div style="display: flex; flex-direction: column; gap: 12px;">
-          <div style="display: flex; align-items: center; gap: 12px;">
+          <div id="aktLoginHariIniWrap" style="display: flex; align-items: center; gap: 12px;">
             <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(34, 197, 94, 0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800;">check</span></div>
-            <span style="font-size: 12.5px;">Donasi naik 12%</span>
+            <span id="aktLoginHariIniText" style="font-size: 12.5px;">Memuat data login…</span>
           </div>
           <div id="aktPengurusLamaWrap" style="display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="showDaftarPengurusBelumLoginLama()">
             <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(251, 191, 36, 0.15); color: #FBBF24; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800;">warning</span></div>
             <span id="aktPengurusLamaText" style="font-size: 12.5px;">Memuat data pengurus…</span>
           </div>
-          <div style="display: flex; align-items: center; gap: 12px;">
+          <div id="aktDonasiVerifikasiWrap" style="display: flex; align-items: center; gap: 12px;">
             <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(59, 130, 246, 0.15); color: #60A5FA; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800;">lock</span></div>
-            <span style="font-size: 12.5px;">18 data perlu verifikasi</span>
+            <span id="aktDonasiVerifikasiText" style="font-size: 12.5px;">Memuat data donasi…</span>
           </div>
         </div>
       </div>
