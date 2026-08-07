@@ -895,6 +895,21 @@
   .aksi-kitabisa-label {
     font-size: 11px; font-weight: 700; color: #FF5A3A; text-align: center; line-height: 1.2;
   }
+
+  /* Aksi Cepat: Kotak Gopay / Donasi / Donasi Online -- juga dibuat
+     mencolok pakai ikon gradient warna-warni, tapi ukuran & tanpa animasi
+     pulse, biar tetap satu tingkat di bawah "Donasi Kitabisa.com" yang
+     jadi fokus utama. */
+  .aksi-cepat-icon {
+    width: 54px; height: 54px; border-radius: 15px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  }
+  .aksi-cepat-icon .material-symbols-outlined { font-size: 24px; font-variation-settings: 'FILL' 1; }
+  .aksi-kotak-icon { background: linear-gradient(135deg, #FFD166 0%, #FBBF24 55%, #F59E0B 100%); }
+  .aksi-donasi-icon { background: linear-gradient(135deg, #D8B4FE 0%, #C084FC 55%, #A855F7 100%); }
+  .aksi-online-icon { background: linear-gradient(135deg, #93C5FD 0%, #60A5FA 55%, #3B82F6 100%); }
 </style>
 </head>
 <body>
@@ -2161,15 +2176,15 @@ function renderContent() {
           <span class="aksi-kitabisa-label">Donasi<br>Kitabisa.com</span>
         </div>
         <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="openAppUrl('https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/?embed=1&tab=input-kotak')">
-          <div style="width: 50px; height: 50px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: #FBBF24;"><span class="material-symbols-outlined">savings</span></div>
+          <div class="aksi-cepat-icon aksi-kotak-icon"><span class="material-symbols-outlined">savings</span></div>
           <span style="font-size: 10.5px; color: var(--text-secondary);">Kotak Gopay</span>
         </div>
         <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="openAppUrl('https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/?embed=1&tab=input-donasi')">
-          <div style="width: 50px; height: 50px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: #C084FC;"><span class="material-symbols-outlined">add_box</span></div>
+          <div class="aksi-cepat-icon aksi-donasi-icon"><span class="material-symbols-outlined">add_box</span></div>
           <span style="font-size: 10.5px; color: var(--text-secondary);">Donasi</span>
         </div>
         <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="toggleMidtransForm()">
-          <div style="width: 50px; height: 50px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: #60A5FA;"><span class="material-symbols-outlined">credit_card</span></div>
+          <div class="aksi-cepat-icon aksi-online-icon"><span class="material-symbols-outlined">credit_card</span></div>
           <span style="font-size: 10.5px; color: var(--text-secondary);">Donasi Online</span>
         </div>
         <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="showModal('Info', 'Fitur Scan QR sedang dikembangkan')">
