@@ -384,16 +384,17 @@
   @keyframes slideUpApp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
   .overlay-header {
-    display: flex; align-items: center; gap: 12px; padding: 16px 20px;
+    display: flex; align-items: center; gap: 10px; padding: 10px 16px;
     border-bottom: 1px solid var(--glass-border); background: rgba(15,23,42,0.95);
     backdrop-filter: blur(16px);
   }
-  .overlay-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+  .overlay-title { font-size: 14.5px; font-weight: 700; color: var(--text-primary); }
   .overlay-close {
-    background: var(--glass-strong); border: 1px solid var(--glass-border-strong); cursor: pointer; padding: 8px;
+    background: var(--glass-strong); border: 1px solid var(--glass-border-strong); cursor: pointer; padding: 6px;
     border-radius: 50%; display: flex; align-items: center; justify-content: center;
     transition: background 0.2s;
   }
+  .overlay-close svg { width: 18px; height: 18px; }
   .overlay-close:active { background: rgba(255,255,255,0.15); }
   .overlay iframe { flex: 1; width: 100%; border: none; background: #121A2F; }
   .akun-content { flex: 1; overflow-y: auto; padding: 20px; background: var(--bg-navy); }
