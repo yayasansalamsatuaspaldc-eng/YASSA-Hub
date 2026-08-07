@@ -188,6 +188,8 @@
     overflow: hidden;
     box-shadow: var(--shadow-deep), 0 0 0 1px rgba(var(--bento-primary-rgb),0.2);
     border: 1px solid rgba(34, 197, 94, 0.2);
+    display: flex;
+    flex-direction: column;
   }
   .summary-card::before {
     content: "";
@@ -227,7 +229,9 @@
      panjang tetap punya ruang penuh selebar kartu dan gak kepotong di layar sempit. */
   .summary-sub-text { flex: 1; min-width: 0; }
   .summary-sub-label { font-size: 11px; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; margin-bottom: 3px; }
-  .summary-sub-value { font-size: 15.5px; color: var(--bento-amber); font-weight: 700; letter-spacing: -0.2px; overflow-wrap: anywhere; }
+  .summary-sub-value { font-size: 15.5px; color: var(--bento-amber); font-weight: 700; letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .content { flex: 1; padding: 24px 20px 100px; overflow-y: auto; }
 
   .content { flex: 1; padding: 24px 20px 100px; overflow-y: auto; }
   .section-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--text-primary); letter-spacing: -0.2px; }
