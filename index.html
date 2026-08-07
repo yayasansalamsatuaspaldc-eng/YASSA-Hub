@@ -67,7 +67,11 @@
     margin: 0; padding: 0; background: var(--bg-navy-deep);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     color: var(--text-primary);
-    min-height: 100vh;
+    height: 100%;
+    overflow: hidden; /* Kunci scroll di level halaman -- yang boleh scroll cuma
+                          .content di dalam #app. Tanpa ini, di sebagian browser/
+                          WebView mobile seluruh halaman (termasuk header & bottom-nav
+                          yang seharusnya diam) ikut ke-scroll pas user scroll konten. */
   }
 
   /* Container App (Penuh di Mobile, Terpusat di Tablet/Laptop) */
