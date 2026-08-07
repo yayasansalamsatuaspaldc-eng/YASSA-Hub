@@ -1192,7 +1192,7 @@
         </div>
         <div class="user-form-field" id="ufPasswordField">
           <label class="user-form-label">Password Awal</label>
-          <input type="text" id="ufPassword" class="user-form-input" placeholder="Minimal 6 karakter">
+          <input type="text" id="ufPassword" class="user-form-input" placeholder="Minimal 6 karakter" autocapitalize="off" autocorrect="off" spellcheck="false">
         </div>
         <div class="user-form-field">
           <label class="user-form-label">Email Google</label>
@@ -3792,13 +3792,24 @@ function submitUserForm(event) {
 }
 
 function resetUserPassword() {
-  showModal("Reset Password", "Masukkan password baru buat " + editingUserKey + " (minimal 6 karakter):", true, function() {
-      // In a real app we'd use a custom input modal here, but fallback to prompt for simplicity in this flow if we really need it
-      const newPassword = prompt("Password Baru:");
-      if (!newPassword) return;
-      callGAS("resetPassword", [authToken, editingUserKey, newPassword])
-        .then(function () { showModal("Sukses", "Password berhasil direset."); })
-        .catch(function (err) { showModal("Gagal", err.message); });
+  const inputId = "resetPasswordInputField";
+  const messageHtml =
+    "Masukkan password baru buat <b>" + editingUserKey + "</b> (minimal 6 karakter):" +
+    '<br><input type="text" id="' + inputId + '" autocapitalize="off" autocorrect="off" spellcheck="false" ' +
+    'style="width:100%;margin-top:10px;padding:10px;border-radius:6px;border:1px solid #ccc;box-sizing:border-box;" placeholder="Password baru">';
+
+  showModal("Reset Password", messageHtml, true, function () {
+    const inputEl = document.getElementById(inputId);
+    const newPassword = inputEl ? inputEl.value : "";
+    if (!newPassword || newPassword.length < 6) {
+      showModal("Gagal", "Password minimal 6 karakter.");
+      return;
+    }
+    callGAS("resetPassword", [authToken, editingUserKey, newPassword])
+      .then(function () {
+        showModal("Sukses", "Password berhasil direset jadi: <b>" + newPassword + "</b><br>Pastikan kasih tau user PERSIS teks ini (huruf besar/kecil ikut dihitung).");
+      })
+      .catch(function (err) { showModal("Gagal", err.message); });
   });
 }
 
