@@ -3395,7 +3395,7 @@ function renderAksesMenuPanel() {
         wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#94A3B8;font-size:13px;">Sheet Setting_Akses_Menu masih kosong.</div>';
         return;
       }
-      wrap.innerHTML = groups.map(renderAksesMenuGroupTable).join("");
+      wrap.innerHTML = groups.map(function (g, i) { return renderAksesMenuGroupTable(g, i); }).join("");
     })
     .catch(function (err) {
       const wrap = document.getElementById("aksesMenuWrap");
@@ -3419,8 +3419,18 @@ function aksesMenuSelectValueToRaw(selectValue) {
   return "tidak";
 }
 
-function renderAksesMenuGroupTable(group) {
+function renderAksesMenuGroupTable(group, colorIdx) {
   if (!group.roles || !group.roles.length) return "";
+  const palette = [
+    { fg: "#34D399", bg: "rgba(52,211,153,0.12)" },
+    { fg: "#60A5FA", bg: "rgba(96,165,250,0.12)" },
+    { fg: "#C084FC", bg: "rgba(192,132,252,0.12)" },
+    { fg: "#FBBF24", bg: "rgba(251,191,36,0.12)" },
+    { fg: "#22D3EE", bg: "rgba(34,211,238,0.12)" },
+    { fg: "#F472B6", bg: "rgba(244,114,182,0.12)" },
+  ];
+  const c = palette[colorIdx % palette.length];
+
   const headerCells = group.roles.map(function (r) {
     return '<th style="padding:8px 6px;font-size:10.5px;font-weight:700;color:var(--text-secondary);text-align:center;white-space:nowrap;">' + escapeHtmlHub(r) + '</th>';
   }).join("");
@@ -3437,12 +3447,14 @@ function renderAksesMenuGroupTable(group) {
         '<option value="ya_wilayah"' + (selVal === "ya_wilayah" ? " selected" : "") + '>Ya + Wilayah</option>' +
         '</select></td>';
     }).join("");
-    return '<tr><td style="padding:6px 8px;font-size:12px;font-weight:600;white-space:nowrap;">' + escapeHtmlHub(m.menu) + '</td>' + cells + '</tr>';
+    return '<tr style="border-top:1px solid var(--glass-border);"><td style="padding:8px 8px;font-size:12px;font-weight:600;white-space:nowrap;">' + escapeHtmlHub(m.menu) + '</td>' + cells + '</tr>';
   }).join("");
 
-  return '<div style="background:var(--glass);border-radius:16px;border:1px solid var(--glass-border);margin-bottom:16px;overflow:hidden;">' +
-    '<div style="padding:10px 14px;font-size:13px;font-weight:700;background:var(--glass-strong);border-bottom:1px solid var(--glass-border);">' + escapeHtmlHub(group.appName) + '</div>' +
-    '<div style="overflow-x:auto;"><table style="border-collapse:collapse;width:100%;"><thead><tr><th style="padding:8px 8px;font-size:10.5px;color:var(--text-secondary);text-align:left;">Menu</th>' + headerCells + '</tr></thead><tbody>' + bodyRows + '</tbody></table></div>' +
+  return '<div style="background:var(--glass);border-radius:16px;border:1px solid ' + c.fg + '33;margin-bottom:20px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,0.25);">' +
+    '<div style="padding:12px 14px;font-size:13.5px;font-weight:800;color:' + c.fg + ';background:' + c.bg + ';border-bottom:2px solid ' + c.fg + '55;display:flex;align-items:center;gap:8px;">' +
+    '<span style="width:8px;height:8px;border-radius:50%;background:' + c.fg + ';display:inline-block;"></span>' + escapeHtmlHub(group.appName) +
+    '</div>' +
+    '<div style="overflow-x:auto;"><table style="border-collapse:collapse;width:100%;"><thead><tr style="border-bottom:1px solid var(--glass-border);"><th style="padding:8px 8px;font-size:10.5px;color:var(--text-secondary);text-align:left;">Menu</th>' + headerCells + '</tr></thead><tbody>' + bodyRows + '</tbody></table></div>' +
     '</div>';
 }
 
