@@ -910,6 +910,23 @@
   .aksi-kotak-icon { background: linear-gradient(135deg, #FFD166 0%, #FBBF24 55%, #F59E0B 100%); }
   .aksi-donasi-icon { background: linear-gradient(135deg, #D8B4FE 0%, #C084FC 55%, #A855F7 100%); }
   .aksi-online-icon { background: linear-gradient(135deg, #93C5FD 0%, #60A5FA 55%, #3B82F6 100%); }
+
+  /* Aksi Cepat: Donasi Online -- dinaikkan level mencoloknya, mirip
+     Donasi Kitabisa.com (ukuran lebih besar + pulse ring), tapi pakai
+     warna biru khasnya sendiri biar tetap beda identitas. */
+  @keyframes onlinePulseRing {
+    0%   { box-shadow: 0 0 0 0 rgba(59,130,246,0.55), 0 6px 18px rgba(59,130,246,0.35); }
+    70%  { box-shadow: 0 0 0 10px rgba(59,130,246,0), 0 6px 18px rgba(59,130,246,0.35); }
+    100% { box-shadow: 0 0 0 0 rgba(59,130,246,0), 0 6px 18px rgba(59,130,246,0.35); }
+  }
+  .aksi-online-icon {
+    width: 58px; height: 58px; border-radius: 16px;
+    border: 1.5px solid rgba(255,255,255,0.35);
+    animation: onlinePulseRing 2.2s ease-out infinite;
+  }
+  .aksi-online-label {
+    font-size: 11px; font-weight: 700; color: #3B82F6; text-align: center; line-height: 1.2;
+  }
 </style>
 </head>
 <body>
@@ -2185,9 +2202,9 @@ function renderContent() {
         </div>
         <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="toggleMidtransForm()">
           <div class="aksi-cepat-icon aksi-online-icon"><span class="material-symbols-outlined">credit_card</span></div>
-          <span style="font-size: 10.5px; color: var(--text-secondary);">Donasi Online</span>
+          <span class="aksi-online-label">Donasi<br>Online</span>
         </div>
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="showModal('Info', 'Fitur Scan QR sedang dikembangkan')">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="showQrCodeDonasiCepat()">
           <div style="width: 50px; height: 50px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: var(--neon-cyan);"><span class="material-symbols-outlined">qr_code_scanner</span></div>
           <span style="font-size: 10.5px; color: var(--text-secondary);">QR Code</span>
         </div>
@@ -2925,6 +2942,27 @@ function showProfileQR() {
     console.error("Gagal memuat QR:", error);
     showModal("Error", "Gagal memuat QR Code profil.");
   }
+}
+
+// QR Code Donasi (Aksi Cepat Beranda) -- gambar statis dari Google Drive
+// (kode QR e-wallet/rekening buat donasi cepat). Kalau nanti mau ganti
+// gambarnya, tinggal ganti QR_DONASI_DRIVE_FILE_ID di bawah ini dengan ID
+// file Drive yang baru (ID = bagian di antara "/d/" dan "/view" pada link
+// share Drive-nya).
+const QR_DONASI_DRIVE_FILE_ID = "1C2KR6INrVpeR5cJPxYNubWmyVj27E8k8";
+function showQrCodeDonasiCepat() {
+  const imgUrl = "https://lh3.googleusercontent.com/d/" + QR_DONASI_DRIVE_FILE_ID + "=w800";
+  const modalHtml = `
+    <div style="display:flex; flex-direction:column; align-items:center; gap:14px;">
+      <div style="background:#fff; padding:12px; border-radius:16px; display:inline-block; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
+        <img src="${imgUrl}" alt="QR Code Donasi" style="width:220px; max-width:100%; display:block; border-radius:8px;" onerror="this.parentElement.innerHTML='<div style=\\'padding:24px; color:#999; font-size:12.5px; text-align:center;\\'>Gagal memuat gambar QR. Pastikan file Drive-nya sudah di-share ke \\'Siapa saja yang punya link\\'.</div>'">
+      </div>
+      <div style="font-size:11.5px; color:var(--text-secondary); text-align:center; line-height:1.4;">
+        <b>Scan QR ini buat donasi cepat</b><br>Lewat GoPay / QRIS langsung dari HP donatur.
+      </div>
+    </div>
+  `;
+  showModal("QR Code Donasi", modalHtml);
 }
 
 let userListCache = [];
