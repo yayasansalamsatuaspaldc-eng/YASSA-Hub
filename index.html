@@ -290,11 +290,17 @@
     box-shadow: 0 4px 24px rgba(0,0,0,0.35);
     border: 1px solid var(--glass-border);
   }
-  .menu-grid { display: grid; grid-template-columns: repeat(4, 1fr); row-gap: 24px; column-gap: 8px; }
-  .menu-item { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; padding: 0; transition: transform 0.2s; }
-  .menu-item:active { transform: scale(0.92); }
-  .menu-icon { width: 54px; height: 54px; border-radius: 18px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--glass-border-strong); }
-  .menu-label { font-size: 11.5px; font-weight: 500; color: var(--text-secondary); text-align: center; line-height: 1.3; max-width: 60px;}
+  .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .menu-item {
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    cursor: pointer; padding: 20px 12px; border-radius: 20px;
+    background: var(--glass-strong); border: 1px solid var(--glass-border);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .menu-item:active { transform: scale(0.95); }
+  .menu-icon { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+  .menu-label { font-size: 13px; font-weight: 700; color: var(--text-primary); text-align: center; line-height: 1.3; }
+  .menu-desc { font-size: 10.5px; font-weight: 500; color: var(--text-secondary); text-align: center; line-height: 1.3; margin-top: -4px; }
 
   .bottom-nav {
     position: absolute;
@@ -1419,54 +1425,54 @@ const MENUS = {
     title: "Kotak & Donasi",
     baseUrl: "https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/",
     items: [
-      { label: "Dashboard", icon: "chart", color: "teal", tab: "dashboard" },
-      { label: "Informasi Kotak", icon: "piggy", color: "blue", tab: "info-kotak" },
-      { label: "Input Buka Kotak", icon: "receipt", color: "coral", tab: "input-kotak" },
-      { label: "Input Donasi", icon: "heart", color: "amber", tab: "input-donasi" },
-      { label: "Admin Hub", icon: "list", color: "purple", tab: "monitor" },
+      { label: "Dashboard", icon: "chart", color: "teal", tab: "dashboard", desc: "Ringkasan & statistik" },
+      { label: "Informasi Kotak", icon: "piggy", color: "blue", tab: "info-kotak", desc: "Master data kotak" },
+      { label: "Input Buka Kotak", icon: "receipt", color: "coral", tab: "input-kotak", desc: "Catat hasil buka" },
+      { label: "Input Donasi", icon: "heart", color: "amber", tab: "input-donasi", desc: "Catat donasi masuk" },
+      { label: "Admin Hub", icon: "list", color: "purple", tab: "monitor", desc: "Kelola & monitor" },
     ],
   },
   absensi: {
     title: "Absensi & Kegiatan",
     items: [
-      { label: "Beranda", icon: "home", color: "teal", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/index.html?embed=1" },
-      { label: "Dashboard", icon: "chart", color: "blue", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Dashboard.html?embed=1" },
-      { label: "Kegiatan", icon: "calendar", color: "coral", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Kegiatan.html?embed=1" },
-      { label: "Notulen", icon: "clipboard", color: "amber", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Notulen.html?embed=1" },
-      { label: "Arsip", icon: "package", color: "purple", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Arsip.html?embed=1" },
-      { label: "Absen Sekarang", icon: "userplus", color: "teal", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Absensi.html?embed=1" },
+      { label: "Beranda", icon: "home", color: "teal", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/index.html?embed=1", desc: "Ringkasan kegiatan" },
+      { label: "Dashboard", icon: "chart", color: "blue", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Dashboard.html?embed=1", desc: "Statistik kehadiran" },
+      { label: "Kegiatan", icon: "calendar", color: "coral", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Kegiatan.html?embed=1", desc: "Jadwal kegiatan" },
+      { label: "Notulen", icon: "clipboard", color: "amber", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Notulen.html?embed=1", desc: "Catatan rapat" },
+      { label: "Arsip", icon: "package", color: "purple", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Arsip.html?embed=1", desc: "Riwayat & arsip" },
+      { label: "Absen Sekarang", icon: "userplus", color: "teal", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Absensi.html?embed=1", desc: "Isi kehadiran" },
     ],
   },
   awg: {
     title: "AWG (Ahli Waris Gojek)",
     baseUrl: "https://yayasansalamsatuaspaldc-eng.github.io/AWG/",
     items: [
-      { label: "Beranda AWG", icon: "home", color: "teal", tab: "dashboard" },
-      { label: "Data Baru", icon: "userplus", color: "blue", tab: "registrasi" },
-      { label: "Kontrol", icon: "shield", color: "coral", tab: "penyelesaian" },
-      { label: "List Antrian", icon: "list", color: "amber", tab: "antrian" },
-      { label: "Print Data", icon: "printer", color: "purple", tab: "export" },
+      { label: "Beranda AWG", icon: "home", color: "teal", tab: "dashboard", desc: "Ringkasan & statistik" },
+      { label: "Data Baru", icon: "userplus", color: "blue", tab: "registrasi", desc: "Registrasi pemohon" },
+      { label: "Kontrol", icon: "shield", color: "coral", tab: "penyelesaian", desc: "Verifikasi & proses" },
+      { label: "List Antrian", icon: "list", color: "amber", tab: "antrian", desc: "Daftar tunggu" },
+      { label: "Print Data", icon: "printer", color: "purple", tab: "export", desc: "Cetak & ekspor" },
     ],
   },
   pm: {
     title: "Penerima Manfaat",
     baseUrl: "https://yayasansalamsatuaspaldc-eng.github.io/Penerima-Manfaat/",
     items: [
-      { label: "Dashboard", icon: "chart", color: "teal", tab: "dashboard" },
-      { label: "Program", icon: "piggy", color: "blue", tab: "programDonasi" },
-      { label: "Penerima", icon: "users", color: "coral", tab: "penerima" },
-      { label: "Distribusi", icon: "package", color: "purple", tab: "distribusi" },
+      { label: "Dashboard", icon: "chart", color: "teal", tab: "dashboard", desc: "Ringkasan & statistik" },
+      { label: "Program", icon: "piggy", color: "blue", tab: "programDonasi", desc: "Program & donasi" },
+      { label: "Penerima", icon: "users", color: "coral", tab: "penerima", desc: "Data penerima" },
+      { label: "Distribusi", icon: "package", color: "purple", tab: "distribusi", desc: "Distribusi bantuan" },
     ],
   },
   bukubesar: {
     title: "Cloud Buku Besar",
     baseUrl: "https://yayasansalamsatuaspaldc-eng.github.io/Buku-Besar/",
     items: [
-      { label: "Dashboard", icon: "chart", color: "teal", tab: "dashboard" },
-      { label: "Input Jurnal", icon: "receipt", color: "blue", tab: "input" },
-      { label: "Buku Besar", icon: "bookopen", color: "coral", tab: "data" },
-      { label: "Laporan", icon: "printer", color: "amber", tab: "laporan" },
-      { label: "Aset & Lokasi", icon: "package", color: "purple", tab: "aset" },
+      { label: "Dashboard", icon: "chart", color: "teal", tab: "dashboard", desc: "Ringkasan & statistik" },
+      { label: "Input Jurnal", icon: "receipt", color: "blue", tab: "input", desc: "Catat transaksi" },
+      { label: "Buku Besar", icon: "bookopen", color: "coral", tab: "data", desc: "Rekap per akun" },
+      { label: "Laporan", icon: "printer", color: "amber", tab: "laporan", desc: "Laporan Isak 35" },
+      { label: "Aset & Lokasi", icon: "package", color: "purple", tab: "aset", desc: "Data aset & lokasi" },
     ],
   },
   mobile: {
@@ -2377,14 +2383,15 @@ function renderContent() {
   menu.items.forEach((item, i) => {
     if (!isMenuItemVisible(active, i)) return; // "tidak" di sheet Setting_Akses_Menu -> sembunyikan tombol ini
     const c = ICON_COLORS[item.color] || ICON_COLORS.teal;
-    html += `<button class="menu-item" onclick="openApp(${i})">
-      <div class="menu-icon" style="background:${c.bg}">${iconSvg(item.icon, c.fg, 24)}</div>
+    html += `<button class="menu-item" style="border-color:${c.fg}40; box-shadow:0 6px 16px ${c.fg}1F;" onclick="openApp(${i})">
+      <div class="menu-icon" style="background:${c.bg}">${iconSvg(item.icon, c.fg, 26)}</div>
       <span class="menu-label">${item.label}</span>
+      ${item.desc ? `<span class="menu-desc">${item.desc}</span>` : ""}
     </button>`;
   });
   
   html += `<button class="menu-item" onclick="showModal('Lainnya', 'Fitur selengkapnya sedang dikembangkan.')">
-    <div class="menu-icon" style="background:rgba(255,255,255,0.06)">${iconSvg("more", "#94A3B8", 24)}</div>
+    <div class="menu-icon" style="background:rgba(255,255,255,0.06)">${iconSvg("more", "#94A3B8", 26)}</div>
     <span class="menu-label">Lainnya</span>
   </button>`;
   html += `</div></div>`;
