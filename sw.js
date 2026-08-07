@@ -3,7 +3,7 @@
 // bisa kebuka meski koneksi lagi jelek. Konten di dalam iframe (Kotak & Donasi,
 // Absensi, AWG, Penerima Manfaat) TETAP butuh internet karena itu app terpisah.
 
-const CACHE_NAME = "yassa-hub-shell-v4";
+const CACHE_NAME = "yassa-hub-shell-v5";
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -15,7 +15,11 @@ const SHELL_FILES = [
 self.addEventListener("install", function (event) {
   event.waitUntil(
     caches.open(CACHE_NAME).then(function (cache) {
-      return cache.addAll(SHELL_FILES);
+      // cache: "reload" -> paksa fetch beneran ke server pas nyimpen shell
+      // pertama kali, jangan sampai kena HTTP cache browser/CDN yang bisa
+      // nyimpen index.html versi lama tanpa disadari.
+      const requests = SHELL_FILES.map(function (url) { return new Request(url, { cache: "reload" }); });
+      return cache.addAll(requests);
     })
   );
   self.skipWaiting();
@@ -50,7 +54,11 @@ self.addEventListener("fetch", function (event) {
 
   if (isHTMLRequest) {
     event.respondWith(
-      fetch(event.request)
+      // cache: "no-store" -> paksa lewat network beneran, gak boleh dijawab
+      // dari HTTP cache browser/CDN (mis. Cache-Control: max-age dari hosting).
+      // Tanpa ini, "network-first" di atas kertas doang -- browser bisa aja
+      // tetep nyeplak jawaban lama dari cache HTTP walau kode ini manggil fetch().
+      fetch(event.request, { cache: "no-store" })
         .then(function (response) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(function (cache) {
