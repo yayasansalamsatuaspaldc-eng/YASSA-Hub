@@ -876,6 +876,25 @@
   }
 
   .login-app-version { font-size: 11px; font-weight: 500; color: var(--text-muted); margin-top: 10px; text-align: center; }
+
+  /* Aksi Cepat: Donasi Kitabisa.com -- dibuat mencolok supaya jadi fokus utama */
+  @keyframes kitabisaPulseRing {
+    0%   { box-shadow: 0 0 0 0 rgba(255,90,58,0.55), 0 6px 18px rgba(255,90,58,0.35); }
+    70%  { box-shadow: 0 0 0 10px rgba(255,90,58,0), 0 6px 18px rgba(255,90,58,0.35); }
+    100% { box-shadow: 0 0 0 0 rgba(255,90,58,0), 0 6px 18px rgba(255,90,58,0.35); }
+  }
+  .aksi-kitabisa-icon {
+    width: 58px; height: 58px; border-radius: 16px;
+    background: linear-gradient(135deg, #FF7A45 0%, #FF5A3A 55%, #FF3B7F 100%);
+    border: 1.5px solid rgba(255,255,255,0.35);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    animation: kitabisaPulseRing 2.2s ease-out infinite;
+  }
+  .aksi-kitabisa-icon .material-symbols-outlined { font-size: 26px; font-variation-settings: 'FILL' 1; }
+  .aksi-kitabisa-label {
+    font-size: 11px; font-weight: 700; color: #FF5A3A; text-align: center; line-height: 1.2;
+  }
 </style>
 </head>
 <body>
@@ -1865,6 +1884,68 @@ function loadBerandaStats() {
       const elVer = document.getElementById("aktDonasiVerifikasiText");
       if (elVer) elVer.textContent = "Gagal memuat data donasi";
     });
+
+  // Aktivitas Terbaru (kartu Beranda paling bawah) -- gabungan dari 4 app
+  // (Donasi, Absensi, AWG, PM), lihat getAktivitasTerbaru() di code.gs.
+  loadAktivitasTerbaru();
+}
+
+// Metadata tampilan per app buat kartu Aktivitas Terbaru: ikon, warna, dan
+// label App. Kalau nanti nambah app baru yang ikut nulis ke log, tambahin
+// pemetaannya juga di sini (appKey HARUS sama persis kayak yang dikirim
+// app tsb ke catatAktivitas() di backend).
+const AKTIVITAS_APP_META = {
+  donasi: { icon: "receipt_long", color: "var(--bento-primary)" },
+  absensi: { icon: "event_note", color: "#60A5FA" },
+  awg: { icon: "groups", color: "#C084FC" },
+  pm: { icon: "person", color: "#FBBF24" },
+};
+
+function formatWaktuAktivitas(isoString) {
+  const waktu = new Date(isoString);
+  if (isNaN(waktu.getTime())) return "";
+  const now = new Date();
+  const selisihMenit = Math.floor((now - waktu) / 60000);
+  if (selisihMenit < 1) return "Baru saja";
+  if (selisihMenit < 60) return selisihMenit + " menit lalu";
+  const sameDay = waktu.toDateString() === now.toDateString();
+  if (sameDay) {
+    return waktu.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }).replace(":", ".");
+  }
+  return waktu.toLocaleDateString("id-ID", { day: "2-digit", month: "2-digit" }) + " " +
+    waktu.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }).replace(":", ".");
+}
+
+function loadAktivitasTerbaru() {
+  const wrap = document.getElementById("aktivitasTerbaruList");
+  if (!wrap) return;
+
+  callGAS("getAktivitasTerbaru", [authToken])
+    .then(function (data) {
+      const list = Array.isArray(data) ? data : [];
+      if (list.length === 0) {
+        wrap.innerHTML = '<div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 12px 0;">Belum ada aktivitas.</div>';
+        return;
+      }
+      wrap.innerHTML = list.map(function (item, idx) {
+        const meta = AKTIVITAS_APP_META[item.app] || { icon: "notifications", color: "var(--text-secondary)" };
+        const sub = item.detail
+          ? item.detail + (item.oleh ? " · oleh " + item.oleh : "")
+          : (item.oleh ? "oleh " + item.oleh : "");
+        const divider = idx < list.length - 1 ? '<div style="height: 1px; background: var(--glass-border);"></div>' : "";
+        return `
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--glass); color: ${meta.color}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><span class="material-symbols-outlined" style="font-size: 16px;">${meta.icon}</span></div>
+            <div style="flex: 1; min-width: 0;"><div style="font-size: 12.5px; font-weight: 600;">${item.aksi}</div>${sub ? `<div style="font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${sub}</div>` : ""}</div>
+            <span style="font-size: 11px; color: var(--text-muted); flex-shrink: 0;">${formatWaktuAktivitas(item.timestamp)}</span>
+          </div>
+          ${divider}
+        `;
+      }).join("");
+    })
+    .catch(function () {
+      wrap.innerHTML = '<div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 12px 0;">Gagal memuat aktivitas terbaru.</div>';
+    });
 }
 
 // ============================================================
@@ -2076,8 +2157,8 @@ function renderContent() {
       <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Aksi Cepat Donasi</h3>
       <div style="display: flex; justify-content: space-between; margin-bottom: 24px;">
         <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="window.open('https://kitabisa.com/campaign/gojekbantuyatim', '_blank')">
-          <div style="width: 50px; height: 50px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: var(--bento-primary);"><span class="material-symbols-outlined">volunteer_activism</span></div>
-          <span style="font-size: 10.5px; color: var(--text-secondary);">Donasi</span>
+          <div class="aksi-kitabisa-icon"><span class="material-symbols-outlined">volunteer_activism</span></div>
+          <span class="aksi-kitabisa-label">Donasi<br>Kitabisa.com</span>
         </div>
         <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="openAppUrl('https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/?embed=1&tab=input-kotak')">
           <div style="width: 50px; height: 50px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: #FBBF24;"><span class="material-symbols-outlined">savings</span></div>
@@ -2104,24 +2185,8 @@ function renderContent() {
           <h3 style="font-size: 14px; font-weight: 600; margin: 0;">Aktivitas Terbaru</h3>
           <a href="#" style="font-size: 11.5px; color: var(--neon-blue); text-decoration: none;" onclick="showModal('Info', 'Fitur Riwayat sedang dikembangkan.'); return false;">Lihat Semua</a>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 14px;">
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--glass); color: var(--bento-primary); display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 16px;">receipt_long</span></div>
-            <div style="flex: 1;"><div style="font-size: 12.5px; font-weight: 600;">Donasi ditambahkan</div><div style="font-size: 11px; color: var(--text-muted);">oleh Ahmad</div></div>
-            <span style="font-size: 11px; color: var(--text-muted);">09.30</span>
-          </div>
-          <div style="height: 1px; background: var(--glass-border);"></div>
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--glass); color: #60A5FA; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 16px;">person</span></div>
-            <div style="flex: 1;"><div style="font-size: 12.5px; font-weight: 600;">Anak baru didaftarkan</div></div>
-            <span style="font-size: 11px; color: var(--text-muted);">09.10</span>
-          </div>
-          <div style="height: 1px; background: var(--glass-border);"></div>
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--glass); color: #C084FC; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 16px;">location_on</span></div>
-            <div style="flex: 1;"><div style="font-size: 12.5px; font-weight: 600;">Wilayah Bandung update data</div></div>
-            <span style="font-size: 11px; color: var(--text-muted);">08.45</span>
-          </div>
+        <div id="aktivitasTerbaruList" style="display: flex; flex-direction: column; gap: 14px;">
+          <div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 12px 0;">Memuat aktivitas…</div>
         </div>
       </div>
       
