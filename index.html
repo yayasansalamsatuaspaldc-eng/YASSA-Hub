@@ -1550,13 +1550,20 @@ const MENUS = {
   },
   mobile: {
     title: "YASSA Mobile",
-    // YASSA Mobile masih pakai sistem login & data sendiri (belum SSO dengan Hub).
-    // Berbeda dari app lain: tidak lagi dipecah jadi 5 menu terpisah di Hub.
-    // Sekarang cukup 1 tombol "Masuk App" yang membuka YASSA Mobile TANPA
-    // mode embed, jadi header & bottom nav aslinya (tab-tab bawaan Mobile)
-    // tetap tampil dan dipakai seperti biasa di dalam iframe.
+    // 🔄 UPDATE (08 Agu 2026): dulu cuma 1 tombol "Masuk App" (isFullApp),
+    // sekarang dipecah jadi 5 menu kayak app lain, biar tunduk ke matrix
+    // Setting_Akses_Menu (lewat isMenuItemVisible) sama kayak app lain.
+    // Login & hak akses TETAP 100% ditentukan Mobile sendiri (Code.gs-nya) --
+    // ini cuma nentuin tombol menu mana yang KELIATAN di Hub, filter internal
+    // Mobile (role-based nav) tetap jalan sebagai lapisan kedua.
     baseUrl: "https://yassa-mobile.github.io/yassamobile/",
-    isFullApp: true,
+    items: [
+      { label: "Beranda", icon: "home", color: "teal", tab: "home", desc: "Ringkasan & statistik" },
+      { label: "Data KK", icon: "users", color: "blue", tab: "keluarga", desc: "Data keluarga almarhum" },
+      { label: "Kontrol", icon: "shield", color: "purple", tab: "perisai", desc: "Keamanan & blacklist" },
+      { label: "Data Anak", icon: "heart", color: "coral", tab: "anak", desc: "Data anak yatim" },
+      { label: "Profil", icon: "user", color: "amber", tab: "aksi", desc: "Akun & pengaturan" },
+    ],
   },
   pengaturan: { title: "Pengaturan" }, // dirender khusus lewat renderPengaturanPanel(), bukan menu-grid biasa
 };
@@ -2474,28 +2481,6 @@ function renderContent() {
       <div class="section-title" style="margin-bottom:0;">${menu.title}</div>
     </div>`;
 
-  if (menu.isFullApp) {
-    // YASSA Mobile: bukan menu-grid biasa, cuma 1 tombol besar "Masuk App"
-    // yang membuka aplikasinya secara utuh (dengan tab navigasi sendiri).
-    html += `
-      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; padding:48px 16px;">
-        <div style="width:88px; height:88px; border-radius:28px; background:rgba(34,197,94,0.15); color:var(--bento-primary); display:flex; align-items:center; justify-content:center;">
-          <span class="material-symbols-outlined" style="font-size:44px; font-variation-settings:'FILL' 1;">smartphone</span>
-        </div>
-        <div style="text-align:center;">
-          <div style="font-weight:700; font-size:16px; margin-bottom:6px;">YASSA Mobile</div>
-          <div style="font-size:13px; color:var(--text-secondary); line-height:1.4;">Buka aplikasi YASSA Mobile lengkap<br>dengan navigasi tab-nya sendiri</div>
-        </div>
-        <button onclick="openMobileApp()" style="width:100%; max-width:320px; padding:16px; border-radius:18px; background:var(--bento-primary); color:#0B1220; font-weight:700; font-size:15px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
-          <span class="material-symbols-outlined" style="font-size:20px;">login</span>
-          Masuk App
-        </button>
-        ${renderMobileNotifButton()}
-      </div>`;
-    el.innerHTML = html;
-    return;
-  }
-
   html += `<div class="menu-panel"><div class="menu-grid">`;
 
   menu.items.forEach((item, i) => {
@@ -2513,10 +2498,20 @@ function renderContent() {
     <span class="menu-label">Lainnya</span>
   </button>`;
   html += `</div></div>`;
+
+  // 🔔 YASSA Mobile: tombol "Aktifkan Notifikasi" tetap ditampilkan di bawah
+  // grid menu (dulu nempel di tombol "Masuk App" tunggal, sekarang di sini).
+  if (active === "mobile") {
+    html += `<div style="display:flex; flex-direction:column; align-items:center; gap:10px; padding:4px 16px 24px;">${renderMobileNotifButton()}</div>`;
+  }
   
   el.innerHTML = html;
 }
 
+// 🗄️ SUDAH TIDAK DIPAKAI (08 Agu 2026) -- dulu dipanggil dari tombol
+// tunggal "Masuk App" (mode isFullApp). Sekarang YASSA Mobile dipecah jadi
+// 5 menu seperti app lain (lihat MENUS.mobile & openApp()). Dibiarkan di
+// sini, gak dihapus, kalau-kalau masih ada referensi lama yang kelewat.
 function openMobileApp() {
   // Buka YASSA Mobile TANPA ?embed=1 supaya header & bottom nav bawaan
   // Mobile tetap muncul di dalam iframe, dan user navigasi pakai
@@ -3885,13 +3880,37 @@ function openApp(index) {
   const menu = MENUS[active];
   const item = menu.items[index];
 
+  document.getElementById("overlayTitle").textContent = item.label;
+
+  // 🔗 YASSA Mobile: beda dari app lain -- gak nempel ?hubToken=, tapi minta
+  // tiket SSO sekali-pakai (?sso=...) tiap kali pindah menu (tiketnya emang
+  // cuma boleh dipakai sekali, jadi harus diminta ulang tiap klik, gak bisa
+  // dicache). Login & hak akses TETAP 100% ditentukan Mobile sendiri lewat
+  // handleSsoLogin() di Code.gs-nya -- ini cuma titip identitas doang.
+  if (active === "mobile") {
+    document.getElementById("overlayFrame").src = "about:blank";
+    document.getElementById("overlay").classList.add("open");
+    const baseTabUrl = menu.baseUrl + "?embed=1&tab=" + item.tab;
+    callGAS("generateSsoToken", [authToken])
+      .then(function (res) {
+        const ssoToken = res && res.ssoToken;
+        document.getElementById("overlayFrame").src = ssoToken
+          ? baseTabUrl + "&sso=" + encodeURIComponent(ssoToken)
+          : baseTabUrl; // Gagal bikin tiket -> tetap buka, user login manual
+      })
+      .catch(function () {
+        document.getElementById("overlayFrame").src = baseTabUrl;
+      });
+    overlayLoadedMenuKey = active;
+    overlayLoadedBaseUrl = menu.baseUrl || null;
+    return;
+  }
+
   const appMasihHidupDiBackground =
     overlayLoadedMenuKey === active &&
     overlayLoadedBaseUrl === menu.baseUrl &&
     APPS_WITH_POSTMESSAGE_NAV.indexOf(active) !== -1 &&
     !!item.tab; // cuma app yang navigasinya lewat ?tab=, bukan url per-halaman kayak Absensi
-
-  document.getElementById("overlayTitle").textContent = item.label;
 
   if (appMasihHidupDiBackground) {
     // Ganti tab tanpa reload -- kirim ke origin app tsb aja (bukan "*"),
