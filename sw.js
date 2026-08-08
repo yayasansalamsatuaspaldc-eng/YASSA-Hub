@@ -3,7 +3,7 @@
 // bisa kebuka meski koneksi lagi jelek. Konten di dalam iframe (Kotak & Donasi,
 // Absensi, AWG, Penerima Manfaat) TETAP butuh internet karena itu app terpisah.
 
-const CACHE_NAME = "yassa-hub-shell-v5";
+const CACHE_NAME = "yassa-hub-shell-v6";
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -15,14 +15,40 @@ const SHELL_FILES = [
 self.addEventListener("install", function (event) {
   event.waitUntil(
     caches.open(CACHE_NAME).then(function (cache) {
-      // cache: "reload" -> paksa fetch beneran ke server pas nyimpen shell
-      // pertama kali, jangan sampai kena HTTP cache browser/CDN yang bisa
-      // nyimpen index.html versi lama tanpa disadari.
-      const requests = SHELL_FILES.map(function (url) { return new Request(url, { cache: "reload" }); });
-      return cache.addAll(requests);
+      // cache: "reload" -> paksa fetch beneran (bukan dari HTTP cache
+      // browser). Query param unik -> paksa tembus cache CDN GitHub Pages
+      // (Fastly) juga, biar shell yang pertama kali disimpan gak basi.
+      //
+      // PENTING: cache.put() pakai Request ASLI (tanpa param busting)
+      // sebagai key, biar nanti "./index.html" dkk tetap bisa dicocokkan
+      // dari kode lain (mis. caches.match("./index.html") di fallback offline).
+      return Promise.all(
+        SHELL_FILES.map(function (url) {
+          const original = new Request(url, { cache: "reload" });
+          const busted = new URL(url, self.location.href);
+          busted.searchParams.set("_swcb", Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
+          const networkReq = new Request(busted.toString(), { cache: "no-store" });
+
+          return fetch(networkReq)
+            .then(function (res) {
+              if (!res.ok) throw new Error("HTTP " + res.status + " utk " + url);
+              return cache.put(original, res);
+            })
+            .catch(function (err) {
+              console.error("[SW install] gagal cache shell file:", url, err);
+              throw err; // tetep gagalin install biar gak nyimpen shell yg gak lengkap
+            });
+        })
+      );
     })
   );
   self.skipWaiting();
+});
+
+self.addEventListener("message", function (event) {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("activate", function (event) {
@@ -53,12 +79,29 @@ self.addEventListener("fetch", function (event) {
     (event.request.headers.get("accept") || "").includes("text/html");
 
   if (isHTMLRequest) {
+    // Bikin URL fetch punya query param unik tiap kali, KHUSUS buat request
+    // yang beneran dikirim ke jaringan. Ini buat "menembus" cache CDN GitHub
+    // Pages (Fastly) yang punya lapisan cache sendiri di luar kontrol browser
+    // -- cache:"no-store" di atas cuma ngomong ke browser, gak ngomong ke CDN.
+    // Dengan query param beda tiap request, CDN nganggep ini resource baru
+    // dan wajib ambil dari origin (GitHub), bukan dari cache edge-nya.
+    //
+    // PENTING: cache key yang disimpan/dicocokkan ke Cache Storage tetap
+    // pakai `event.request` yang ASLI (tanpa param busting), biar fallback
+    // offline (caches.match) masih bisa nemuin versi yang udah tersimpan.
+    const bustedUrl = new URL(event.request.url);
+    bustedUrl.searchParams.set("_swcb", Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
+    const networkRequest = new Request(bustedUrl.toString(), {
+      method: event.request.method,
+      headers: event.request.headers,
+      mode: event.request.mode === "navigate" ? "same-origin" : event.request.mode,
+      credentials: event.request.credentials,
+      redirect: "follow",
+      cache: "no-store",
+    });
+
     event.respondWith(
-      // cache: "no-store" -> paksa lewat network beneran, gak boleh dijawab
-      // dari HTTP cache browser/CDN (mis. Cache-Control: max-age dari hosting).
-      // Tanpa ini, "network-first" di atas kertas doang -- browser bisa aja
-      // tetep nyeplak jawaban lama dari cache HTTP walau kode ini manggil fetch().
-      fetch(event.request, { cache: "no-store" })
+      fetch(networkRequest)
         .then(function (response) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(function (cache) {
