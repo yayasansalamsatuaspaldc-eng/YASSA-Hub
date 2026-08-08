@@ -1132,15 +1132,15 @@
     
     <div class="user-menu-divider"></div>
     
-    <button class="user-menu-item" onclick="window.open('https://drive.google.com/file/d/1Okr37b06X3j42cvGaplbL5X2LgpChPXd/view?usp=sharing', '_blank'); closeUserMenu();">
+    <button class="user-menu-item" onclick="openDocViewer('1Okr37b06X3j42cvGaplbL5X2LgpChPXd', 'Pengesahan Yayasan')">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
       Pengesahan Yayasan
     </button>
-    <button class="user-menu-item" onclick="window.open('https://drive.google.com/file/d/1e2F544MhO67uu1ffCIPX0d_xi-u-bmbe/view?usp=sharing', '_blank'); closeUserMenu();">
+    <button class="user-menu-item" onclick="openDocViewer('1e2F544MhO67uu1ffCIPX0d_xi-u-bmbe', 'Akte Notaris')">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
       Akte Notaris
     </button>
-    <button class="user-menu-item" onclick="window.open('https://drive.google.com/file/d/1jbT1PP9teuqJcyezrVMphPpAcSuJRFTR/view?usp=sharing', '_blank'); closeUserMenu();">
+    <button class="user-menu-item" onclick="openDocViewer('1jbT1PP9teuqJcyezrVMphPpAcSuJRFTR', 'Regulasi YASSA')">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
       Regulasi YASSA
     </button>
@@ -1170,6 +1170,23 @@
       <span class="overlay-title" id="overlayTitle">Aplikasi</span>
     </div>
     <iframe id="overlayFrame" src="about:blank" allow="camera; geolocation"></iframe>
+  </div>
+
+  <!-- Overlay Viewer Dokumen (Pengesahan Yayasan / Akte Notaris / Regulasi) -->
+  <!-- Sengaja dibuat TERPISAH dari #overlay (overlay app biasa), soalnya
+       #overlay punya logika khusus (overlayLoadedMenuKey/overlayLoadedBaseUrl
+       + postMessage nav) buat app yang harus tetap hidup di background.
+       Kalau dokumen numpang di #overlay yang sama, itu bisa bikin state-nya
+       ketuker: Hub bakal ngira app terakhir (mis. Buku Besar) masih "hidup"
+       padahal iframe-nya udah ketiban dokumen PDF. -->
+  <div class="overlay" id="docViewerOverlay">
+    <div class="overlay-header">
+      <button class="overlay-close" id="docViewerClose">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E2E8F0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+      <span class="overlay-title" id="docViewerTitle">Dokumen</span>
+    </div>
+    <iframe id="docViewerFrame" src="about:blank"></iframe>
   </div>
 
   <!-- Halaman Penuh: Akun -->
@@ -2711,6 +2728,23 @@ function submitMidtransDonation() {
       btn.textContent = 'Buat Link Pembayaran';
     });
 }
+
+// Nampilin dokumen legalitas (Pengesahan Yayasan / Akte Notaris / Regulasi)
+// LANGSUNG di dalam Hub lewat iframe preview Google Drive -- bukan
+// window.open ke tab baru, dan bukan link download. fileId diambil dari
+// bagian ".../file/d/FILE_ID/view..." di link share Drive-nya.
+function openDocViewer(fileId, title) {
+  closeUserMenu();
+  document.getElementById("docViewerTitle").textContent = title;
+  document.getElementById("docViewerFrame").src =
+    "https://drive.google.com/file/d/" + fileId + "/preview";
+  document.getElementById("docViewerOverlay").classList.add("open");
+}
+
+document.getElementById("docViewerClose").addEventListener("click", function () {
+  document.getElementById("docViewerOverlay").classList.remove("open");
+  document.getElementById("docViewerFrame").src = "about:blank"; // reset biar gak nyangkut di background
+});
 
 function openAppUrl(url) {
   // Selalu TUTUP sheet "Input Data" (bukan toggle), soalnya fungsi ini juga
