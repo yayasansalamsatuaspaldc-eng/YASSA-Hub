@@ -2114,9 +2114,12 @@ function loadKeuanganStats() {
         if (elSantunanWrap) elSantunanWrap.style.display = "block";
         if (elTotalSantunan) elTotalSantunan.textContent = formatRupiahHub(santunan.totalPenyaluran || 0);
         if (elRincianRate) {
-          elRincianRate.textContent =
+          const cakupan = Number(santunan.jumlahBulanCakupan || 1);
+          let teks =
             Number(santunan.jumlahAnakYatim || 0) + " anak \u00d7 " + formatRupiahHub(santunan.ratePokok || 0) +
             " + tambahan yatim piatu/disabilitas";
+          if (cakupan > 1) teks += " \u00d7 " + cakupan + " bulan (rapel)";
+          elRincianRate.textContent = teks;
         }
       }
 
