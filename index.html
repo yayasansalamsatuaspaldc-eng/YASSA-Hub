@@ -2557,8 +2557,8 @@ function loadProfilePerforma() {
       if (elKehadiranBar) elKehadiranBar.style.width = persenHadir + "%";
       if (elKehadiranKet) {
         elKehadiranKet.textContent = Number(kehadiran.totalKegiatan || 0) > 0
-          ? "Hadir " + Number(kehadiran.jumlahHadir || 0) + " dari " + Number(kehadiran.totalKegiatan || 0) + " pertemuan (semua waktu)"
-          : "Belum ada data kegiatan yang bisa dihitung";
+          ? "Hadir " + Number(kehadiran.jumlahHadir || 0) + " dari " + Number(kehadiran.totalKegiatan || 0) + " pertemuan (Jan\u2013bulan ini)"
+          : "Belum ada data kegiatan tahun ini";
       }
 
       // --- Pencapaian Donasi ---
@@ -2566,12 +2566,12 @@ function loadProfilePerforma() {
       if (!donasi.ditemukan) {
         if (elDonasiPersen) elDonasiPersen.textContent = "-";
         if (elDonasiBar) elDonasiBar.style.width = "0%";
-        if (elDonasiKet) elDonasiKet.textContent = "Belum diisi Bendahara bulan ini";
+        if (elDonasiKet) elDonasiKet.textContent = "Belum ada data yang diisi Bendahara tahun ini";
       } else {
         if (elDonasiPersen) elDonasiPersen.textContent = persenDonasi + "%";
         if (elDonasiBar) elDonasiBar.style.width = persenDonasi + "%";
         if (elDonasiKet) {
-          elDonasiKet.textContent = formatRupiahHub(donasi.realisasiDonasi || 0) + " / " + formatRupiahHub(donasi.kebutuhanDonasi || 0) + " (bulan ini)";
+          elDonasiKet.textContent = formatRupiahHub(donasi.realisasiDonasi || 0) + " / " + formatRupiahHub(donasi.kebutuhanDonasi || 0) + " (Jan\u2013bulan ini)";
         }
       }
     })
@@ -3459,6 +3459,35 @@ function handleUserMenuClick(action) {
             pengurusListCache = list;
             pengurusSearchTerm = "";
             pengurusFilterWilayah = defaultPengurusWilayahFilter();
+
+            // Kolom % Kehadiran & % Donasi cuma buat SUPERADMIN/ADMIN --
+            // role lain (Korwil/Pengurus/dst) tetap cuma lihat kartu
+            // nama/jabatan/WA biasa (gak ada request tambahan).
+            const roleUpper = String((currentUser && currentUser.role) || "").toUpperCase();
+            const bolehLihatPerforma = roleUpper === "SUPERADMIN" || roleUpper === "ADMIN";
+            if (!bolehLihatPerforma) return null;
+
+            return callGAS("getPerformaSemuaPengurus", [authToken])
+              .then(function (performaList) {
+                const petaPerforma = {};
+                (performaList || []).forEach(function (p) {
+                  petaPerforma[String(p.nama || "").trim().toUpperCase()] = p;
+                });
+                pengurusListCache = pengurusListCache.map(function (u) {
+                  const p = petaPerforma[String(u.nama || "").trim().toUpperCase()];
+                  if (p) {
+                    u.persenKehadiran = p.persenKehadiran;
+                    u.persenDonasi = p.persenDonasi;
+                  }
+                  return u;
+                });
+              })
+              // Fail-open: kalau ambil data performa gagal (mis. sheet
+              // Absensi lagi bermasalah), daftar pengurus TETAP tampil,
+              // cuma kolom performa-nya gak nongol.
+              .catch(function () {});
+          })
+          .then(function () {
             document.getElementById("akunContent").innerHTML = buildPengurusPanelHtml();
           })
           .catch(function (err) {
@@ -3610,6 +3639,17 @@ function pengurusCardHtml(u) {
     ? "SEMUA"
     : String(u.wilayahAkses || "-").split(",")[0].trim();
   const jabatanTxt = u.jabatan || roleLabel(u.role);
+  // Baris badge %Kehadiran/%Donasi CUMA muncul kalau datanya ada di objek
+  // u (artinya yang buka halaman ini SUPERADMIN/ADMIN -- lihat
+  // handleUserMenuClick('pengurus')). Role lain gak minta data ini sama
+  // sekali, jadi field-nya undefined & baris ini otomatis gak dirender.
+  const adaDataPerforma = u.persenKehadiran !== undefined || u.persenDonasi !== undefined;
+  const performaHtml = adaDataPerforma
+    ? `<div style="display:flex; gap:6px; margin-bottom:10px; justify-content:center;">
+         <span style="font-size:9.5px; font-weight:700; padding:3px 8px; border-radius:999px; background: rgba(34,211,238,0.12); color:#22D3EE;">Hadir ${Math.max(0, Number(u.persenKehadiran || 0))}%</span>
+         <span style="font-size:9.5px; font-weight:700; padding:3px 8px; border-radius:999px; background: rgba(34,197,94,0.12); color: var(--bento-primary);">Donasi ${Math.max(0, Number(u.persenDonasi || 0))}%</span>
+       </div>`
+    : "";
   return `
     <div style="background: var(--glass-strong); border: 1px solid var(--glass-border); border-radius: 18px; overflow: hidden; display: flex; flex-direction: column; align-items: center;">
       <div style="width: 100%; height: 44px; background: linear-gradient(135deg, var(--bento-primary), #0B7A45); position: relative;">
@@ -3621,6 +3661,7 @@ function pengurusCardHtml(u) {
       <div style="padding: 10px 12px 14px; text-align: center; width: 100%;">
         <div style="font-size: 13.5px; font-weight: 700; margin-bottom: 2px;">${escapeHtmlHub(u.nama || "-")}</div>
         <div style="font-size: 11.5px; color: var(--bento-primary); font-weight: 600; margin-bottom: 10px;">${escapeHtmlHub(jabatanTxt)}</div>
+        ${performaHtml}
         ${waUrl
           ? `<a href="${waUrl}" target="_blank" rel="noopener" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; border-radius: 10px; background: rgba(34,197,94,0.12); color: var(--bento-primary); font-size: 11.5px; font-weight: 600; text-decoration: none;">
               <span class="material-symbols-outlined" style="font-size: 14px;">chat</span> Hubungi WA
