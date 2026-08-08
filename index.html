@@ -2013,14 +2013,16 @@ function loadBerandaStats() {
       }
     });
 
-  // Total Santunan Diperlukan, Kekurangan Santunan, & Total Donasi (gabungan
-  // 4 sumber, SAMA datanya dengan yang dipakai tab Keuangan -- lihat
-  // loadKeuanganStats()):
+  // Total Santunan Diperlukan, Kekurangan Santunan, & Total Donasi:
   //   - Total Santunan Diperlukan -> dari getPenyaluranSantunanBulanIni
-  //     (jumlah anak x rate, ditentukan Bendahara -- Kartu 1 tab Keuangan).
-  //   - Total Donasi -> gabungan Realisasi Lapangan + Kitabisa + Midtrans.
-  //   - Kekurangan Santunan -> Total Santunan Diperlukan dikurangi Total
-  //     Donasi yang udah terkumpul (kalau masih kurang; kalau udah
+  //     dengan paksaNasional=true (jumlah anak x rate, SEMUA wilayah
+  //     digabung, TIDAK ikut wilayahAkses user yang login -- beda dari
+  //     Kartu 1 tab Keuangan yang emang sengaja PER WILAYAH).
+  //   - Total Donasi -> gabungan Realisasi Lapangan (per wilayah, ikut
+  //     akses user, SAMA kayak tab Keuangan) + Kitabisa + Midtrans
+  //     (keduanya udah nasional dari sononya).
+  //   - Kekurangan Santunan -> Total Santunan Diperlukan (nasional)
+  //     dikurangi Total Donasi (kalau masih kurang; kalau udah
   //     tercapai/lebih, ditampilkan "Tercapai").
   const elTotalSantunanDiperlukan = document.getElementById("summaryTotalSantunanDiperlukan");
   const elTotalDonasi = document.getElementById("summaryTotalDonasi");
@@ -2073,7 +2075,9 @@ function loadBerandaStats() {
   if (berandaStatsCache.donasi) terapkanDonasiBeranda(berandaStatsCache.donasi);
 
   Promise.all([
-    callGAS("getPenyaluranSantunanBulanIni", [authToken]),
+    // paksaNasional=true -- Total Santunan Diperlukan di Beranda SELALU
+    // jumlah semua wilayah, walau user yang login akses-nya cuma 1 wilayah.
+    callGAS("getPenyaluranSantunanBulanIni", [authToken, true]),
     callGAS("getKeuanganManual", [authToken]),
     callGAS("getKitabisaRealisasiBulanIni", [authToken]),
     callGAS("getDonasiRealisasiBulanIni", [authToken]),
