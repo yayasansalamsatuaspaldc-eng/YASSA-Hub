@@ -3874,7 +3874,7 @@ function uploadFoto(input) {
 // masih reload penuh seperti biasa sampai ditambahin dukungan yang sama).
 let overlayLoadedMenuKey = null;
 let overlayLoadedBaseUrl = null;
-const APPS_WITH_POSTMESSAGE_NAV = ["donasi", "pm", "awg", "bukubesar"]; // tambahin key menu lain di sini kalau app-nya udah didukung juga
+const APPS_WITH_POSTMESSAGE_NAV = ["donasi", "pm", "awg", "bukubesar", "mobile"]; // tambahin key menu lain di sini kalau app-nya udah didukung juga
 
 function openApp(index) {
   const menu = MENUS[active];
@@ -3882,11 +3882,38 @@ function openApp(index) {
 
   document.getElementById("overlayTitle").textContent = item.label;
 
+  // 🩹 FIX: dulu YASSA Mobile SELALU masuk jalur reload-total + minta tiket
+  // SSO baru di SETIAP klik menu (walau app-nya masih sama & masih hidup di
+  // iframe) -- makanya tiap pindah menu (mis. Beranda -> Profil) selalu
+  // loading "memuat data" dari nol. Sekarang cek DULU apakah app yang sama
+  // masih hidup di background (persis kayak app lain: Donasi/PM/AWG/Buku
+  // Besar) -- kalau iya, cukup kirim postMessage ganti tab TANPA reload.
+  // Jalur SSO reload-total di bawah cuma jalan pas PERTAMA KALI buka Mobile
+  // (atau abis app lain dibuka di iframe yang sama), bukan tiap klik menu.
+  const appMasihHidupDiBackground =
+    overlayLoadedMenuKey === active &&
+    overlayLoadedBaseUrl === menu.baseUrl &&
+    APPS_WITH_POSTMESSAGE_NAV.indexOf(active) !== -1 &&
+    !!item.tab; // cuma app yang navigasinya lewat ?tab=, bukan url per-halaman kayak Absensi
+
+  if (appMasihHidupDiBackground) {
+    // Ganti tab tanpa reload -- kirim ke origin app tsb aja (bukan "*"),
+    // biar gak nyasar/kebocor ke iframe lain kalau originnya beda.
+    const targetOrigin = new URL(menu.baseUrl).origin;
+    document.getElementById("overlayFrame").contentWindow.postMessage(
+      { type: "YASSA_HUB_NAVIGATE", tab: item.tab },
+      targetOrigin
+    );
+    document.getElementById("overlay").classList.add("open");
+    return;
+  }
+
   // 🔗 YASSA Mobile: beda dari app lain -- gak nempel ?hubToken=, tapi minta
-  // tiket SSO sekali-pakai (?sso=...) tiap kali pindah menu (tiketnya emang
-  // cuma boleh dipakai sekali, jadi harus diminta ulang tiap klik, gak bisa
-  // dicache). Login & hak akses TETAP 100% ditentukan Mobile sendiri lewat
-  // handleSsoLogin() di Code.gs-nya -- ini cuma titip identitas doang.
+  // tiket SSO sekali-pakai (?sso=...). Ini cuma jalan kalau app-nya BELUM
+  // hidup di iframe (lihat appMasihHidupDiBackground di atas), jadi gak lagi
+  // minta tiket baru tiap pindah menu. Login & hak akses TETAP 100%
+  // ditentukan Mobile sendiri lewat handleSsoLogin() di Code.gs-nya -- ini
+  // cuma titip identitas doang.
   if (active === "mobile") {
     document.getElementById("overlayFrame").src = "about:blank";
     document.getElementById("overlay").classList.add("open");
@@ -3903,24 +3930,6 @@ function openApp(index) {
       });
     overlayLoadedMenuKey = active;
     overlayLoadedBaseUrl = menu.baseUrl || null;
-    return;
-  }
-
-  const appMasihHidupDiBackground =
-    overlayLoadedMenuKey === active &&
-    overlayLoadedBaseUrl === menu.baseUrl &&
-    APPS_WITH_POSTMESSAGE_NAV.indexOf(active) !== -1 &&
-    !!item.tab; // cuma app yang navigasinya lewat ?tab=, bukan url per-halaman kayak Absensi
-
-  if (appMasihHidupDiBackground) {
-    // Ganti tab tanpa reload -- kirim ke origin app tsb aja (bukan "*"),
-    // biar gak nyasar/kebocor ke iframe lain kalau originnya beda.
-    const targetOrigin = new URL(menu.baseUrl).origin;
-    document.getElementById("overlayFrame").contentWindow.postMessage(
-      { type: "YASSA_HUB_NAVIGATE", tab: item.tab },
-      targetOrigin
-    );
-    document.getElementById("overlay").classList.add("open");
     return;
   }
 
