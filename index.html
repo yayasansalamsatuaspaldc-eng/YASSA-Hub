@@ -2065,6 +2065,8 @@ function loadKeuanganStats() {
   const elSelisihIconWrap = document.getElementById("keuanganSelisihIconWrap");
   const elSelisihIcon = document.getElementById("keuanganSelisihIcon");
   const elStatusBanner = document.getElementById("keuanganStatusBanner");
+  const elRincianWilayahWrap = document.getElementById("keuanganRincianWilayahWrap");
+  const elRincianWilayahList = document.getElementById("keuanganRincianWilayahList");
 
   const elKitabisaBelumDiisi = document.getElementById("keuanganKitabisaBelumDiisi");
   const elKitabisaWrap = document.getElementById("keuanganKitabisaWrap");
@@ -2181,6 +2183,7 @@ function loadKeuanganStats() {
         if (elBelumDiisi) elBelumDiisi.style.display = "flex";
         if (elProgresWrap) elProgresWrap.style.display = "none";
         if (elStatusBanner) elStatusBanner.style.display = "none";
+        if (elRincianWilayahWrap) elRincianWilayahWrap.style.display = "none";
         return;
       }
 
@@ -2224,8 +2227,57 @@ function loadKeuanganStats() {
         elStatusBanner.style.background = kurang ? "rgba(239, 68, 68, 0.10)" : "rgba(34, 197, 94, 0.10)";
         elStatusBanner.style.borderColor = kurang ? "rgba(239, 68, 68, 0.3)" : "rgba(34, 197, 94, 0.3)";
       }
+
+      // --- Breakdown kekurangan per wilayah (cuma tampil kalau user akses
+      //     lebih dari 1 wilayah, mis. Super Admin/"ALL") ---
+      const rincianWilayahManual = manual.rincianWilayah || [];
+      if (elRincianWilayahWrap && elRincianWilayahList) {
+        if (rincianWilayahManual.length > 1) {
+          elRincianWilayahWrap.style.display = "block";
+          elRincianWilayahList.innerHTML = rincianWilayahManual
+            .map(function (r) {
+              const kb = Number(r.kebutuhanDonasi || 0);
+              const rl = Number(r.realisasiDonasi || 0);
+              const kk = Number(r.kekuranganDonasi || Math.max(0, kb - rl));
+              const pc = Number(r.persenTercapai || (kb > 0 ? Math.round((rl / kb) * 100) : 100));
+              const tercapai = r.sudahTercapai === true || (kb === 0) || rl >= kb;
+              const warnaStatus = tercapai ? "#86EFAC" : "#FCA5A5";
+              const teksStatus = tercapai ? "Tercapai" : ("Kurang " + formatRupiahHub(kk));
+              const namaWilayah = escapeHtmlHub(r.wilayah || "-");
+              return (
+                '<div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05);">' +
+                  '<div>' +
+                    '<div style="font-size:12.5px; font-weight:600; color:white;">' + namaWilayah + '</div>' +
+                    '<div style="font-size:10px; color:var(--text-secondary);">' + formatRupiahHub(rl) + ' / ' + formatRupiahHub(kb) + '</div>' +
+                  '</div>' +
+                  '<div style="text-align:right;">' +
+                    '<div style="font-size:12px; font-weight:700; color:' + warnaStatus + ';">' + teksStatus + '</div>' +
+                    '<div style="font-size:9.5px; color:var(--text-secondary);">' + Math.max(0, pc) + '%</div>' +
+                  '</div>' +
+                '</div>'
+              );
+            })
+            .join("");
+        } else {
+          // Cuma 1 wilayah (atau 0) -- kartu utama di atas udah cukup
+          // mewakili, gak perlu diulang di breakdown.
+          elRincianWilayahWrap.style.display = "none";
+          elRincianWilayahList.innerHTML = "";
+        }
+      }
     })
     .catch(gagalSemua);
+}
+
+// Escape teks bebas (mis. nama wilayah) sebelum dipasang lewat innerHTML,
+// biar aman dari karakter HTML aneh (bukan proteksi XSS penuh, cukup buat
+// data internal spreadsheet Bendahara yang formatnya udah lumayan terjaga).
+function escapeHtmlHub(teks) {
+  return String(teks)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 // Format angka jadi "RpX.XXX.XXX" ala Indonesia (dipakai di tab Keuangan).
@@ -2485,6 +2537,14 @@ function renderContent() {
             <div style="font-size: 16px; font-weight: 700; color: #FCA5A5;" id="keuanganSelisihNominal">...</div>
             <div style="font-size: 10.5px; color: rgba(252, 165, 165, 0.85);" id="keuanganSelisihLabel">...</div>
           </div>
+        </div>
+
+        <!-- Breakdown kekurangan PER WILAYAH -- cuma tampil kalau user akses
+             lebih dari 1 wilayah (mis. Super Admin/"ALL"). Kalau cuma 1
+             wilayah, kartu di atas udah cukup mewakili, gak perlu diulang. -->
+        <div id="keuanganRincianWilayahWrap" style="display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--glass-border);">
+          <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Rincian per Wilayah</div>
+          <div id="keuanganRincianWilayahList"></div>
         </div>
       </div>
 
