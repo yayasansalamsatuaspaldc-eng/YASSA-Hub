@@ -2101,25 +2101,61 @@ function loadKeuanganStats() {
       const kitabisa = hasil[2];
       const midtrans = hasil[3];
 
-      // --- Kartu 1: Jumlah Anak & Total Santunan ---
+      // --- Kartu 1: Jumlah Anak & Total Santunan (PER WILAYAH -- rate & jumlah
+      //     anak sekarang bisa beda tiap wilayah, lihat santunan.rincianWilayah) ---
       if (elYatim) elYatim.textContent = Number(santunan.jumlahAnakYatim || 0);
       if (elPiatu) elPiatu.textContent = Number(santunan.jumlahYatimPiatu || 0);
       if (elDsb) elDsb.textContent = Number(santunan.jumlahDisabilitas || 0);
 
+      const rincianWilayahSantunan = santunan.rincianWilayah || [];
+      const wilayahBelumDiisiRate = santunan.wilayahBelumDiisiRate || [];
+
       if (!santunan.ditemukan) {
-        if (elSantunanBelumDiisi) elSantunanBelumDiisi.style.display = "flex";
+        // Belum ada baris SAMA SEKALI bulan ini (siapkanBarisSantunanBulanIni()
+        // di Apps Script belum dijalankan) -- jumlah anak masih ditampilkan
+        // (fallback gabungan dari Mobile), tapi total Rupiah belum bisa dihitung.
+        if (elSantunanBelumDiisi) {
+          elSantunanBelumDiisi.style.display = "flex";
+          const spanTeks = elSantunanBelumDiisi.querySelector("span:last-child");
+          if (spanTeks) spanTeks.textContent = "Bendahara belum mengisi rate santunan bulan ini.";
+        }
         if (elSantunanWrap) elSantunanWrap.style.display = "none";
       } else {
-        if (elSantunanBelumDiisi) elSantunanBelumDiisi.style.display = "none";
         if (elSantunanWrap) elSantunanWrap.style.display = "block";
         if (elTotalSantunan) elTotalSantunan.textContent = formatRupiahHub(santunan.totalPenyaluran || 0);
+
+        if (wilayahBelumDiisiRate.length > 0) {
+          // Baris wilayahnya udah ada, tapi sebagian rate-nya masih kosong --
+          // total di atas sudah menganggap wilayah itu Rp0, kasih tau user.
+          if (elSantunanBelumDiisi) {
+            elSantunanBelumDiisi.style.display = "flex";
+            const spanTeks = elSantunanBelumDiisi.querySelector("span:last-child");
+            if (spanTeks) {
+              spanTeks.textContent = "Rate wilayah " + wilayahBelumDiisiRate.join(", ") + " belum diisi (dianggap Rp0).";
+            }
+          }
+        } else if (elSantunanBelumDiisi) {
+          elSantunanBelumDiisi.style.display = "none";
+        }
+
         if (elRincianRate) {
-          const cakupan = Number(santunan.jumlahBulanCakupan || 1);
-          let teks =
-            Number(santunan.jumlahAnakYatim || 0) + " anak \u00d7 " + formatRupiahHub(santunan.ratePokok || 0) +
-            " + tambahan yatim piatu/disabilitas";
-          if (cakupan > 1) teks += " \u00d7 " + cakupan + " bulan (rapel)";
-          elRincianRate.textContent = teks;
+          if (rincianWilayahSantunan.length === 1) {
+            // User cuma akses 1 wilayah -- tampilkan rincian rate wilayah itu.
+            const r = rincianWilayahSantunan[0];
+            const cakupan = Number(r.jumlahBulanCakupan || 1);
+            let teks =
+              Number(r.jumlahAnakYatim || 0) + " anak \u00d7 " + formatRupiahHub(r.ratePokok || 0) +
+              " + tambahan yatim piatu/disabilitas";
+            if (cakupan > 1) teks += " \u00d7 " + cakupan + " bulan (rapel)";
+            elRincianRate.textContent = teks;
+          } else if (rincianWilayahSantunan.length > 1) {
+            // User akses beberapa wilayah -- rate bisa beda-beda per wilayah,
+            // jadi cukup ringkas jumlah wilayahnya aja di sini.
+            elRincianRate.textContent =
+              rincianWilayahSantunan.length + " wilayah \u00b7 rate & jumlah anak beda per wilayah";
+          } else {
+            elRincianRate.textContent = "";
+          }
         }
       }
 
