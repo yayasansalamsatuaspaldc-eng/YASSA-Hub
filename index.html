@@ -1768,6 +1768,12 @@ function onLoginSuccess(res) {
     wilayahAkses: res.wilayahAkses,
     bolehPrint: res.bolehPrint,
     fotoUrl: res.fotoUrl || "",
+    // PENTING: tanpa ini, isAppVisible()/isMenuItemVisible() gak nemu
+    // currentUser.aksesMenu -> fail-open -> semua app/menu keliatan
+    // (gak kefilter sesuai role) sampai halaman di-refresh manual, karena
+    // checkSession (yang jalan pas refresh) makein SELURUH objek respons
+    // apa adanya, bukan nyusun ulang field satu-satu kayak di sini.
+    aksesMenu: res.aksesMenu || null,
   };
   sessionStorage.setItem("yassa_token", authToken);
   sessionStorage.setItem("yassa_user", JSON.stringify(currentUser));
