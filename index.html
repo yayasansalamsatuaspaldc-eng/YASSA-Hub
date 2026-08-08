@@ -181,8 +181,8 @@
     background: linear-gradient(135deg, #1A3B35 0%, #0F2220 100%);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-radius: 22px;
-    padding: 20px;
+    border-radius: 18px;
+    padding: 16px;
     position: relative;
     z-index: 2;
     overflow: hidden;
@@ -201,35 +201,35 @@
     filter: blur(28px);
     pointer-events: none;
   }
-  .summary-top { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; position: relative; z-index: 1; }
+  .summary-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; position: relative; z-index: 1; }
   .summary-icon {
-    width: 36px; height: 36px; border-radius: 50%;
+    width: 30px; height: 30px; border-radius: 50%;
     background: rgba(var(--bento-primary-rgb),0.18);
     color: var(--bento-primary);
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
   }
-  .summary-icon .material-symbols-outlined { font-size: 19px; }
-  .summary-label { font-size: 11px; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 4px; }
-  .summary-value { font-size: 26px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; position: relative; z-index: 1; }
+  .summary-icon .material-symbols-outlined { font-size: 16px; }
+  .summary-label { font-size: 10px; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 3px; }
+  .summary-value { font-size: 21px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; position: relative; z-index: 1; }
   .summary-sub-row {
-    margin-top: 16px; padding-top: 14px;
+    margin-top: 12px; padding-top: 10px;
     border-top: 1px solid var(--glass-border);
-    display: flex; align-items: center; gap: 10px; position: relative; z-index: 1;
+    display: flex; align-items: center; gap: 8px; position: relative; z-index: 1;
     min-width: 0;
   }
   .summary-sub-icon {
-    width: 26px; height: 26px; border-radius: 8px;
+    width: 22px; height: 22px; border-radius: 7px;
     background: rgba(var(--bento-amber-rgb),0.18);
     color: var(--bento-amber);
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
-  .summary-sub-icon .material-symbols-outlined { font-size: 15px; }
+  .summary-sub-icon .material-symbols-outlined { font-size: 13px; }
   /* Label + value ditumpuk vertikal (bukan sebaris) supaya nominal Rupiah yang
      panjang tetap punya ruang penuh selebar kartu dan gak kepotong di layar sempit. */
   .summary-sub-text { flex: 1; min-width: 0; }
-  .summary-sub-label { font-size: 11px; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; margin-bottom: 3px; }
-  .summary-sub-value { font-size: 15.5px; color: var(--bento-amber); font-weight: 700; letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .summary-sub-label { font-size: 10px; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; margin-bottom: 2px; }
+  .summary-sub-value { font-size: 13.5px; color: var(--bento-amber); font-weight: 700; letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   .content { flex: 1; padding: 24px 20px 100px; overflow-y: auto; }
 
