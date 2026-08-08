@@ -2534,6 +2534,53 @@ function loadKeuanganStats() {
     });
 }
 
+// Ambil & tampilkan 2 metrik Performa di tab Profil: Kehadiran Absen
+// (all-time, dari spreadsheet Absensi terpisah) dan Pencapaian Donasi
+// (bulan ini, angka sama dengan tab Keuangan). Dipanggil tiap kali tab
+// Profil dibuka (lihat renderContent, cabang active === "profil").
+function loadProfilePerforma() {
+  const elKehadiranPersen = document.getElementById("profilPerformaKehadiranPersen");
+  const elKehadiranBar = document.getElementById("profilPerformaKehadiranBar");
+  const elKehadiranKet = document.getElementById("profilPerformaKehadiranKeterangan");
+  const elDonasiPersen = document.getElementById("profilPerformaDonasiPersen");
+  const elDonasiBar = document.getElementById("profilPerformaDonasiBar");
+  const elDonasiKet = document.getElementById("profilPerformaDonasiKeterangan");
+
+  callGAS("getPerformaProfil", [authToken])
+    .then(function (hasil) {
+      const kehadiran = (hasil && hasil.kehadiran) || {};
+      const donasi = (hasil && hasil.donasi) || {};
+
+      // --- Kehadiran Absen ---
+      const persenHadir = Math.max(0, Number(kehadiran.persenKehadiran || 0));
+      if (elKehadiranPersen) elKehadiranPersen.textContent = persenHadir + "%";
+      if (elKehadiranBar) elKehadiranBar.style.width = persenHadir + "%";
+      if (elKehadiranKet) {
+        elKehadiranKet.textContent = Number(kehadiran.totalKegiatan || 0) > 0
+          ? "Hadir " + Number(kehadiran.jumlahHadir || 0) + " dari " + Number(kehadiran.totalKegiatan || 0) + " pertemuan (semua waktu)"
+          : "Belum ada data kegiatan yang bisa dihitung";
+      }
+
+      // --- Pencapaian Donasi ---
+      const persenDonasi = Math.max(0, Number(donasi.persenTercapai || 0));
+      if (!donasi.ditemukan) {
+        if (elDonasiPersen) elDonasiPersen.textContent = "-";
+        if (elDonasiBar) elDonasiBar.style.width = "0%";
+        if (elDonasiKet) elDonasiKet.textContent = "Belum diisi Bendahara bulan ini";
+      } else {
+        if (elDonasiPersen) elDonasiPersen.textContent = persenDonasi + "%";
+        if (elDonasiBar) elDonasiBar.style.width = persenDonasi + "%";
+        if (elDonasiKet) {
+          elDonasiKet.textContent = formatRupiahHub(donasi.realisasiDonasi || 0) + " / " + formatRupiahHub(donasi.kebutuhanDonasi || 0) + " (bulan ini)";
+        }
+      }
+    })
+    .catch(function () {
+      if (elKehadiranKet) elKehadiranKet.textContent = "Gagal memuat data kehadiran.";
+      if (elDonasiKet) elDonasiKet.textContent = "Gagal memuat data donasi.";
+    });
+}
+
 // Escape teks bebas (mis. nama wilayah) sebelum dipasang lewat innerHTML,
 // biar aman dari karakter HTML aneh (bukan proteksi XSS penuh, cukup buat
 // data internal spreadsheet Bendahara yang formatnya udah lumayan terjaga).
@@ -2909,6 +2956,36 @@ function renderContent() {
         </button>
       </div>
 
+      <h3 style="font-weight: 600; font-size: 14px; margin-bottom: 12px; padding: 0 4px;">Performa</h3>
+      <div style="background: var(--glass-strong); border-radius: 20px; padding: 18px; margin-bottom: 24px; border: 1px solid var(--glass-border); display: flex; flex-direction: column; gap: 18px;">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="material-symbols-outlined" style="font-size: 17px; color: var(--neon-cyan);">event_available</span>
+              <span style="font-size: 12.5px; font-weight: 600;">Kehadiran Absen</span>
+            </div>
+            <span id="profilPerformaKehadiranPersen" style="font-size: 13px; font-weight: 700; color: var(--neon-cyan);">...</span>
+          </div>
+          <div style="height: 8px; border-radius: 6px; background: rgba(255,255,255,0.08); overflow: hidden;">
+            <div id="profilPerformaKehadiranBar" style="height: 100%; width: 0%; border-radius: 6px; background: var(--neon-cyan); transition: width .4s;"></div>
+          </div>
+          <div id="profilPerformaKehadiranKeterangan" style="font-size: 10.5px; color: var(--text-muted); margin-top: 5px;">Memuat data kehadiran...</div>
+        </div>
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="material-symbols-outlined" style="font-size: 17px; color: var(--bento-primary);">volunteer_activism</span>
+              <span style="font-size: 12.5px; font-weight: 600;">Pencapaian Donasi</span>
+            </div>
+            <span id="profilPerformaDonasiPersen" style="font-size: 13px; font-weight: 700; color: var(--bento-primary);">...</span>
+          </div>
+          <div style="height: 8px; border-radius: 6px; background: rgba(255,255,255,0.08); overflow: hidden;">
+            <div id="profilPerformaDonasiBar" style="height: 100%; width: 0%; border-radius: 6px; background: var(--bento-primary); transition: width .4s;"></div>
+          </div>
+          <div id="profilPerformaDonasiKeterangan" style="font-size: 10.5px; color: var(--text-muted); margin-top: 5px;">Memuat data donasi...</div>
+        </div>
+      </div>
+
       <h3 style="font-weight: 600; font-size: 14px; margin-bottom: 12px; padding: 0 4px;">Tim & Organisasi</h3>
       <div style="background: var(--glass-strong); border-radius: 20px; display: flex; flex-direction: column; border: 1px solid var(--glass-border);">
         <div style="display: flex; align-items: center; gap: 12px; padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;" onclick="handleUserMenuClick('pengurus')">
@@ -2932,6 +3009,7 @@ function renderContent() {
       </div>
     `;
     el.innerHTML = html;
+    loadProfilePerforma();
     return;
   }
 
