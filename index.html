@@ -2599,28 +2599,6 @@ function renderContent() {
         </div>
       </div>
 
-      <!-- Aktivitas Hari Ini -->
-      <div style="background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--glass-border);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-          <h3 style="font-size: 14px; font-weight: 600; margin: 0;">Aktivitas Hari Ini</h3>
-          <a href="#" style="font-size: 11.5px; color: var(--neon-blue); text-decoration: none;" onclick="showModal('Info', 'Fitur Log Aktivitas sedang dikembangkan.'); return false;">Lihat Semua</a>
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-          <div id="aktLoginHariIniWrap" style="display: flex; align-items: center; gap: 12px;">
-            <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(34, 197, 94, 0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800;">check</span></div>
-            <span id="aktLoginHariIniText" style="font-size: 12.5px;">Memuat data login…</span>
-          </div>
-          <div id="aktPengurusLamaWrap" style="display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="showDaftarPengurusBelumLoginLama()">
-            <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(251, 191, 36, 0.15); color: #FBBF24; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800;">warning</span></div>
-            <span id="aktPengurusLamaText" style="font-size: 12.5px;">Memuat data pengurus…</span>
-          </div>
-          <div id="aktDonasiVerifikasiWrap" style="display: flex; align-items: center; gap: 12px;">
-            <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(59, 130, 246, 0.15); color: #60A5FA; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800;">lock</span></div>
-            <span id="aktDonasiVerifikasiText" style="font-size: 12.5px;">Memuat data donasi…</span>
-          </div>
-        </div>
-      </div>
-
       <!-- Aksi Cepat Menu Bawah -->
       <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Aksi Cepat Donasi</h3>
       <div style="display: flex; justify-content: space-between; margin-bottom: 24px;">
@@ -2646,6 +2624,27 @@ function renderContent() {
         </div>
       </div>
 
+      <!-- Aktivitas Hari Ini -->
+      <div style="background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--glass-border);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <h3 style="font-size: 14px; font-weight: 600; margin: 0;">Aktivitas Hari Ini</h3>
+          <a href="#" style="font-size: 11.5px; color: var(--neon-blue); text-decoration: none;" onclick="showModal('Info', 'Fitur Log Aktivitas sedang dikembangkan.'); return false;">Lihat Semua</a>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div id="aktLoginHariIniWrap" style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(34, 197, 94, 0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800;">check</span></div>
+            <span id="aktLoginHariIniText" style="font-size: 12.5px;">Memuat data login…</span>
+          </div>
+          <div id="aktPengurusLamaWrap" style="display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="showDaftarPengurusBelumLoginLama()">
+            <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(251, 191, 36, 0.15); color: #FBBF24; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800;">warning</span></div>
+            <span id="aktPengurusLamaText" style="font-size: 12.5px;">Memuat data pengurus…</span>
+          </div>
+          <div id="aktDonasiVerifikasiWrap" style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(59, 130, 246, 0.15); color: #60A5FA; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800;">lock</span></div>
+            <span id="aktDonasiVerifikasiText" style="font-size: 12.5px;">Memuat data donasi…</span>
+          </div>
+        </div>
+      </div>
 
       <!-- Aktivitas Terbaru -->
       <div style="background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--glass-border);">
