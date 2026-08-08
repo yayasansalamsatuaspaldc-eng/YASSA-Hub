@@ -4063,8 +4063,16 @@ function cleanupCacheAndUpdate() {
     tasks.push(
       navigator.serviceWorker.register("sw.js")
         .then(function (reg) {
+          // Jaga-jaga: kalau ada SW baru yang udah "waiting" tapi belum
+          // teraktivasi (misal karena install sempat gagal/lambat pas
+          // sesi sebelumnya), suruh dia skipWaiting sekarang juga. Tanpa
+          // ini, SW itu bisa nyangkut nunggu terus dan user tetep jalanin
+          // JS versi lama sampai manual refresh.
+          if (reg.waiting) {
+            reg.waiting.postMessage({ type: "SKIP_WAITING" });
+          }
           if (!reg.update) return null;
-          return reg.update().catch(function () {});
+          return reg.update().catch(function (err) { console.warn("reg.update() gagal:", err); });
         })
         .catch(function (err) { console.warn("Gagal daftar service worker:", err); })
     );
