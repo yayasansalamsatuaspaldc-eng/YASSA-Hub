@@ -2026,20 +2026,33 @@ function loadAktivitasTerbaru() {
 }
 
 // ============================================================
-// Ambil angka ASLI buat tab "Keuangan" (Jumlah Anak Yatim, Yatim Piatu,
-// Disabilitas) -- dari YASSA Mobile (sheet "Anak"), lewat action publik
-// 'getKeuanganStats', gak butuh login/token karena cuma balikin angka
-// agregat, bukan data pribadi.
-// Dibatasi otomatis sesuai wilayah akses user Hub yang login (mis. Agus
-// dengan wilayahAkses "BOGOR" cuma lihat angka anak wilayah Bogor saja;
-// user dengan wilayahAkses "ALL" lihat semua wilayah).
-// "Jumlah Anak Yatim" diambil dari jumlah anak program Gopay (santunan
-// Gopay memang khusus utk anak yatim), bukan dari kolom YATIM langsung.
+// Ambil angka ASLI buat tab "Keuangan" -- 4 kartu, 4 sumber data beda:
+//   1. Jumlah Anak & Total Santunan -- PER WILAYAH. Jumlah anak (Yatim,
+//      Yatim Piatu, Disabilitas) ditarik otomatis dari YASSA Mobile, rate
+//      Rupiah diisi manual Bendahara tiap bulan; Hub yang gabungin & hitung
+//      totalnya lewat action "getPenyaluranSantunanBulanIni".
+//   2. Realisasi Lapangan -- PER WILAYAH, kebutuhan & realisasi donasi
+//      (kotak donasi dsb) diisi manual Bendahara/Korwil per wilayah, lewat
+//      action "getKeuanganManual".
+//   3. Donasi Kitabisa.com -- NASIONAL, 1 angka gabungan diisi manual
+//      Bendahara (bukan per wilayah), lewat action
+//      "getKitabisaRealisasiBulanIni".
+//   4. Donasi Online / Midtrans -- NASIONAL, tercatat otomatis tiap ada
+//      pembayaran Snap yang settlement, lewat action
+//      "getDonasiRealisasiBulanIni".
+// Semua 4 endpoint di atas ada di script Hub sendiri (bukan manggil YASSA
+// Mobile langsung dari frontend lagi) -- Hub yang urus panggil ke Mobile
+// di baliknya buat action #1.
 // ============================================================
 function loadKeuanganStats() {
   const elYatim = document.getElementById("keuanganJumlahYatim");
   const elPiatu = document.getElementById("keuanganYatimPiatu");
   const elDsb = document.getElementById("keuanganDisabilitas");
+  const elSantunanBelumDiisi = document.getElementById("keuanganSantunanBelumDiisi");
+  const elSantunanWrap = document.getElementById("keuanganSantunanWrap");
+  const elTotalSantunan = document.getElementById("keuanganTotalSantunan");
+  const elRincianRate = document.getElementById("keuanganRincianRate");
+
   const elCatatan = document.getElementById("keuanganCatatanBendahara");
   const elBelumDiisi = document.getElementById("keuanganBelumDiisi");
   const elProgresWrap = document.getElementById("keuanganProgresWrap");
@@ -2052,48 +2065,76 @@ function loadKeuanganStats() {
   const elSelisihIconWrap = document.getElementById("keuanganSelisihIconWrap");
   const elSelisihIcon = document.getElementById("keuanganSelisihIcon");
   const elStatusBanner = document.getElementById("keuanganStatusBanner");
+
+  const elKitabisaBelumDiisi = document.getElementById("keuanganKitabisaBelumDiisi");
+  const elKitabisaWrap = document.getElementById("keuanganKitabisaWrap");
+  const elKitabisaNominal = document.getElementById("keuanganKitabisaNominal");
+  const elKitabisaCatatan = document.getElementById("keuanganKitabisaCatatan");
+
   const elHistoriBulanIni = document.getElementById("keuanganHistoriBulanIni");
-  const wilayahAkses = (currentUser && currentUser.wilayahAkses) ? currentUser.wilayahAkses : "ALL";
 
   const gagalSemua = function () {
-    [elYatim, elPiatu, elDsb, elKebutuhan, elRealisasi, elPersen, elSelisihNominal, elSelisihLabel, elHistoriBulanIni]
+    [elYatim, elPiatu, elDsb, elTotalSantunan, elKebutuhan, elRealisasi, elPersen,
+      elSelisihNominal, elSelisihLabel, elKitabisaNominal, elHistoriBulanIni]
       .forEach(function (el) { if (el) el.textContent = "-"; });
     if (elCatatan) elCatatan.textContent = "Gagal memuat data.";
   };
 
-  // 1) Statistik anak (Jumlah Anak Yatim, Yatim Piatu, Disabilitas) --
-  //    dari YASSA Mobile, difilter otomatis sesuai wilayah akses user login.
-  const pAnak = fetch(GAS_MOBILE_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain" },
-    body: JSON.stringify({ action: "getKeuanganStats", wilayah: wilayahAkses }),
-  })
-    .then(function (r) { return r.json(); })
-    .then(function (res) {
-      if (!res || !res.success || !res.data) throw new Error("gagal");
-      return res.data;
-    });
+  // 1) Jumlah anak per kategori + rate + total santunan, sudah digabung &
+  //    dihitung di backend Hub (server-to-server ke YASSA Mobile di baliknya).
+  const pSantunan = callGAS("getPenyaluranSantunanBulanIni", [authToken]);
 
-  // 2) Kebutuhan & Realisasi Donasi Bulan Ini -- DITULIS MANUAL oleh Bendahara
-  //    di spreadsheet terpisah (bukan lagi dihitung otomatis dari jumlah anak).
+  // 2) Kebutuhan & Realisasi Donasi Lapangan Bulan Ini -- DITULIS MANUAL oleh
+  //    Bendahara/Korwil per wilayah.
   const pManual = callGAS("getKeuanganManual", [authToken]);
 
-  // 3) Histori donasi ONLINE lewat Midtrans bulan ini (buat kartu 3, terpisah
-  //    dari total manual Bendahara di kartu 2 -- Midtrans cuma nyatet donasi
-  //    yang masuk lewat Snap, belum tentu sama dgn total riil yg dipegang Bendahara).
+  // 3) Realisasi Donasi Kitabisa.com bulan ini -- NASIONAL, manual Bendahara.
+  const pKitabisa = callGAS("getKitabisaRealisasiBulanIni", [authToken]);
+
+  // 4) Histori donasi ONLINE lewat Midtrans bulan ini -- NASIONAL, otomatis.
   const pMidtrans = callGAS("getDonasiRealisasiBulanIni", [authToken]);
 
-  Promise.all([pAnak, pManual, pMidtrans])
+  Promise.all([pSantunan, pManual, pKitabisa, pMidtrans])
     .then(function (hasil) {
-      const anak = hasil[0];
+      const santunan = hasil[0];
       const manual = hasil[1];
-      const midtrans = hasil[2];
+      const kitabisa = hasil[2];
+      const midtrans = hasil[3];
 
-      if (elYatim) elYatim.textContent = Number(anak.jumlahAnakYatim || 0);
-      if (elPiatu) elPiatu.textContent = anak.jumlahYatimPiatu;
-      if (elDsb) elDsb.textContent = anak.jumlahDisabilitas;
+      // --- Kartu 1: Jumlah Anak & Total Santunan ---
+      if (elYatim) elYatim.textContent = Number(santunan.jumlahAnakYatim || 0);
+      if (elPiatu) elPiatu.textContent = Number(santunan.jumlahYatimPiatu || 0);
+      if (elDsb) elDsb.textContent = Number(santunan.jumlahDisabilitas || 0);
+
+      if (!santunan.ditemukan) {
+        if (elSantunanBelumDiisi) elSantunanBelumDiisi.style.display = "flex";
+        if (elSantunanWrap) elSantunanWrap.style.display = "none";
+      } else {
+        if (elSantunanBelumDiisi) elSantunanBelumDiisi.style.display = "none";
+        if (elSantunanWrap) elSantunanWrap.style.display = "block";
+        if (elTotalSantunan) elTotalSantunan.textContent = formatRupiahHub(santunan.totalPenyaluran || 0);
+        if (elRincianRate) {
+          elRincianRate.textContent =
+            Number(santunan.jumlahAnakYatim || 0) + " anak \u00d7 " + formatRupiahHub(santunan.ratePokok || 0) +
+            " + tambahan yatim piatu/disabilitas";
+        }
+      }
+
+      // --- Kartu 3: Donasi Kitabisa.com ---
+      if (!kitabisa.ditemukan) {
+        if (elKitabisaBelumDiisi) elKitabisaBelumDiisi.style.display = "flex";
+        if (elKitabisaWrap) elKitabisaWrap.style.display = "none";
+      } else {
+        if (elKitabisaBelumDiisi) elKitabisaBelumDiisi.style.display = "none";
+        if (elKitabisaWrap) elKitabisaWrap.style.display = "block";
+        if (elKitabisaNominal) elKitabisaNominal.textContent = formatRupiahHub(kitabisa.totalRealisasi || 0);
+        if (elKitabisaCatatan) elKitabisaCatatan.textContent = kitabisa.catatan || "Total pencairan bulan ini";
+      }
+
+      // --- Kartu 4: Donasi Online / Midtrans ---
       if (elHistoriBulanIni) elHistoriBulanIni.textContent = formatRupiahHub(midtrans.totalRealisasi || 0);
 
+      // --- Kartu 2: Realisasi Lapangan ---
       if (!manual.ditemukan) {
         // Bendahara belum isi baris bulan ini -- jangan tampilkan Rp0 yang menyesatkan.
         if (elCatatan) elCatatan.textContent = "Ditentukan oleh Bendahara";
@@ -2313,6 +2354,10 @@ function renderContent() {
 
   if (active === "keuangan") {
     const wilayahText = currentUser.wilayahAkses === "ALL" ? "Semua Wilayah" : (currentUser.wilayahAkses || "-");
+    // Badge kecil buat bedain angka yang PER WILAYAH (ikut filter wilayahAkses
+    // user login) vs NASIONAL (1 angka gabungan sama ke semua user).
+    const badgeWilayah = `<span style="font-size: 9px; font-weight: 700; letter-spacing: 0.3px; padding: 2px 7px; border-radius: 99px; background: rgba(var(--bento-primary-rgb),0.15); color: var(--bento-primary); margin-left: 6px; vertical-align: middle;">PER WILAYAH</span>`;
+    const badgeNasional = `<span style="font-size: 9px; font-weight: 700; letter-spacing: 0.3px; padding: 2px 7px; border-radius: 99px; background: rgba(59, 130, 246, 0.18); color: #93C5FD; margin-left: 6px; vertical-align: middle;">NASIONAL</span>`;
     let html = `
       <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-top: 16px;">
         <h2 style="font-weight: 600; font-size: 18px;">Keuangan</h2>
@@ -2321,9 +2366,11 @@ function renderContent() {
         </button>
       </header>
 
+      <!-- 1. Jumlah Anak Yatim + Total Santunan (per wilayah -- jumlah anak dari
+           YASSA Mobile, rate dari Bendahara, dihitung otomatis di Hub) -->
       <div style="background: var(--glass-strong); border-radius: 20px; padding: 22px 20px; margin-bottom: 16px; border: 1px solid var(--glass-border); border-left: 4px solid var(--bento-primary);">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
-          <div style="font-size: 12px; color: var(--text-secondary);">1. Jumlah Anak Yatim <span style="font-size: 10px; color: var(--bento-primary);">(Program Gopay)</span></div>
+          <div style="font-size: 12px; color: var(--text-secondary);">1. Jumlah Anak &amp; Santunan ${badgeWilayah}<br><span style="font-size: 10px; color: var(--bento-primary);">(Program Gopay)</span></div>
           <div style="width: 44px; height: 44px; border-radius: 14px; background: rgba(var(--bento-primary-rgb),0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
             <span class="material-symbols-outlined" style="font-size: 22px; font-variation-settings: 'FILL' 1;">groups</span>
           </div>
@@ -2331,7 +2378,7 @@ function renderContent() {
         <div style="font-size: 34px; font-weight: 800; color: white; line-height: 1.1; margin: 4px 0 2px;" id="keuanganJumlahYatim">...</div>
         <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 18px;">Anak &middot; Wilayah ${escapeHtmlHub(wilayahText)} &middot; Bulan Ini</div>
 
-        <div style="display: flex; gap: 10px;">
+        <div style="display: flex; gap: 10px; margin-bottom: 18px;">
           <div style="flex: 1; background: rgba(168, 85, 247, 0.10); border: 1px solid rgba(168, 85, 247, 0.25); border-left: 3px solid #A855F7; border-radius: 14px; padding: 12px;">
             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
               <span class="material-symbols-outlined" style="font-size: 15px; color: #C084FC;">diversity_1</span>
@@ -2347,10 +2394,24 @@ function renderContent() {
             <div style="font-size: 20px; font-weight: 700; color: #FEF3C7;" id="keuanganDisabilitas">...</div>
           </div>
         </div>
+
+        <div style="border-top: 1px dashed var(--glass-border); padding-top: 16px;">
+          <div id="keuanganSantunanBelumDiisi" style="display: none; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; background: rgba(251, 191, 36, 0.10); border: 1px solid rgba(251, 191, 36, 0.3); margin-bottom: 4px;">
+            <span class="material-symbols-outlined" style="font-size: 18px; color: #FBBF24;">info</span>
+            <span style="font-size: 11px; color: #FDE68A;">Bendahara belum mengisi rate santunan bulan ini.</span>
+          </div>
+          <div id="keuanganSantunanWrap">
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Total Santunan Bulan Ini</div>
+            <div style="font-size: 26px; font-weight: 800; color: white; margin-bottom: 4px;" id="keuanganTotalSantunan">...</div>
+            <div style="font-size: 10px; color: var(--text-secondary);" id="keuanganRincianRate">...</div>
+          </div>
+        </div>
       </div>
 
+      <!-- 2. Realisasi Lapangan (kotak donasi & sejenisnya, per wilayah -- diisi
+           manual oleh Korwil/Bendahara di sheet Keuangan_Bulanan) -->
       <div style="background: var(--glass-strong); border-radius: 20px; padding: 22px 20px; margin-bottom: 16px; border: 1px solid var(--glass-border); border-left: 4px solid #3B82F6;">
-        <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">2. Kebutuhan Donasi Bulan Ini</div>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">2. Realisasi Lapangan ${badgeWilayah}</div>
         <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;" id="keuanganCatatanBendahara">Ditentukan oleh Bendahara</div>
         <div style="font-size: 26px; font-weight: 800; margin-bottom: 4px; color: white;" id="keuanganKebutuhanNominal">...</div>
         <div style="font-size: 10px; color: var(--bento-primary); margin-bottom: 18px;">Total kebutuhan donasi</div>
@@ -2377,10 +2438,6 @@ function renderContent() {
           </div>
         </div>
 
-        <button onclick="toggleMidtransForm()" style="width: 100%; margin-top: 8px; padding: 11px; border-radius: 12px; border: 1px dashed rgba(var(--bento-primary-rgb),0.4); background: rgba(var(--bento-primary-rgb),0.08); color: var(--bento-primary); font-size: 12.5px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
-          <span class="material-symbols-outlined" style="font-size: 16px;">add_circle</span> Catat Donasi
-        </button>
-
         <div id="keuanganStatusBanner" style="display: flex; align-items: center; gap: 12px; margin-top: 16px; padding: 14px; border-radius: 14px; background: rgba(239, 68, 68, 0.10); border: 1px solid rgba(239, 68, 68, 0.3);">
           <div id="keuanganSelisihIconWrap" style="width: 36px; height: 36px; border-radius: 10px; background: rgba(239, 68, 68, 0.15); color: #EF4444; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
             <span class="material-symbols-outlined" style="font-size: 18px;" id="keuanganSelisihIcon">arrow_downward</span>
@@ -2392,11 +2449,35 @@ function renderContent() {
         </div>
       </div>
 
-      <div style="background: var(--glass-strong); border-radius: 20px; padding: 20px; margin-bottom: 8px; border: 1px solid var(--glass-border); border-left: 4px solid #A855F7;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-          <div style="font-size: 12px; color: var(--text-secondary);">3. Histori Donasi <span style="font-size: 10px;">(Online / Midtrans)</span></div>
+      <!-- 3. Donasi Kitabisa.com (nasional -- diisi manual oleh Bendahara, gak
+           dipecah per wilayah karena laporan Kitabisa memang gabungan) -->
+      <div style="background: var(--glass-strong); border-radius: 20px; padding: 22px 20px; margin-bottom: 16px; border: 1px solid var(--glass-border); border-left: 4px solid #F97316;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+          <div style="font-size: 12px; color: var(--text-secondary);">3. Donasi Kitabisa.com ${badgeNasional}</div>
+          <div style="width: 44px; height: 44px; border-radius: 14px; background: rgba(249, 115, 22, 0.15); color: #FB923C; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <span class="material-symbols-outlined" style="font-size: 22px; font-variation-settings: 'FILL' 1;">volunteer_activism</span>
+          </div>
         </div>
-        <div style="display: flex; flex-direction: column; font-size: 12px;">
+        <div id="keuanganKitabisaBelumDiisi" style="display: none; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; background: rgba(251, 191, 36, 0.10); border: 1px solid rgba(251, 191, 36, 0.3); margin: 10px 0 4px;">
+          <span class="material-symbols-outlined" style="font-size: 18px; color: #FBBF24;">info</span>
+          <span style="font-size: 11px; color: #FDE68A;">Bendahara belum mencatat pencairan Kitabisa bulan ini.</span>
+        </div>
+        <div id="keuanganKitabisaWrap">
+          <div style="font-size: 26px; font-weight: 800; color: white; margin: 4px 0 2px;" id="keuanganKitabisaNominal">...</div>
+          <div style="font-size: 11px; color: var(--text-secondary);" id="keuanganKitabisaCatatan">Total pencairan bulan ini</div>
+        </div>
+        <button onclick="window.open('https://kitabisa.com/campaign/gojekbantuyatim', '_blank')" style="width: 100%; margin-top: 14px; padding: 11px; border-radius: 12px; border: 1px dashed rgba(249, 115, 22, 0.4); background: rgba(249, 115, 22, 0.08); color: #FB923C; font-size: 12.5px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+          <span class="material-symbols-outlined" style="font-size: 16px;">open_in_new</span> Buka Campaign Kitabisa
+        </button>
+      </div>
+
+      <!-- 4. Donasi Online / Midtrans (nasional -- Snap payment, tercatat
+           otomatis di sheet Donasi_Midtrans, TIDAK per wilayah) -->
+      <div style="background: var(--glass-strong); border-radius: 20px; padding: 20px; margin-bottom: 8px; border: 1px solid var(--glass-border); border-left: 4px solid #A855F7;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <div style="font-size: 12px; color: var(--text-secondary);">4. Donasi Online ${badgeNasional}<br><span style="font-size: 10px;">(Midtrans)</span></div>
+        </div>
+        <div style="display: flex; flex-direction: column; font-size: 12px; margin-bottom: 14px;">
           <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">
             <span>Bulan Ini</span>
             <div style="display: flex; align-items: center; gap: 8px; color: var(--bento-primary);">
@@ -2404,6 +2485,9 @@ function renderContent() {
             </div>
           </div>
         </div>
+        <button onclick="toggleMidtransForm()" style="width: 100%; padding: 11px; border-radius: 12px; border: 1px dashed rgba(var(--bento-primary-rgb),0.4); background: rgba(var(--bento-primary-rgb),0.08); color: var(--bento-primary); font-size: 12.5px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+          <span class="material-symbols-outlined" style="font-size: 16px;">add_circle</span> Catat Donasi
+        </button>
       </div>
     `;
     el.innerHTML = html;
