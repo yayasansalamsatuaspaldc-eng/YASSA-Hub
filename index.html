@@ -1106,14 +1106,35 @@
     <div class="summary-top">
       <div class="summary-icon"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">account_balance_wallet</span></div>
       <div class="summary-label">Total Donasi</div>
+      <button id="summaryDonasiToggleBtn" onclick="toggleSummaryDonasiBreakdown()" aria-label="Lihat rincian Total Donasi" style="margin-left:auto; background:rgba(255,255,255,0.08); border:none; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; position:relative; z-index:1;">
+        <span class="material-symbols-outlined" id="summaryDonasiToggleIcon" style="font-size:16px; color:var(--text-secondary); transition: transform 0.25s ease;">expand_more</span>
+      </button>
     </div>
-    <div class="summary-value" id="summaryTotalDonasi">Rp 12.450.000</div>
+    <div class="summary-value" id="summaryTotalDonasi">...</div>
+
+    <!-- Rincian sumber Total Donasi -- disembunyikan default, muncul/hilang
+         lewat tombol dropdown di atas. Isinya 3 sumber realisasi bulan ini:
+         Lapangan (per wilayah, sesuai akses user), Kitabisa, Midtrans. -->
+    <div id="summaryDonasiBreakdown" style="display:none; margin-top:10px; padding-top:10px; border-top:1px solid var(--glass-border); position:relative; z-index:1;">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; font-size:11.5px;">
+        <span style="color:var(--text-secondary);">Realisasi Lapangan</span>
+        <span style="color:var(--text-primary); font-weight:600;" id="summaryDonasiLapangan">...</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; font-size:11.5px;">
+        <span style="color:var(--text-secondary);">Kitabisa.com</span>
+        <span style="color:var(--text-primary); font-weight:600;" id="summaryDonasiKitabisa">...</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; font-size:11.5px;">
+        <span style="color:var(--text-secondary);">Donasi Online (Midtrans)</span>
+        <span style="color:var(--text-primary); font-weight:600;" id="summaryDonasiMidtrans">...</span>
+      </div>
+    </div>
+
     <div class="summary-sub-row">
       <div class="summary-sub-icon"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">money_off</span></div>
       <div class="summary-sub-text">
         <div class="summary-sub-label">Kekurangan Donasi</div>
-        <!-- TODO: masih dummy, sambungkan ke sumber data target vs. terkumpul kalau sudah ada -->
-        <div class="summary-sub-value" id="summaryKekuranganDonasi">Rp 3.550.000</div>
+        <div class="summary-sub-value" id="summaryKekuranganDonasi">...</div>
       </div>
     </div>
   </div>
@@ -1874,6 +1895,17 @@ function render() {
   renderBottomNav();
 }
 
+// Toggle tampil/sembunyi rincian sumber "Total Donasi" di kartu Beranda
+// (Lapangan/Kitabisa/Midtrans) -- dipanggil tombol dropdown di kartu.
+function toggleSummaryDonasiBreakdown() {
+  const el = document.getElementById("summaryDonasiBreakdown");
+  const icon = document.getElementById("summaryDonasiToggleIcon");
+  if (!el) return;
+  const sedangTerbuka = el.style.display === "block";
+  el.style.display = sedangTerbuka ? "none" : "block";
+  if (icon) icon.style.transform = sedangTerbuka ? "rotate(0deg)" : "rotate(180deg)";
+}
+
 // ============================================================
 // Ambil angka ASLI buat kartu Ringkasan Beranda (Anak, Wilayah, Pengurus):
 //   - Total Anak    -> dari YASSA Mobile (sheet "Anak", lewat action publik
@@ -1882,6 +1914,15 @@ function render() {
 //   - Total Wilayah -> dihitung dari kolom WilayahAkses tiap user AKTIF di
 //                       sheet Akun Hub (nama wilayah unik, "ALL" gak dihitung).
 //   - Total Pengurus-> jumlah baris user AKTIF di sheet Akun Hub (1 Nama = 1 pengurus).
+//   - Total Donasi & Kekurangan Donasi -> digabung dari 3 sumber realisasi
+//                       bulan ini (SAMA seperti tab Keuangan, sesuai
+//                       wilayahAkses user yang login buat bagian Lapangan):
+//                         Realisasi Lapangan (per wilayah, getKeuanganManual)
+//                       + Kitabisa (nasional, getKitabisaRealisasiBulanIni)
+//                       + Midtrans (nasional, getDonasiRealisasiBulanIni)
+//                       Kekurangan Donasi = kekuranganDonasi dari Realisasi
+//                       Lapangan aja (Kitabisa & Midtrans gak punya target/
+//                       kebutuhan, jadi gak ada "kekurangan" buat itu).
 // Dipanggil tiap kali tab Beranda dibuka. Kalau salah satu gagal (mis.
 // jaringan/Mobile down), yang lain tetap jalan -- gak saling blokir.
 // ============================================================
@@ -1898,13 +1939,53 @@ function loadBerandaStats() {
       const totalAnak = res.data.totalAnak;
       const elA = document.getElementById("statTotalAnak");
       if (elA) elA.textContent = totalAnak;
-      // Catatan: kartu "Kekurangan Donasi" (id="summaryKekuranganDonasi") di
-      // Beranda sengaja belum disambungkan ke data asli -- masih dummy sampai
-      // ada sumber data target vs. terkumpul yang jelas.
     })
     .catch(function () {
       const elA = document.getElementById("statTotalAnak");
       if (elA) elA.textContent = "-";
+    });
+
+  // Total Donasi & Kekurangan Donasi (gabungan 3 sumber, SAMA datanya
+  // dengan yang dipakai tab Keuangan -- lihat loadKeuanganStats()).
+  const elTotalDonasi = document.getElementById("summaryTotalDonasi");
+  const elKekurangan = document.getElementById("summaryKekuranganDonasi");
+  const elLapangan = document.getElementById("summaryDonasiLapangan");
+  const elKitabisaBD = document.getElementById("summaryDonasiKitabisa");
+  const elMidtransBD = document.getElementById("summaryDonasiMidtrans");
+
+  Promise.all([
+    callGAS("getKeuanganManual", [authToken]),
+    callGAS("getKitabisaRealisasiBulanIni", [authToken]),
+    callGAS("getDonasiRealisasiBulanIni", [authToken]),
+  ])
+    .then(function (hasil) {
+      const manual = hasil[0];
+      const kitabisa = hasil[1];
+      const midtrans = hasil[2];
+
+      const realisasiLapangan = Number(manual.realisasiDonasi || 0);
+      const realisasiKitabisa = Number(kitabisa.totalRealisasi || 0);
+      const realisasiMidtrans = Number(midtrans.totalRealisasi || 0);
+      const totalDonasi = realisasiLapangan + realisasiKitabisa + realisasiMidtrans;
+      // Kekurangan cuma dari Lapangan -- Kitabisa/Midtrans gak punya target.
+      const kekurangan = manual.ditemukan ? Number(manual.kekuranganDonasi || 0) : 0;
+
+      if (elTotalDonasi) elTotalDonasi.textContent = formatRupiahHub(totalDonasi);
+      if (elKekurangan) {
+        elKekurangan.textContent = manual.ditemukan
+          ? formatRupiahHub(kekurangan)
+          : "Belum diisi Bendahara";
+      }
+      if (elLapangan) elLapangan.textContent = formatRupiahHub(realisasiLapangan);
+      if (elKitabisaBD) elKitabisaBD.textContent = formatRupiahHub(realisasiKitabisa);
+      if (elMidtransBD) elMidtransBD.textContent = formatRupiahHub(realisasiMidtrans);
+    })
+    .catch(function () {
+      if (elTotalDonasi) elTotalDonasi.textContent = "-";
+      if (elKekurangan) elKekurangan.textContent = "-";
+      if (elLapangan) elLapangan.textContent = "-";
+      if (elKitabisaBD) elKitabisaBD.textContent = "-";
+      if (elMidtransBD) elMidtransBD.textContent = "-";
     });
 
   // Total Wilayah & Total Pengurus (dari sheet Akun Hub sendiri)
