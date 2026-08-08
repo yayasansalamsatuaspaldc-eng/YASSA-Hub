@@ -231,6 +231,43 @@
   .summary-sub-label { font-size: 10px; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; margin-bottom: 2px; }
   .summary-sub-value { font-size: 13.5px; color: var(--bento-amber); font-weight: 700; letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+  /* Efek nyala buat "Kekurangan Santunan" pas masih ada kekurangan bulan
+     ini, biar jelas keliatan & narik perhatian yang buka app -- ikon
+     berdenyut merah + nominal dibesarin & merah cerah. */
+  .summary-sub-icon.icon-kekurangan-urgent {
+    background: rgba(239, 68, 68, 0.22) !important;
+    color: #F87171 !important;
+    animation: summaryUrgentPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes summaryUrgentPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.45); }
+    50% { box-shadow: 0 0 0 7px rgba(239, 68, 68, 0); }
+  }
+  .summary-sub-value.value-kekurangan-urgent {
+    color: #FCA5A5 !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    animation: summaryUrgentTextGlow 1.6s ease-in-out infinite;
+  }
+  @keyframes summaryUrgentTextGlow {
+    0%, 100% { text-shadow: 0 0 0 rgba(239, 68, 68, 0); }
+    50% { text-shadow: 0 0 10px rgba(239, 68, 68, 0.55); }
+  }
+  .summary-kekurangan-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 8.5px; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase;
+    color: #FCA5A5; background: rgba(239, 68, 68, 0.16); border: 1px solid rgba(239, 68, 68, 0.35);
+    padding: 1px 6px; border-radius: 99px; margin-left: 6px; vertical-align: middle;
+  }
+  /* Kondisi udah tercapai -- ikon & teks jadi hijau tenang, gak berdenyut. */
+  .summary-sub-icon.icon-kekurangan-tercapai {
+    background: rgba(34, 197, 94, 0.18) !important;
+    color: var(--bento-primary) !important;
+  }
+  .summary-sub-value.value-kekurangan-tercapai {
+    color: #86EFAC !important;
+  }
+
   .content { flex: 1; padding: 24px 20px 100px; overflow-y: auto; }
 
   .content { flex: 1; padding: 24px 20px 100px; overflow-y: auto; }
@@ -1104,40 +1141,52 @@
   <!-- Kartu Mengambang -->
   <div class="summary-card" id="summaryCard">
     <div class="summary-top">
-      <div class="summary-icon"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">account_balance_wallet</span></div>
-      <div class="summary-label">Total Donasi</div>
-      <button id="summaryDonasiToggleBtn" onclick="toggleSummaryDonasiBreakdown()" aria-label="Lihat rincian Total Donasi" style="margin-left:auto; background:rgba(255,255,255,0.08); border:none; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; position:relative; z-index:1;">
-        <span class="material-symbols-outlined" id="summaryDonasiToggleIcon" style="font-size:16px; color:var(--text-secondary); transition: transform 0.25s ease;">expand_more</span>
-      </button>
+      <div class="summary-icon"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">volunteer_activism</span></div>
+      <div class="summary-label">Total Santunan Diperlukan</div>
     </div>
-    <div class="summary-value" id="summaryTotalDonasi">...</div>
+    <div class="summary-value" id="summaryTotalSantunanDiperlukan">...</div>
 
-    <!-- Rincian sumber Total Donasi -- disembunyikan default, muncul/hilang
-         lewat tombol dropdown di atas. Isinya 3 sumber realisasi bulan ini:
-         Lapangan (per wilayah, sesuai akses user), Kitabisa, Midtrans. -->
-    <div id="summaryDonasiBreakdown" style="display:none; margin-top:10px; padding-top:10px; border-top:1px solid var(--glass-border); position:relative; z-index:1;">
-      <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; font-size:11.5px;">
-        <span style="color:var(--text-secondary);">Realisasi Lapangan</span>
-        <span style="color:var(--text-primary); font-weight:600;" id="summaryDonasiLapangan">...</span>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; font-size:11.5px;">
-        <span style="color:var(--text-secondary);">Kitabisa.com</span>
-        <span style="color:var(--text-primary); font-weight:600;" id="summaryDonasiKitabisa">...</span>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; font-size:11.5px;">
-        <span style="color:var(--text-secondary);">Donasi Online (Midtrans)</span>
-        <span style="color:var(--text-primary); font-weight:600;" id="summaryDonasiMidtrans">...</span>
-      </div>
-    </div>
-
+    <!-- Sub-row 1: Kekurangan Santunan (Total Santunan Diperlukan dikurangi
+         Total Donasi yang udah terkumpul bulan ini) -->
     <div class="summary-sub-row">
-      <div class="summary-sub-icon"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">money_off</span></div>
+      <div class="summary-sub-icon" id="summaryKekuranganIconWrap"><span class="material-symbols-outlined" id="summaryKekuranganIcon" style="font-variation-settings:'FILL' 1;">money_off</span></div>
       <div class="summary-sub-text">
-        <div class="summary-sub-label">Kekurangan Donasi</div>
+        <div class="summary-sub-label">Kekurangan Santunan<span class="summary-kekurangan-badge" id="summaryKekuranganBadge" style="display:none;"><span class="material-symbols-outlined" style="font-size:9px;">priority_high</span>Perlu Perhatian</span></div>
         <div class="summary-sub-value" id="summaryKekuranganDonasi">...</div>
       </div>
     </div>
+
+    <!-- Sub-row 2: Total Donasi -- rincian sumber (Lapangan/Kitabisa/Midtrans)
+         disembunyikan default, muncul/hilang lewat tombol dropdown. -->
+    <div class="summary-sub-row" style="align-items: flex-start;">
+      <div class="summary-sub-icon" style="background: rgba(var(--bento-primary-rgb),0.18); color: var(--bento-primary);"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">account_balance_wallet</span></div>
+      <div class="summary-sub-text">
+        <div style="display:flex; align-items:center; gap:6px; margin-bottom:2px;">
+          <div class="summary-sub-label" style="margin-bottom:0;">Total Donasi</div>
+          <button id="summaryDonasiToggleBtn" onclick="toggleSummaryDonasiBreakdown()" aria-label="Lihat rincian Total Donasi" style="margin-left:auto; background:rgba(255,255,255,0.08); border:none; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;">
+            <span class="material-symbols-outlined" id="summaryDonasiToggleIcon" style="font-size:13px; color:var(--text-secondary); transition: transform 0.25s ease;">expand_more</span>
+          </button>
+        </div>
+        <div class="summary-sub-value" id="summaryTotalDonasi" style="color: var(--bento-primary); font-size: 13.5px;">...</div>
+
+        <div id="summaryDonasiBreakdown" style="display:none; margin-top:8px; padding-top:8px; border-top:1px solid var(--glass-border);">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:3px 0; font-size:11px;">
+            <span style="color:var(--text-secondary);">Realisasi Lapangan</span>
+            <span style="color:var(--text-primary); font-weight:600;" id="summaryDonasiLapangan">...</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:3px 0; font-size:11px;">
+            <span style="color:var(--text-secondary);">Kitabisa.com</span>
+            <span style="color:var(--text-primary); font-weight:600;" id="summaryDonasiKitabisa">...</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:3px 0; font-size:11px;">
+            <span style="color:var(--text-secondary);">Donasi Online (Midtrans)</span>
+            <span style="color:var(--text-primary); font-weight:600;" id="summaryDonasiMidtrans">...</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+
 
   <!-- Dropdown Menu Akun -->
   <div class="user-menu-overlay" id="userMenuOverlay" onclick="closeUserMenu()"></div>
@@ -1926,8 +1975,22 @@ function toggleSummaryDonasiBreakdown() {
 // Dipanggil tiap kali tab Beranda dibuka. Kalau salah satu gagal (mis.
 // jaringan/Mobile down), yang lain tetap jalan -- gak saling blokir.
 // ============================================================
+// Cache in-memory hasil terakhir tiap bagian kartu Beranda (per sesi/reload
+// halaman). Sama kayak keuanganStatsCache: dipakai biar pas pindah-pindah
+// tab (mis. Beranda -> Keuangan -> Beranda lagi) TANPA keluar app, angka
+// lama langsung tampil instan (gak keliatan reset ke "…"/0), sambil tetap
+// diam-diam refresh ke server di background.
+let berandaStatsCache = {
+  totalAnak: null,
+  donasi: null, // { totalSantunanDiperlukan, kekuranganSantunan, santunanDitemukan, totalDonasi, lapangan, kitabisa, midtrans }
+  dashboard: null,
+  verifikasi: null,
+};
+
 function loadBerandaStats() {
   // Total Anak (dari YASSA Mobile)
+  const elA = document.getElementById("statTotalAnak");
+  if (elA && berandaStatsCache.totalAnak !== null) elA.textContent = berandaStatsCache.totalAnak;
   fetch(GAS_MOBILE_URL, {
     method: "POST",
     headers: { "Content-Type": "text/plain" },
@@ -1937,110 +2000,191 @@ function loadBerandaStats() {
     .then(function (res) {
       if (!res || !res.success || !res.data) throw new Error("gagal");
       const totalAnak = res.data.totalAnak;
-      const elA = document.getElementById("statTotalAnak");
-      if (elA) elA.textContent = totalAnak;
+      berandaStatsCache.totalAnak = totalAnak;
+      const elA2 = document.getElementById("statTotalAnak");
+      if (elA2) elA2.textContent = totalAnak;
     })
     .catch(function () {
-      const elA = document.getElementById("statTotalAnak");
-      if (elA) elA.textContent = "-";
+      // Kalau udah ada cache, biarin angka lama tetap tampil daripada
+      // direset ke "-" cuma gara-gara 1x gangguan jaringan.
+      if (berandaStatsCache.totalAnak === null) {
+        const elA3 = document.getElementById("statTotalAnak");
+        if (elA3) elA3.textContent = "-";
+      }
     });
 
-  // Total Donasi & Kekurangan Donasi (gabungan 3 sumber, SAMA datanya
-  // dengan yang dipakai tab Keuangan -- lihat loadKeuanganStats()).
+  // Total Santunan Diperlukan, Kekurangan Santunan, & Total Donasi (gabungan
+  // 4 sumber, SAMA datanya dengan yang dipakai tab Keuangan -- lihat
+  // loadKeuanganStats()):
+  //   - Total Santunan Diperlukan -> dari getPenyaluranSantunanBulanIni
+  //     (jumlah anak x rate, ditentukan Bendahara -- Kartu 1 tab Keuangan).
+  //   - Total Donasi -> gabungan Realisasi Lapangan + Kitabisa + Midtrans.
+  //   - Kekurangan Santunan -> Total Santunan Diperlukan dikurangi Total
+  //     Donasi yang udah terkumpul (kalau masih kurang; kalau udah
+  //     tercapai/lebih, ditampilkan "Tercapai").
+  const elTotalSantunanDiperlukan = document.getElementById("summaryTotalSantunanDiperlukan");
   const elTotalDonasi = document.getElementById("summaryTotalDonasi");
   const elKekurangan = document.getElementById("summaryKekuranganDonasi");
+  const elKekuranganIconWrap = document.getElementById("summaryKekuranganIconWrap");
+  const elKekuranganIcon = document.getElementById("summaryKekuranganIcon");
+  const elKekuranganBadge = document.getElementById("summaryKekuranganBadge");
   const elLapangan = document.getElementById("summaryDonasiLapangan");
   const elKitabisaBD = document.getElementById("summaryDonasiKitabisa");
   const elMidtransBD = document.getElementById("summaryDonasiMidtrans");
 
+  const terapkanDonasiBeranda = function (d) {
+    if (elTotalSantunanDiperlukan) {
+      elTotalSantunanDiperlukan.textContent = d.santunanDitemukan
+        ? formatRupiahHub(d.totalSantunanDiperlukan)
+        : "Belum diisi Bendahara";
+    }
+
+    // Efek visual "Kekurangan Santunan" -- masih kurang: ikon berdenyut
+    // merah + nominal dibesarin & nyala, plus badge "Perlu Perhatian",
+    // biar keliatan jelas & narik perhatian yang buka app. Udah
+    // tercapai: ganti hijau tenang + ikon centang, gak berdenyut lagi.
+    if (elKekurangan && elKekuranganIconWrap && elKekuranganIcon) {
+      elKekurangan.classList.remove("value-kekurangan-urgent", "value-kekurangan-tercapai");
+      elKekuranganIconWrap.classList.remove("icon-kekurangan-urgent", "icon-kekurangan-tercapai");
+      if (elKekuranganBadge) elKekuranganBadge.style.display = "none";
+
+      if (!d.santunanDitemukan) {
+        elKekurangan.textContent = "Belum diisi Bendahara";
+        elKekuranganIcon.textContent = "money_off";
+      } else if (d.kekuranganSantunan > 0) {
+        elKekurangan.textContent = formatRupiahHub(d.kekuranganSantunan);
+        elKekurangan.classList.add("value-kekurangan-urgent");
+        elKekuranganIconWrap.classList.add("icon-kekurangan-urgent");
+        elKekuranganIcon.textContent = "priority_high";
+        if (elKekuranganBadge) elKekuranganBadge.style.display = "inline-flex";
+      } else {
+        elKekurangan.textContent = "Tercapai! \ud83c\udf89";
+        elKekurangan.classList.add("value-kekurangan-tercapai");
+        elKekuranganIconWrap.classList.add("icon-kekurangan-tercapai");
+        elKekuranganIcon.textContent = "check_circle";
+      }
+    }
+
+    if (elTotalDonasi) elTotalDonasi.textContent = formatRupiahHub(d.totalDonasi);
+    if (elLapangan) elLapangan.textContent = formatRupiahHub(d.lapangan);
+    if (elKitabisaBD) elKitabisaBD.textContent = formatRupiahHub(d.kitabisa);
+    if (elMidtransBD) elMidtransBD.textContent = formatRupiahHub(d.midtrans);
+  };
+  if (berandaStatsCache.donasi) terapkanDonasiBeranda(berandaStatsCache.donasi);
+
   Promise.all([
+    callGAS("getPenyaluranSantunanBulanIni", [authToken]),
     callGAS("getKeuanganManual", [authToken]),
     callGAS("getKitabisaRealisasiBulanIni", [authToken]),
     callGAS("getDonasiRealisasiBulanIni", [authToken]),
   ])
     .then(function (hasil) {
-      const manual = hasil[0];
-      const kitabisa = hasil[1];
-      const midtrans = hasil[2];
+      const santunan = hasil[0];
+      const manual = hasil[1];
+      const kitabisa = hasil[2];
+      const midtrans = hasil[3];
 
       const realisasiLapangan = Number(manual.realisasiDonasi || 0);
       const realisasiKitabisa = Number(kitabisa.totalRealisasi || 0);
       const realisasiMidtrans = Number(midtrans.totalRealisasi || 0);
       const totalDonasi = realisasiLapangan + realisasiKitabisa + realisasiMidtrans;
-      // Kekurangan cuma dari Lapangan -- Kitabisa/Midtrans gak punya target.
-      const kekurangan = manual.ditemukan ? Number(manual.kekuranganDonasi || 0) : 0;
 
-      if (elTotalDonasi) elTotalDonasi.textContent = formatRupiahHub(totalDonasi);
-      if (elKekurangan) {
-        elKekurangan.textContent = manual.ditemukan
-          ? formatRupiahHub(kekurangan)
-          : "Belum diisi Bendahara";
-      }
-      if (elLapangan) elLapangan.textContent = formatRupiahHub(realisasiLapangan);
-      if (elKitabisaBD) elKitabisaBD.textContent = formatRupiahHub(realisasiKitabisa);
-      if (elMidtransBD) elMidtransBD.textContent = formatRupiahHub(realisasiMidtrans);
+      const totalSantunanDiperlukan = santunan.ditemukan ? Number(santunan.totalPenyaluran || 0) : 0;
+      const kekuranganSantunan = santunan.ditemukan ? Math.max(0, totalSantunanDiperlukan - totalDonasi) : 0;
+
+      berandaStatsCache.donasi = {
+        totalSantunanDiperlukan: totalSantunanDiperlukan,
+        kekuranganSantunan: kekuranganSantunan,
+        santunanDitemukan: santunan.ditemukan,
+        totalDonasi: totalDonasi,
+        lapangan: realisasiLapangan,
+        kitabisa: realisasiKitabisa,
+        midtrans: realisasiMidtrans,
+      };
+      terapkanDonasiBeranda(berandaStatsCache.donasi);
     })
     .catch(function () {
-      if (elTotalDonasi) elTotalDonasi.textContent = "-";
-      if (elKekurangan) elKekurangan.textContent = "-";
-      if (elLapangan) elLapangan.textContent = "-";
-      if (elKitabisaBD) elKitabisaBD.textContent = "-";
-      if (elMidtransBD) elMidtransBD.textContent = "-";
+      // Kalau udah ada cache, biarin angka lama tetap tampil daripada
+      // direset ke "-" cuma gara-gara 1x gangguan jaringan.
+      if (!berandaStatsCache.donasi) {
+        if (elTotalSantunanDiperlukan) elTotalSantunanDiperlukan.textContent = "-";
+        if (elTotalDonasi) elTotalDonasi.textContent = "-";
+        if (elKekurangan) elKekurangan.textContent = "-";
+        if (elLapangan) elLapangan.textContent = "-";
+        if (elKitabisaBD) elKitabisaBD.textContent = "-";
+        if (elMidtransBD) elMidtransBD.textContent = "-";
+      }
     });
 
   // Total Wilayah & Total Pengurus (dari sheet Akun Hub sendiri)
+  const terapkanDashboardBeranda = function (data) {
+    const elW = document.getElementById("statTotalWilayah");
+    const elP = document.getElementById("statTotalPengurus");
+    if (elW) elW.textContent = data.totalWilayah;
+    if (elP) elP.textContent = data.totalPengurus;
+
+    // Aktivitas Hari Ini -> Pengurus belum login lama
+    window._daftarPengurusBelumLoginLama = data.daftarPengurusBelumLoginLama || [];
+    const elAkt = document.getElementById("aktPengurusLamaText");
+    if (elAkt) {
+      const jumlah = data.totalPengurusBelumLoginLama || 0;
+      elAkt.textContent = jumlah > 0
+        ? jumlah + " pengurus belum login lama"
+        : "Semua pengurus aktif login";
+    }
+
+    // Aktivitas Hari Ini -> Pengurus login hari ini
+    const elLogin = document.getElementById("aktLoginHariIniText");
+    if (elLogin) {
+      const jumlahLogin = data.totalLoginHariIni || 0;
+      elLogin.textContent = jumlahLogin > 0
+        ? jumlahLogin + " pengurus login hari ini"
+        : "Belum ada pengurus login hari ini";
+    }
+  };
+  if (berandaStatsCache.dashboard) terapkanDashboardBeranda(berandaStatsCache.dashboard);
+
   callGAS("getDashboardStats", [authToken])
     .then(function (data) {
-      const elW = document.getElementById("statTotalWilayah");
-      const elP = document.getElementById("statTotalPengurus");
-      if (elW) elW.textContent = data.totalWilayah;
-      if (elP) elP.textContent = data.totalPengurus;
-
-      // Aktivitas Hari Ini -> Pengurus belum login lama
-      window._daftarPengurusBelumLoginLama = data.daftarPengurusBelumLoginLama || [];
-      const elAkt = document.getElementById("aktPengurusLamaText");
-      if (elAkt) {
-        const jumlah = data.totalPengurusBelumLoginLama || 0;
-        elAkt.textContent = jumlah > 0
-          ? jumlah + " pengurus belum login lama"
-          : "Semua pengurus aktif login";
-      }
-
-      // Aktivitas Hari Ini -> Pengurus login hari ini
-      const elLogin = document.getElementById("aktLoginHariIniText");
-      if (elLogin) {
-        const jumlahLogin = data.totalLoginHariIni || 0;
-        elLogin.textContent = jumlahLogin > 0
-          ? jumlahLogin + " pengurus login hari ini"
-          : "Belum ada pengurus login hari ini";
-      }
+      berandaStatsCache.dashboard = data;
+      terapkanDashboardBeranda(data);
     })
     .catch(function () {
-      const elW = document.getElementById("statTotalWilayah");
-      const elP = document.getElementById("statTotalPengurus");
-      if (elW) elW.textContent = "-";
-      if (elP) elP.textContent = "-";
-      const elAkt = document.getElementById("aktPengurusLamaText");
-      if (elAkt) elAkt.textContent = "Gagal memuat data pengurus";
-      const elLogin = document.getElementById("aktLoginHariIniText");
-      if (elLogin) elLogin.textContent = "Gagal memuat data login";
+      if (!berandaStatsCache.dashboard) {
+        const elW = document.getElementById("statTotalWilayah");
+        const elP = document.getElementById("statTotalPengurus");
+        if (elW) elW.textContent = "-";
+        if (elP) elP.textContent = "-";
+        const elAkt = document.getElementById("aktPengurusLamaText");
+        if (elAkt) elAkt.textContent = "Gagal memuat data pengurus";
+        const elLogin = document.getElementById("aktLoginHariIniText");
+        if (elLogin) elLogin.textContent = "Gagal memuat data login";
+      }
     });
 
   // Aktivitas Hari Ini -> Donasi Midtrans perlu verifikasi (PENDING /
   // PERLU_DICEK_FRAUD)
+  const terapkanVerifikasiBeranda = function (data) {
+    const elVer = document.getElementById("aktDonasiVerifikasiText");
+    if (elVer) {
+      const jumlah = (data && data.total) || 0;
+      elVer.textContent = jumlah > 0
+        ? jumlah + " donasi Midtrans perlu verifikasi"
+        : "Semua donasi Midtrans terverifikasi";
+    }
+  };
+  if (berandaStatsCache.verifikasi) terapkanVerifikasiBeranda(berandaStatsCache.verifikasi);
+
   callGAS("getDonasiPerluVerifikasi", [authToken])
     .then(function (data) {
-      const elVer = document.getElementById("aktDonasiVerifikasiText");
-      if (elVer) {
-        const jumlah = (data && data.total) || 0;
-        elVer.textContent = jumlah > 0
-          ? jumlah + " donasi Midtrans perlu verifikasi"
-          : "Semua donasi Midtrans terverifikasi";
-      }
+      berandaStatsCache.verifikasi = data;
+      terapkanVerifikasiBeranda(data);
     })
     .catch(function () {
-      const elVer = document.getElementById("aktDonasiVerifikasiText");
-      if (elVer) elVer.textContent = "Gagal memuat data donasi";
+      if (!berandaStatsCache.verifikasi) {
+        const elVer = document.getElementById("aktDonasiVerifikasiText");
+        if (elVer) elVer.textContent = "Gagal memuat data donasi";
+      }
     });
 
   // Aktivitas Terbaru (kartu Beranda paling bawah) -- gabungan dari 4 app
@@ -2125,7 +2269,29 @@ function loadAktivitasTerbaru() {
 // Mobile langsung dari frontend lagi) -- Hub yang urus panggil ke Mobile
 // di baliknya buat action #1.
 // ============================================================
-function loadKeuanganStats() {
+// Cache in-memory hasil terakhir loadKeuanganStats() (per sesi/reload halaman).
+// Tujuannya: pas user pindah-pindah tab (mis. Keuangan -> Beranda -> Keuangan
+// lagi) TANPA keluar app, angka lama langsung tampil instan dari cache ini
+// (gak sempat keliatan reset ke "..."/0), sambil tetap diam-diam refresh ke
+// server di background lewat loadKeuanganStats() biar datanya tetap update.
+let keuanganStatsCache = null;
+
+function tampilkanKeuanganGagal() {
+  ["keuanganJumlahYatim", "keuanganYatimPiatu", "keuanganDisabilitas", "keuanganTotalSantunan",
+    "keuanganKebutuhanNominal", "keuanganRealisasiNominal", "keuanganPersenTercapai",
+    "keuanganSelisihNominal", "keuanganSelisihLabel", "keuanganKitabisaNominal", "keuanganHistoriBulanIni"]
+    .forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = "-";
+    });
+  const elCatatan = document.getElementById("keuanganCatatanBendahara");
+  if (elCatatan) elCatatan.textContent = "Gagal memuat data.";
+}
+
+// Nerapin 1 paket hasil (dari cache ATAU dari fetch baru) ke semua elemen
+// tab Keuangan. Dipisah dari loadKeuanganStats() biar bisa dipanggil 2 cara:
+// instan dari cache, atau setelah Promise.all sukses.
+function terapkanKeuanganStats(hasil) {
   const elYatim = document.getElementById("keuanganJumlahYatim");
   const elPiatu = document.getElementById("keuanganYatimPiatu");
   const elDsb = document.getElementById("keuanganDisabilitas");
@@ -2156,29 +2322,7 @@ function loadKeuanganStats() {
 
   const elHistoriBulanIni = document.getElementById("keuanganHistoriBulanIni");
 
-  const gagalSemua = function () {
-    [elYatim, elPiatu, elDsb, elTotalSantunan, elKebutuhan, elRealisasi, elPersen,
-      elSelisihNominal, elSelisihLabel, elKitabisaNominal, elHistoriBulanIni]
-      .forEach(function (el) { if (el) el.textContent = "-"; });
-    if (elCatatan) elCatatan.textContent = "Gagal memuat data.";
-  };
-
-  // 1) Jumlah anak per kategori + rate + total santunan, sudah digabung &
-  //    dihitung di backend Hub (server-to-server ke YASSA Mobile di baliknya).
-  const pSantunan = callGAS("getPenyaluranSantunanBulanIni", [authToken]);
-
-  // 2) Kebutuhan & Realisasi Donasi Lapangan Bulan Ini -- DITULIS MANUAL oleh
-  //    Bendahara/Korwil per wilayah.
-  const pManual = callGAS("getKeuanganManual", [authToken]);
-
-  // 3) Realisasi Donasi Kitabisa.com bulan ini -- NASIONAL, manual Bendahara.
-  const pKitabisa = callGAS("getKitabisaRealisasiBulanIni", [authToken]);
-
-  // 4) Histori donasi ONLINE lewat Midtrans bulan ini -- NASIONAL, otomatis.
-  const pMidtrans = callGAS("getDonasiRealisasiBulanIni", [authToken]);
-
-  Promise.all([pSantunan, pManual, pKitabisa, pMidtrans])
-    .then(function (hasil) {
+  {
       const santunan = hasil[0];
       const manual = hasil[1];
       const kitabisa = hasil[2];
@@ -2346,8 +2490,44 @@ function loadKeuanganStats() {
           elRincianWilayahList.innerHTML = "";
         }
       }
+  }
+}
+
+function loadKeuanganStats() {
+  // Kalau sesi ini udah pernah sukses ambil data (mis. user tadi udah buka
+  // tab Keuangan, terus pindah ke tab lain, terus balik lagi TANPA keluar
+  // app), langsung tampilin angka lama dari cache duluan -- instan, gak
+  // sempat keliatan reset ke "..."/0. Setelah itu tetap lanjut fetch ke
+  // server di background buat mastiin datanya paling baru.
+  if (keuanganStatsCache) {
+    terapkanKeuanganStats(keuanganStatsCache);
+  }
+
+  // 1) Jumlah anak per kategori + rate + total santunan, sudah digabung &
+  //    dihitung di backend Hub (server-to-server ke YASSA Mobile di baliknya).
+  const pSantunan = callGAS("getPenyaluranSantunanBulanIni", [authToken]);
+
+  // 2) Kebutuhan & Realisasi Donasi Lapangan Bulan Ini -- DITULIS MANUAL oleh
+  //    Bendahara/Korwil per wilayah.
+  const pManual = callGAS("getKeuanganManual", [authToken]);
+
+  // 3) Realisasi Donasi Kitabisa.com bulan ini -- NASIONAL, manual Bendahara.
+  const pKitabisa = callGAS("getKitabisaRealisasiBulanIni", [authToken]);
+
+  // 4) Histori donasi ONLINE lewat Midtrans bulan ini -- NASIONAL, otomatis.
+  const pMidtrans = callGAS("getDonasiRealisasiBulanIni", [authToken]);
+
+  Promise.all([pSantunan, pManual, pKitabisa, pMidtrans])
+    .then(function (hasil) {
+      keuanganStatsCache = hasil;
+      terapkanKeuanganStats(hasil);
     })
-    .catch(gagalSemua);
+    .catch(function () {
+      // Kalau fetch gagal TAPI sebelumnya udah ada cache yang sukses,
+      // biarin angka lama itu tetap tampil (lebih baik daripada direset
+      // ke "-" cuma gara-gara 1x gangguan jaringan).
+      if (!keuanganStatsCache) tampilkanKeuanganGagal();
+    });
 }
 
 // Escape teks bebas (mis. nama wilayah) sebelum dipasang lewat innerHTML,
