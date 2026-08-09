@@ -3460,11 +3460,9 @@ function handleUserMenuClick(action) {
             pengurusSearchTerm = "";
             pengurusFilterWilayah = defaultPengurusWilayahFilter();
 
-            // Kolom % Kehadiran & % Donasi cuma buat SUPERADMIN/ADMIN --
-            // role lain (Korwil/Pengurus/dst) tetap cuma lihat kartu
-            // nama/jabatan/WA biasa (gak ada request tambahan).
-            const roleUpper = String((currentUser && currentUser.role) || "").toUpperCase();
-            const bolehLihatPerforma = roleUpper === "SUPERADMIN" || roleUpper === "ADMIN";
+            // Kolom % Kehadiran & % Donasi sekarang bisa dilihat SEMUA role
+            // (sebelumnya cuma SUPERADMIN/ADMIN).
+            const bolehLihatPerforma = true;
             if (!bolehLihatPerforma) return null;
 
             return callGAS("getPerformaSemuaPengurus", [authToken])
