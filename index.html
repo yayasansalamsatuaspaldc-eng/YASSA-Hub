@@ -5002,6 +5002,108 @@ function initGlobalRippleEffect() {
 }
 initGlobalRippleEffect();
 
+// ============================================================
+// ⬅️ TOMBOL BACK FISIK/GESTURE HP -- JANGAN LANGSUNG KELUAR APLIKASI.
+// Default-nya PWA gak punya "riwayat" navigasi internal, jadi tombol back
+// Android langsung keluar app walau lagi ada overlay/dialog terbuka atau
+// lagi di tab selain Beranda -- itu yang bikin kerasa aneh/gampang salah
+// pencet. Solusinya: manfaatkan History API -- titipkan 1 "state" ke
+// riwayat browser tiap kali overlay kebuka / pindah tab dari Beranda,
+// terus "tangkep" event popstate (yang dipicu tombol back) buat:
+//   1) Kalau ada overlay/menu yang lagi kebuka -> tutup itu aja dulu.
+//   2) Kalau gak ada overlay tapi lagi gak di tab Beranda -> balik ke
+//      Beranda dulu.
+//   3) Kalau udah di Beranda & gak ada overlay -> BARU boleh keluar app
+//      beneran, tapi dikasih pola "tekan sekali lagi buat keluar" (toast
+//      singkat) biar gak kepencet gak sengaja.
+// Selector di bawah generic (nyari SEMUA elemen yang lagi ".open"), jadi
+// otomatis nyakup overlay APAPUN di Hub ini (dokumen viewer, menu akun,
+// form user, sheet input, modal konfirmasi, dst) TANPA perlu ubah kode
+// tiap fungsi open/close satu-satu.
+// ============================================================
+const OVERLAY_OPEN_SELECTOR = '.overlay.open, .user-menu.open, #userFormOverlay.open, #customModalOverlay.open, #inputOverlay.open, #forcePwOverlay.open';
+
+let backExitArmed = false; // true sesaat setelah toast "tekan lagi buat keluar" muncul
+
+function getOpenOverlays() {
+  return Array.from(document.querySelectorAll(OVERLAY_OPEN_SELECTOR));
+}
+
+// Tutup SEMUA overlay yang lagi kebuka (dipanggil pas back fisik ditekan
+// sementara ada overlay). Coba pakai fungsi close resmi yang udah ada
+// kalau ID-nya dikenali (biar side-effect lain -- misal stop iframe video
+// dokumen -- tetap jalan), fallback ke cara umum (lepas class "open") buat
+// overlay lain yang gak ada fungsi close khususnya.
+function closeTopmostOverlay() {
+  const overlays = getOpenOverlays();
+  if (!overlays.length) return false;
+
+  overlays.forEach(function (el) {
+    if (el.id === "userMenu") { closeUserMenu(); return; }
+    if (el.id === "docViewerOverlay" && typeof closeDocViewer === "function") { closeDocViewer(); return; }
+    if (el.id === "userFormOverlay" && typeof closeUserForm === "function") { closeUserForm(); return; }
+    if (el.id === "customModalOverlay" && typeof closeModal === "function") { closeModal(); return; }
+    if (el.id === "inputOverlay") { toggleInputSheet(); return; }
+    el.classList.remove("open"); // fallback generic
+  });
+  return true;
+}
+
+function showBackToExitToast() {
+  let toast = document.getElementById("backExitToast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "backExitToast";
+    toast.textContent = "Tekan sekali lagi untuk keluar";
+    toast.style.cssText = "position:fixed; left:50%; bottom:96px; transform:translateX(-50%); background:rgba(20,26,44,0.95); color:#fff; padding:10px 18px; border-radius:99px; font-size:13px; font-weight:600; z-index:999; box-shadow:0 8px 24px rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); pointer-events:none;";
+    document.body.appendChild(toast);
+  }
+  toast.style.display = "block";
+  clearTimeout(showBackToExitToast._t);
+  showBackToExitToast._t = setTimeout(function () {
+    toast.style.display = "none";
+    backExitArmed = false;
+  }, 2000);
+}
+
+function initBackButtonHandling() {
+  // Butuh 2 entry riwayat: 1 "jangkar" (replaceState) + 1 "buffer" (pushState)
+  // di atasnya. Kalau cuma 1 entry doang, back PERTAMA kali gak akan sempat
+  // ke-tangkep event popstate sama sekali (Android langsung anggap "gak ada
+  // riwayat lagi" dan keluar app duluan sebelum JS sempat jalan). Dengan
+  // 2 entry, back pertama cuma "memakan" buffer-nya dulu (popstate KETANGKEP
+  // di sini), baru back berikutnya (kalau buffer gak ditambal lagi) yang
+  // beneran keluar.
+  history.replaceState({ yassaHub: true, anchor: true }, "");
+  history.pushState({ yassaHub: true }, "");
+
+  window.addEventListener("popstate", function () {
+    // 1) Ada overlay terbuka? Tutup itu aja dulu, jangan keluar.
+    if (closeTopmostOverlay()) {
+      history.pushState({ yassaHub: true }, "");
+      backExitArmed = false;
+      return;
+    }
+    // 2) Belum di Beranda? Balik ke Beranda dulu.
+    if (active !== "beranda") {
+      active = "beranda";
+      render();
+      history.pushState({ yassaHub: true }, "");
+      backExitArmed = false;
+      return;
+    }
+    // 3) Udah di Beranda & gak ada overlay -> pola "tekan lagi buat keluar".
+    if (!backExitArmed) {
+      backExitArmed = true;
+      showBackToExitToast();
+      history.pushState({ yassaHub: true }, ""); // titipkan lagi biar back kedua ke-tangkep juga
+    }
+    // Kalau backExitArmed udah true (berarti ini back ke-2 dalam 2 detik),
+    // sengaja TIDAK pushState lagi -> back berikutnya bakal beneran keluar.
+  });
+}
+initBackButtonHandling();
+
 function bootApp() {
   setSplashStatus("Membersihkan cache...");
   cleanupCacheAndUpdate()
