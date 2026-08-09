@@ -1999,7 +1999,9 @@ function render() {
   renderBottomNav();
   // Tur tutorial cuma jalan pas udah di Beranda (bukan pas gate notifikasi
   // di tab App masih nongol) -- biar gak numpuk 2 overlay sekaligus.
-  if (active === "beranda") maybeStartTour();
+  // tourInProgress dicek biar render() yang dipicu OLEH tur sendiri (pas
+  // loncat ke tab App buat nunjuk grid aplikasi) gak restart tur dari awal.
+  if (active === "beranda" && !tourInProgress) maybeStartTour();
 }
 
 // Toggle tampil/sembunyi rincian sumber "Total Donasi" di kartu Beranda
@@ -2807,7 +2809,7 @@ function renderContent() {
         </div>
       </div>
       <div style="height:1px; background:linear-gradient(90deg, var(--glass-border-strong), transparent); margin: 16px 0 24px;"></div>
-      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+      <div id="appGridContainer" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
     `;
 
     const APP_CARDS = [
@@ -3297,13 +3299,18 @@ const COACHMARK_STEPS = [
   { selector: '.header-logo-btn', title: 'Foto Profil & Menu Akun', desc: 'Tekan di sini buat lihat Profil Saya, Daftar Pengurus, dokumen yayasan, sampai Keluar (Logout).', placement: 'bottom' },
   { selector: '#notifBellBtn', title: 'Notifikasi', desc: 'Nanti muncul di sini kalau ada donasi masuk atau kehadiran baru di wilayahmu.', placement: 'bottom' },
   { selector: '#bottomNav button[data-tab="app"]', title: 'Tab App', desc: 'Semua aplikasi YASSA ada di sini: Kotak & Donasi, AWG, Penerima Manfaat, Cloud Buku Besar, dan YASSA Mobile.', placement: 'top' },
+  { selector: '#appGridContainer', title: 'Semua Aplikasi', desc: 'Tinggal tap salah satu ikon buat langsung buka aplikasinya, gak perlu keluar dari Hub.', placement: 'top', requireTab: 'app' },
   { selector: '#bottomNav button[data-tab="input"]', title: 'Input Cepat', desc: 'Tombol tengah ini jalan pintas buat input data kegiatan/laporan tanpa perlu buka app satu-satu.', placement: 'top' },
+  { selector: '#bottomNav button[data-tab="keuangan"]', title: 'Tab Keuangan', desc: 'Lihat rekap donasi, kotak, dan realisasi keuangan YASSA -- sesuai wilayah kamu.', placement: 'top' },
+  { selector: '#bottomNav button[data-tab="profil"]', title: 'Tab Profil', desc: 'Data diri kamu, dedikasi (persentase kehadiran & donasi), dan pengaturan akun ada di sini.', placement: 'top' },
 ];
 let coachmarkIndex = 0;
+let tourInProgress = false;
 
 function maybeStartTour() {
   if (localStorage.getItem('yassa_tour_seen') === '1') return;
   coachmarkIndex = 0;
+  tourInProgress = true;
   // Kasih jeda dikit biar bottomNav & header selesai kegambar dulu
   setTimeout(showCoachmarkStep, 450);
 }
@@ -3321,6 +3328,16 @@ function showCoachmarkStep() {
 
   if (coachmarkIndex >= COACHMARK_STEPS.length) { endTour(); return; }
   const step = COACHMARK_STEPS[coachmarkIndex];
+
+  // Beberapa step (mis. grid App) butuh pindah tab dulu sebelum elemennya
+  // ada di DOM. tourInProgress udah true dari maybeStartTour(), jadi
+  // render() di sini TIDAK bakal restart tur dari awal.
+  if (step.requireTab && active !== step.requireTab) {
+    active = step.requireTab;
+    closeUserMenu();
+    render();
+  }
+
   const target = document.querySelector(step.selector);
   // Elemen target gak ada (mis. tab disembunyikan buat role tertentu) -> lewati step ini
   if (!target) { coachmarkIndex++; showCoachmarkStep(); return; }
@@ -3367,8 +3384,11 @@ function nextCoachmarkStep() {
 
 function endTour() {
   localStorage.setItem('yassa_tour_seen', '1');
+  tourInProgress = false;
   const root = document.getElementById('coachmarkRoot');
   if (root) root.innerHTML = '';
+  // Kalau tur sempat loncat ke tab App buat nunjuk grid, balikin ke Beranda
+  if (active !== 'beranda') { active = 'beranda'; render(); }
 }
 
 function toggleInputSheet() {
