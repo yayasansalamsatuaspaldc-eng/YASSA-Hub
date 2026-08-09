@@ -63,6 +63,28 @@
 
   button, input, select, textarea { color: inherit; font-family: inherit; }
 
+  /* ============================================================
+     🌊 EFEK SENTUH GLOBAL (ripple) -- diterapkan otomatis ke SEMUA
+     tombol & elemen berklik lewat JS (lihat initGlobalRippleEffect())
+     di bagian <script> bawah, jadi gak perlu tambahin manual ke tiap
+     tombol satu-satu. Elemen target ditandai class "gtap" oleh JS.
+     Ripple-nya lingkaran putih transparan yang membesar & memudar dari
+     titik sentuh, dikombinasikan dengan efek "mengecil dikit" (scale)
+     biar berasa kayak tombol native ke-tekan.
+     ============================================================ */
+  .gtap { position: relative; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+  .gtap-scale { transition: transform 0.12s ease; }
+  .gtap-scale.gtap-pressed { transform: scale(0.96); }
+  .gtap-ripple {
+    position: absolute; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(circle, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.12) 60%, rgba(255,255,255,0) 100%);
+    transform: scale(0); opacity: 1;
+    animation: gtapRippleAnim 0.55s ease-out forwards;
+  }
+  @keyframes gtapRippleAnim {
+    to { transform: scale(2.6); opacity: 0; }
+  }
+
   html, body {
     margin: 0; padding: 0; background: var(--bg-navy-deep);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -4931,6 +4953,54 @@ function cleanupCacheAndUpdate() {
     return new Promise(function (resolve) { setTimeout(resolve, 350); });
   });
 }
+
+// ============================================================
+// 🌊 EFEK SENTUH GLOBAL (ripple) -- otomatis berlaku ke SEMUA tombol &
+// elemen berklik di seluruh Hub (bottom nav, kartu App, menu akun, tombol
+// donasi, dll), TANPA perlu nambahin manual ke tiap elemen satu-satu.
+// Dipasang SEKALI lewat event delegation di document (bukan per-elemen),
+// jadi tetap kepakai walau konten di-render ulang lewat innerHTML (SPA-style
+// render() di Hub ini) -- elemen barunya otomatis ke-cover juga.
+// SELECTOR: mana aja yang dianggap "bisa disentuh/diklik" -- <button>,
+// atribut onclick, atau class .nav-btn (tombol bottom nav).
+// ============================================================
+function initGlobalRippleEffect() {
+  const SELECTOR = 'button, [onclick], .nav-btn';
+
+  function findTarget(evt) {
+    const el = evt.target.closest(SELECTOR);
+    if (!el || el.disabled) return null;
+    return el;
+  }
+
+  document.addEventListener("pointerdown", function (e) {
+    const target = findTarget(e);
+    if (!target) return;
+
+    target.classList.add("gtap", "gtap-scale", "gtap-pressed");
+
+    const rect = target.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height) * 1.3 || 60;
+    const ripple = document.createElement("span");
+    ripple.className = "gtap-ripple";
+    ripple.style.width = size + "px";
+    ripple.style.height = size + "px";
+    ripple.style.left = (e.clientX - rect.left - size / 2) + "px";
+    ripple.style.top = (e.clientY - rect.top - size / 2) + "px";
+    target.appendChild(ripple);
+    ripple.addEventListener("animationend", function () { ripple.remove(); });
+  }, { passive: true });
+
+  // Lepas efek "mengecil" begitu jari/mouse diangkat atau dibatalkan
+  // (misal jari geser keluar dari tombol pas nge-scroll).
+  ["pointerup", "pointercancel", "pointerleave"].forEach(function (evtName) {
+    document.addEventListener(evtName, function (e) {
+      const target = e.target.closest(".gtap-pressed");
+      if (target) target.classList.remove("gtap-pressed");
+    }, { passive: true });
+  });
+}
+initGlobalRippleEffect();
 
 function bootApp() {
   setSplashStatus("Membersihkan cache...");
