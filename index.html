@@ -2728,6 +2728,9 @@ function renderContent() {
 
   summary.style.display = active === "beranda" ? "flex" : "none";
   document.getElementById("appHeader").classList.toggle("header-compact", active !== "beranda");
+  // Tab Profil punya kartu profil sendiri (foto, nama, no. HP) di bagian atas,
+  // jadi header sapaan umum ("Selamat datang, ...") tidak perlu ditampilkan lagi di tab ini.
+  document.getElementById("appHeader").style.display = active === "profil" ? "none" : "";
 
   if (active === "beranda") {
     let html = `
