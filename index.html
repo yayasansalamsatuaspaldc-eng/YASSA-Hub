@@ -2832,19 +2832,20 @@ function renderContent() {
     `;
 
     const APP_CARDS = [
-      { key: "mobile", bg: "rgba(34, 197, 94, 0.15)", fg: "var(--bento-primary)", icon: "smartphone", title: "YASSA Mobile", desc: "Data Base<br>YASSA" },
-      { key: "donasi", bg: "rgba(34, 197, 94, 0.15)", fg: "var(--bento-primary)", icon: "box", title: "Kotak & Donasi", desc: "Kelola kotak<br>dan donasi" },
-      { key: "absensi", bg: "rgba(59, 130, 246, 0.15)", fg: "#60A5FA", icon: "assignment", title: "Kehadiran", desc: "Catat kehadiran<br>kegiatan" },
-      { key: "awg", bg: "rgba(168, 85, 247, 0.15)", fg: "#C084FC", icon: "favorite", title: "AWG", desc: "Ahli Waris<br>Akun" },
-      { key: "pm", bg: "rgba(251, 191, 36, 0.15)", fg: "#FBBF24", icon: "group", title: "Penerima Manfaat", desc: "Data penerima<br>manfaat" },
-      { key: "bukubesar", bg: "rgba(34, 211, 238, 0.15)", fg: "#22D3EE", icon: "menu_book", title: "Cloud Buku", desc: "Pembukuan Digital<br>Yayasan" },
+      { key: "mobile", grad: "linear-gradient(135deg, #34D399 0%, #059669 100%)", glow: "rgba(16,185,129,0.35)", icon: "smartphone", title: "YASSA Mobile", desc: "Data Base<br>YASSA" },
+      { key: "donasi", grad: "linear-gradient(135deg, #4ADE80 0%, #15803D 100%)", glow: "rgba(34,197,94,0.35)", icon: "box", title: "Kotak & Donasi", desc: "Kelola kotak<br>dan donasi" },
+      { key: "absensi", grad: "linear-gradient(135deg, #60A5FA 0%, #1D4ED8 100%)", glow: "rgba(59,130,246,0.35)", icon: "assignment", title: "Kehadiran", desc: "Catat kehadiran<br>kegiatan" },
+      { key: "awg", grad: "linear-gradient(135deg, #E879F9 0%, #7E22CE 100%)", glow: "rgba(168,85,247,0.35)", icon: "favorite", title: "AWG", desc: "Ahli Waris<br>Akun" },
+      { key: "pm", grad: "linear-gradient(135deg, #FCD34D 0%, #D97706 100%)", glow: "rgba(251,191,36,0.35)", icon: "group", title: "Penerima Manfaat", desc: "Data penerima<br>manfaat" },
+      { key: "bukubesar", grad: "linear-gradient(135deg, #67E8F9 0%, #0E7490 100%)", glow: "rgba(34,211,238,0.35)", icon: "menu_book", title: "Cloud Buku", desc: "Pembukuan Digital<br>Yayasan" },
     ];
 
     APP_CARDS.filter(function (c) { return isAppVisible(c.key); }).forEach(function (c) {
       html += `
-        <button onclick="setActive('${c.key}')" style="background: var(--glass-strong); padding: 24px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; border: 1px solid var(--glass-border); cursor: pointer;">
-          <div style="width: 56px; height: 56px; border-radius: 50%; background: ${c.bg}; color: ${c.fg}; display: flex; align-items: center; justify-content: center;">
-            <span class="material-symbols-outlined" style="font-size: 32px; font-variation-settings: 'FILL' 1;">${c.icon}</span>
+        <button onclick="setActive('${c.key}')" style="background: var(--glass-strong); padding: 20px 16px 22px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; gap: 14px; border: 1px solid var(--glass-border); cursor: pointer;">
+          <div style="position: relative; width: 64px; height: 64px; border-radius: 20px; background: ${c.grad}; box-shadow: 0 10px 22px ${c.glow}, inset 0 1px 0 rgba(255,255,255,0.35); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+            <div style="position: absolute; top: -18px; left: -14px; width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.22); filter: blur(2px);"></div>
+            <span class="material-symbols-outlined" style="position: relative; font-size: 30px; color: #fff; font-variation-settings: 'FILL' 1; text-shadow: 0 1px 3px rgba(0,0,0,0.25);">${c.icon}</span>
           </div>
           <div style="text-align: center;">
             <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">${c.title}</div>
