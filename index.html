@@ -1737,7 +1737,13 @@ function showApp() {
   updateHeaderAvatar();
 
   document.getElementById("userMenuPengaturanBtn").style.display = currentUser.role === "SUPERADMIN" ? "flex" : "none";
-  active = "beranda";
+
+  // 🔔 Begitu Hub baru dibuka (login baru ATAU sesi lama di-restore pas
+  // refresh), langsung arahkan ke layar "Aktifkan Notifikasi" (gate yang
+  // sudah ada di tab App) SEBELUM masuk Beranda -- bukan nunggu user
+  // klik tab App sendiri.
+  const notifStatus = localStorage.getItem("yassa_mobile_notif_status");
+  active = (notifStatus !== "granted" && notifStatus !== "skipped") ? "app" : "beranda";
   render();
 }
 
@@ -2712,6 +2718,32 @@ function renderContent() {
   }
 
   if (active === "app") {
+    // 🔔 GATE: notifikasi WAJIB diaktifkan dulu sebelum grid 6 app muncul.
+    // Sebelumnya tombol "Aktifkan Notifikasi" cuma nongol di dalam menu
+    // YASSA Mobile (gampang kelewat). Sekarang jadi syarat masuk tab App.
+    const notifStatus = localStorage.getItem("yassa_mobile_notif_status");
+    if (notifStatus !== "granted" && notifStatus !== "skipped") {
+      el.innerHTML = `
+        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:60px 24px; gap:16px;">
+          <div style="width:72px; height:72px; border-radius:50%; background:rgba(var(--bento-primary-rgb),0.15); color:var(--bento-primary); display:flex; align-items:center; justify-content:center;">
+            <span class="material-symbols-outlined" style="font-size:36px;">notifications_active</span>
+          </div>
+          <div>
+            <h2 style="font-weight:700; font-size:17px; margin:0 0 6px;">Aktifkan Notifikasi Dulu</h2>
+            <div style="font-size:13px; color:var(--text-secondary); max-width:280px; line-height:1.5;">
+              Sebelum masuk ke aplikasi, aktifkan notifikasi biar kamu langsung tahu kalau ada donasi masuk atau kehadiran baru di wilayahmu.
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:8px; width:100%;">
+            ${renderMobileNotifButton()}
+          </div>
+          <button onclick="localStorage.setItem('yassa_mobile_notif_status','skipped'); render();" style="margin-top:4px; background:transparent; border:none; color:var(--text-muted); font-size:12px; text-decoration:underline; cursor:pointer;">
+            Lewati dulu, nanti saja
+          </button>
+        </div>`;
+      return;
+    }
+
     let html = `
       <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px; padding-top:16px;">
         <div style="width:40px; height:40px; border-radius:12px; background:rgba(var(--bento-primary-rgb),0.15); color:var(--bento-primary); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
@@ -3158,7 +3190,7 @@ function openMobileAppForNotif() {
 window.addEventListener("message", function (e) {
   if (!e.data || e.data.type !== "yassa-mobile-notif-status") return;
   localStorage.setItem("yassa_mobile_notif_status", e.data.status);
-  if (active === "mobile") render();
+  if (active === "mobile" || active === "app") render();
 });
 
 function renderBottomNav() {
