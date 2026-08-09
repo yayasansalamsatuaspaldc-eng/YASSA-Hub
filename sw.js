@@ -3,7 +3,7 @@
 // bisa kebuka meski koneksi lagi jelek. Konten di dalam iframe (Kotak & Donasi,
 // Absensi, AWG, Penerima Manfaat) TETAP butuh internet karena itu app terpisah.
 
-const CACHE_NAME = "yassa-hub-shell-v6";
+const CACHE_NAME = "yassa-hub-shell-v7";
 const SHELL_FILES = [
   "./",
   "./index.html",
