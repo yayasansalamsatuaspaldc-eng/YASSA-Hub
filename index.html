@@ -882,16 +882,16 @@
   }
 
   .login-divider {
-    display: flex; align-items: center; gap: 12px; margin: 30px 0 20px; color: var(--text-muted); font-size: 12px; font-weight: 500;
+    display: flex; align-items: center; gap: 12px; margin: 22px 0 16px; color: var(--text-muted); font-size: 12px; font-weight: 500;
   }
   .login-divider::before, .login-divider::after { content: ""; flex: 1; height: 1px; background: var(--glass-border-strong); }
 
-  .google-btn-wrap { display: flex; justify-content: center; min-height: 44px; margin-bottom: 20px;}
+  .google-btn-wrap { display: flex; justify-content: center; min-height: 44px; margin-bottom: 12px;}
 
   .login-footer-icons {
     display: flex;
     justify-content: space-around;
-    margin-top: 28px;
+    margin-top: 10px;
   }
 
   .login-footer-icon-btn {
@@ -1597,14 +1597,14 @@ const MENUS = {
     ],
   },
   absensi: {
-    title: "Absensi & Kegiatan",
+    title: "Kehadiran & Kegiatan",
     items: [
       { label: "Beranda", icon: "home", color: "teal", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/index.html?embed=1", desc: "Ringkasan kegiatan" },
       { label: "Dashboard", icon: "chart", color: "blue", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Dashboard.html?embed=1", desc: "Statistik kehadiran" },
       { label: "Kegiatan", icon: "calendar", color: "coral", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Kegiatan.html?embed=1", desc: "Jadwal kegiatan" },
       { label: "Notulen", icon: "clipboard", color: "amber", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Notulen.html?embed=1", desc: "Catatan rapat" },
       { label: "Arsip", icon: "package", color: "purple", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Arsip.html?embed=1", desc: "Riwayat & arsip" },
-      { label: "Absen Sekarang", icon: "userplus", color: "teal", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Absensi.html?embed=1", desc: "Isi kehadiran" },
+      { label: "Hadir Sekarang", icon: "userplus", color: "teal", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Absensi.html?embed=1", desc: "Isi kehadiran" },
     ],
   },
   awg: {
@@ -2729,7 +2729,7 @@ function renderContent() {
     const APP_CARDS = [
       { key: "mobile", bg: "rgba(34, 197, 94, 0.15)", fg: "var(--bento-primary)", icon: "smartphone", title: "YASSA Mobile", desc: "Data Base<br>YASSA" },
       { key: "donasi", bg: "rgba(34, 197, 94, 0.15)", fg: "var(--bento-primary)", icon: "box", title: "Kotak & Donasi", desc: "Kelola kotak<br>dan donasi" },
-      { key: "absensi", bg: "rgba(59, 130, 246, 0.15)", fg: "#60A5FA", icon: "assignment", title: "Absensi", desc: "Catat kehadiran<br>kegiatan" },
+      { key: "absensi", bg: "rgba(59, 130, 246, 0.15)", fg: "#60A5FA", icon: "assignment", title: "Kehadiran", desc: "Catat kehadiran<br>kegiatan" },
       { key: "awg", bg: "rgba(168, 85, 247, 0.15)", fg: "#C084FC", icon: "favorite", title: "AWG", desc: "Ahli Waris<br>Akun" },
       { key: "pm", bg: "rgba(251, 191, 36, 0.15)", fg: "#FBBF24", icon: "group", title: "Penerima Manfaat", desc: "Data penerima<br>manfaat" },
       { key: "bukubesar", bg: "rgba(34, 211, 238, 0.15)", fg: "#22D3EE", icon: "menu_book", title: "Cloud Buku", desc: "Pembukuan Digital<br>Yayasan" },
@@ -2956,7 +2956,7 @@ function renderContent() {
         </button>
       </div>
 
-      <h3 style="font-weight: 600; font-size: 14px; margin-bottom: 12px; padding: 0 4px;">Performa</h3>
+      <h3 style="font-weight: 600; font-size: 14px; margin-bottom: 12px; padding: 0 4px;">Dedikasi</h3>
       <div style="background: var(--glass-strong); border-radius: 20px; padding: 18px; margin-bottom: 24px; border: 1px solid var(--glass-border); display: flex; flex-direction: column; gap: 18px;">
         <div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
