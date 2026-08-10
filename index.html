@@ -1395,6 +1395,19 @@
     <div class="akun-content" id="akunContent"></div>
   </div>
 
+  <!-- Halaman Penuh: Laporan Bulanan (Pendapatan vs Pengeluaran Santunan) --
+       reuse class "overlay" yang sama kayak akunPage, jadi otomatis kena
+       tombol back fisik Android (lihat OVERLAY_OPEN_SELECTOR/closeTopmostOverlay). -->
+  <div class="overlay" id="laporanBulananPage">
+    <div class="overlay-header">
+      <button class="overlay-close" id="laporanBulananClose">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E2E8F0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <span class="overlay-title">Laporan Bulanan</span>
+    </div>
+    <div class="akun-content" id="laporanBulananContent"></div>
+  </div>
+
   <!-- Form Tambah/Edit User (Pengaturan) -->
   <div class="user-form-overlay" id="userFormOverlay" onclick="if(event.target===this) closeUserForm()">
     <div class="user-form-sheet">
@@ -3017,6 +3030,21 @@ function renderContent() {
         <button id="keuanganRetryBtn" onclick="loadKeuanganStats()" style="display: none; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 99px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: #fff; cursor: pointer; flex-shrink: 0;">Coba Lagi</button>
       </div>
 
+      <!-- Pintu masuk ke Laporan Bulanan (pendapatan vs pengeluaran santunan,
+           per bulan, klik buat lihat rincian) -- nasional/gabungan semua
+           wilayah, biar Pengurus/Korwil/Tim Kerja/Relawan semua lihat angka
+           yang sama pas ditanya-tanya donatur. -->
+      <button onclick="openLaporanBulanan()" style="width: 100%; background: linear-gradient(135deg, rgba(34,197,94,0.16), rgba(16,185,129,0.10)); border: 1px solid rgba(34,197,94,0.3); border-radius: 18px; padding: 16px 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 14px; cursor: pointer; text-align: left;">
+        <div style="width: 44px; height: 44px; border-radius: 14px; background: rgba(34,197,94,0.18); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <span class="material-symbols-outlined" style="font-size: 22px;">monitoring</span>
+        </div>
+        <div style="flex: 1;">
+          <div style="font-size: 13.5px; font-weight: 700; color: white;">Laporan Bulanan</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">Pendapatan &amp; pengeluaran santunan per bulan</div>
+        </div>
+        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
+      </button>
+
       <!-- 1. Jumlah Anak Yatim + Total Santunan (per wilayah -- jumlah anak dari
            YASSA Mobile, rate dari Bendahara, dihitung otomatis di Hub) -->
       <div id="keuanganTourTarget" style="background: var(--glass-strong); border-radius: 20px; padding: 22px 20px; margin-bottom: 16px; border: 1px solid var(--glass-border); border-left: 4px solid var(--bento-primary);">
@@ -3575,6 +3603,174 @@ function toggleInputSheet() {
   } else {
     sheet.classList.add('open');
   }
+}
+
+// ============================================================
+// 📊 LAPORAN BULANAN (Pendapatan vs Pengeluaran Santunan) -- halaman penuh
+// yang dibuka dari tombol di tab Keuangan. List 12 bulan (accordion), klik
+// 1 bulan buat expand rincian. Data NASIONAL/gabungan semua wilayah
+// (getLaporanBulananList/Detail di server SENGAJA gak difilter wilayah).
+// ============================================================
+let laporanBulananTahunAktif = new Date().getFullYear();
+let laporanBulananDetailCache = {}; // key "bulan-tahun" -> hasil getLaporanBulananDetail, biar gak fetch ulang tiap buka/tutup accordion yang sama
+let laporanBulananBulanTerbuka = null; // bulan yang accordion-nya lagi kebuka, null kalau semua tertutup
+
+function openLaporanBulanan() {
+  document.getElementById("laporanBulananPage").classList.add("open");
+  laporanBulananBulanTerbuka = null;
+  loadLaporanBulananList(laporanBulananTahunAktif);
+}
+
+function loadLaporanBulananList(tahun) {
+  laporanBulananTahunAktif = tahun;
+  const el = document.getElementById("laporanBulananContent");
+  el.innerHTML = `
+    <div style="display:flex; align-items:center; justify-content:center; padding: 60px 0; color: var(--text-secondary); font-size: 12.5px; gap: 8px;">
+      <span class="material-symbols-outlined spin" style="font-size: 18px;">progress_activity</span> Memuat laporan...
+    </div>`;
+
+  callGAS("getLaporanBulananList", [authToken, tahun])
+    .then(function (data) { renderLaporanBulananList(data); })
+    .catch(function (err) {
+      el.innerHTML = `
+        <div style="padding: 40px 20px; text-align: center; color: var(--text-secondary); font-size: 12.5px;">
+          Gagal memuat laporan: ${escapeHtmlHub(String(err && err.message || err))}
+          <br><button onclick="loadLaporanBulananList(${tahun})" style="margin-top: 14px; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 99px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; cursor: pointer;">Coba Lagi</button>
+        </div>`;
+    });
+}
+
+function renderLaporanBulananList(data) {
+  const el = document.getElementById("laporanBulananContent");
+  laporanBulananDetailCache = {}; // ganti tahun -> cache lama gak relevan lagi
+  const tahun = data.tahun;
+
+  let html = `
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 18px;">
+      <button onclick="loadLaporanBulananList(${tahun - 1})" style="width: 36px; height: 36px; border-radius: 12px; background: var(--glass-strong); border: 1px solid var(--glass-border); color: #fff; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+        <span class="material-symbols-outlined" style="font-size: 18px;">chevron_left</span>
+      </button>
+      <div style="font-size: 16px; font-weight: 700; color: #fff;">Tahun ${tahun}</div>
+      <button onclick="loadLaporanBulananList(${tahun + 1})" style="width: 36px; height: 36px; border-radius: 12px; background: var(--glass-strong); border: 1px solid var(--glass-border); color: #fff; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+        <span class="material-symbols-outlined" style="font-size: 18px;">chevron_right</span>
+      </button>
+    </div>
+    <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;">
+      Data gabungan SEMUA wilayah. Pengeluaran dihitung berdasarkan <b>bulan periode santunan</b> (bukan tanggal cair) -- santunan yang telat/dirapel tetap tercatat di bulan seharusnya, dengan tanda ⚠️.
+    </div>`;
+
+  data.bulanList.forEach(function (b) {
+    const adaData = b.adaPendapatan || b.adaPengeluaran;
+    const selisihWarna = b.selisih >= 0 ? "#86EFAC" : "#FCA5A5";
+    html += `
+      <div style="background: var(--glass-strong); border-radius: 16px; margin-bottom: 10px; border: 1px solid var(--glass-border); overflow: hidden;">
+        <button onclick="toggleLaporanBulananDetail(${b.bulan}, ${b.tahun})" style="width: 100%; padding: 14px 16px; display:flex; align-items:center; justify-content:space-between; cursor: pointer; text-align:left; ${adaData ? '' : 'opacity: 0.55;'}">
+          <div>
+            <div style="font-size: 13.5px; font-weight: 700; color: #fff;">${b.namaBulan} ${b.adaYangTelat ? '⚠️' : ''}</div>
+            <div style="font-size: 10.5px; color: var(--text-secondary); margin-top: 2px;">
+              ${adaData ? `Masuk ${formatRupiahHub(b.totalPendapatan)} &middot; Tersalur ${formatRupiahHub(b.totalPengeluaran)}` : 'Belum ada data'}
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap: 8px;">
+            ${adaData ? `<span style="font-size: 11.5px; font-weight: 700; color: ${selisihWarna};">${b.selisih >= 0 ? '+' : ''}${formatRupiahHub(b.selisih)}</span>` : ''}
+            <span class="material-symbols-outlined laporan-chevron-${b.bulan}-${b.tahun}" style="font-size: 20px; color: var(--text-muted); transition: transform 0.2s;">expand_more</span>
+          </div>
+        </button>
+        <div id="laporanDetail-${b.bulan}-${b.tahun}" style="display:none; padding: 0 16px 16px;"></div>
+      </div>`;
+  });
+
+  el.innerHTML = html;
+}
+
+function toggleLaporanBulananDetail(bulan, tahun) {
+  const key = bulan + "-" + tahun;
+  const wrap = document.getElementById("laporanDetail-" + key);
+  const chevron = document.querySelector(".laporan-chevron-" + key);
+  if (!wrap) return;
+
+  const sedangTerbuka = wrap.style.display === "block";
+  if (sedangTerbuka) {
+    wrap.style.display = "none";
+    if (chevron) chevron.style.transform = "rotate(0deg)";
+    laporanBulananBulanTerbuka = null;
+    return;
+  }
+
+  wrap.style.display = "block";
+  if (chevron) chevron.style.transform = "rotate(180deg)";
+  laporanBulananBulanTerbuka = key;
+
+  if (laporanBulananDetailCache[key]) {
+    renderLaporanBulananDetail(wrap, laporanBulananDetailCache[key]);
+    return;
+  }
+
+  wrap.innerHTML = `<div style="padding: 16px 0; text-align:center; color: var(--text-secondary); font-size: 11.5px;"><span class="material-symbols-outlined spin" style="font-size: 15px; vertical-align: middle;">progress_activity</span> Memuat rincian...</div>`;
+
+  callGAS("getLaporanBulananDetail", [authToken, bulan, tahun])
+    .then(function (detail) {
+      laporanBulananDetailCache[key] = detail;
+      // Cek masih ada dibuka & masih bulan yang sama -- cegah race condition
+      // kalau user buru-buru klik-klik banyak bulan sebelum fetch selesai.
+      if (laporanBulananBulanTerbuka === key) renderLaporanBulananDetail(wrap, detail);
+    })
+    .catch(function (err) {
+      wrap.innerHTML = `<div style="padding: 12px 0; color: #FCA5A5; font-size: 11px;">Gagal memuat rincian: ${escapeHtmlHub(String(err && err.message || err))}</div>`;
+    });
+}
+
+function renderLaporanBulananDetail(wrap, d) {
+  let html = `<div style="border-top: 1px dashed var(--glass-border); padding-top: 14px; margin-top: 2px;">`;
+
+  // -- Pendapatan --
+  html += `<div style="font-size: 11px; font-weight: 700; color: var(--bento-primary); margin-bottom: 8px;">PENDAPATAN &middot; ${formatRupiahHub(d.pendapatan.total)}</div>`;
+
+  if (d.pendapatan.lapangan.rincianWilayah.length) {
+    html += `<div style="font-size: 10.5px; color: var(--text-secondary); margin-bottom: 4px;">Realisasi Lapangan</div>`;
+    d.pendapatan.lapangan.rincianWilayah.forEach(function (r) {
+      html += `<div style="display:flex; justify-content:space-between; font-size: 11.5px; padding: 5px 0; color: #E2E8F0;"><span>${escapeHtmlHub(r.wilayah)}</span><span style="font-weight:600;">${formatRupiahHub(r.realisasiDonasi)}</span></div>`;
+    });
+  }
+  if (d.pendapatan.kitabisa.total > 0) {
+    html += `<div style="display:flex; justify-content:space-between; font-size: 11.5px; padding: 5px 0; color: #E2E8F0;"><span>Kitabisa.com</span><span style="font-weight:600;">${formatRupiahHub(d.pendapatan.kitabisa.total)}</span></div>`;
+  }
+  if (d.pendapatan.midtrans.total > 0) {
+    html += `<div style="display:flex; justify-content:space-between; font-size: 11.5px; padding: 5px 0; color: #E2E8F0;"><span>Donasi Online (${d.pendapatan.midtrans.jumlahDonatur} donatur)</span><span style="font-weight:600;">${formatRupiahHub(d.pendapatan.midtrans.total)}</span></div>`;
+  }
+  if (d.pendapatan.total === 0) {
+    html += `<div style="font-size: 11px; color: var(--text-muted); padding: 6px 0;">Belum ada data pendapatan bulan ini.</div>`;
+  }
+
+  // -- Pengeluaran --
+  html += `<div style="font-size: 11px; font-weight: 700; color: #F87171; margin: 16px 0 8px;">PENGELUARAN SANTUNAN &middot; ${formatRupiahHub(d.pengeluaran.total)}</div>`;
+  if (d.pengeluaran.rincianWilayah.length) {
+    d.pengeluaran.rincianWilayah.forEach(function (r) {
+      html += `
+        <div style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+          <div style="display:flex; justify-content:space-between; font-size: 11.5px; color: #E2E8F0;">
+            <span>${escapeHtmlHub(r.wilayah)} ${r.telat ? '⚠️' : ''}</span>
+            <span style="font-weight:600;">${formatRupiahHub(r.jumlahDisalurkan)}</span>
+          </div>
+          <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">
+            ${r.jumlahAnakDisantuni} anak &middot; cair ${escapeHtmlHub(r.tanggalPencairan || '-')}${r.telat ? ' (di luar bulan periode)' : ''}
+            ${r.catatan ? ' &middot; ' + escapeHtmlHub(r.catatan) : ''}
+          </div>
+        </div>`;
+    });
+  } else {
+    html += `<div style="font-size: 11px; color: var(--text-muted); padding: 6px 0;">Belum ada pencairan santunan tercatat buat periode ini.</div>`;
+  }
+
+  const selisihWarna = d.selisih >= 0 ? "#86EFAC" : "#FCA5A5";
+  html += `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--glass-border);">
+      <span style="font-size: 11.5px; color: var(--text-secondary);">Selisih (Pendapatan - Pengeluaran)</span>
+      <span style="font-size: 13px; font-weight: 800; color: ${selisihWarna};">${d.selisih >= 0 ? '+' : ''}${formatRupiahHub(d.selisih)}</span>
+    </div>
+  </div>`;
+
+  wrap.innerHTML = html;
 }
 
 function toggleMidtransForm() {
@@ -4967,6 +5163,10 @@ function resetOverlayIframe() {
 document.getElementById("akunPageClose").addEventListener("click", function () {
   document.getElementById("akunPage").classList.remove("open");
   orgChartZoomState = null;
+});
+
+document.getElementById("laporanBulananClose").addEventListener("click", function () {
+  document.getElementById("laporanBulananPage").classList.remove("open");
 });
 
 function showModal(title, message, isConfirm = false, onConfirm = null) {
