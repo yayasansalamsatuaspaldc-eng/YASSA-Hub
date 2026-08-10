@@ -2624,6 +2624,28 @@ function loadKeuanganStats() {
   const elBannerText = document.getElementById("keuanganLoadingBannerText");
   const elRetryBtn = document.getElementById("keuanganRetryBtn");
 
+  // Kalimat loading dirotasi ACAK tiap kali tab Keuangan dibuka (bukan
+  // teks statis "Mengambil data..." yang itu-itu terus) -- biar sambil
+  // nunggu data, pengurus/relawan diingetin ke misi YASSA. Dipilih acak
+  // di sini (bukan bergilir/sequential) biar tiap buka app kerasa beda.
+  const KALIMAT_LOADING_KEUANGAN = [
+    "Menghitung berkah untuk anak-anak yatim kita...",
+    "Sedang menjumlahkan kebaikan bulan ini...",
+    "Menyiapkan data — demi mereka yang menunggu...",
+    "Sabar sebentar, hasil kerja keras kita lagi disiapkan...",
+    "Setiap angka di sini mewakili harapan seorang anak...",
+    "Sedikit lagi, semangat menunggu ya...",
+    "Menyusun data, seperti kita menyusun kepedulian...",
+  ];
+  const KALIMAT_LOADING_KEUANGAN_LAMBAT = [
+    "Masih diproses — hal baik memang butuh waktu...",
+    "Koneksi agak pelan, tapi kita tetap jalan bareng...",
+    "Sabar ya, sedang memastikan semua data akurat untuk mereka...",
+  ];
+  const kalimatAcak = function (daftar) {
+    return daftar[Math.floor(Math.random() * daftar.length)];
+  };
+
   // Kalau sesi ini udah pernah sukses ambil data (mis. user tadi udah buka
   // tab Keuangan, terus pindah ke tab lain, terus balik lagi TANPA keluar
   // app), langsung tampilin angka lama dari cache duluan -- instan, gak
@@ -2644,7 +2666,7 @@ function loadKeuanganStats() {
       elBanner.className = "kv-banner-loading";
       elBanner.style.display = "flex";
       if (elBannerIcon) { elBannerIcon.textContent = "progress_activity"; elBannerIcon.classList.add("spin"); }
-      if (elBannerText) elBannerText.textContent = "Mengambil data keuangan terbaru...";
+      if (elBannerText) elBannerText.textContent = kalimatAcak(KALIMAT_LOADING_KEUANGAN);
       if (elRetryBtn) elRetryBtn.style.display = "none";
     }
   }
@@ -2655,7 +2677,7 @@ function loadKeuanganStats() {
   let lambatTimer = null;
   if (!dariCache && elBannerText) {
     lambatTimer = setTimeout(function () {
-      elBannerText.textContent = "Masih memuat, koneksi sedang lambat. Mohon tunggu sebentar...";
+      elBannerText.textContent = kalimatAcak(KALIMAT_LOADING_KEUANGAN_LAMBAT);
     }, 6000);
   }
 
@@ -2965,7 +2987,7 @@ function renderContent() {
            gak ngira datanya emang kosong pas fetch ke 4 sumber lagi lambat. -->
       <div id="keuanganLoadingBanner" class="kv-banner-loading" style="display: none; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; margin-bottom: 16px;">
         <span class="material-symbols-outlined spin" id="keuanganLoadingIcon" style="font-size: 18px; flex-shrink: 0;">progress_activity</span>
-        <span style="font-size: 12px; flex: 1;" id="keuanganLoadingBannerText">Mengambil data keuangan terbaru...</span>
+        <span style="font-size: 12px; flex: 1;" id="keuanganLoadingBannerText">Menghitung berkah untuk anak-anak yatim kita...</span>
         <button id="keuanganRetryBtn" onclick="loadKeuanganStats()" style="display: none; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 99px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: #fff; cursor: pointer; flex-shrink: 0;">Coba Lagi</button>
       </div>
 
