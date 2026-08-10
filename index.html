@@ -2191,16 +2191,23 @@ function loadBerandaStats() {
   Promise.all([
     // paksaNasional=true -- Total Santunan Diperlukan di Beranda SELALU
     // jumlah semua wilayah, walau user yang login akses-nya cuma 1 wilayah.
-    callGAS("getPenyaluranSantunanBulanIni", [authToken, true]),
-    callGAS("getKeuanganManual", [authToken]),
-    callGAS("getKitabisaRealisasiBulanIni", [authToken]),
-    callGAS("getDonasiRealisasiBulanIni", [authToken]),
+    //
+    // PERBAIKAN PERFORMA: dulu 4 panggilan callGAS() terpisah ke server
+    // (getPenyaluranSantunanBulanIni, getKeuanganManual,
+    // getKitabisaRealisasiBulanIni, getDonasiRealisasiBulanIni), sekarang
+    // digabung jadi 1 panggilan getRingkasanKeuangan() -- backend yang
+    // menjalankan ke-4 fungsi itu internal + di-cache 3 menit di server
+    // (lihat Code_gs_HUB.gs). Efeknya: 1x roundtrip network, bukan 4x, dan
+    // kalau tab Beranda dibuka lagi dalam 3 menit, backend langsung balikin
+    // dari cache tanpa query sheet/Mobile ulang.
+    callGAS("getRingkasanKeuangan", [authToken, true]),
   ])
-    .then(function (hasil) {
-      const santunan = hasil[0];
-      const manual = hasil[1];
-      const kitabisa = hasil[2];
-      const midtrans = hasil[3];
+    .then(function (hasilGabungan) {
+      const r = hasilGabungan[0];
+      const santunan = r.penyaluranSantunan;
+      const manual = r.keuanganManual;
+      const kitabisa = r.kitabisaRealisasi;
+      const midtrans = r.donasiRealisasi;
 
       const realisasiLapangan = Number(manual.realisasiDonasi || 0);
       const realisasiKitabisa = Number(kitabisa.totalRealisasi || 0);
@@ -2652,22 +2659,19 @@ function loadKeuanganStats() {
     }, 6000);
   }
 
-  // 1) Jumlah anak per kategori + rate + total santunan, sudah digabung &
-  //    dihitung di backend Hub (server-to-server ke YASSA Mobile di baliknya).
-  const pSantunan = callGAS("getPenyaluranSantunanBulanIni", [authToken]);
+  // PERBAIKAN PERFORMA: dulu 4 panggilan callGAS() terpisah (masing2 request
+  // HTTP sendiri), sekarang digabung jadi 1 panggilan getRingkasanKeuangan()
+  // -- backend jalanin ke-4 fungsi lama itu internal + hasilnya di-cache 3
+  // menit di server. Array hasil di bawah (pSantunan/pManual/pKitabisa/
+  // pMidtrans) dipertahankan urutannya biar terapkanKeuanganStats() di bawah
+  // TIDAK perlu diubah sama sekali.
+  const pRingkasan = callGAS("getRingkasanKeuangan", [authToken, false]).then(function (r) {
+    return [r.penyaluranSantunan, r.keuanganManual, r.kitabisaRealisasi, r.donasiRealisasi];
+  });
 
-  // 2) Kebutuhan & Realisasi Donasi Lapangan Bulan Ini -- DITULIS MANUAL oleh
-  //    Bendahara/Korwil per wilayah.
-  const pManual = callGAS("getKeuanganManual", [authToken]);
-
-  // 3) Realisasi Donasi Kitabisa.com bulan ini -- NASIONAL, manual Bendahara.
-  const pKitabisa = callGAS("getKitabisaRealisasiBulanIni", [authToken]);
-
-  // 4) Histori donasi ONLINE lewat Midtrans bulan ini -- NASIONAL, otomatis.
-  const pMidtrans = callGAS("getDonasiRealisasiBulanIni", [authToken]);
-
-  Promise.all([pSantunan, pManual, pKitabisa, pMidtrans])
-    .then(function (hasil) {
+  Promise.all([pRingkasan])
+    .then(function (hasilWrap) {
+      const hasil = hasilWrap[0];
       keuanganStatsCache = hasil;
       terapkanKeuanganStats(hasil);
       if (elBanner) elBanner.style.display = "none";
