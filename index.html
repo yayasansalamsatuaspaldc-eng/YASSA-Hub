@@ -728,6 +728,19 @@
   }
   @keyframes appSplashSpin { to { transform: rotate(360deg); } }
   #manualRefreshIcon.spin { animation: appSplashSpin 0.7s linear infinite; }
+
+  /* Indikator "sedang ambil data" tab Keuangan -- biar user gak ngira app
+     macet/data kosong pas fetch ke 4 sumber (santunan, manual, kitabisa,
+     midtrans) lagi lambat. */
+  @keyframes kvPulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+  .kv-loading { display: inline-block; animation: kvPulse 1.1s ease-in-out infinite; }
+  #keuanganLoadingIcon.spin { animation: appSplashSpin 0.8s linear infinite; }
+  .kv-banner-loading { background: rgba(34,211,238,0.08); border: 1px solid rgba(34,211,238,0.25); }
+  .kv-banner-loading #keuanganLoadingIcon { color: var(--neon-cyan); }
+  .kv-banner-loading #keuanganLoadingBannerText { color: var(--text-secondary); }
+  .kv-banner-error { background: rgba(239,68,68,0.10); border: 1px solid rgba(239,68,68,0.3); }
+  .kv-banner-error #keuanganLoadingIcon { color: #F87171; }
+  .kv-banner-error #keuanganLoadingBannerText { color: #FCA5A5; }
   .app-splash-status { font-size: 13px; color: var(--text-muted); font-weight: 600; letter-spacing: 0.2px; }
 
   /* Status "sedang masuk" pas proses login Google */
@@ -2599,13 +2612,44 @@ function terapkanKeuanganStats(hasil) {
 }
 
 function loadKeuanganStats() {
+  const elBanner = document.getElementById("keuanganLoadingBanner");
+  const elBannerIcon = document.getElementById("keuanganLoadingIcon");
+  const elBannerText = document.getElementById("keuanganLoadingBannerText");
+  const elRetryBtn = document.getElementById("keuanganRetryBtn");
+
   // Kalau sesi ini udah pernah sukses ambil data (mis. user tadi udah buka
   // tab Keuangan, terus pindah ke tab lain, terus balik lagi TANPA keluar
   // app), langsung tampilin angka lama dari cache duluan -- instan, gak
   // sempat keliatan reset ke "..."/0. Setelah itu tetap lanjut fetch ke
-  // server di background buat mastiin datanya paling baru.
-  if (keuanganStatsCache) {
+  // server di background biar datanya tetap update, TAPI banner gak usah
+  // ditampilin lagi karena user udah lihat angkanya.
+  const dariCache = !!keuanganStatsCache;
+  if (dariCache) {
     terapkanKeuanganStats(keuanganStatsCache);
+  }
+
+  if (elBanner) {
+    if (dariCache) {
+      elBanner.style.display = "none";
+    } else {
+      // Data belum pernah kebuka sesi ini -- kasih tau user jelas2 lagi
+      // ambil data, biar gak dikira app-nya macet atau datanya kosong.
+      elBanner.className = "kv-banner-loading";
+      elBanner.style.display = "flex";
+      if (elBannerIcon) { elBannerIcon.textContent = "progress_activity"; elBannerIcon.classList.add("spin"); }
+      if (elBannerText) elBannerText.textContent = "Mengambil data keuangan terbaru...";
+      if (elRetryBtn) elRetryBtn.style.display = "none";
+    }
+  }
+
+  // Kalau ambil data lebih dari 6 detik (koneksi lelet, atau salah satu dari
+  // 4 sumber server-to-server lagi lambat), kasih pesan tambahan biar user
+  // tau ini masih proses, bukan macet.
+  let lambatTimer = null;
+  if (!dariCache && elBannerText) {
+    lambatTimer = setTimeout(function () {
+      elBannerText.textContent = "Masih memuat, koneksi sedang lambat. Mohon tunggu sebentar...";
+    }, 6000);
   }
 
   // 1) Jumlah anak per kategori + rate + total santunan, sudah digabung &
@@ -2626,12 +2670,27 @@ function loadKeuanganStats() {
     .then(function (hasil) {
       keuanganStatsCache = hasil;
       terapkanKeuanganStats(hasil);
+      if (elBanner) elBanner.style.display = "none";
     })
-    .catch(function () {
+    .catch(function (err) {
       // Kalau fetch gagal TAPI sebelumnya udah ada cache yang sukses,
       // biarin angka lama itu tetap tampil (lebih baik daripada direset
-      // ke "-" cuma gara-gara 1x gangguan jaringan).
-      if (!keuanganStatsCache) tampilkanKeuanganGagal();
+      // ke "-" cuma gara-gara 1x gangguan jaringan). Banner tetap disembunyiin.
+      if (dariCache) {
+        if (elBanner) elBanner.style.display = "none";
+        return;
+      }
+      tampilkanKeuanganGagal();
+      if (elBanner) {
+        elBanner.className = "kv-banner-error";
+        elBanner.style.display = "flex";
+        if (elBannerIcon) { elBannerIcon.textContent = "error"; elBannerIcon.classList.remove("spin"); }
+        if (elBannerText) elBannerText.textContent = "Gagal mengambil data keuangan" + (err && err.message ? ": " + err.message : ". Cek koneksi lalu coba lagi.");
+        if (elRetryBtn) elRetryBtn.style.display = "inline-block";
+      }
+    })
+    .finally(function () {
+      if (lambatTimer) clearTimeout(lambatTimer);
     });
 }
 
@@ -2898,6 +2957,14 @@ function renderContent() {
         </button>
       </header>
 
+      <!-- Banner status ambil data: nunjukin lagi loading / gagal, biar user
+           gak ngira datanya emang kosong pas fetch ke 4 sumber lagi lambat. -->
+      <div id="keuanganLoadingBanner" class="kv-banner-loading" style="display: none; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; margin-bottom: 16px;">
+        <span class="material-symbols-outlined spin" id="keuanganLoadingIcon" style="font-size: 18px; flex-shrink: 0;">progress_activity</span>
+        <span style="font-size: 12px; flex: 1;" id="keuanganLoadingBannerText">Mengambil data keuangan terbaru...</span>
+        <button id="keuanganRetryBtn" onclick="loadKeuanganStats()" style="display: none; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 99px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: #fff; cursor: pointer; flex-shrink: 0;">Coba Lagi</button>
+      </div>
+
       <!-- 1. Jumlah Anak Yatim + Total Santunan (per wilayah -- jumlah anak dari
            YASSA Mobile, rate dari Bendahara, dihitung otomatis di Hub) -->
       <div id="keuanganTourTarget" style="background: var(--glass-strong); border-radius: 20px; padding: 22px 20px; margin-bottom: 16px; border: 1px solid var(--glass-border); border-left: 4px solid var(--bento-primary);">
@@ -2907,7 +2974,7 @@ function renderContent() {
             <span class="material-symbols-outlined" style="font-size: 22px; font-variation-settings: 'FILL' 1;">groups</span>
           </div>
         </div>
-        <div style="font-size: 34px; font-weight: 800; color: white; line-height: 1.1; margin: 4px 0 2px;" id="keuanganJumlahYatim">...</div>
+        <div style="font-size: 34px; font-weight: 800; color: white; line-height: 1.1; margin: 4px 0 2px;" id="keuanganJumlahYatim"><span class="kv-loading">...</span></div>
         <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 18px;">Anak &middot; Wilayah ${escapeHtmlHub(wilayahText)} &middot; Bulan Ini</div>
 
         <div style="display: flex; gap: 10px; margin-bottom: 18px;">
@@ -2916,14 +2983,14 @@ function renderContent() {
               <span class="material-symbols-outlined" style="font-size: 15px; color: #C084FC;">diversity_1</span>
               <span style="font-size: 10.5px; color: #D8B4FE;">Yatim Piatu</span>
             </div>
-            <div style="font-size: 20px; font-weight: 700; color: #E9D5FF;" id="keuanganYatimPiatu">...</div>
+            <div style="font-size: 20px; font-weight: 700; color: #E9D5FF;" id="keuanganYatimPiatu"><span class="kv-loading">...</span></div>
           </div>
           <div style="flex: 1; background: rgba(245, 158, 11, 0.10); border: 1px solid rgba(245, 158, 11, 0.25); border-left: 3px solid #FBBF24; border-radius: 14px; padding: 12px;">
             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
               <span class="material-symbols-outlined" style="font-size: 15px; color: #FBBF24;">accessible</span>
               <span style="font-size: 10.5px; color: #FDE68A;">Disabilitas</span>
             </div>
-            <div style="font-size: 20px; font-weight: 700; color: #FEF3C7;" id="keuanganDisabilitas">...</div>
+            <div style="font-size: 20px; font-weight: 700; color: #FEF3C7;" id="keuanganDisabilitas"><span class="kv-loading">...</span></div>
           </div>
         </div>
 
@@ -2934,8 +3001,8 @@ function renderContent() {
           </div>
           <div id="keuanganSantunanWrap">
             <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Total Santunan Bulan Ini</div>
-            <div style="font-size: 26px; font-weight: 800; color: white; margin-bottom: 4px;" id="keuanganTotalSantunan">...</div>
-            <div style="font-size: 10px; color: var(--text-secondary);" id="keuanganRincianRate">...</div>
+            <div style="font-size: 26px; font-weight: 800; color: white; margin-bottom: 4px;" id="keuanganTotalSantunan"><span class="kv-loading">...</span></div>
+            <div style="font-size: 10px; color: var(--text-secondary);" id="keuanganRincianRate"><span class="kv-loading">...</span></div>
           </div>
         </div>
       </div>
@@ -2945,7 +3012,7 @@ function renderContent() {
       <div style="background: var(--glass-strong); border-radius: 20px; padding: 22px 20px; margin-bottom: 16px; border: 1px solid var(--glass-border); border-left: 4px solid #3B82F6;">
         <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">2. Realisasi Lapangan ${badgeWilayah}</div>
         <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;" id="keuanganCatatanBendahara">Ditentukan oleh Bendahara</div>
-        <div style="font-size: 26px; font-weight: 800; margin-bottom: 4px; color: white;" id="keuanganKebutuhanNominal">...</div>
+        <div style="font-size: 26px; font-weight: 800; margin-bottom: 4px; color: white;" id="keuanganKebutuhanNominal"><span class="kv-loading">...</span></div>
         <div style="font-size: 10px; color: var(--bento-primary); margin-bottom: 18px;">Total kebutuhan donasi</div>
 
         <div id="keuanganBelumDiisi" style="display: none; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; background: rgba(251, 191, 36, 0.10); border: 1px solid rgba(251, 191, 36, 0.3); margin-bottom: 16px;">
@@ -2957,11 +3024,11 @@ function renderContent() {
           <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px;">
             <div>
               <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Realisasi Donasi</div>
-              <div style="font-size: 22px; font-weight: 700;" id="keuanganRealisasiNominal">...</div>
+              <div style="font-size: 22px; font-weight: 700;" id="keuanganRealisasiNominal"><span class="kv-loading">...</span></div>
               <div style="font-size: 10px; color: var(--text-secondary);">Dicatat Bendahara</div>
             </div>
             <div style="text-align: right;">
-              <div style="font-size: 16px; font-weight: 700;" id="keuanganPersenTercapai">...</div>
+              <div style="font-size: 16px; font-weight: 700;" id="keuanganPersenTercapai"><span class="kv-loading">...</span></div>
               <div style="font-size: 10px; color: var(--text-secondary);">Tercapai</div>
             </div>
           </div>
@@ -2975,8 +3042,8 @@ function renderContent() {
             <span class="material-symbols-outlined" style="font-size: 18px;" id="keuanganSelisihIcon">arrow_downward</span>
           </div>
           <div>
-            <div style="font-size: 16px; font-weight: 700; color: #FCA5A5;" id="keuanganSelisihNominal">...</div>
-            <div style="font-size: 10.5px; color: rgba(252, 165, 165, 0.85);" id="keuanganSelisihLabel">...</div>
+            <div style="font-size: 16px; font-weight: 700; color: #FCA5A5;" id="keuanganSelisihNominal"><span class="kv-loading">...</span></div>
+            <div style="font-size: 10.5px; color: rgba(252, 165, 165, 0.85);" id="keuanganSelisihLabel"><span class="kv-loading">...</span></div>
           </div>
         </div>
 
@@ -3003,7 +3070,7 @@ function renderContent() {
           <span style="font-size: 11px; color: #FDE68A;">Bendahara belum mencatat pencairan Kitabisa bulan ini.</span>
         </div>
         <div id="keuanganKitabisaWrap">
-          <div style="font-size: 26px; font-weight: 800; color: white; margin: 4px 0 2px;" id="keuanganKitabisaNominal">...</div>
+          <div style="font-size: 26px; font-weight: 800; color: white; margin: 4px 0 2px;" id="keuanganKitabisaNominal"><span class="kv-loading">...</span></div>
           <div style="font-size: 11px; color: var(--text-secondary);" id="keuanganKitabisaCatatan">Total pencairan bulan ini</div>
         </div>
         <button onclick="window.open('https://kitabisa.com/campaign/gojekbantuyatim', '_blank')" style="width: 100%; margin-top: 14px; padding: 11px; border-radius: 12px; border: 1px dashed rgba(249, 115, 22, 0.4); background: rgba(249, 115, 22, 0.08); color: #FB923C; font-size: 12.5px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
@@ -3021,7 +3088,7 @@ function renderContent() {
           <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">
             <span>Bulan Ini</span>
             <div style="display: flex; align-items: center; gap: 8px; color: var(--bento-primary);">
-              <span id="keuanganHistoriBulanIni">...</span> <span class="material-symbols-outlined" style="font-size: 14px;">chevron_right</span>
+              <span id="keuanganHistoriBulanIni"><span class="kv-loading">...</span></span> <span class="material-symbols-outlined" style="font-size: 14px;">chevron_right</span>
             </div>
           </div>
         </div>
@@ -3047,10 +3114,14 @@ function renderContent() {
         <div style="position: absolute; bottom: -46px; left: -18px; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.06); pointer-events: none;"></div>
 
         <div style="position: relative;">
-          <div style="width: 92px; height: 92px; border-radius: 50%; margin: 0 auto; padding: 3px; background: rgba(255,255,255,0.25);">
+          <div style="width: 92px; height: 92px; border-radius: 50%; margin: 0 auto; padding: 3px; background: rgba(255,255,255,0.25); position: relative;">
             <div style="width: 100%; height: 100%; border-radius: 50%; overflow: hidden; border: 3px solid rgba(255,255,255,0.9); background: rgba(255,255,255,0.1);">
-              <img src="${fotoProfil}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="showProfileQR()">
+              <img id="profilTabAvatarImg" src="${fotoProfil}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="showProfileQR()">
             </div>
+            <label for="inputFotoProfileTab" id="labelUploadFotoTab" style="position: absolute; bottom: -2px; right: -2px; width: 26px; height: 26px; border-radius: 50%; background: var(--grad-primary); display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #15803D; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">
+              ${iconSvg("edit", "#fff", 13)}
+            </label>
+            <input type="file" id="inputFotoProfileTab" accept="image/*" style="display: none;" onchange="uploadFoto(this)">
           </div>
           <h1 style="font-size: 18px; font-weight: 700; margin: 14px 0 2px; color: #fff;">${escapeHtmlHub(currentUser.nama)}</h1>
           <div style="font-size: 12px; color: rgba(255,255,255,0.75); margin-bottom: 18px;">${escapeHtmlHub(currentUser.username || "-")}</div>
@@ -4678,30 +4749,61 @@ function toggleUserStatus() {
 function uploadFoto(input) {
   if (!input.files || !input.files[0]) return;
   const file = input.files[0];
+
+  // Validasi dasar: hanya gambar, maks 5MB (biar gak nyangkut lama pas upload
+  // dari kamera HP yang biasanya ukuran filenya gede).
+  if (!file.type || file.type.indexOf("image/") !== 0) {
+    showModal("Gagal", "File yang dipilih bukan gambar. Pilih foto dari Kamera atau Galeri ya.");
+    input.value = "";
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    showModal("Gagal", "Ukuran foto maksimal 5MB. Coba pilih foto lain atau kompres dulu.");
+    input.value = "";
+    return;
+  }
+
   const reader = new FileReader();
-  
+
+  // Bisa dipicu dari 2 tempat: overlay "Profil Saya" (labelUploadFoto) atau
+  // tab Profil langsung (labelUploadFotoTab). Nonaktifin tombol yg dipicu aja.
   const labelUpload = document.getElementById("labelUploadFoto");
-  labelUpload.style.opacity = "0.4";
-  labelUpload.style.pointerEvents = "none";
-  
+  const labelUploadTab = document.getElementById("labelUploadFotoTab");
+  const activeLabel = input.id === "inputFotoProfileTab" ? labelUploadTab : labelUpload;
+  if (activeLabel) {
+    activeLabel.style.opacity = "0.4";
+    activeLabel.style.pointerEvents = "none";
+  }
+
   reader.onload = function(e) {
     const base64Data = e.target.result.split(',')[1];
     const mimeType = file.type;
-    
+
     callGAS("uploadProfilePhoto", [authToken, base64Data, mimeType])
       .then(function(res) {
-        currentUser.fotoUrl = res.fotoUrl; 
+        currentUser.fotoUrl = res.fotoUrl;
         sessionStorage.setItem("yassa_user", JSON.stringify(currentUser));
+
+        // Update semua tempat foto profil ditampilkan biar langsung sinkron.
         const avatarImg = document.querySelector("#akunContent .profile-avatar");
         if (avatarImg) avatarImg.src = res.fotoUrl;
+        const tabAvatarImg = document.getElementById("profilTabAvatarImg");
+        if (tabAvatarImg) tabAvatarImg.src = res.fotoUrl;
         updateHeaderAvatar();
-        labelUpload.style.opacity = "1";
-        labelUpload.style.pointerEvents = "auto";
+
+        if (activeLabel) {
+          activeLabel.style.opacity = "1";
+          activeLabel.style.pointerEvents = "auto";
+        }
+        input.value = "";
         showModal("Sukses", "Foto profil berhasil diperbarui!");
       })
       .catch(function(err) {
-        labelUpload.style.opacity = "1";
-        labelUpload.style.pointerEvents = "auto";
+        if (activeLabel) {
+          activeLabel.style.opacity = "1";
+          activeLabel.style.pointerEvents = "auto";
+        }
+        input.value = "";
         showModal("Gagal", "Gagal mengunggah foto: " + err.message);
       });
   };
