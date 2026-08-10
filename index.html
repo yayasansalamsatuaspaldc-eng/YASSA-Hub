@@ -1194,6 +1194,24 @@
   </div>
 </div>
 
+<!-- Custom Modal Pengganti Alert/Confirm -- SENGAJA ditaruh di LUAR #app
+     (sejajar dengan #loginScreen & #app), bukan di dalam #app seperti
+     sebelumnya. Dulu div ini nyempil di dalam #app yang display:none
+     sebelum login, jadi showModal() (dipakai tombol "Keamanan" &
+     "Keluhan" di halaman login) SUKSES kepanggil tapi modalnya gak
+     kelihatan sama sekali -- ketimpa ancestor yang hidden. Sekarang
+     modal ini independen, jadi bisa tampil baik di halaman login
+     maupun setelah masuk ke app. -->
+<div class="custom-modal-overlay" id="customModalOverlay">
+  <div class="custom-modal">
+    <div class="custom-modal-title" id="customModalTitle">Informasi</div>
+    <div class="custom-modal-message" id="customModalMessage">Pesan informasi disini.</div>
+    <div class="custom-modal-actions" id="customModalActions">
+      <!-- Tombol akan dirender via JS -->
+    </div>
+  </div>
+</div>
+
 <div id="app" style="display:none;">
 
   <!-- Bagian Header -->
@@ -1476,17 +1494,6 @@
           <button type="submit" class="btn-form-save" id="fpSaveBtn" style="flex:1;">Simpan & Lanjutkan</button>
         </div>
       </form>
-    </div>
-  </div>
-
-  <!-- Custom Modal Pengganti Alert/Confirm -->
-  <div class="custom-modal-overlay" id="customModalOverlay">
-    <div class="custom-modal">
-      <div class="custom-modal-title" id="customModalTitle">Informasi</div>
-      <div class="custom-modal-message" id="customModalMessage">Pesan informasi disini.</div>
-      <div class="custom-modal-actions" id="customModalActions">
-        <!-- Tombol akan dirender via JS -->
-      </div>
     </div>
   </div>
 
