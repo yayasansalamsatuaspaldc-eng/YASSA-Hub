@@ -1408,6 +1408,20 @@
     <div class="akun-content" id="laporanBulananContent"></div>
   </div>
 
+  <!-- Halaman Penuh: Data Anak Yatim (Program Gopay) -- tabel ringkasan
+       SEMUA wilayah, narik LIVE dari YASSA Mobile lewat action
+       "getDataAnakYatim" tiap dibuka. Reuse class "overlay" yang sama
+       (otomatis kena tombol back fisik Android). -->
+  <div class="overlay" id="dataAnakYatimPage">
+    <div class="overlay-header">
+      <button class="overlay-close" id="dataAnakYatimClose">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E2E8F0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <span class="overlay-title">Data Anak Yatim</span>
+    </div>
+    <div class="akun-content" id="dataAnakYatimContent"></div>
+  </div>
+
   <!-- Form Tambah/Edit User (Pengaturan) -->
   <div class="user-form-overlay" id="userFormOverlay" onclick="if(event.target===this) closeUserForm()">
     <div class="user-form-sheet">
@@ -3074,6 +3088,21 @@ function renderContent() {
         <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
       </button>
 
+      <!-- Pintu masuk ke Data Anak Yatim (Program Gopay) -- tabel ringkasan
+           SEMUA wilayah (KK, Yatim, Yatim Piatu, Disabilitas), narik LIVE
+           dari YASSA Mobile tiap dibuka. NASIONAL/gabungan semua wilayah
+           (gak difilter wilayahAkses), sama seperti Laporan Bulanan di atas. -->
+      <button onclick="openDataAnakYatim()" style="width: 100%; background: linear-gradient(135deg, rgba(168,85,247,0.16), rgba(236,72,153,0.10)); border: 1px solid rgba(168,85,247,0.3); border-radius: 18px; padding: 16px 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 14px; cursor: pointer; text-align: left;">
+        <div style="width: 44px; height: 44px; border-radius: 14px; background: rgba(168,85,247,0.18); color: #C084FC; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <span class="material-symbols-outlined" style="font-size: 22px;">diversity_3</span>
+        </div>
+        <div style="flex: 1;">
+          <div style="font-size: 13.5px; font-weight: 700; color: white;">Data Anak Yatim</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">Jumlah KK, Yatim, Yatim Piatu &amp; Disabilitas per wilayah (Program Gopay)</div>
+        </div>
+        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
+      </button>
+
       <!-- Section label buat kartu-kartu di bawah ini yang SEMUA sifatnya
            per-wilayah (ikut wilayahAkses user login) -- beda dari Laporan
            Bulanan di atas yang nasional/gabungan semua wilayah. -->
@@ -3831,6 +3860,103 @@ function renderLaporanBulananDetail(wrap, d) {
   </div>`;
 
   wrap.innerHTML = html;
+}
+
+// ============================================================
+// 👶 DATA ANAK YATIM (Program Gopay) -- halaman penuh yang dibuka dari
+// tombol di tab Keuangan. Tabel ringkasan SEMUA wilayah (KK, Yatim, Yatim
+// Piatu, Disabilitas), narik LIVE dari YASSA Mobile lewat action
+// "getDataAnakYatim" (server yang urus panggil ke Mobile-nya, lihat
+// getDataAnakYatim() di Code.gs Hub). NASIONAL/gabungan semua wilayah,
+// SENGAJA gak difilter wilayahAkses user yang login (lihat komentar
+// SHEET_NAME_DATA_ANAK_YATIM di Code.gs). Khusus Program Gopay -- Anak
+// Asuh TIDAK ikut terhitung (sudah difilter di endpoint Mobile-nya).
+// ============================================================
+let dataAnakYatimCache = null; // cache in-memory per sesi, sama polanya kayak keuanganStatsCache
+
+function openDataAnakYatim() {
+  document.getElementById("dataAnakYatimPage").classList.add("open");
+  loadDataAnakYatim();
+}
+
+function loadDataAnakYatim() {
+  const el = document.getElementById("dataAnakYatimContent");
+
+  // Kalau ada cache dari sesi ini, tampilin dulu instan sambil tetap
+  // fetch ulang di background -- sama polanya kayak loadKeuanganStats().
+  if (dataAnakYatimCache) {
+    renderDataAnakYatim(dataAnakYatimCache, true);
+  } else {
+    el.innerHTML = `
+      <div style="display:flex; align-items:center; justify-content:center; padding: 60px 0; color: var(--text-secondary); font-size: 12.5px; gap: 8px;">
+        <span class="material-symbols-outlined spin" style="font-size: 18px;">progress_activity</span> Mengambil data anak yatim dari YASSA Mobile...
+      </div>`;
+  }
+
+  callGAS("getDataAnakYatim", [authToken])
+    .then(function (data) {
+      dataAnakYatimCache = data;
+      renderDataAnakYatim(data, false);
+    })
+    .catch(function (err) {
+      if (dataAnakYatimCache) return; // udah ada data lama ditampilkan, biarin aja
+      el.innerHTML = `
+        <div style="padding: 40px 20px; text-align: center; color: var(--text-secondary); font-size: 12.5px;">
+          Gagal memuat data: ${escapeHtmlHub(String(err && err.message || err))}
+          <br><button onclick="loadDataAnakYatim()" style="margin-top: 14px; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 99px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; cursor: pointer;">Coba Lagi</button>
+        </div>`;
+    });
+}
+
+function renderDataAnakYatim(data, dariCache) {
+  const el = document.getElementById("dataAnakYatimContent");
+  const rincian = data.rincianWilayah || [];
+
+  let html = `
+    <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;">
+      Data <b>khusus Program Gopay</b> (Anak Asuh tidak termasuk), diambil langsung dari YASSA Mobile untuk SEMUA wilayah.
+      ${dariCache ? '<span style="color: var(--bento-primary);">Sedang memperbarui...</span>' : ''}
+    </div>
+
+    <div style="display:flex; gap:8px; margin-bottom: 18px;">
+      <div style="flex:1; background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); border-radius: 12px; padding: 10px 8px; text-align:center;">
+        <div style="font-size:17px; font-weight:800; color:#93C5FD;">${Number(data.totalKK || 0)}</div>
+        <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">KK</div>
+      </div>
+      <div style="flex:1; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); border-radius: 12px; padding: 10px 8px; text-align:center;">
+        <div style="font-size:17px; font-weight:800; color:#86EFAC;">${Number(data.totalYatim || 0)}</div>
+        <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Yatim</div>
+      </div>
+      <div style="flex:1; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; padding: 10px 8px; text-align:center;">
+        <div style="font-size:17px; font-weight:800; color:#D8B4FE;">${Number(data.totalYatimPiatu || 0)}</div>
+        <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Yatim Piatu</div>
+      </div>
+      <div style="flex:1; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; padding: 10px 8px; text-align:center;">
+        <div style="font-size:17px; font-weight:800; color:#FDE68A;">${Number(data.totalDisabilitas || 0)}</div>
+        <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Disabilitas</div>
+      </div>
+    </div>
+
+    <div style="font-size: 11px; font-weight: 700; color: #fff; margin: 0 2px 10px;">Rincian per Wilayah (${rincian.length})</div>`;
+
+  if (!rincian.length) {
+    html += `<div style="font-size: 11px; color: var(--text-muted); padding: 20px 0; text-align:center;">Belum ada data wilayah.</div>`;
+  } else {
+    rincian.forEach(function (r) {
+      html += `
+        <div style="background: var(--glass-strong); border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; border: 1px solid var(--glass-border);">
+          <div style="font-size: 12.5px; font-weight: 700; color: #fff; margin-bottom: 8px;">${escapeHtmlHub(r.wilayah)}</div>
+          <div style="display:flex; gap: 14px; flex-wrap: wrap;">
+            <div style="font-size: 11px; color: var(--text-secondary);">KK <b style="color:#93C5FD;">${Number(r.jumlahKK || 0)}</b></div>
+            <div style="font-size: 11px; color: var(--text-secondary);">Yatim <b style="color:#86EFAC;">${Number(r.jumlahYatim || 0)}</b></div>
+            <div style="font-size: 11px; color: var(--text-secondary);">Yatim Piatu <b style="color:#D8B4FE;">${Number(r.jumlahYatimPiatu || 0)}</b></div>
+            <div style="font-size: 11px; color: var(--text-secondary);">Disabilitas <b style="color:#FDE68A;">${Number(r.jumlahDisabilitas || 0)}</b></div>
+          </div>
+        </div>`;
+    });
+  }
+
+  el.innerHTML = html;
 }
 
 function toggleMidtransForm() {
@@ -5227,6 +5353,10 @@ document.getElementById("akunPageClose").addEventListener("click", function () {
 
 document.getElementById("laporanBulananClose").addEventListener("click", function () {
   document.getElementById("laporanBulananPage").classList.remove("open");
+});
+
+document.getElementById("dataAnakYatimClose").addEventListener("click", function () {
+  document.getElementById("dataAnakYatimPage").classList.remove("open");
 });
 
 function showModal(title, message, isConfirm = false, onConfirm = null) {
