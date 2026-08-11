@@ -2913,6 +2913,42 @@ function renderContent() {
         </div>
       </div>
 
+      <!-- Data Anak Yatim (Program Gopay) -- kartu klik-buat-detail, narik
+           LIVE dari YASSA Mobile (action getDataAnakYatim), NASIONAL/semua
+           wilayah, khusus Program Gopay (Anak Asuh tidak termasuk).
+           Preview 4 angka di sini, rincian lengkap per wilayah muncul pas
+           diklik (lihat openDataAnakYatim() / renderDataAnakYatim()). -->
+      <div onclick="openDataAnakYatim()" style="background: var(--glass-strong); border-radius: 20px; padding: 18px 18px 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid #A855F7; cursor: pointer;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
+          <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(168,85,247,0.15); color: #C084FC; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <span class="material-symbols-outlined" style="font-size: 21px; font-variation-settings: 'FILL' 1;">diversity_3</span>
+          </div>
+          <div style="flex: 1; min-width: 0;">
+            <h3 style="font-size: 14px; font-weight: 700; margin: 0;">Data Anak Yatim</h3>
+            <div style="font-size: 10.5px; color: var(--text-secondary); margin-top: 1px;">Program Gopay &middot; Semua Wilayah</div>
+          </div>
+          <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted); flex-shrink: 0;">chevron_right</span>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <div style="flex:1; background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+            <div style="font-size:15px; font-weight:800; color:#93C5FD;" id="berandaAnakYatimKK"><span class="kv-loading">...</span></div>
+            <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">KK</div>
+          </div>
+          <div style="flex:1; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+            <div style="font-size:15px; font-weight:800; color:#86EFAC;" id="berandaAnakYatimYatim"><span class="kv-loading">...</span></div>
+            <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Yatim</div>
+          </div>
+          <div style="flex:1; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+            <div style="font-size:15px; font-weight:800; color:#D8B4FE;" id="berandaAnakYatimPiatu"><span class="kv-loading">...</span></div>
+            <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Yatim Piatu</div>
+          </div>
+          <div style="flex:1; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+            <div style="font-size:15px; font-weight:800; color:#FDE68A;" id="berandaAnakYatimDisabilitas"><span class="kv-loading">...</span></div>
+            <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Disabilitas</div>
+          </div>
+        </div>
+      </div>
+
       <!-- Aksi Cepat Menu Bawah -->
       <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Aksi Cepat Donasi</h3>
       <div style="display: flex; justify-content: space-between; margin-bottom: 24px;">
@@ -2974,6 +3010,7 @@ function renderContent() {
     html += `<div class="app-version-footer">YASSA Hub v${APP_VERSION}</div>`;
     el.innerHTML = html;
     loadBerandaStats();
+    loadDataAnakYatimPreviewBeranda();
     return;
   }
 
@@ -3084,21 +3121,6 @@ function renderContent() {
         <div style="flex: 1;">
           <div style="font-size: 13.5px; font-weight: 700; color: white;">Laporan Bulanan</div>
           <div style="font-size: 11px; color: var(--text-secondary);">Pendapatan &amp; pengeluaran santunan per bulan</div>
-        </div>
-        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
-      </button>
-
-      <!-- Pintu masuk ke Data Anak Yatim (Program Gopay) -- tabel ringkasan
-           SEMUA wilayah (KK, Yatim, Yatim Piatu, Disabilitas), narik LIVE
-           dari YASSA Mobile tiap dibuka. NASIONAL/gabungan semua wilayah
-           (gak difilter wilayahAkses), sama seperti Laporan Bulanan di atas. -->
-      <button onclick="openDataAnakYatim()" style="width: 100%; background: linear-gradient(135deg, rgba(168,85,247,0.16), rgba(236,72,153,0.10)); border: 1px solid rgba(168,85,247,0.3); border-radius: 18px; padding: 16px 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 14px; cursor: pointer; text-align: left;">
-        <div style="width: 44px; height: 44px; border-radius: 14px; background: rgba(168,85,247,0.18); color: #C084FC; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-          <span class="material-symbols-outlined" style="font-size: 22px;">diversity_3</span>
-        </div>
-        <div style="flex: 1;">
-          <div style="font-size: 13.5px; font-weight: 700; color: white;">Data Anak Yatim</div>
-          <div style="font-size: 11px; color: var(--text-secondary);">Jumlah KK, Yatim, Yatim Piatu &amp; Disabilitas per wilayah (Program Gopay)</div>
         </div>
         <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
       </button>
@@ -3873,6 +3895,39 @@ function renderLaporanBulananDetail(wrap, d) {
 // Asuh TIDAK ikut terhitung (sudah difilter di endpoint Mobile-nya).
 // ============================================================
 let dataAnakYatimCache = null; // cache in-memory per sesi, sama polanya kayak keuanganStatsCache
+
+// Isi 4 angka preview (KK/Yatim/Yatim Piatu/Disabilitas) di KARTU Beranda --
+// dipanggil tiap kali tab Beranda dibuka. Beda dari loadDataAnakYatim() di
+// bawah (yang isi HALAMAN PENUH pas kartu ini diklik) -- preview ini cuma
+// nampilin 4 angka total, gak nulis rincian per wilayah. Pakai cache yang
+// SAMA (dataAnakYatimCache) biar kartu Beranda & halaman detail selalu
+// sinkron & gak dobel fetch kalau user buka halaman detailnya juga.
+function loadDataAnakYatimPreviewBeranda() {
+  const elKK = document.getElementById("berandaAnakYatimKK");
+  const elYatim = document.getElementById("berandaAnakYatimYatim");
+  const elPiatu = document.getElementById("berandaAnakYatimPiatu");
+  const elDsb = document.getElementById("berandaAnakYatimDisabilitas");
+
+  function terapkan(data) {
+    if (elKK) elKK.textContent = Number(data.totalKK || 0);
+    if (elYatim) elYatim.textContent = Number(data.totalYatim || 0);
+    if (elPiatu) elPiatu.textContent = Number(data.totalYatimPiatu || 0);
+    if (elDsb) elDsb.textContent = Number(data.totalDisabilitas || 0);
+  }
+
+  if (dataAnakYatimCache) terapkan(dataAnakYatimCache);
+
+  callGAS("getDataAnakYatim", [authToken])
+    .then(function (data) {
+      dataAnakYatimCache = data;
+      terapkan(data);
+    })
+    .catch(function () {
+      // Gagal fetch -- kalau ada cache lama, biarin tetap tampil (jangan
+      // direset ke "..."). Kalau belum ada cache sama sekali, biarin "..."
+      // nongol (bukan error keras) biar Beranda gak berasa rusak.
+    });
+}
 
 function openDataAnakYatim() {
   document.getElementById("dataAnakYatimPage").classList.add("open");
