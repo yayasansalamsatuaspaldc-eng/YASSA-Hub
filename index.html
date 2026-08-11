@@ -2460,13 +2460,7 @@ function terapkanKeuanganStats(hasil) {
       //     anak sekarang bisa beda tiap wilayah, lihat santunan.rincianWilayah) ---
       if (elYatim) elYatim.textContent = Number(santunan.jumlahAnakYatim || 0);
       if (elPiatu) elPiatu.textContent = Number(santunan.jumlahYatimPiatu || 0);
-      // Disabilitas di tab Keuangan digabung dgn Disabilitas Ortu (istri/ibu),
-      // SAMA kayak logic totalDisabilitas di getDataAnakYatim() (tab Beranda)
-      // -- backend getPenyaluranSantunanBulanIni() sengaja misahin 2 field
-      // (jumlahDisabilitas = anak, jumlahDisabilitasOrtu = istri/ibu) buat
-      // keperluan hitung Rupiah per kategori, tapi buat DITAMPILKAN ke user
-      // harus digabung biar konsisten sama angka di Beranda.
-      if (elDsb) elDsb.textContent = Number(santunan.jumlahDisabilitas || 0) + Number(santunan.jumlahDisabilitasOrtu || 0);
+      if (elDsb) elDsb.textContent = Number(santunan.jumlahDisabilitas || 0);
 
       const rincianWilayahSantunan = santunan.rincianWilayah || [];
       const wilayahBelumDiisiRate = santunan.wilayahBelumDiisiRate || [];
@@ -2507,7 +2501,7 @@ function terapkanKeuanganStats(hasil) {
             let teks =
               Number(r.jumlahAnakYatim || 0) + " anak \u00d7 " + formatRupiahHub(r.ratePokok || 0) +
               " + tambahan yatim piatu/disabilitas";
-            if (cakupan > 1) teks += " \u00d7 " + cakupan + " bulan (rapel)";
+            if (cakupan > 1) teks += " (rapel " + cakupan + " bulan, nominal sudah manual)";
             elRincianRate.textContent = teks;
           } else if (rincianWilayahSantunan.length > 1) {
             // User akses beberapa wilayah -- rate bisa beda-beda per wilayah,
