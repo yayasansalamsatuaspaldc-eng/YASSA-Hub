@@ -2435,6 +2435,19 @@ function loadAktivitasTerbaru() {
 // server di background lewat loadKeuanganStats() biar datanya tetap update.
 let keuanganStatsCache = null;
 
+// Toggle buka/tutup list "Rincian per Wilayah" (dipakai bareng sama Kartu 1
+// "Rate Santunan" & Kartu 2 "Realisasi Lapangan") -- default ketutup biar
+// kartu gak kepanjangan buat Super Admin/Admin yang akses semua wilayah,
+// tinggal klik header-nya buat expand/collapse.
+function toggleRincianWilayahKeuangan(listId, chevronId) {
+  const list = document.getElementById(listId);
+  const chevron = document.getElementById(chevronId);
+  if (!list) return;
+  const sedangTerbuka = list.style.display === "block";
+  list.style.display = sedangTerbuka ? "none" : "block";
+  if (chevron) chevron.style.transform = sedangTerbuka ? "rotate(0deg)" : "rotate(180deg)";
+}
+
 function tampilkanKeuanganGagal() {
   ["keuanganJumlahYatim", "keuanganYatimPiatu", "keuanganDisabilitas", "keuanganTotalSantunan",
     "keuanganKebutuhanNominal", "keuanganRealisasiNominal", "keuanganPersenTercapai",
@@ -2458,6 +2471,9 @@ function terapkanKeuanganStats(hasil) {
   const elSantunanWrap = document.getElementById("keuanganSantunanWrap");
   const elTotalSantunan = document.getElementById("keuanganTotalSantunan");
   const elRincianRate = document.getElementById("keuanganRincianRate");
+  const elRincianWilayahSantunanWrap = document.getElementById("keuanganRincianWilayahSantunanWrap");
+  const elRincianWilayahSantunanList = document.getElementById("keuanganRincianWilayahSantunanList");
+  const elRincianWilayahSantunanLabel = document.getElementById("keuanganRincianWilayahSantunanLabel");
 
   const elCatatan = document.getElementById("keuanganCatatanBendahara");
   const elBelumDiisi = document.getElementById("keuanganBelumDiisi");
@@ -2473,6 +2489,7 @@ function terapkanKeuanganStats(hasil) {
   const elStatusBanner = document.getElementById("keuanganStatusBanner");
   const elRincianWilayahWrap = document.getElementById("keuanganRincianWilayahWrap");
   const elRincianWilayahList = document.getElementById("keuanganRincianWilayahList");
+  const elRincianWilayahLabel = document.getElementById("keuanganRincianWilayahLabel");
 
   const elKitabisaBelumDiisi = document.getElementById("keuanganKitabisaBelumDiisi");
   const elKitabisaWrap = document.getElementById("keuanganKitabisaWrap");
@@ -2536,11 +2553,47 @@ function terapkanKeuanganStats(hasil) {
             elRincianRate.textContent = teks;
           } else if (rincianWilayahSantunan.length > 1) {
             // User akses beberapa wilayah -- rate bisa beda-beda per wilayah,
-            // jadi cukup ringkas jumlah wilayahnya aja di sini.
+            // jadi cukup ringkas jumlah wilayahnya aja di sini. Rinciannya
+            // sendiri ada di list collapsible di bawah (klik buat buka).
             elRincianRate.textContent =
               rincianWilayahSantunan.length + " wilayah \u00b7 rate & jumlah anak beda per wilayah";
           } else {
             elRincianRate.textContent = "";
+          }
+        }
+
+        // --- Breakdown rate & jumlah anak PER WILAYAH (collapsible, cuma
+        //     tampil kalau user akses lebih dari 1 wilayah) ---
+        if (elRincianWilayahSantunanWrap && elRincianWilayahSantunanList) {
+          if (rincianWilayahSantunan.length > 1) {
+            elRincianWilayahSantunanWrap.style.display = "block";
+            if (elRincianWilayahSantunanLabel) {
+              elRincianWilayahSantunanLabel.textContent =
+                "Rincian per Wilayah (" + rincianWilayahSantunan.length + ")";
+            }
+            elRincianWilayahSantunanList.innerHTML = rincianWilayahSantunan
+              .map(function (r) {
+                const rateBelumDiisi = r.rateSudahDiisi === false;
+                const namaWilayah = escapeHtmlHub(r.wilayah || "-");
+                const jumlahAnak = Number(r.jumlahAnakYatim || 0);
+                const totalBaris = Number(r.totalPenyaluran || 0);
+                const warnaKanan = rateBelumDiisi ? "#FDE68A" : "#E2E8F0";
+                const teksKanan = rateBelumDiisi ? "Rate belum diisi" : formatRupiahHub(totalBaris);
+                const subTeks = jumlahAnak + " anak" + (rateBelumDiisi ? "" : " \u00d7 " + formatRupiahHub(r.ratePokok || 0));
+                return (
+                  '<div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05);">' +
+                    '<div>' +
+                      '<div style="font-size:12.5px; font-weight:600; color:white;">' + namaWilayah + '</div>' +
+                      '<div style="font-size:10px; color:var(--text-secondary);">' + subTeks + '</div>' +
+                    '</div>' +
+                    '<div style="font-size:12px; font-weight:700; color:' + warnaKanan + ';">' + teksKanan + '</div>' +
+                  '</div>'
+                );
+              })
+              .join("");
+          } else {
+            elRincianWilayahSantunanWrap.style.display = "none";
+            elRincianWilayahSantunanList.innerHTML = "";
           }
         }
       }
@@ -2637,6 +2690,9 @@ function terapkanKeuanganStats(hasil) {
       if (elRincianWilayahWrap && elRincianWilayahList) {
         if (rincianWilayahManual.length > 1) {
           elRincianWilayahWrap.style.display = "block";
+          if (elRincianWilayahLabel) {
+            elRincianWilayahLabel.textContent = "Rincian per Wilayah (" + rincianWilayahManual.length + ")";
+          }
           elRincianWilayahList.innerHTML = rincianWilayahManual
             .map(function (r) {
               const kb = Number(r.kebutuhanDonasi || 0);
@@ -3176,6 +3232,19 @@ function renderContent() {
             <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Total Santunan Bulan Ini</div>
             <div style="font-size: 26px; font-weight: 800; color: white; margin-bottom: 4px;" id="keuanganTotalSantunan"><span class="kv-loading">...</span></div>
             <div style="font-size: 10px; color: var(--text-secondary);" id="keuanganRincianRate"><span class="kv-loading">...</span></div>
+
+            <!-- Breakdown rate & jumlah anak PER WILAYAH -- cuma tampil kalau
+                 user akses lebih dari 1 wilayah (mis. Super Admin/"ALL").
+                 Default KETUTUP (collapsed) biar kartu gak kepanjangan buat
+                 Super Admin yang akses semua 16 wilayah -- tinggal klik buat
+                 buka/tutup rinciannya. -->
+            <div id="keuanganRincianWilayahSantunanWrap" style="display: none; margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--glass-border);">
+              <button type="button" onclick="toggleRincianWilayahKeuangan('keuanganRincianWilayahSantunanList', 'keuanganRincianWilayahSantunanChevron')" style="width: 100%; display: flex; align-items: center; justify-content: space-between; background: transparent; border: none; padding: 0; cursor: pointer; color: inherit; font-family: inherit;">
+                <span style="font-size: 11px; color: var(--text-muted);" id="keuanganRincianWilayahSantunanLabel">Rincian per Wilayah</span>
+                <span class="material-symbols-outlined" id="keuanganRincianWilayahSantunanChevron" style="font-size: 18px; color: var(--text-muted); transition: transform 0.2s;">expand_more</span>
+              </button>
+              <div id="keuanganRincianWilayahSantunanList" style="display: none; margin-top: 4px;"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -3224,8 +3293,11 @@ function renderContent() {
              lebih dari 1 wilayah (mis. Super Admin/"ALL"). Kalau cuma 1
              wilayah, kartu di atas udah cukup mewakili, gak perlu diulang. -->
         <div id="keuanganRincianWilayahWrap" style="display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--glass-border);">
-          <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Rincian per Wilayah</div>
-          <div id="keuanganRincianWilayahList"></div>
+          <button type="button" onclick="toggleRincianWilayahKeuangan('keuanganRincianWilayahList', 'keuanganRincianWilayahChevron')" style="width: 100%; display: flex; align-items: center; justify-content: space-between; background: transparent; border: none; padding: 0; cursor: pointer; color: inherit; font-family: inherit;">
+            <span style="font-size: 11px; color: var(--text-muted);" id="keuanganRincianWilayahLabel">Rincian per Wilayah</span>
+            <span class="material-symbols-outlined" id="keuanganRincianWilayahChevron" style="font-size: 18px; color: var(--text-muted); transition: transform 0.2s;">expand_more</span>
+          </button>
+          <div id="keuanganRincianWilayahList" style="display: none; margin-top: 4px;"></div>
         </div>
       </div>
 
