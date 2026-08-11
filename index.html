@@ -2566,6 +2566,11 @@ function terapkanKeuanganStats(hasil) {
       const realisasi = Number(manual.realisasiDonasi || 0);
       const selisih = kebutuhan - realisasi;
       const persen = kebutuhan > 0 ? Math.round((realisasi / kebutuhan) * 100) : 0;
+      // rateSudahDiisi: default true kalau field ini gak ada (mis. backend
+      // lama sebelum patch) supaya gak salah nge-flag "belum diisi" pas
+      // sebenarnya cuma belum dikirim backend-nya.
+      const rateSudahDiisi = manual.rateSudahDiisi !== false;
+      const belumAdaRate = !rateSudahDiisi;
 
       if (elKebutuhan) elKebutuhan.textContent = formatRupiahHub(kebutuhan);
       if (elRealisasi) elRealisasi.textContent = formatRupiahHub(realisasi);
@@ -2578,24 +2583,38 @@ function terapkanKeuanganStats(hasil) {
       }
 
       const kurang = selisih > 0;
+      // warna kuning netral khusus buat kondisi "rate belum diisi" -- BEDA
+      // dari merah (kurang) & hijau (tercapai), biar gak ketuker sama status
+      // yang beneran udah ada datanya.
+      const WARNA_BELUM_ADA_RATE = "#FDE68A";
       if (elSelisihNominal) {
-        elSelisihNominal.textContent = kurang ? formatRupiahHub(selisih) : "Target Tercapai! \ud83c\udf89";
-        elSelisihNominal.style.color = kurang ? "#FCA5A5" : "#BBF7D0";
+        elSelisihNominal.textContent = belumAdaRate
+          ? "Rate santunan belum diisi"
+          : (kurang ? formatRupiahHub(selisih) : "Target Tercapai! \ud83c\udf89");
+        elSelisihNominal.style.color = belumAdaRate ? WARNA_BELUM_ADA_RATE : (kurang ? "#FCA5A5" : "#BBF7D0");
       }
       if (elSelisihLabel) {
-        elSelisihLabel.textContent = kurang
-          ? "Kekurangan dari target bulan ini"
-          : "Realisasi donasi sudah melebihi/menyamai target";
-        elSelisihLabel.style.color = kurang ? "rgba(252, 165, 165, 0.85)" : "rgba(187, 247, 208, 0.85)";
+        elSelisihLabel.textContent = belumAdaRate
+          ? "Bendahara belum mengisi rate santunan bulan ini"
+          : (kurang ? "Kekurangan dari target bulan ini" : "Realisasi donasi sudah melebihi/menyamai target");
+        elSelisihLabel.style.color = belumAdaRate
+          ? "rgba(253, 230, 138, 0.85)"
+          : (kurang ? "rgba(252, 165, 165, 0.85)" : "rgba(187, 247, 208, 0.85)");
       }
       if (elSelisihIconWrap) {
-        elSelisihIconWrap.style.background = kurang ? "rgba(239, 68, 68, 0.15)" : "rgba(34, 197, 94, 0.18)";
-        elSelisihIconWrap.style.color = kurang ? "#EF4444" : "var(--bento-primary)";
+        elSelisihIconWrap.style.background = belumAdaRate
+          ? "rgba(251, 191, 36, 0.15)"
+          : (kurang ? "rgba(239, 68, 68, 0.15)" : "rgba(34, 197, 94, 0.18)");
+        elSelisihIconWrap.style.color = belumAdaRate ? WARNA_BELUM_ADA_RATE : (kurang ? "#EF4444" : "var(--bento-primary)");
       }
-      if (elSelisihIcon) elSelisihIcon.textContent = kurang ? "arrow_downward" : "celebration";
+      if (elSelisihIcon) elSelisihIcon.textContent = belumAdaRate ? "hourglass_empty" : (kurang ? "arrow_downward" : "celebration");
       if (elStatusBanner) {
-        elStatusBanner.style.background = kurang ? "rgba(239, 68, 68, 0.10)" : "rgba(34, 197, 94, 0.10)";
-        elStatusBanner.style.borderColor = kurang ? "rgba(239, 68, 68, 0.3)" : "rgba(34, 197, 94, 0.3)";
+        elStatusBanner.style.background = belumAdaRate
+          ? "rgba(251, 191, 36, 0.10)"
+          : (kurang ? "rgba(239, 68, 68, 0.10)" : "rgba(34, 197, 94, 0.10)");
+        elStatusBanner.style.borderColor = belumAdaRate
+          ? "rgba(251, 191, 36, 0.3)"
+          : (kurang ? "rgba(239, 68, 68, 0.3)" : "rgba(34, 197, 94, 0.3)");
       }
 
       // --- Breakdown kekurangan per wilayah (cuma tampil kalau user akses
@@ -2610,9 +2629,15 @@ function terapkanKeuanganStats(hasil) {
               const rl = Number(r.realisasiDonasi || 0);
               const kk = Number(r.kekuranganDonasi || Math.max(0, kb - rl));
               const pc = Number(r.persenTercapai || (kb > 0 ? Math.round((rl / kb) * 100) : 100));
-              const tercapai = r.sudahTercapai === true || (kb === 0) || rl >= kb;
-              const warnaStatus = tercapai ? "#86EFAC" : "#FCA5A5";
-              const teksStatus = tercapai ? "Tercapai" : ("Kurang " + formatRupiahHub(kk));
+              // rateSudahDiisi: default true kalau field belum dikirim backend
+              // (kompatibilitas mundur), supaya wilayah yang datanya lengkap
+              // gak ketiban status "belum diisi" secara keliru.
+              const rateWilayahSudahDiisi = r.rateSudahDiisi !== false;
+              const tercapai = rateWilayahSudahDiisi && (r.sudahTercapai === true || rl >= kb);
+              const warnaStatus = !rateWilayahSudahDiisi ? "#FDE68A" : (tercapai ? "#86EFAC" : "#FCA5A5");
+              const teksStatus = !rateWilayahSudahDiisi
+                ? "Rate belum diisi"
+                : (tercapai ? "Tercapai" : ("Kurang " + formatRupiahHub(kk)));
               const namaWilayah = escapeHtmlHub(r.wilayah || "-");
               return (
                 '<div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05);">' +
