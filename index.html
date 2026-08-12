@@ -1847,7 +1847,18 @@ function callGAS(action, args) {
     headers: { "Content-Type": "text/plain" },
     body: JSON.stringify({ action: action, args: args || [] }),
   })
-    .then(function (r) { return r.json(); })
+    .then(async function (r) {
+      // Ambil respons mentah terlebih dahulu untuk pelacakan (debugging)
+      const textRaw = await r.text();
+      try {
+        // Coba jadikan JSON. Jika gagal (misal karena balasan berupa HTML <!DOCTYPE>), masuk ke catch
+        return JSON.parse(textRaw);
+      } catch (e) {
+        console.error("DEBUG - Respons bukan JSON dari server GAS:", textRaw);
+        // Pesan error diubah sesuai permintaan agar mengarahkan user keluar aplikasi
+        throw new Error("Sesi terputus atau koneksi bermasalah. Silakan keluar (tutup) aplikasi dan masuk kembali.");
+      }
+    })
     .then(function (res) {
       if (res.success === false) throw new Error(res.message || "Terjadi kesalahan.");
       return res._dibungkus ? res.data : res;
