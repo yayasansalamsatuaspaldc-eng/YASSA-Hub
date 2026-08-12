@@ -290,9 +290,12 @@
     color: #86EFAC !important;
   }
 
-  .content { flex: 1; padding: 24px 20px 100px; overflow-y: auto; }
-
-  .content { flex: 1; padding: 24px 20px 100px; overflow-y: auto; }
+  /* min-height:0 WAJIB di sini -- tanpa ini, .content (anak flex:1 dari #app
+     yang flex-column) gak bisa nyusut ngikutin tinggi #app pas kontennya
+     lebih panjang dari card. Efeknya kepentok/kepotong (bukan discroll
+     penuh) khususnya di mode kartu desktop (#app di-fix 90vh) -- di HP
+     jarang kelihatan karena #app ngikutin tinggi layar device (100dvh). */
+  .content { flex: 1; min-height: 0; padding: 24px 20px 100px; overflow-y: auto; }
   .section-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--text-primary); letter-spacing: -0.2px; }
 
   .animate-fade-up { animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
