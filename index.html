@@ -2188,6 +2188,7 @@ let berandaStatsCache = (function() {
     donasi: null, // { totalSantunanDiperlukan, kekuranganSantunan, santunanDitemukan, totalDonasi, lapangan, kitabisa, midtrans }
     dashboard: null,
     verifikasi: null,
+    aktivitas: null, // array log aktivitas terbaru (Donasi/Absensi/AWG/PM)
   };
 })();
 
@@ -2199,7 +2200,8 @@ function saveBerandaCacheHub() {
 }
 
 function loadBerandaStats() {
-  // Total Anak (dari YASSA Mobile)
+  // Total Anak (dari YASSA Mobile) -- server BEDA sama Hub, jadi TETAP
+  // request terpisah, gak bisa ikut digabung ke getBerandaBundle().
   const elA = document.getElementById("statTotalAnak");
   if (elA && berandaStatsCache.totalAnak !== null) elA.textContent = berandaStatsCache.totalAnak;
   fetch(GAS_MOBILE_URL, {
@@ -2282,53 +2284,6 @@ function loadBerandaStats() {
   };
   if (berandaStatsCache.donasi) terapkanDonasiBeranda(berandaStatsCache.donasi);
 
-  Promise.all([
-    // paksaNasional=true -- Total Santunan Diperlukan di Beranda SELALU
-    // jumlah semua wilayah, walau user yang login akses-nya cuma 1 wilayah.
-    //
-    // PERBAIKAN PERFORMA: dulu 4 panggilan callGAS() terpisah ke server
-    // (getPenyaluranSantunanBulanIni, getKeuanganManual,
-    // getKitabisaRealisasiBulanIni, getDonasiRealisasiBulanIni), sekarang
-    // digabung jadi 1 panggilan getRingkasanKeuangan() -- backend yang
-    // menjalankan ke-4 fungsi itu internal + di-cache 3 menit di server
-    // (lihat Code_gs_HUB.gs). Efeknya: 1x roundtrip network, bukan 4x, dan
-    // kalau tab Beranda dibuka lagi dalam 3 menit, backend langsung balikin
-    // dari cache tanpa query sheet/Mobile ulang. Field kitabisaRealisasi &
-    // donasiRealisasi dari respons ini SEKARANG gak dipakai lagi buat Total
-    // Donasi (lihat komentar di atas), tapi backend-nya dibiarin apa
-    // adanya -- gak perlu ubah Code.gs cuma buat ini.
-    callGAS("getRingkasanKeuangan", [authToken, true]),
-  ])
-    .then(function (hasilGabungan) {
-      const r = hasilGabungan[0];
-      const santunan = r.penyaluranSantunan;
-      const manual = r.keuanganManual;
-
-      const realisasiLapangan = Number(manual.realisasiDonasi || 0);
-      const totalDonasi = realisasiLapangan;
-
-      const totalSantunanDiperlukan = santunan.ditemukan ? Number(santunan.totalPenyaluran || 0) : 0;
-      const kekuranganSantunan = santunan.ditemukan ? Math.max(0, totalSantunanDiperlukan - totalDonasi) : 0;
-
-      berandaStatsCache.donasi = {
-        totalSantunanDiperlukan: totalSantunanDiperlukan,
-        kekuranganSantunan: kekuranganSantunan,
-        santunanDitemukan: santunan.ditemukan,
-        totalDonasi: totalDonasi,
-      };
-      saveBerandaCacheHub(); // <-- SIMPAN KE OFFLINE CACHE
-      terapkanDonasiBeranda(berandaStatsCache.donasi);
-    })
-    .catch(function () {
-      // Kalau udah ada cache, biarin angka lama tetap tampil daripada
-      // direset ke "-" cuma gara-gara 1x gangguan jaringan.
-      if (!berandaStatsCache.donasi) {
-        if (elTotalSantunanDiperlukan) elTotalSantunanDiperlukan.textContent = "-";
-        if (elTotalDonasi) elTotalDonasi.textContent = "-";
-        if (elKekurangan) elKekurangan.textContent = "-";
-      }
-    });
-
   // Total Wilayah & Total Pengurus (dari sheet Akun Hub sendiri)
   const terapkanDashboardBeranda = function (data) {
     const elW = document.getElementById("statTotalWilayah");
@@ -2357,25 +2312,6 @@ function loadBerandaStats() {
   };
   if (berandaStatsCache.dashboard) terapkanDashboardBeranda(berandaStatsCache.dashboard);
 
-  callGAS("getDashboardStats", [authToken])
-    .then(function (data) {
-      berandaStatsCache.dashboard = data;
-      saveBerandaCacheHub(); // <-- SIMPAN KE OFFLINE CACHE
-      terapkanDashboardBeranda(data);
-    })
-    .catch(function () {
-      if (!berandaStatsCache.dashboard) {
-        const elW = document.getElementById("statTotalWilayah");
-        const elP = document.getElementById("statTotalPengurus");
-        if (elW) elW.textContent = "-";
-        if (elP) elP.textContent = "-";
-        const elAkt = document.getElementById("aktPengurusLamaText");
-        if (elAkt) elAkt.textContent = "Gagal memuat data pengurus";
-        const elLogin = document.getElementById("aktLoginHariIniText");
-        if (elLogin) elLogin.textContent = "Gagal memuat data login";
-      }
-    });
-
   // Aktivitas Hari Ini -> Donasi Midtrans perlu verifikasi (PENDING /
   // PERLU_DICEK_FRAUD)
   const terapkanVerifikasiBeranda = function (data) {
@@ -2389,22 +2325,116 @@ function loadBerandaStats() {
   };
   if (berandaStatsCache.verifikasi) terapkanVerifikasiBeranda(berandaStatsCache.verifikasi);
 
-  callGAS("getDonasiPerluVerifikasi", [authToken])
-    .then(function (data) {
-      berandaStatsCache.verifikasi = data;
-      saveBerandaCacheHub(); // <-- SIMPAN KE OFFLINE CACHE
-      terapkanVerifikasiBeranda(data);
+  // Aktivitas Terbaru (kartu Beranda paling bawah) -- tampilin dulu dari
+  // cache kalau ada, biar langsung keliatan tanpa nunggu server.
+  if (berandaStatsCache.aktivitas) renderAktivitasTerbaru(berandaStatsCache.aktivitas);
+
+  // ============================================================
+  // SATU permintaan gabungan ke server Hub (getBerandaBundle)
+  // ------------------------------------------------------------
+  // PERBAIKAN PERFORMA (Anti-Bottleneck): dulu 4 panggilan callGAS()
+  // terpisah ke server Hub (getRingkasanKeuangan, getDashboardStats,
+  // getDonasiPerluVerifikasi, getAktivitasTerbaru) ditembak BARENGAN,
+  // bikin GAS "tersedak" krn kebanyakan koneksi paralel dari 1 user.
+  // Sekarang digabung jadi 1x panggilan getBerandaBundle() -- backend
+  // yang menjalankan ke-4 fungsi itu internal secara berurutan (lihat
+  // Code_gs_HUB.gs), lalu balikin hasilnya sekaligus dalam 1 respons.
+  // Efeknya: cuma 1x roundtrip network ke server Hub (bukan 4x).
+  //
+  // Local Storage juga ikut digabung jadi 1x tulis di akhir (bukan 4x
+  // tulis terpisah kayak sebelumnya) -- sama kayak prinsip "batch write"
+  // yang udah dipakai di tab Keuangan.
+  // ============================================================
+  callGAS("getBerandaBundle", [authToken, true])
+    .then(function (bundle) {
+      // 1) Ringkasan Keuangan -> kartu Donasi & Kekurangan Donasi
+      if (bundle.ringkasanKeuangan) {
+        const r = bundle.ringkasanKeuangan;
+        const santunan = r.penyaluranSantunan;
+        const manual = r.keuanganManual;
+
+        const realisasiLapangan = Number(manual.realisasiDonasi || 0);
+        const totalDonasi = realisasiLapangan;
+
+        const totalSantunanDiperlukan = santunan.ditemukan ? Number(santunan.totalPenyaluran || 0) : 0;
+        const kekuranganSantunan = santunan.ditemukan ? Math.max(0, totalSantunanDiperlukan - totalDonasi) : 0;
+
+        berandaStatsCache.donasi = {
+          totalSantunanDiperlukan: totalSantunanDiperlukan,
+          kekuranganSantunan: kekuranganSantunan,
+          santunanDitemukan: santunan.ditemukan,
+          totalDonasi: totalDonasi,
+        };
+        terapkanDonasiBeranda(berandaStatsCache.donasi);
+      } else if (!berandaStatsCache.donasi) {
+        // Kalau udah ada cache, biarin angka lama tetap tampil daripada
+        // direset ke "-" cuma gara-gara 1x gangguan jaringan.
+        if (elTotalSantunanDiperlukan) elTotalSantunanDiperlukan.textContent = "-";
+        if (elTotalDonasi) elTotalDonasi.textContent = "-";
+        if (elKekurangan) elKekurangan.textContent = "-";
+      }
+
+      // 2) Dashboard Stats -> kartu Total Wilayah & Total Pengurus
+      if (bundle.dashboardStats) {
+        berandaStatsCache.dashboard = bundle.dashboardStats;
+        terapkanDashboardBeranda(bundle.dashboardStats);
+      } else if (!berandaStatsCache.dashboard) {
+        const elW = document.getElementById("statTotalWilayah");
+        const elP = document.getElementById("statTotalPengurus");
+        if (elW) elW.textContent = "-";
+        if (elP) elP.textContent = "-";
+        const elAkt = document.getElementById("aktPengurusLamaText");
+        if (elAkt) elAkt.textContent = "Gagal memuat data pengurus";
+        const elLogin = document.getElementById("aktLoginHariIniText");
+        if (elLogin) elLogin.textContent = "Gagal memuat data login";
+      }
+
+      // 3) Donasi Perlu Verifikasi
+      if (bundle.donasiVerifikasi) {
+        berandaStatsCache.verifikasi = bundle.donasiVerifikasi;
+        terapkanVerifikasiBeranda(bundle.donasiVerifikasi);
+      } else if (!berandaStatsCache.verifikasi) {
+        const elVer = document.getElementById("aktDonasiVerifikasiText");
+        if (elVer) elVer.textContent = "Gagal memuat data donasi";
+      }
+
+      // 4) Aktivitas Terbaru
+      if (bundle.aktivitasTerbaru) {
+        berandaStatsCache.aktivitas = bundle.aktivitasTerbaru;
+        renderAktivitasTerbaru(bundle.aktivitasTerbaru);
+      } else if (!berandaStatsCache.aktivitas) {
+        renderAktivitasTerbaru(null, true);
+      }
+
+      // Simpan SEMUA hasil sekaligus ke Local Storage (1x tulis, bukan 4x)
+      saveBerandaCacheHub();
     })
     .catch(function () {
+      // Seluruh bundle gagal (mis. sesi putus/jaringan mati total). Kalau
+      // belum ada cache sama sekali buat bagian itu, baru tampilin "-".
+      if (!berandaStatsCache.donasi) {
+        if (elTotalSantunanDiperlukan) elTotalSantunanDiperlukan.textContent = "-";
+        if (elTotalDonasi) elTotalDonasi.textContent = "-";
+        if (elKekurangan) elKekurangan.textContent = "-";
+      }
+      if (!berandaStatsCache.dashboard) {
+        const elW = document.getElementById("statTotalWilayah");
+        const elP = document.getElementById("statTotalPengurus");
+        if (elW) elW.textContent = "-";
+        if (elP) elP.textContent = "-";
+        const elAkt = document.getElementById("aktPengurusLamaText");
+        if (elAkt) elAkt.textContent = "Gagal memuat data pengurus";
+        const elLogin = document.getElementById("aktLoginHariIniText");
+        if (elLogin) elLogin.textContent = "Gagal memuat data login";
+      }
       if (!berandaStatsCache.verifikasi) {
         const elVer = document.getElementById("aktDonasiVerifikasiText");
         if (elVer) elVer.textContent = "Gagal memuat data donasi";
       }
+      if (!berandaStatsCache.aktivitas) {
+        renderAktivitasTerbaru(null, true);
+      }
     });
-
-  // Aktivitas Terbaru (kartu Beranda paling bawah) -- gabungan dari 4 app
-  // (Donasi, Absensi, AWG, PM), lihat getAktivitasTerbaru() di code.gs.
-  loadAktivitasTerbaru();
 }
 
 // Metadata tampilan per app buat kartu Aktivitas Terbaru: ikon, warna, dan
@@ -2433,36 +2463,39 @@ function formatWaktuAktivitas(isoString) {
     waktu.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }).replace(":", ".");
 }
 
-function loadAktivitasTerbaru() {
+// Render kartu Aktivitas Terbaru dari data yang UDAH ADA di tangan (cache
+// atau hasil getBerandaBundle) -- fungsi ini GAK manggil server sendiri
+// lagi (dulu loadAktivitasTerbaru() manggil callGAS terpisah, sekarang
+// datanya numpang di getBerandaBundle() biar cuma 1x request ke server).
+function renderAktivitasTerbaru(data, gagal) {
   const wrap = document.getElementById("aktivitasTerbaruList");
   if (!wrap) return;
 
-  callGAS("getAktivitasTerbaru", [authToken])
-    .then(function (data) {
-      const list = Array.isArray(data) ? data : [];
-      if (list.length === 0) {
-        wrap.innerHTML = '<div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 12px 0;">Belum ada aktivitas.</div>';
-        return;
-      }
-      wrap.innerHTML = list.map(function (item, idx) {
-        const meta = AKTIVITAS_APP_META[item.app] || { icon: "notifications", color: "var(--text-secondary)" };
-        const sub = item.detail
-          ? item.detail + (item.oleh ? " · oleh " + item.oleh : "")
-          : (item.oleh ? "oleh " + item.oleh : "");
-        const divider = idx < list.length - 1 ? '<div style="height: 1px; background: var(--glass-border);"></div>' : "";
-        return `
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--glass); color: ${meta.color}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><span class="material-symbols-outlined" style="font-size: 16px;">${meta.icon}</span></div>
-            <div style="flex: 1; min-width: 0;"><div style="font-size: 12.5px; font-weight: 600;">${item.aksi}</div>${sub ? `<div style="font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${sub}</div>` : ""}</div>
-            <span style="font-size: 11px; color: var(--text-muted); flex-shrink: 0;">${formatWaktuAktivitas(item.timestamp)}</span>
-          </div>
-          ${divider}
-        `;
-      }).join("");
-    })
-    .catch(function () {
-      wrap.innerHTML = '<div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 12px 0;">Gagal memuat aktivitas terbaru.</div>';
-    });
+  if (gagal) {
+    wrap.innerHTML = '<div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 12px 0;">Gagal memuat aktivitas terbaru.</div>';
+    return;
+  }
+
+  const list = Array.isArray(data) ? data : [];
+  if (list.length === 0) {
+    wrap.innerHTML = '<div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 12px 0;">Belum ada aktivitas.</div>';
+    return;
+  }
+  wrap.innerHTML = list.map(function (item, idx) {
+    const meta = AKTIVITAS_APP_META[item.app] || { icon: "notifications", color: "var(--text-secondary)" };
+    const sub = item.detail
+      ? item.detail + (item.oleh ? " · oleh " + item.oleh : "")
+      : (item.oleh ? "oleh " + item.oleh : "");
+    const divider = idx < list.length - 1 ? '<div style="height: 1px; background: var(--glass-border);"></div>' : "";
+    return `
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--glass); color: ${meta.color}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><span class="material-symbols-outlined" style="font-size: 16px;">${meta.icon}</span></div>
+        <div style="flex: 1; min-width: 0;"><div style="font-size: 12.5px; font-weight: 600;">${item.aksi}</div>${sub ? `<div style="font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${sub}</div>` : ""}</div>
+        <span style="font-size: 11px; color: var(--text-muted); flex-shrink: 0;">${formatWaktuAktivitas(item.timestamp)}</span>
+      </div>
+      ${divider}
+    `;
+  }).join("");
 }
 
 // ============================================================
