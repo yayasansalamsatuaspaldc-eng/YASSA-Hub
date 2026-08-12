@@ -755,6 +755,39 @@
   }
   .google-btn-wrap.is-loading { opacity: 0.5; pointer-events: none; }
 
+  /* Splash "Bismillah" yang muncul SETELAH login berhasil (manual/Google),
+     nutupin Beranda selama proses ambil data awal jalan di belakang layar.
+     BUKAN dipakai pas restore sesi/refresh -- cuma pas login baru. */
+  .post-login-splash {
+    position: fixed; inset: 0; z-index: 9999;
+    display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    background: var(--bg-navy-deep);
+    transition: opacity 0.4s ease;
+    padding: 24px; text-align: center;
+  }
+  .post-login-splash.show { display: flex; }
+  .post-login-splash.hide { opacity: 0; pointer-events: none; }
+  .post-login-splash-logo { width: 80px; height: 80px; }
+  .post-login-splash-arabic {
+    font-size: 26px; line-height: 1.9; color: var(--text-primary);
+    font-family: "Traditional Arabic", "Scheherazade New", "Amiri", serif;
+    direction: rtl;
+  }
+  .post-login-splash-sub {
+    font-size: 14px; font-weight: 600; color: var(--text-secondary);
+    letter-spacing: 0.2px;
+  }
+  .post-login-splash-status {
+    font-size: 12.5px; color: var(--text-muted); font-weight: 500;
+    min-height: 18px;
+  }
+  .post-login-splash-spinner {
+    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+    border: 3px solid rgba(34,211,238,0.2); border-top-color: var(--neon-cyan);
+    animation: appSplashSpin 0.8s linear infinite;
+    margin-top: 4px;
+  }
+
   .login-card {
     width: 100%; max-width: 400px;
     background: var(--bg-navy);
@@ -1087,6 +1120,28 @@
   </svg>
   <div class="app-splash-spinner"></div>
   <div class="app-splash-status" id="appSplashStatus">Menyiapkan aplikasi...</div>
+</div>
+
+<!-- ============ SPLASH "BISMILLAH" SETELAH LOGIN BARU ============
+     Cuma muncul pas login manual/Google berhasil (BUKAN pas restore
+     sesi/refresh). Nutupin layar 30 detik selagi data awal Beranda
+     diam-diam diambil di belakang layar lewat onLoginSuccess() -> showApp(). -->
+<div id="postLoginSplash" class="post-login-splash">
+  <svg viewBox="0 0 100 100" class="post-login-splash-logo" aria-label="YASSA Logo">
+    <circle cx="28" cy="38" r="6" fill="#22C55E"/>
+    <path d="M13 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="72" cy="38" r="6" fill="#22C55E"/>
+    <path d="M57 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="50" cy="28" r="7.5" fill="#22C55E"/>
+    <path d="M30 53 a 20 20 0 0 1 40 0" fill="none" stroke="#22C55E" stroke-width="6.5" stroke-linecap="round"/>
+    <text x="50" y="76" font-family="'Inter', sans-serif" font-weight="900" font-size="24" text-anchor="middle" letter-spacing="-0.5">
+      <tspan fill="#ffffff">YAS</tspan><tspan fill="#22C55E">SA</tspan>
+    </text>
+  </svg>
+  <div class="post-login-splash-arabic">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+  <div class="post-login-splash-sub" id="postLoginSplashSub">Kita akan membuka YASSA Hub...</div>
+  <div class="post-login-splash-spinner"></div>
+  <div class="post-login-splash-status" id="postLoginSplashStatus">Menyiapkan aplikasi...</div>
 </div>
 
 <!-- ============ LAYAR LOGIN ============ -->
@@ -2001,12 +2056,21 @@ function onLoginSuccess(res) {
   sessionStorage.setItem("yassa_token", authToken);
   sessionStorage.setItem("yassa_user", JSON.stringify(currentUser));
   document.getElementById("loginForm").reset();
+
+  // Splash "Bismillah" nutupin layar 30 detik selagi showApp()/render()
+  // jalan & data awal Beranda diam-diam diambil di belakang layar.
+  // Modal "wajib ganti password" (kalau ada) ditahan dulu, baru muncul
+  // SETELAH splash hilang biar gak numpuk 2 overlay sekaligus.
+  showPostLoginSplash();
   showApp();
-  if (res.mustChangePassword) {
-    openForceChangePasswordModal();
-  } else {
-    pendingOldPassword = null;
-  }
+  setTimeout(function () {
+    hidePostLoginSplash();
+    if (res.mustChangePassword) {
+      openForceChangePasswordModal();
+    } else {
+      pendingOldPassword = null;
+    }
+  }, POST_LOGIN_SPLASH_DURATION_MS);
 }
 
 function openForceChangePasswordModal() {
@@ -5444,6 +5508,59 @@ function hideSplash() {
   if (!el) return;
   el.classList.add("hide");
   setTimeout(function () { el.remove(); }, 400);
+}
+
+// ============================================================
+// Splash "Bismillah" -- cuma dipakai SETELAH login baru berhasil
+// (manual & Google), BUKAN pas restore sesi/refresh. Nutupin layar
+// 30 detik sementara showApp()/render() jalan & data awal Beranda
+// diam-diam di-fetch di belakang layar (loadBerandaStats, dst).
+// ============================================================
+const POST_LOGIN_SPLASH_DURATION_MS = 20000;
+let _postLoginSplashStatusTimer = null;
+
+function showPostLoginSplash() {
+  const el = document.getElementById("postLoginSplash");
+  if (!el) return;
+  el.classList.remove("hide");
+  el.classList.add("show");
+
+  // Teks status gantian jalan biar gak jenuh -- diselang-seling antara
+  // status teknis (biar user tetap ngerti app lagi kerja, bukan macet)
+  // dan pengingat semangat/Islami soal anak yatim (sesuai misi YASSA).
+  const pesanUrutan = [
+    "Menyiapkan aplikasi...",
+    "Rasulullah ﷺ bersabda: pengasuh anak yatim kelak bersanding dengan beliau di surga.",
+    "Mengambil data terbaru...",
+    "Menyantuni anak yatim adalah pintu rezeki dan keberkahan.",
+    "Menyusun data Beranda...",
+    "QS Al-Ma'un mengingatkan: jangan menghardik anak yatim.",
+    "Setiap amanah yang kita jaga hari ini adalah ladang pahala.",
+    "Hampir selesai...",
+    "Semangat! Yuk lanjutkan amanah untuk anak-anak yatim hari ini.",
+  ];
+  const statusEl = document.getElementById("postLoginSplashStatus");
+  let i = 0;
+  if (statusEl) statusEl.textContent = pesanUrutan[0];
+  if (_postLoginSplashStatusTimer) clearInterval(_postLoginSplashStatusTimer);
+  _postLoginSplashStatusTimer = setInterval(function () {
+    i = (i + 1) % pesanUrutan.length;
+    if (statusEl) statusEl.textContent = pesanUrutan[i];
+  }, 2200);
+}
+
+function hidePostLoginSplash() {
+  const el = document.getElementById("postLoginSplash");
+  if (_postLoginSplashStatusTimer) {
+    clearInterval(_postLoginSplashStatusTimer);
+    _postLoginSplashStatusTimer = null;
+  }
+  if (!el) return;
+  el.classList.add("hide");
+  setTimeout(function () {
+    el.classList.remove("show");
+    el.classList.remove("hide");
+  }, 400);
 }
 
 // Beneran bersihin Cache Storage lama & minta service worker cek versi
