@@ -2177,12 +2177,26 @@ function render() {
 // tab (mis. Beranda -> Keuangan -> Beranda lagi) TANPA keluar app, angka
 // lama langsung tampil instan (gak keliatan reset ke "…"/0), sambil tetap
 // diam-diam refresh ke server di background.
-let berandaStatsCache = {
-  totalAnak: null,
-  donasi: null, // { totalSantunanDiperlukan, kekuranganSantunan, santunanDitemukan, totalDonasi, lapangan, kitabisa, midtrans }
-  dashboard: null,
-  verifikasi: null,
-};
+// Memanfaatkan Local Storage agar data Beranda langsung tampil saat aplikasi dibuka (Offline Cache)
+let berandaStatsCache = (function() {
+  try {
+    const cached = localStorage.getItem('yassa_hub_beranda_cache');
+    if (cached) return JSON.parse(cached);
+  } catch(e) {}
+  return {
+    totalAnak: null,
+    donasi: null, // { totalSantunanDiperlukan, kekuranganSantunan, santunanDitemukan, totalDonasi, lapangan, kitabisa, midtrans }
+    dashboard: null,
+    verifikasi: null,
+  };
+})();
+
+// Fungsi bantuan (Helper) untuk menyimpan ke memori HP
+function saveBerandaCacheHub() {
+  try {
+    localStorage.setItem('yassa_hub_beranda_cache', JSON.stringify(berandaStatsCache));
+  } catch(e) {}
+}
 
 function loadBerandaStats() {
   // Total Anak (dari YASSA Mobile)
@@ -2198,6 +2212,7 @@ function loadBerandaStats() {
       if (!res || !res.success || !res.data) throw new Error("gagal");
       const totalAnak = res.data.totalAnak;
       berandaStatsCache.totalAnak = totalAnak;
+      saveBerandaCacheHub(); // <-- SIMPAN KE OFFLINE CACHE
       const elA2 = document.getElementById("statTotalAnak");
       if (elA2) elA2.textContent = totalAnak;
     })
@@ -2301,6 +2316,7 @@ function loadBerandaStats() {
         santunanDitemukan: santunan.ditemukan,
         totalDonasi: totalDonasi,
       };
+      saveBerandaCacheHub(); // <-- SIMPAN KE OFFLINE CACHE
       terapkanDonasiBeranda(berandaStatsCache.donasi);
     })
     .catch(function () {
@@ -2344,6 +2360,7 @@ function loadBerandaStats() {
   callGAS("getDashboardStats", [authToken])
     .then(function (data) {
       berandaStatsCache.dashboard = data;
+      saveBerandaCacheHub(); // <-- SIMPAN KE OFFLINE CACHE
       terapkanDashboardBeranda(data);
     })
     .catch(function () {
@@ -2375,6 +2392,7 @@ function loadBerandaStats() {
   callGAS("getDonasiPerluVerifikasi", [authToken])
     .then(function (data) {
       berandaStatsCache.verifikasi = data;
+      saveBerandaCacheHub(); // <-- SIMPAN KE OFFLINE CACHE
       terapkanVerifikasiBeranda(data);
     })
     .catch(function () {
