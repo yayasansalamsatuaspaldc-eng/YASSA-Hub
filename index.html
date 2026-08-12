@@ -1127,14 +1127,14 @@
      sesi/refresh). Nutupin layar 30 detik selagi data awal Beranda
      diam-diam diambil di belakang layar lewat onLoginSuccess() -> showApp(). -->
 <div id="postLoginSplash" class="post-login-splash">
-  <svg viewBox="0 0 100 100" class="post-login-splash-logo" aria-label="YASSA Logo">
-    <circle cx="28" cy="38" r="6" fill="#22C55E"/>
-    <path d="M13 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
-    <circle cx="72" cy="38" r="6" fill="#22C55E"/>
-    <path d="M57 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
-    <circle cx="50" cy="28" r="7.5" fill="#22C55E"/>
-    <path d="M30 53 a 20 20 0 0 1 40 0" fill="none" stroke="#22C55E" stroke-width="6.5" stroke-linecap="round"/>
-    <text x="50" y="76" font-family="'Inter', sans-serif" font-weight="900" font-size="24" text-anchor="middle" letter-spacing="-0.5">
+  <svg viewBox="0 0 100 96" class="post-login-splash-logo" aria-label="YASSA Logo">
+    <circle cx="22" cy="36" r="6.5" fill="#22C55E"/>
+    <path d="M8 58 a 14 14 0 0 1 28 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="78" cy="36" r="6.5" fill="#22C55E"/>
+    <path d="M64 58 a 14 14 0 0 1 28 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="50" cy="23" r="9" fill="#22C55E"/>
+    <path d="M27 55 a 23 23 0 0 1 46 0" fill="none" stroke="#22C55E" stroke-width="7" stroke-linecap="round"/>
+    <text x="50" y="88" font-family="'Inter', sans-serif" font-weight="900" font-size="22" text-anchor="middle" letter-spacing="-0.3">
       <tspan fill="#ffffff">YAS</tspan><tspan fill="#22C55E">SA</tspan>
     </text>
   </svg>
@@ -5516,7 +5516,7 @@ function hideSplash() {
 // 30 detik sementara showApp()/render() jalan & data awal Beranda
 // diam-diam di-fetch di belakang layar (loadBerandaStats, dst).
 // ============================================================
-const POST_LOGIN_SPLASH_DURATION_MS = 20000;
+const POST_LOGIN_SPLASH_DURATION_MS = 30000;
 let _postLoginSplashStatusTimer = null;
 
 function showPostLoginSplash() {
@@ -5546,7 +5546,7 @@ function showPostLoginSplash() {
   _postLoginSplashStatusTimer = setInterval(function () {
     i = (i + 1) % pesanUrutan.length;
     if (statusEl) statusEl.textContent = pesanUrutan[i];
-  }, 2200);
+  }, 3500);
 }
 
 function hidePostLoginSplash() {
