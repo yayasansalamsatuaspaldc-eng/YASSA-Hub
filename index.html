@@ -5652,14 +5652,52 @@ function openApp(index) {
     !!item.tab; // cuma app yang navigasinya lewat ?tab=, bukan url per-halaman kayak Absensi
 
   if (appMasihHidupDiBackground) {
-    // Ganti tab tanpa reload -- kirim ke origin app tsb aja (bukan "*"),
-    // biar gak nyasar/kebocor ke iframe lain kalau originnya beda.
+    // 🩹 FIX (13 Agu 2026): dulu Hub LANGSUNG percaya app masih hidup di
+    // iframe cuma dari variabel overlayLoadedMenuKey/overlayLoadedBaseUrl,
+    // tanpa pernah dicek beneran. Kalau WebView-nya sendiri sudah crash
+    // (kehabisan memori -- muncul layar abu-abu + ikon wajah sedih khas
+    // "renderer process crashed"), iframe-nya jadi "mayat": src masih
+    // ke-set tapi JS di dalamnya sudah mati total. Hub tetap kirim
+    // postMessage seolah app-nya hidup, padahal gak ada yang dengerin --
+    // hasilnya user macet di layar crash itu SELAMANYA walau bolak-balik
+    // ganti menu, karena gak pernah reload ulang.
+    //
+    // Sekarang: kirim postMessage kayak biasa TAPI sertakan "nonce"
+    // sekali-pakai, lalu tunggu balasan ACK dari app (lihat handler
+    // 'YASSA_HUB_NAVIGATE' di Mobile/app terkait, sekarang balas
+    // 'YASSA_HUB_NAV_ACK' begitu pesan diterima & tab diganti). Kalau
+    // dalam waktu singkat gak ada balasan sama sekali, itu tandanya
+    // iframe-nya sudah crash/mati -- reset status "masih hidup" lalu
+    // panggil ulang openApp() supaya jatuh ke jalur RELOAD PENUH (buka
+    // dari nol, minta tiket SSO baru) seperti pertama kali buka app.
     const targetOrigin = new URL(menu.baseUrl).origin;
+    const navNonce = "nav_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+    let navAckDiterima = false;
+
+    function handleNavAck(e) {
+      if (e.origin !== targetOrigin) return;
+      if (!e.data || e.data.type !== "YASSA_HUB_NAV_ACK" || e.data.nonce !== navNonce) return;
+      navAckDiterima = true;
+      window.removeEventListener("message", handleNavAck);
+    }
+    window.addEventListener("message", handleNavAck);
+
     document.getElementById("overlayFrame").contentWindow.postMessage(
-      { type: "YASSA_HUB_NAVIGATE", tab: item.tab },
+      { type: "YASSA_HUB_NAVIGATE", tab: item.tab, nonce: navNonce },
       targetOrigin
     );
     document.getElementById("overlay").classList.add("open");
+
+    setTimeout(function () {
+      window.removeEventListener("message", handleNavAck);
+      if (!navAckDiterima) {
+        // Iframe dianggap crash/gak merespons -- paksa buka ulang dari nol.
+        overlayLoadedMenuKey = null;
+        overlayLoadedBaseUrl = null;
+        openApp(index);
+      }
+    }, 1200);
+
     return;
   }
 
