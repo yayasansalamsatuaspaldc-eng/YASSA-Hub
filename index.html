@@ -502,6 +502,25 @@
   .user-menu-icon.tone-muted { background: rgba(255,255,255,0.07); color: var(--text-secondary); }
 
   .overlay { position: absolute; inset: 0; background: var(--bg-navy); display: none; flex-direction: column; z-index: 30; }
+  /* ============================================================
+     🩹 FIX (poin 3: indikator status jaringan): banner tipis di
+     ATAS layar, muncul otomatis pas koneksi terputus (event
+     "offline"), sembunyi lagi begitu koneksi balik ("online").
+     z-index paling tinggi di seluruh app (di atas modal/overlay)
+     biar selalu keliatan, di app manapun user lagi berada.
+     ============================================================ */
+  .network-status-banner {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100000;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 9px 16px; font-size: 12.5px; font-weight: 700;
+    text-align: center; transform: translateY(-100%);
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+  }
+  .network-status-banner.show { transform: translateY(0); }
+  .network-status-banner.offline { background: #DC2626; color: #fff; }
+  .network-status-banner.online { background: #16A34A; color: #fff; }
+  .network-status-banner .material-symbols-outlined { font-size: 16px; }
   /* 🩹 FIX: overlay "menghubungkan..." yang nutupin iframe selama Hub
      nyoba-ulang minta tiket SSO ke server (lihat callGASWithRetry_). */
   .overlay-sso-loading {
@@ -1123,6 +1142,12 @@
 </style>
 </head>
 <body>
+
+<!-- ============ BANNER STATUS JARINGAN ============ -->
+<div id="networkStatusBanner" class="network-status-banner offline">
+  <span class="material-symbols-outlined">wifi_off</span>
+  <span id="networkStatusText">Koneksi internet terputus</span>
+</div>
 
 <!-- ============ SPLASH / LOADING AWAL ============ -->
 <div id="appSplash" class="app-splash">
@@ -1960,6 +1985,63 @@ function callGASWithRetry_(action, args, opts) {
   });
 }
 
+// ============================================================
+// 🩹 FIX (poin 3: indikator status jaringan)
+// Pakai navigator.onLine + event "online"/"offline" bawaan browser
+// buat nampilin banner "Koneksi terputus" tanpa nunggu request
+// gagal dulu -- user langsung tahu kenapa loading lama/nyangkut,
+// gak nebak-nebak sendiri.
+//
+// CATATAN JUJUR soal navigator.onLine: ini cuma deteksi status
+// adaptor jaringan device (ada sinyal WiFi/data atau enggak), BUKAN
+// jaminan internetnya beneran nyambung ke server (mis. WiFi nyala
+// tapi gak ada akses internet tetap kebaca "online" oleh browser).
+// Makanya banner ini pelengkap, bukan pengganti retry+timeout yang
+// udah dipasang di callGASWithRetry_ -- kalau navigator.onLine bilang
+// "online" tapi request tetap gagal berkali-kali, itu yang bakal
+// ketauan lewat error/pesan dari callGASWithRetry_ itu sendiri.
+// ============================================================
+let networkOnlineToastTimer = null;
+
+function updateNetworkStatusBanner(isOnline) {
+  const banner = document.getElementById("networkStatusBanner");
+  const textEl = document.getElementById("networkStatusText");
+  if (!banner || !textEl) return;
+
+  if (networkOnlineToastTimer) {
+    clearTimeout(networkOnlineToastTimer);
+    networkOnlineToastTimer = null;
+  }
+
+  if (!isOnline) {
+    banner.classList.remove("online");
+    banner.classList.add("offline", "show");
+    textEl.textContent = "Koneksi internet terputus";
+    return;
+  }
+
+  // Baru balik online: kalau banner "offline" lagi keliatan, ganti jadi
+  // "koneksi kembali" sebentar (2.5 detik) baru sembunyi -- biar user
+  // dapet kepastian koneksinya udah pulih, bukan tiba-tiba ilang tanpa
+  // penjelasan. Kalau banner emang lagi gak keliatan, gak perlu apa-apa.
+  if (banner.classList.contains("show")) {
+    banner.classList.remove("offline");
+    banner.classList.add("online");
+    textEl.textContent = "Koneksi internet kembali tersambung";
+    networkOnlineToastTimer = setTimeout(function () {
+      banner.classList.remove("show");
+    }, 2500);
+  }
+}
+
+window.addEventListener("online", function () { updateNetworkStatusBanner(true); });
+window.addEventListener("offline", function () { updateNetworkStatusBanner(false); });
+// Cek status awal pas app baru dibuka (jaga-jaga kalau HP udah dalam
+// keadaan offline SEBELUM app ini dimuat, bukan cuma pas berubah).
+document.addEventListener("DOMContentLoaded", function () {
+  if (!navigator.onLine) updateNetworkStatusBanner(false);
+});
+
 function togglePasswordVisibility(inputId, btn) {
   const input = document.getElementById(inputId);
   if (!input) return;
@@ -1982,7 +2064,7 @@ function initAuth() {
     authToken = savedToken;
     currentUser = JSON.parse(savedUser);
 
-    callGAS("checkSession", [authToken])
+    callGASWithRetry_("checkSession", [authToken])
       .then(function (session) {
         currentUser = session;
         sessionStorage.setItem("yassa_user", JSON.stringify(currentUser));
@@ -2094,7 +2176,7 @@ function handleLoginSubmit(event) {
   btn.disabled = true;
   btn.textContent = "Memproses...";
 
-  callGAS("login", [email, password])
+  callGASWithRetry_("login", [email, password])
     .then(function (res) {
       pendingOldPassword = password; 
       onLoginSuccess(res);
@@ -2138,7 +2220,7 @@ function setGoogleLoginLoading(isLoading) {
 function handleGoogleCredential(response) {
   document.getElementById("loginError").style.display = "none";
   setGoogleLoginLoading(true);
-  callGAS("loginGoogle", [response.credential])
+  callGASWithRetry_("loginGoogle", [response.credential])
     .then(function (res) { onLoginSuccess(res); })
     .catch(function (err) { showLoginError(err.message); })
     .finally(function () { setGoogleLoginLoading(false); });
@@ -2228,7 +2310,7 @@ function submitForceChangePassword(event) {
 }
 
 function doLogout() {
-  callGAS("logoutSession", [authToken]).catch(function () {});
+  callGASWithRetry_("logoutSession", [authToken]).catch(function () {});
   sessionStorage.removeItem("yassa_token");
   sessionStorage.removeItem("yassa_user");
   authToken = null;
@@ -2440,7 +2522,7 @@ function loadBerandaStats() {
   // tulis terpisah kayak sebelumnya) -- sama kayak prinsip "batch write"
   // yang udah dipakai di tab Keuangan.
   // ============================================================
-  callGAS("getBerandaBundle", [authToken, true])
+  callGASWithRetry_("getBerandaBundle", [authToken, true])
     .then(function (bundle) {
       // 1) Ringkasan Keuangan -> kartu Donasi & Kekurangan Donasi
       if (bundle.ringkasanKeuangan) {
@@ -2610,12 +2692,27 @@ function renderAktivitasTerbaru(data, gagal) {
 // tapi SENGAJA gak dipakai lagi di sini -- dibiarin apa adanya di Code.gs,
 // gak perlu diubah cuma buat ini.
 // ============================================================
-// Cache in-memory hasil terakhir loadKeuanganStats() (per sesi/reload halaman).
-// Tujuannya: pas user pindah-pindah tab (mis. Keuangan -> Beranda -> Keuangan
-// lagi) TANPA keluar app, angka lama langsung tampil instan dari cache ini
-// (gak sempat keliatan reset ke "..."/0), sambil tetap diam-diam refresh ke
-// server di background lewat loadKeuanganStats() biar datanya tetap update.
-let keuanganStatsCache = null;
+// Cache hasil terakhir loadKeuanganStats() -- SEKARANG persisten lewat
+// localStorage (dulu cuma in-memory / `let ... = null`, jadi ilang tiap
+// app di-reload atau ke-kill sama OS di HP, harus nunggu loading dari
+// nol lagi walau baru beberapa menit sebelumnya udah berhasil ambil
+// data). Sekarang polanya SAMA PERSIS kayak berandaStatsCache: begitu
+// app dibuka lagi, angka TERAKHIR yang berhasil diambil langsung
+// tampil instan dari cache, sambil diam-diam refresh ke server di
+// background biar tetap update (stale-while-revalidate).
+let keuanganStatsCache = (function () {
+  try {
+    const cached = localStorage.getItem("yassa_hub_keuangan_cache");
+    if (cached) return JSON.parse(cached);
+  } catch (e) {}
+  return null;
+})();
+
+function saveKeuanganCacheHub() {
+  try {
+    localStorage.setItem("yassa_hub_keuangan_cache", JSON.stringify(keuanganStatsCache));
+  } catch (e) {}
+}
 
 // Toggle buka/tutup list "Rincian per Wilayah" (dipakai bareng sama Kartu 1
 // "Rate Santunan" & Kartu 2 "Realisasi Lapangan") -- default ketutup biar
@@ -2964,7 +3061,7 @@ function loadKeuanganStats() {
   // menit di server. Array hasil di bawah (pSantunan/pManual/pKitabisa/
   // pMidtrans) dipertahankan urutannya biar terapkanKeuanganStats() di bawah
   // TIDAK perlu diubah sama sekali.
-  const pRingkasan = callGAS("getRingkasanKeuangan", [authToken, false]).then(function (r) {
+  const pRingkasan = callGASWithRetry_("getRingkasanKeuangan", [authToken, false]).then(function (r) {
     return [r.penyaluranSantunan, r.keuanganManual, r.kitabisaRealisasi, r.donasiRealisasi];
   });
 
@@ -2972,6 +3069,7 @@ function loadKeuanganStats() {
     .then(function (hasilWrap) {
       const hasil = hasilWrap[0];
       keuanganStatsCache = hasil;
+      saveKeuanganCacheHub(); // <-- SIMPAN KE OFFLINE CACHE
       terapkanKeuanganStats(hasil);
       if (elBanner) elBanner.style.display = "none";
     })
@@ -3009,7 +3107,7 @@ function loadProfilePerforma() {
   const elDonasiBar = document.getElementById("profilPerformaDonasiBar");
   const elDonasiKet = document.getElementById("profilPerformaDonasiKeterangan");
 
-  callGAS("getPerformaProfil", [authToken])
+  callGASWithRetry_("getPerformaProfil", [authToken])
     .then(function (hasil) {
       const kehadiran = (hasil && hasil.kehadiran) || {};
       const donasi = (hasil && hasil.donasi) || {};
@@ -3657,7 +3755,7 @@ function openMobileApp() {
   // Kalau gagal apapun sebabnya (jaringan, dst), tetap fallback buka
   // Mobile biasa -- user tinggal login manual seperti sebelumnya.
   document.getElementById("overlayFrame").src = "about:blank";
-  callGAS("generateSsoToken", [authToken])
+  callGASWithRetry_("generateSsoToken", [authToken])
     .then(function (res) {
       const ssoToken = res && res.ssoToken;
       document.getElementById("overlayFrame").src = ssoToken
@@ -3717,7 +3815,7 @@ function openMobileAppForNotif() {
   // Notification.requestPermission() hanya boleh dipanggil dari konteks
   // top-level, tidak dari iframe cross-origin.
   // Tetap dikasih tiket SSO juga biar gak perlu login manual di tab baru ini.
-  callGAS("generateSsoToken", [authToken])
+  callGASWithRetry_("generateSsoToken", [authToken])
     .then(function (res) {
       const ssoToken = res && res.ssoToken;
       const url = ssoToken
@@ -3927,7 +4025,7 @@ function loadLaporanBulananList(tahun) {
       <span class="material-symbols-outlined spin" style="font-size: 18px;">progress_activity</span> Merangkum jejak amanah donasi kita...
     </div>`;
 
-  callGAS("getLaporanBulananList", [authToken, tahun])
+  callGASWithRetry_("getLaporanBulananList", [authToken, tahun])
     .then(function (data) { renderLaporanBulananList(data); })
     .catch(function (err) {
       el.innerHTML = `
@@ -4006,7 +4104,7 @@ function toggleLaporanBulananDetail(bulan, tahun) {
 
   wrap.innerHTML = `<div style="padding: 16px 0; text-align:center; color: var(--text-secondary); font-size: 11.5px;"><span class="material-symbols-outlined spin" style="font-size: 15px; vertical-align: middle;">progress_activity</span> Membuka berkah bulan ini...</div>`;
 
-  callGAS("getLaporanBulananDetail", [authToken, bulan, tahun])
+  callGASWithRetry_("getLaporanBulananDetail", [authToken, bulan, tahun])
     .then(function (detail) {
       laporanBulananDetailCache[key] = detail;
       // Cek masih ada dibuka & masih bulan yang sama -- cegah race condition
@@ -4099,7 +4197,22 @@ function renderLaporanBulananDetail(wrap, d) {
 // SHEET_NAME_DATA_ANAK_YATIM di Code.gs). Khusus Program Gopay -- Anak
 // Asuh TIDAK ikut terhitung (sudah difilter di endpoint Mobile-nya).
 // ============================================================
-let dataAnakYatimCache = null; // cache in-memory per sesi, sama polanya kayak keuanganStatsCache
+// Cache hasil terakhir getDataAnakYatim -- SEKARANG persisten lewat
+// localStorage, pola sama kayak keuanganStatsCache/berandaStatsCache
+// (dulu cuma in-memory, ilang tiap app di-reload/ke-kill OS).
+let dataAnakYatimCache = (function () {
+  try {
+    const cached = localStorage.getItem("yassa_hub_anak_yatim_cache");
+    if (cached) return JSON.parse(cached);
+  } catch (e) {}
+  return null;
+})();
+
+function saveDataAnakYatimCacheHub() {
+  try {
+    localStorage.setItem("yassa_hub_anak_yatim_cache", JSON.stringify(dataAnakYatimCache));
+  } catch (e) {}
+}
 
 // Isi 4 angka preview (KK/Yatim/Yatim Piatu/Disabilitas) di KARTU Beranda --
 // dipanggil tiap kali tab Beranda dibuka. Beda dari loadDataAnakYatim() di
@@ -4122,9 +4235,10 @@ function loadDataAnakYatimPreviewBeranda() {
 
   if (dataAnakYatimCache) terapkan(dataAnakYatimCache);
 
-  callGAS("getDataAnakYatim", [authToken])
+  callGASWithRetry_("getDataAnakYatim", [authToken])
     .then(function (data) {
       dataAnakYatimCache = data;
+      saveDataAnakYatimCacheHub(); // <-- SIMPAN KE OFFLINE CACHE
       terapkan(data);
     })
     .catch(function () {
@@ -4153,9 +4267,10 @@ function loadDataAnakYatim() {
       </div>`;
   }
 
-  callGAS("getDataAnakYatim", [authToken])
+  callGASWithRetry_("getDataAnakYatim", [authToken])
     .then(function (data) {
       dataAnakYatimCache = data;
+      saveDataAnakYatimCacheHub(); // <-- SIMPAN KE OFFLINE CACHE
       renderDataAnakYatim(data, false);
     })
     .catch(function (err) {
@@ -4461,7 +4576,7 @@ function handleUserMenuClick(action) {
         document.getElementById("akunContent").innerHTML = '<div style="text-align:center;color:#94A3B8;font-size:13px;padding:20px 0;">Memuat data pengurus...</div>';
         document.getElementById("akunPage").classList.add("open");
 
-        callGAS("getPengurusList", [authToken])
+        callGASWithRetry_("getPengurusList", [authToken])
           .then(function (list) {
             pengurusListCache = list;
             pengurusSearchTerm = "";
@@ -4472,7 +4587,7 @@ function handleUserMenuClick(action) {
             const bolehLihatPerforma = true;
             if (!bolehLihatPerforma) return null;
 
-            return callGAS("getPerformaSemuaPengurus", [authToken])
+            return callGASWithRetry_("getPerformaSemuaPengurus", [authToken])
               .then(function (performaList) {
                 const petaPerforma = {};
                 (performaList || []).forEach(function (p) {
@@ -5079,7 +5194,7 @@ function renderUserManagementPanel() {
 }
 
 function loadUserListIntoPanel() {
-  callGAS("getUserList", [authToken])
+  callGASWithRetry_("getUserList", [authToken])
     .then(function (users) {
       userListCache = users;
       const wrap = document.getElementById("userTableWrap");
@@ -5136,7 +5251,7 @@ function renderAksesMenuPanel() {
     '<div id="aksesMenuWrap"><div style="padding:20px;text-align:center;color:#94A3B8;font-size:13px;">Memuat data akses menu...</div></div>';
 
   aksesMenuEdits = {};
-  callGAS("getAksesMenuMatrix", [authToken])
+  callGASWithRetry_("getAksesMenuMatrix", [authToken])
     .then(function (groups) {
       aksesMenuGroupsCache = groups;
       const wrap = document.getElementById("aksesMenuWrap");
@@ -5227,7 +5342,7 @@ function saveAksesMenuMatrix() {
   const btn = document.getElementById("aksesMenuSaveBtn");
   if (btn) { btn.style.opacity = "0.4"; btn.style.pointerEvents = "none"; btn.textContent = "Menyimpan..."; }
 
-  callGAS("updateAksesMenuMatrix", [authToken, edits])
+  callGASWithRetry_("updateAksesMenuMatrix", [authToken, edits])
     .then(function () {
       aksesMenuEdits = {};
       showModal("Berhasil", "Perubahan akses menu tersimpan. Menu yang tampil ke user lain akan ikut berubah mulai sesi login berikutnya.");
@@ -5247,7 +5362,7 @@ let wilayahListCache = null;
 
 function loadWilayahListIfNeeded() {
   if (wilayahListCache) return Promise.resolve(wilayahListCache);
-  return callGAS("getWilayahList", [])
+  return callGASWithRetry_("getWilayahList", [])
     .then(function (list) {
       wilayahListCache = (list && list.length) ? list : [];
       return wilayahListCache;
@@ -5420,7 +5535,7 @@ function resetUserPassword() {
       showModal("Gagal", "Password minimal 6 karakter.");
       return;
     }
-    callGAS("resetPassword", [authToken, editingUserKey, newPassword])
+    callGASWithRetry_("resetPassword", [authToken, editingUserKey, newPassword])
       .then(function () {
         showModal("Sukses", "Password berhasil direset jadi: <b>" + newPassword + "</b><br>Pastikan kasih tau user PERSIS teks ini (huruf besar/kecil ikut dihitung).");
       })
@@ -5431,7 +5546,7 @@ function resetUserPassword() {
 function toggleUserStatus() {
   const user = userListCache.find(function (u) { return u.username === editingUserKey || u.email === editingUserKey; });
   const newStatus = String(user.status).toUpperCase() === "AKTIF" ? "NONAKTIF" : "AKTIF";
-  callGAS("setUserStatus", [authToken, editingUserKey, newStatus])
+  callGASWithRetry_("setUserStatus", [authToken, editingUserKey, newStatus])
     .then(function () {
       closeUserForm();
       loadUserListIntoPanel();
