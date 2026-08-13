@@ -502,6 +502,22 @@
   .user-menu-icon.tone-muted { background: rgba(255,255,255,0.07); color: var(--text-secondary); }
 
   .overlay { position: absolute; inset: 0; background: var(--bg-navy); display: none; flex-direction: column; z-index: 30; }
+  /* 🩹 FIX: overlay "menghubungkan..." yang nutupin iframe selama Hub
+     nyoba-ulang minta tiket SSO ke server (lihat callGASWithRetry_). */
+  .overlay-sso-loading {
+    position: absolute; left: 0; right: 0; bottom: 0; top: 52px; /* di bawah overlay-header */
+    background: var(--bg-navy);
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; z-index: 5; padding: 24px; text-align: center;
+  }
+  .overlay-sso-loading.show { display: flex; }
+  .overlay-sso-spinner {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 3px solid rgba(52,211,153,0.2); border-top-color: #34D399;
+    animation: overlaySsoSpin 0.8s linear infinite;
+  }
+  #overlaySsoLoadingText { color: var(--text-muted); font-size: 12.5px; font-weight: 600; }
+  @keyframes overlaySsoSpin { to { transform: rotate(360deg); } }
   .overlay.open { display: flex; animation: slideUpApp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   @keyframes slideUpApp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
@@ -1405,6 +1421,17 @@
       <span class="overlay-title" id="overlayTitle">Aplikasi</span>
     </div>
     <iframe id="overlayFrame" src="about:blank" allow="camera; geolocation"></iframe>
+    <!-- 🩹 FIX: indikator "menghubungkan..." dipasang MENUTUPI iframe
+         selama Hub masih minta/nyoba-ulang tiket SSO ke server (khusus
+         YASSA Mobile). Sebelumnya iframe dibiarin "about:blank" polos
+         tanpa keterangan apapun selama proses ini -- di jaringan operator
+         yang lambat/gagal, user cuma lihat layar kosong sampai tiba-tiba
+         ketemu form login (bukan Beranda), tanpa tahu itu masih proses
+         nyambung. Disembunyikan lagi begitu iframe.src beneran di-set. -->
+    <div class="overlay-sso-loading" id="overlaySsoLoading">
+      <div class="overlay-sso-spinner"></div>
+      <span id="overlaySsoLoadingText">Menghubungkan ke YASSA Mobile...</span>
+    </div>
   </div>
 
   <!-- Overlay Viewer Dokumen (Pengesahan Yayasan / Akte Notaris / Regulasi) -->
@@ -1863,6 +1890,74 @@ function callGAS(action, args) {
       if (res.success === false) throw new Error(res.message || "Terjadi kesalahan.");
       return res._dibungkus ? res.data : res;
     });
+}
+
+// ============================================================
+// 🩹 FIX (bug SSO Mobile gagal di jaringan operator yang lambat):
+// callGAS() biasa TIDAK punya timeout & TIDAK retry -- di jaringan
+// lambat/putus-nyambung, satu kali fetch() bisa gantung lama atau
+// gagal sekali doang, dan pemanggilnya (generateSsoToken di openApp)
+// langsung nyerah & buka Mobile TANPA tiket SSO sama sekali begitu
+// promise-nya ke-reject -- akibatnya Mobile langsung nampilin form
+// login manual, bukan auto-login, padahal cuma jaringannya lagi
+// kurang stabil sesaat.
+//
+// callGASWithRetry_ nambahin 2 hal di atas callGAS() biasa:
+//  1) TIMEOUT per percobaan (lewat AbortController) -- biar fetch yang
+//     "gantung" gak nunggu sampai browser nyerah sendiri (bisa lama
+//     banget di jaringan operator).
+//  2) RETRY otomatis beberapa kali dengan jeda singkat sebelum bener-
+//     bener nyerah -- baru fallback (buka tanpa tiket SSO) kalau SEMUA
+//     percobaan gagal.
+// Dipakai KHUSUS buat generateSsoToken (paling kerasa dampaknya kalau
+// gagal), bukan gantiin callGAS() di tempat lain yang udah jalan baik.
+// ============================================================
+function callGASWithRetry_(action, args, opts) {
+  const maxAttempts = (opts && opts.maxAttempts) || 3;
+  const timeoutMs = (opts && opts.timeoutMs) || 8000;
+  const delayMs = (opts && opts.delayMs) || 1200;
+  const onRetry = (opts && opts.onRetry) || function () {};
+
+  function sekaliCoba(attempt) {
+    const controller = new AbortController();
+    const timer = setTimeout(function () { controller.abort(); }, timeoutMs);
+
+    return fetch(GAS_AUTH_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ action: action, args: args || [] }),
+      signal: controller.signal,
+    })
+      .then(async function (r) {
+        const textRaw = await r.text();
+        try {
+          return JSON.parse(textRaw);
+        } catch (e) {
+          throw new Error("Respons server tidak valid.");
+        }
+      })
+      .then(function (res) {
+        if (res.success === false) throw new Error(res.message || "Terjadi kesalahan.");
+        return res._dibungkus ? res.data : res;
+      })
+      .finally(function () { clearTimeout(timer); });
+  }
+
+  return new Promise(function (resolve, reject) {
+    function coba(attempt) {
+      sekaliCoba(attempt)
+        .then(resolve)
+        .catch(function (err) {
+          if (attempt >= maxAttempts) {
+            reject(err);
+            return;
+          }
+          onRetry(attempt, maxAttempts);
+          setTimeout(function () { coba(attempt + 1); }, delayMs);
+        });
+    }
+    coba(1);
+  });
 }
 
 function togglePasswordVisibility(inputId, btn) {
@@ -5463,15 +5558,44 @@ function openApp(index) {
     document.getElementById("overlayFrame").src = "about:blank";
     document.getElementById("overlay").classList.add("open");
     const baseTabUrl = menu.baseUrl + "?embed=1&tab=" + item.tab;
-    callGAS("generateSsoToken", [authToken])
+
+    // 🩹 FIX: tampilin indikator "menghubungkan..." selama proses minta
+    // tiket SSO (termasuk pas lagi retry di jaringan lambat) -- biar user
+    // gak lihat layar kosong terus tiba-tiba nongol form login tanpa
+    // penjelasan.
+    const ssoLoadingEl = document.getElementById("overlaySsoLoading");
+    const ssoLoadingTextEl = document.getElementById("overlaySsoLoadingText");
+    if (ssoLoadingEl) {
+      ssoLoadingTextEl.textContent = "Menghubungkan ke YASSA Mobile...";
+      ssoLoadingEl.classList.add("show");
+    }
+
+    callGASWithRetry_("generateSsoToken", [authToken], {
+      maxAttempts: 3,
+      timeoutMs: 8000,
+      delayMs: 1200,
+      onRetry: function (attempt, maxAttempts) {
+        // Kasih tau user kalau lagi nyoba ulang (bukan cuma diem),
+        // biar jelas ini masih proses, bukan macet.
+        if (ssoLoadingTextEl) {
+          ssoLoadingTextEl.textContent =
+            "Jaringan lambat, mencoba lagi (" + attempt + "/" + maxAttempts + ")...";
+        }
+      },
+    })
       .then(function (res) {
         const ssoToken = res && res.ssoToken;
         document.getElementById("overlayFrame").src = ssoToken
           ? baseTabUrl + "&sso=" + encodeURIComponent(ssoToken)
-          : baseTabUrl; // Gagal bikin tiket -> tetap buka, user login manual
+          : baseTabUrl; // Gagal bikin tiket walau udah diulang -- tetap buka, user login manual
       })
       .catch(function () {
+        // Semua percobaan gagal (jaringan bener-bener bermasalah) --
+        // tetap fallback buka Mobile TANPA tiket, user login manual.
         document.getElementById("overlayFrame").src = baseTabUrl;
+      })
+      .finally(function () {
+        if (ssoLoadingEl) ssoLoadingEl.classList.remove("show");
       });
     overlayLoadedMenuKey = active;
     overlayLoadedBaseUrl = menu.baseUrl || null;
@@ -5507,6 +5631,8 @@ document.getElementById("overlayClose").addEventListener("click", function () {
 function resetOverlayIframe() {
   document.getElementById("overlay").classList.remove("open");
   document.getElementById("overlayFrame").src = "about:blank";
+  const ssoLoadingEl = document.getElementById("overlaySsoLoading");
+  if (ssoLoadingEl) ssoLoadingEl.classList.remove("show");
   overlayLoadedMenuKey = null;
   overlayLoadedBaseUrl = null;
 }
