@@ -152,9 +152,15 @@
       break-inside: avoid;
       -webkit-column-break-inside: avoid;
     }
-    .header, .summary-card { max-width: 1360px; margin-left: auto; margin-right: auto; }
+    /* Tambahan agar judul (h2/h3) tidak terpisah dari konten di bawahnya saat masuk kolom baru */
+    .content h2, .content h3, .content .section-title {
+      break-after: avoid;
+      -webkit-column-break-after: avoid;
+    }
+    /* Tambahan width: 100% agar header tidak menyusut (squished) ke tengah layar */
+    .header, .summary-card { width: 100%; max-width: 1360px; margin-left: auto; margin-right: auto; }
     .summary-card { margin-top: -30px; }
-    .bottom-nav { max-width: 1400px; left: 50%; transform: translateX(-50%); right: auto; width: 100%; }
+    /* Hapus aturan .bottom-nav di sini karena posisi absolute bawaan mobile (left:0, right:0) sudah membuatnya pas 100% mengikuti lebar #app */
   }
 
   .header {
