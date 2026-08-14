@@ -1514,6 +1514,21 @@
     <div class="akun-content" id="dataAnakYatimContent"></div>
   </div>
 
+  <!-- Halaman Penuh: Formulir Data Baru GOPAY (input data Alm/Keluarga/Anak
+       buat pengajuan santunan baru) -- cuma dipicu dari kartu di tab Profil
+       yang cuma tampil buat SUPERADMIN/ADMIN/KORWIL (lihat renderProfilTab).
+       Reuse class "overlay" yang sama (otomatis kena tombol back fisik
+       Android lewat OVERLAY_OPEN_SELECTOR/closeTopmostOverlay). -->
+  <div class="overlay" id="formulirDataBaruPage">
+    <div class="overlay-header">
+      <button class="overlay-close" id="formulirDataBaruClose" onclick="closeFormulirDataBaru()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E2E8F0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <span class="overlay-title">Formulir Data Baru GOPAY</span>
+    </div>
+    <div class="akun-content" id="formulirDataBaruContent"></div>
+  </div>
+
   <!-- Form Tambah/Edit User (Pengaturan) -->
   <div class="user-form-overlay" id="userFormOverlay" onclick="if(event.target===this) closeUserForm()">
     <div class="user-form-sheet">
@@ -3629,6 +3644,23 @@ function renderContent() {
         </div>
       </div>
 
+      ${(["SUPERADMIN", "ADMIN", "KORWIL"].indexOf(currentUser.role) !== -1) ? `
+      <!-- Pintu masuk ke Formulir Data Baru GOPAY (input data Alm/Keluarga/
+           Anak buat pengajuan santunan baru) -- CUMA tampil buat
+           SUPERADMIN/ADMIN/KORWIL, role lain gak lihat kartu ini sama
+           sekali. Sengaja diletakkan di atas Dedikasi. -->
+      <button onclick="openFormulirDataBaru()" style="width: 100%; background: linear-gradient(135deg, rgba(249,115,22,0.16), rgba(234,88,12,0.10)); border: 1px solid rgba(249,115,22,0.3); border-radius: 18px; padding: 16px 18px; margin-bottom: 24px; display: flex; align-items: center; gap: 14px; cursor: pointer; text-align: left;">
+        <div style="width: 44px; height: 44px; border-radius: 14px; background: rgba(249,115,22,0.18); color: #F97316; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <span class="material-symbols-outlined" style="font-size: 22px;">note_add</span>
+        </div>
+        <div style="flex: 1;">
+          <div style="font-size: 13.5px; font-weight: 700; color: white;">Formulir Data Baru GOPAY</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">Input data pengajuan santunan Alm/Keluarga/Anak</div>
+        </div>
+        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
+      </button>
+      ` : ``}
+
       <h3 style="font-weight: 600; font-size: 14px; margin-bottom: 12px; padding: 0 4px;">Dedikasi</h3>
       <div id="profilDedikasiTourTarget" style="background: var(--glass-strong); border-radius: 20px; padding: 18px; margin-bottom: 24px; border: 1px solid var(--glass-border); border-left: 4px solid #F97316; display: flex; flex-direction: column; gap: 20px;">
         <div>
@@ -4332,6 +4364,539 @@ function renderDataAnakYatim(data, dariCache) {
   }
 
   el.innerHTML = html;
+}
+
+// ============================================================
+// 📝 FORMULIR DATA BARU GOPAY (pengajuan santunan baru: Data Alm, Data
+// Istri/Wali, Data Anak [dinamis sesuai Jumlah Anak], Data Pendukung
+// rekening, & Berkas foto dokumen). Cuma dipicu dari kartu di tab Profil
+// yang cuma tampil buat SUPERADMIN/ADMIN/KORWIL (lihat renderProfilTab).
+//
+// CATATAN ARSITEKTUR: semua handler action ("uploadFileFormulirDataBaru" &
+// "submitFormulirDataBaru") diimplementasikan di file .gs TERPISAH
+// (FormulirDataBaru.gs), BUKAN ditumpuk ke Code.gs utama -- cukup
+// didaftarkan namanya di object `handlers` pada doPost(e) di Code.gs
+// (GAS otomatis gabung semua file .gs jadi satu scope global, jadi
+// fungsi di file lain tetap kepanggil).
+//
+// Foto/berkas diupload SATU-SATU begitu dipilih (bukan nunggu tombol
+// Kirim) -- pola yang sama kayak uploadFoto() buat foto profil -- biar
+// payload submit akhir cuma berisi URL Drive, bukan base64 gede-gede
+// numpuk. File disimpan ke folder Drive yang SUDAH DITENTUKAN (folder ID
+// FORMULIR_DATA_BARU_FOLDER_ID di FormulirDataBaru.gs), bukan folder
+// baru yang dibikin otomatis.
+// ============================================================
+let fdbJumlahAnak = 1;
+let fdbAnakFotoUrls = {}; // { "1": urlAkteAnak1, "2": urlAkteAnak2, ... }
+let fdbBerkasUrls = {};   // { fcKK: url, fcSuratKematian: url, fcKTP: url, ssAkun: url }
+let fdbWilayahList = [];
+
+function openFormulirDataBaru() {
+  document.getElementById("formulirDataBaruPage").classList.add("open");
+  fdbJumlahAnak = 1;
+  fdbAnakFotoUrls = {};
+  fdbBerkasUrls = {};
+  renderFormulirDataBaruForm();
+}
+
+function closeFormulirDataBaru() {
+  document.getElementById("formulirDataBaruPage").classList.remove("open");
+}
+
+function renderFormulirDataBaruForm() {
+  const el = document.getElementById("formulirDataBaruContent");
+  const wilayahSaya = String(currentUser.wilayahAkses || "").toUpperCase() === "ALL" ? "" : (currentUser.wilayahAkses || "");
+  const bulanTahunSekarang = new Date().toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+
+  el.innerHTML = `
+    <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 18px; line-height: 1.5;">
+      Isi data pengajuan santunan baru Program Gopay untuk periode <b>${bulanTahunSekarang}</b>. Semua kolom bertanda <span style="color:#F87171;">*</span> wajib diisi.
+    </div>
+
+    <div id="fdbFormError" style="display:none; background: rgba(248,113,113,0.12); border: 1px solid rgba(248,113,113,0.3); color: #FCA5A5; font-size: 11.5px; padding: 10px 12px; border-radius: 12px; margin-bottom: 16px;"></div>
+
+    <div style="font-size: 12.5px; font-weight: 700; color: #F97316; margin: 4px 2px 12px; display:flex; align-items:center; gap:6px;">
+      <span class="material-symbols-outlined" style="font-size:16px;">description</span> Data Almarhum
+    </div>
+    <div class="user-form-field">
+      <label class="user-form-label">Wilayah <span style="color:#F87171;">*</span></label>
+      <select id="fdbWilayah" class="user-form-select"><option value="">Memuat wilayah...</option></select>
+    </div>
+    <div class="user-form-field">
+      <label class="user-form-label">Tanggal Kirim Data <span style="color:#F87171;">*</span></label>
+      <input type="date" id="fdbTglKirim" class="user-form-input">
+    </div>
+    <div class="user-form-field">
+      <label class="user-form-label">NIK KK <span style="color:#F87171;">*</span></label>
+      <input type="text" id="fdbNikKK" class="user-form-input" inputmode="numeric" placeholder="16 digit">
+    </div>
+    <div class="user-form-field">
+      <label class="user-form-label">NIK KTP <span style="color:#F87171;">*</span></label>
+      <input type="text" id="fdbNikKTP" class="user-form-input" inputmode="numeric" placeholder="16 digit">
+    </div>
+    <div class="user-form-field">
+      <label class="user-form-label">Nama Almarhum <span style="color:#F87171;">*</span></label>
+      <input type="text" id="fdbNamaAlm" class="user-form-input">
+    </div>
+    <div class="user-form-field">
+      <label class="user-form-label">No Gojek</label>
+      <input type="tel" id="fdbNoGojek" class="user-form-input">
+    </div>
+    <div class="user-form-field">
+      <label class="user-form-label">Email Gojek</label>
+      <input type="email" id="fdbEmailGojek" class="user-form-input">
+    </div>
+    <div class="user-form-field">
+      <label class="user-form-label">Status Akun</label>
+      <select id="fdbStatusAkun" class="user-form-select">
+        <option value="Aktif">Aktif</option>
+        <option value="Proses Pembekuan">Proses Pembekuan</option>
+        <option value="Dibekukan">Dibekukan</option>
+      </select>
+    </div>
+    <div class="user-form-field">
+      <label class="user-form-label">Sebab Wafat</label>
+      <select id="fdbSebabWafat" class="user-form-select">
+        <option value="Sakit">Sakit</option>
+        <option value="Kecelakaan">Kecelakaan</option>
+      </select>
+    </div>
+    <div class="user-form-field">
+      <label class="user-form-label">Tanggal Wafat <span style="color:#F87171;">*</span></label>
+      <input type="date" id="fdbTglWafat" class="user-form-input">
+    </div>
+    <div class="user-form-field">
+      <label class="user-form-label">Surat Resign Gojek</label>
+      <select id="fdbSuratResign" class="user-form-select">
+        <option value="Ada">Ada</option>
+        <option value="Belum Ada">Belum Ada</option>
+        <option value="Tidak Diperlukan">Tidak Diperlukan</option>
+      </select>
+    </div>
+    <div class="user-form-field">
+      <label class="user-form-label">Kepesertaan BPJSTK</label>
+      <select id="fdbBpjstk" class="user-form-select">
+        <option value="Aktif">Aktif</option>
+        <option value="Tidak Aktif">Tidak Aktif</option>
+        <option value="Tidak Ada">Tidak Ada</option>
+      </select>
+    </div>
+
+    <div style="font-size: 12.5px; font-weight: 700; color: #F97316; margin: 22px 2px 12px; display:flex; align-items:center; gap:6px;">
+      <span class="material-symbols-outlined" style="font-size:16px;">family_restroom</span> Data Istri/Wali
+    </div>
+    <div class="user-form-field">
+      <label class="user-form-label">Hubungan Dengan Almarhum <span style="color:#F87171;">*</span></label>
+      <select id="fdbHubungan" class="user-form-select">
+        <option value="Istri">Istri</option>
+        <option value="Nenek">Nenek</option>
+        <option value="Kakek">Kakek</option>
+        <option value="Saudara">Saudara</option>
+        <option value="Lainnya">Lainnya</option>
+      </select>
+    </div>
+    <div class="user-form-field">
+      <label class="user-form-label">Nama Keluarga <span style="color:#F87171;">*</span></label>
+      <input type="text" id="fdbNamaKeluarga" class="user-form-input">
+    </div>
+    <div class="user-form-field">
+      <label class="user-form-label">Kategori Keluarga Almarhum</label>
+      <select id="fdbKategoriKeluarga" class="user-form-select">
+        <option value="Normal">Normal</option>
+        <option value="Disabilitas">Disabilitas</option>
+      </select>
+      <div class="user-form-hint">Catatan kondisi istri/wali Almarhum (kalau ada).</div>
+    </div>
+    <div class="user-form-field">
+      <label class="user-form-label">Pekerjaan</label>
+      <select id="fdbPekerjaan" class="user-form-select">
+        <option value="Ibu Rumah Tangga">Ibu Rumah Tangga</option>
+        <option value="Pedagang">Pedagang</option>
+        <option value="Pegawai">Pegawai</option>
+        <option value="Lainnya">Lainnya</option>
+      </select>
+    </div>
+    <div class="user-form-field">
+      <label class="user-form-label">No Telp <span style="color:#F87171;">*</span></label>
+      <input type="tel" id="fdbNoTlp" class="user-form-input" placeholder="628xxxxxxxxx">
+    </div>
+    <div class="user-form-field">
+      <label class="user-form-label">Alamat <span style="color:#F87171;">*</span></label>
+      <textarea id="fdbAlamat" class="user-form-input" rows="2" style="resize:vertical;"></textarea>
+    </div>
+
+    <div style="font-size: 12.5px; font-weight: 700; color: #F97316; margin: 22px 2px 12px; display:flex; align-items:center; gap:6px;">
+      <span class="material-symbols-outlined" style="font-size:16px;">child_care</span> Data Anak
+    </div>
+    <div class="user-form-field">
+      <label class="user-form-label">Jumlah Anak (penerima santunan) <span style="color:#F87171;">*</span></label>
+      <input type="number" id="fdbJumlahAnakInput" class="user-form-input" min="1" max="10" value="1" oninput="fdbUbahJumlahAnak(this.value)">
+    </div>
+    <div id="fdbAnakWrap"></div>
+
+    <div style="font-size: 12.5px; font-weight: 700; color: #F97316; margin: 22px 2px 12px; display:flex; align-items:center; gap:6px;">
+      <span class="material-symbols-outlined" style="font-size:16px;">account_balance_wallet</span> Data Pendukung (Rekening/E-Wallet)
+    </div>
+    <div class="user-form-field">
+      <label class="user-form-label">Nama Bank/E-Wallet <span style="color:#F87171;">*</span></label>
+      <input type="text" id="fdbNamaBank" class="user-form-input">
+    </div>
+    <div class="user-form-field">
+      <label class="user-form-label">Nomor Rek/E-Wallet <span style="color:#F87171;">*</span></label>
+      <input type="text" id="fdbNomorRek" class="user-form-input" inputmode="numeric">
+    </div>
+    <div class="user-form-field">
+      <label class="user-form-label">Atas Nama <span style="color:#F87171;">*</span></label>
+      <input type="text" id="fdbAtasNama" class="user-form-input">
+    </div>
+    <div class="user-form-field">
+      <label class="user-form-label">Pemilik Rekening</label>
+      <select id="fdbPemilikRek" class="user-form-select">
+        <option value="Istri Almarhum">Istri Almarhum</option>
+        <option value="Anak">Anak</option>
+        <option value="Nenek/Kakek">Nenek/Kakek</option>
+        <option value="Saudara">Saudara</option>
+      </select>
+    </div>
+
+    <div style="font-size: 12.5px; font-weight: 700; color: #F97316; margin: 22px 2px 12px; display:flex; align-items:center; gap:6px;">
+      <span class="material-symbols-outlined" style="font-size:16px;">folder_zip</span> Berkas (Foto Dokumen)
+    </div>
+    <div style="font-size: 10.5px; color: var(--text-muted); margin: -4px 2px 14px;">Foto akan otomatis tersimpan ke folder Drive yang sudah ditentukan begitu dipilih.</div>
+    ${fdbBerkasField("fcKK", "FC KK", true, "KK")}
+    ${fdbBerkasField("fcSuratKematian", "FC Surat Kematian", true, "SURAT_KEMATIAN")}
+    ${fdbBerkasField("fcKTP", "FC KTP", true, "KTP")}
+    ${fdbBerkasField("ssAkun", "SS Akun (opsional, kalau ada)", false, "")}
+
+    <button id="fdbSubmitBtn" onclick="submitFormulirDataBaru()" style="width:100%; margin-top: 24px; margin-bottom: 40px; padding: 14px; border-radius: 14px; border: none; background: linear-gradient(135deg, #F97316, #EA580C); color: #fff; font-size: 13.5px; font-weight: 700; cursor: pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+      <span class="material-symbols-outlined" style="font-size:18px;">send</span> Kirim Data
+    </button>
+  `;
+
+  document.getElementById("fdbTglKirim").valueAsDate = new Date();
+  fdbRenderAnakBlocks();
+  fdbMuatWilayah(wilayahSaya);
+}
+
+function fdbBerkasField(key, label, wajib, jenisDokumen) {
+  return `
+    <div class="user-form-field">
+      <label class="user-form-label">${label}${wajib ? ' <span style="color:#F87171;">*</span>' : ''}</label>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <label id="fdbBerkasBox_${key}" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding: 10px; border-radius: 10px; border: 1px dashed rgba(255,255,255,0.25); background: rgba(255,255,255,0.03); cursor:pointer; font-size: 11.5px; color: var(--text-secondary);">
+          <span class="material-symbols-outlined" id="fdbBerkasIcon_${key}" style="font-size:16px;">upload</span>
+          <span id="fdbBerkasLabel_${key}">Pilih Foto</span>
+          <input type="file" accept="image/*" style="display:none;" onchange="fdbPilihFoto(this, {key: '${key}', jenis: '${jenisDokumen || ""}', boxId: 'fdbBerkasBox_${key}', iconId: 'fdbBerkasIcon_${key}', labelId: 'fdbBerkasLabel_${key}', previewId: 'fdbBerkasPreview_${key}'})">
+        </label>
+      </div>
+      <img id="fdbBerkasPreview_${key}" style="display:none; width:100%; max-height:160px; object-fit:contain; border-radius: 10px; margin-top:8px; border: 2px solid transparent; background:#0B1220;">
+    </div>`;
+}
+
+// Render ulang blok-blok anak sesuai fdbJumlahAnak, MEMPERTAHANKAN nilai
+// yang udah diisi user di anak-anak yang masih ada (biar gak ke-reset
+// kalau cuma nambah/kurangin jumlah).
+function fdbRenderAnakBlocks() {
+  const wrap = document.getElementById("fdbAnakWrap");
+  if (!wrap) return;
+
+  const nilaiLama = fdbAmbilNilaiAnakSaatIni_();
+  let html = "";
+  for (let i = 1; i <= fdbJumlahAnak; i++) {
+    const v = nilaiLama[i] || {};
+    const fotoUrl = fdbAnakFotoUrls[i];
+    html += `
+      <div style="background: var(--glass-strong); border-radius: 16px; padding: 14px; margin-bottom: 12px; border: 1px solid var(--glass-border); border-left: 3px solid #F97316;">
+        <div style="font-size: 11.5px; font-weight: 700; color: #fff; margin-bottom: 10px;">Anak Ke-${i}</div>
+        <div class="user-form-field">
+          <label class="user-form-label">Nama Anak <span style="color:#F87171;">*</span></label>
+          <input type="text" id="fdbAnak_${i}_nama" class="user-form-input" value="${escapeHtmlHub(v.nama || "")}">
+        </div>
+        <div class="user-form-field">
+          <label class="user-form-label">Jenis Kelamin</label>
+          <select id="fdbAnak_${i}_jk" class="user-form-select">
+            <option value="Laki-laki" ${v.jk === "Laki-laki" ? "selected" : ""}>Laki-laki</option>
+            <option value="Perempuan" ${v.jk === "Perempuan" ? "selected" : ""}>Perempuan</option>
+          </select>
+        </div>
+        <div class="user-form-field">
+          <label class="user-form-label">TTL Anak (Tempat, Tanggal Lahir)</label>
+          <input type="text" id="fdbAnak_${i}_ttl" class="user-form-input" placeholder="Cth: Jakarta, 12-05-2015" value="${escapeHtmlHub(v.ttl || "")}">
+        </div>
+        <div class="user-form-field">
+          <label class="user-form-label">Kategori Anak</label>
+          <select id="fdbAnak_${i}_kategori" class="user-form-select">
+            <option value="Yatim" ${v.kategori === "Yatim" ? "selected" : ""}>Yatim</option>
+            <option value="Yatim Piatu" ${v.kategori === "Yatim Piatu" ? "selected" : ""}>Yatim Piatu</option>
+            <option value="Disabilitas" ${v.kategori === "Disabilitas" ? "selected" : ""}>Disabilitas</option>
+          </select>
+        </div>
+        <div class="user-form-field">
+          <label class="user-form-label">Nama Sekolah & Kelas</label>
+          <input type="text" id="fdbAnak_${i}_sekolah" class="user-form-input" value="${escapeHtmlHub(v.sekolah || "")}">
+        </div>
+        <div class="user-form-field">
+          <label class="user-form-label">Prestasi Anak</label>
+          <input type="text" id="fdbAnak_${i}_prestasi" class="user-form-input" placeholder="-" value="${escapeHtmlHub(v.prestasi || "")}">
+        </div>
+        <div class="user-form-field" style="margin-bottom:0;">
+          <label class="user-form-label">FC Akte Kelahiran Anak Ke-${i}</label>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <label id="fdbAnakFotoBox_${i}" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding: 10px; border-radius: 10px; border: 1px dashed rgba(255,255,255,0.25); background: rgba(255,255,255,0.03); cursor:pointer; font-size: 11.5px; color: var(--text-secondary);">
+              <span class="material-symbols-outlined" id="fdbAnakFotoIcon_${i}" style="font-size:16px;">${fotoUrl ? "check_circle" : "upload"}</span>
+              <span id="fdbAnakFotoLabel_${i}" style="${fotoUrl ? "color:#86EFAC;" : ""}">${fotoUrl ? "Tersimpan ✓" : "Pilih Foto"}</span>
+              <input type="file" accept="image/*" style="display:none;" onchange="fdbPilihFoto(this, {key: 'anak_${i}', jenis: 'AKTA', boxId: 'fdbAnakFotoBox_${i}', iconId: 'fdbAnakFotoIcon_${i}', labelId: 'fdbAnakFotoLabel_${i}', previewId: 'fdbAnakFotoPreview_${i}', urutanAnak: ${i}})">
+            </label>
+          </div>
+          <img id="fdbAnakFotoPreview_${i}" style="display:${fotoUrl ? "block" : "none"}; width:100%; max-height:160px; object-fit:contain; border-radius: 10px; margin-top:8px; border: 2px solid ${fotoUrl ? "#22C55E" : "transparent"}; background:#0B1220;" ${fotoUrl ? `src="${fotoUrl}"` : ""}>
+        </div>
+      </div>`;
+  }
+  wrap.innerHTML = html;
+}
+
+function fdbAmbilNilaiAnakSaatIni_() {
+  const out = {};
+  for (let i = 1; i <= 10; i++) {
+    const nama = document.getElementById("fdbAnak_" + i + "_nama");
+    if (!nama) continue;
+    out[i] = {
+      nama: nama.value,
+      jk: document.getElementById("fdbAnak_" + i + "_jk").value,
+      ttl: document.getElementById("fdbAnak_" + i + "_ttl").value,
+      kategori: document.getElementById("fdbAnak_" + i + "_kategori").value,
+      sekolah: document.getElementById("fdbAnak_" + i + "_sekolah").value,
+      prestasi: document.getElementById("fdbAnak_" + i + "_prestasi").value,
+    };
+  }
+  return out;
+}
+
+function fdbUbahJumlahAnak(val) {
+  let n = parseInt(val, 10);
+  if (!n || n < 1) n = 1;
+  if (n > 10) n = 10;
+  fdbJumlahAnak = n;
+  fdbRenderAnakBlocks();
+}
+
+function fdbMuatWilayah(wilayahSaya) {
+  const sel = document.getElementById("fdbWilayah");
+  if (wilayahSaya) {
+    // KORWIL cuma pegang 1 wilayah -- langsung kunci ke wilayahnya sendiri,
+    // gak perlu mancing daftar wilayah lain ke server.
+    sel.innerHTML = `<option value="${escapeHtmlHub(wilayahSaya)}">${escapeHtmlHub(wilayahSaya)}</option>`;
+    sel.disabled = true;
+    return;
+  }
+  callGAS("getWilayahList", [])
+    .then(function (list) {
+      fdbWilayahList = list || [];
+      sel.innerHTML = `<option value="">-- Pilih Wilayah --</option>` +
+        fdbWilayahList.map((w) => `<option value="${escapeHtmlHub(w)}">${escapeHtmlHub(w)}</option>`).join("");
+    })
+    .catch(function () {
+      sel.innerHTML = `<option value="">Gagal memuat wilayah</option>`;
+    });
+}
+
+// ============================================================
+// Alur pilih foto berkas (berkas umum ATAUPUN foto akte anak):
+//   1) Validasi dasar (harus gambar, maks 8MB).
+//   2) Kunci kotak upload + tampilkan "⏳ Tunggu sebentar, dokumen sedang
+//      dibaca AI..." SEBELUM apa pun lain terjadi.
+//   3) Kirim ke cekKualitasFotoAI (Google Cloud Vision OCR) buat ngecek
+//      ketajaman & kesesuaian jenis dokumennya.
+//   4) SUKSES -> lanjut upload ke Drive (uploadFileFormulirDataBaru),
+//      tampilkan preview dengan bingkai HIJAU, simpan URL-nya.
+//   5) GAGAL/ERROR -> input di-reset (WAJIB pilih ulang), tampilkan
+//      pesan dari AI lewat showModal, kotak upload dibuka kembali.
+// opts = { key, jenis, boxId, iconId, labelId, previewId, urutanAnak }
+//   - jenis: "KK" | "KTP" | "AKTA" | "SURAT_KEMATIAN" | "" (bebas, cuma
+//     dicek ada-tidaknya teks -- dipakai buat SS Akun).
+//   - urutanAnak: diisi kalau ini foto akte anak (buat nyimpen ke
+//     fdbAnakFotoUrls), dikosongkan/undefined kalau berkas umum (nyimpen
+//     ke fdbBerkasUrls[opts.key]).
+// ============================================================
+function fdbPilihFoto(input, opts) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+
+  const box = document.getElementById(opts.boxId);
+  const icon = document.getElementById(opts.iconId);
+  const label = document.getElementById(opts.labelId);
+  const preview = document.getElementById(opts.previewId);
+
+  function resetKotak(pesanLabel) {
+    input.value = "";
+    if (box) { box.style.pointerEvents = "auto"; box.style.opacity = "1"; }
+    if (icon) icon.textContent = "upload";
+    if (label) { label.textContent = pesanLabel || "Pilih Foto"; label.style.color = ""; }
+    if (preview) { preview.style.display = "none"; preview.src = ""; preview.style.borderColor = "transparent"; }
+  }
+
+  if (!file.type || file.type.indexOf("image/") !== 0) {
+    showModal("Gagal", "File yang dipilih bukan gambar. Pilih foto dari Kamera atau Galeri ya.");
+    resetKotak();
+    return;
+  }
+  if (file.size > 8 * 1024 * 1024) {
+    showModal("Gagal", "Ukuran foto maksimal 8MB. Coba kompres dulu atau foto ulang.");
+    resetKotak();
+    return;
+  }
+
+  // Kunci kotak upload SEBELUM proses baca AI mulai -- user gak bisa
+  // pilih file lain / klik ulang sampai hasil verifikasi turun.
+  if (box) { box.style.pointerEvents = "none"; box.style.opacity = "0.6"; }
+  if (icon) icon.textContent = "hourglass_top";
+  if (label) label.textContent = "⏳ Tunggu sebentar, dokumen sedang dibaca AI...";
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const base64Data = e.target.result.split(",")[1];
+
+    callGASWithRetry_("cekKualitasFotoAI", [base64Data, opts.jenis || ""])
+      .then(function (hasilAI) {
+        if (!hasilAI || hasilAI.status !== "SUKSES") {
+          const pesan = (hasilAI && hasilAI.pesan) || "Foto ditolak sistem, silakan foto ulang.";
+          showModal("Foto Perlu Diulang", pesan);
+          resetKotak();
+          throw new Error("__AI_GAGAL__"); // stop chain, jangan lanjut upload
+        }
+
+        // Lolos verifikasi AI -> lanjut upload beneran ke Drive.
+        if (label) label.textContent = "Mengunggah...";
+        return callGASWithRetry_("uploadFileFormulirDataBaru", [authToken, base64Data, file.type, file.name]);
+      })
+      .then(function (resUpload) {
+        if (!resUpload) return; // udah dihentikan di step AI gagal
+        if (opts.urutanAnak) {
+          fdbAnakFotoUrls[opts.urutanAnak] = resUpload.url;
+        } else {
+          fdbBerkasUrls[opts.key] = resUpload.url;
+        }
+        if (box) { box.style.pointerEvents = "auto"; box.style.opacity = "1"; }
+        if (icon) icon.textContent = "check_circle";
+        if (label) { label.textContent = "Tersimpan ✓"; label.style.color = "#86EFAC"; }
+        if (preview) {
+          preview.src = resUpload.url;
+          preview.style.display = "block";
+          preview.style.borderColor = "#22C55E"; // bingkai hijau = lolos verifikasi
+        }
+      })
+      .catch(function (err) {
+        if (err && err.message === "__AI_GAGAL__") return; // sudah ditangani di atas
+        showModal("Gagal", "Gagal memproses foto: " + String(err && err.message || err));
+        resetKotak();
+      });
+  };
+  reader.readAsDataURL(file);
+}
+
+function submitFormulirDataBaru() {
+  const errEl = document.getElementById("fdbFormError");
+  errEl.style.display = "none";
+
+  const val = (id) => (document.getElementById(id).value || "").trim();
+
+  const dataAlm = {
+    wilayah: val("fdbWilayah"),
+    tglKirim: val("fdbTglKirim"),
+    nikKK: val("fdbNikKK"),
+    nikKTP: val("fdbNikKTP"),
+    namaAlm: val("fdbNamaAlm"),
+    noGojek: val("fdbNoGojek"),
+    emailGojek: val("fdbEmailGojek"),
+    statusAkun: val("fdbStatusAkun"),
+    sebabWafat: val("fdbSebabWafat"),
+    tglWafat: val("fdbTglWafat"),
+    suratResign: val("fdbSuratResign"),
+    bpjstk: val("fdbBpjstk"),
+  };
+  const dataIstri = {
+    hubungan: val("fdbHubungan"),
+    namaKeluarga: val("fdbNamaKeluarga"),
+    kategoriKeluarga: val("fdbKategoriKeluarga"),
+    pekerjaan: val("fdbPekerjaan"),
+    noTlp: val("fdbNoTlp"),
+    alamat: val("fdbAlamat"),
+  };
+  const dataPendukung = {
+    namaBank: val("fdbNamaBank"),
+    nomorRek: val("fdbNomorRek"),
+    atasNama: val("fdbAtasNama"),
+    pemilikRek: val("fdbPemilikRek"),
+  };
+
+  const nilaiAnak = fdbAmbilNilaiAnakSaatIni_();
+  const anakList = [];
+  for (let i = 1; i <= fdbJumlahAnak; i++) {
+    const v = nilaiAnak[i] || {};
+    anakList.push({
+      urutan: i,
+      nama: (v.nama || "").trim(),
+      jk: v.jk || "",
+      ttl: (v.ttl || "").trim(),
+      kategori: v.kategori || "",
+      sekolah: (v.sekolah || "").trim(),
+      prestasi: (v.prestasi || "").trim(),
+      fotoAkteUrl: fdbAnakFotoUrls[i] || "",
+    });
+  }
+
+  // Validasi wajib di sisi front-end dulu (biar user gak nunggu round-trip
+  // ke server buat error yang jelas-jelas keliatan dari sini).
+  const wajibIsi = [
+    [dataAlm.wilayah, "Wilayah"], [dataAlm.tglKirim, "Tanggal Kirim Data"],
+    [dataAlm.nikKK, "NIK KK"], [dataAlm.nikKTP, "NIK KTP"], [dataAlm.namaAlm, "Nama Almarhum"],
+    [dataAlm.tglWafat, "Tanggal Wafat"], [dataIstri.hubungan, "Hubungan Dengan Almarhum"],
+    [dataIstri.namaKeluarga, "Nama Keluarga"], [dataIstri.noTlp, "No Telp"], [dataIstri.alamat, "Alamat"],
+    [dataPendukung.namaBank, "Nama Bank/E-Wallet"], [dataPendukung.nomorRek, "Nomor Rek/E-Wallet"],
+    [dataPendukung.atasNama, "Atas Nama"],
+  ];
+  for (const [nilai, label] of wajibIsi) {
+    if (!nilai) { errEl.textContent = "Kolom \"" + label + "\" wajib diisi."; errEl.style.display = "block"; errEl.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+  }
+  for (const a of anakList) {
+    if (!a.nama) { errEl.textContent = "Nama Anak Ke-" + a.urutan + " wajib diisi."; errEl.style.display = "block"; errEl.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+  }
+  if (!fdbBerkasUrls.fcKK || !fdbBerkasUrls.fcSuratKematian || !fdbBerkasUrls.fcKTP) {
+    errEl.textContent = "Berkas FC KK, FC Surat Kematian, dan FC KTP wajib diunggah dulu.";
+    errEl.style.display = "block";
+    errEl.scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+
+  const payload = {
+    dataAlm: dataAlm,
+    dataIstri: dataIstri,
+    dataAnak: anakList,
+    dataPendukung: dataPendukung,
+    berkas: {
+      fcKK: fdbBerkasUrls.fcKK || "",
+      fcSuratKematian: fdbBerkasUrls.fcSuratKematian || "",
+      fcKTP: fdbBerkasUrls.fcKTP || "",
+      ssAkun: fdbBerkasUrls.ssAkun || "",
+    },
+  };
+
+  const btn = document.getElementById("fdbSubmitBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined spin" style="font-size:18px;">progress_activity</span> Mengirim...';
+
+  callGASWithRetry_("submitFormulirDataBaru", [authToken, payload])
+    .then(function () {
+      showModal("Sukses", "Data baru berhasil dikirim & tersimpan. Tim GOPAY wilayah akan memverifikasi berkas kamu.");
+      closeFormulirDataBaru();
+    })
+    .catch(function (err) {
+      showModal("Gagal", "Gagal mengirim data: " + String(err && err.message || err));
+    })
+    .finally(function () {
+      btn.disabled = false;
+      btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">send</span> Kirim Data';
+    });
 }
 
 function toggleMidtransForm() {
