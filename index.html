@@ -113,12 +113,13 @@
     overflow: hidden;
   }
 
-  /* Tablet ke atas: body jadi kanvas ambient penuh, #app tampil sebagai kartu perangkat terpusat.
-     Breakpoint sengaja diset di 1280px supaya HP dan TABLET (termasuk landscape) tetap full-screen,
-     dan hanya layar Laptop/Desktop asli yang menampilkan mode kartu terpusat. */
+  /* Tablet ke atas: body jadi kanvas ambient penuh, #app melebar mengisi layar
+     (bukan lagi kartu sempit 480px). Breakpoint sengaja diset di 1280px supaya
+     HP dan TABLET (termasuk landscape) tetap full-screen seperti mode mobile,
+     dan hanya layar Laptop/Desktop asli yang menampilkan mode "melebar". */
   @media (min-width: 1280px) {
     body {
-      padding: 40px 20px;
+      padding: 32px 20px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -129,13 +130,31 @@
         var(--bg-navy-deep);
     }
     #app {
-      max-width: 480px;
-      border-radius: 32px;
+      width: 100%;
+      max-width: 1400px;
+      border-radius: 28px;
       box-shadow: var(--shadow-deep), 0 0 120px rgba(59,130,246,0.1), 0 0 60px rgba(168,85,247,0.08);
       min-height: 90vh;
       height: 90vh;
       border: 1px solid var(--glass-border);
     }
+    /* Konten dasbor (kartu-kartu yang tadinya numpuk 1 kolom di HP) dialirkan
+       jadi beberapa kolom di layar lebar, mirip layout YASSA Mobile di
+       laptop. Pakai CSS columns (bukan grid) supaya SEMUA halaman (Beranda,
+       Keuangan, dll) otomatis ikut melebar tanpa perlu tulis ulang tiap
+       render function satu-satu -- tiap kartu top-level di .content jadi
+       "potongan" yang mengalir mengisi kolom yang tersedia. */
+    .content {
+      column-width: 380px;
+      column-gap: 20px;
+    }
+    .content > * {
+      break-inside: avoid;
+      -webkit-column-break-inside: avoid;
+    }
+    .header, .summary-card { max-width: 1360px; margin-left: auto; margin-right: auto; }
+    .summary-card { margin-top: -30px; }
+    .bottom-nav { max-width: 1400px; left: 50%; transform: translateX(-50%); right: auto; width: 100%; }
   }
 
   .header {
