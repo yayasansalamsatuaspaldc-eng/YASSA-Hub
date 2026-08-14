@@ -863,7 +863,7 @@
 
   /* Laptop/Desktop asli ke atas: layar login jadi kanvas ambient penuh, kartu login terpusat.
      HP dan TABLET (termasuk landscape, hingga 1279px) tetap full-screen seperti mode mobile. */
-  @media (min-width: 1280px) {
+  @media (min-width: 1024px) {
     .login-screen {
       padding: 56px 20px;
       background:
@@ -873,24 +873,24 @@
         var(--bg-navy-deep);
     }
     .login-card {
-      max-width: 900px;
-      min-height: 560px;
+      max-width: 880px !important;
+      width: 100%;
+      min-height: 520px;
       flex-direction: row;
       border-radius: 32px;
       box-shadow: var(--shadow-deep), 0 0 120px rgba(59,130,246,0.12), 0 0 60px rgba(168,85,247,0.08);
       border: 1px solid var(--glass-border);
     }
     .login-header-bg {
-      width: 45%;
-      height: auto;
+      flex: 0 0 45%;
       min-height: 100%;
       padding-bottom: 0;
       border-right: 1px solid var(--glass-border-strong);
     }
     .login-form-container {
-      width: 55%;
+      flex: 0 0 55%;
       justify-content: center;
-      padding: 40px 50px;
+      padding: 40px 48px;
     }
     .login-header-wave {
       display: none;
