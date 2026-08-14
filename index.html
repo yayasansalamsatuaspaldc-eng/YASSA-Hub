@@ -1553,6 +1553,24 @@
     <div class="akun-content" id="laporanBulananContent"></div>
   </div>
 
+  <!-- Halaman Penuh: Viewer PDF Laporan Bulanan -- dibuka dari tombol "Lihat
+       PDF" di Laporan Bulanan. Nampilin file PDF LANGSUNG di dalam app lewat
+       iframe (link Google Drive mode /preview), jadi user bisa scroll/baca
+       tanpa kepaksa download. Tombol "Unduh" tetap disediakan terpisah kalau
+       user emang mau simpan filenya. -->
+  <div class="overlay" id="laporanPdfViewerPage">
+    <div class="overlay-header">
+      <button class="overlay-close" id="laporanPdfViewerClose">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E2E8F0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <span class="overlay-title" id="laporanPdfViewerTitle">Laporan PDF</span>
+      <a id="laporanPdfViewerUnduhBtn" href="#" target="_blank" rel="noopener" style="margin-left:auto; display:flex; align-items:center; gap:5px; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 99px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: #fff; text-decoration:none;">
+        <span class="material-symbols-outlined" style="font-size: 15px;">download</span> Unduh
+      </a>
+    </div>
+    <iframe id="laporanPdfViewerFrame" src="about:blank" style="width:100%; height: calc(100% - 56px); border: none; background: #fff;"></iframe>
+  </div>
+
   <!-- Halaman Penuh: Data Anak Yatim (Program Gopay) -- tabel ringkasan
        SEMUA wilayah, narik LIVE dari YASSA Mobile lewat action
        "getDataAnakYatim" tiap dibuka. Reuse class "overlay" yang sama
@@ -4095,6 +4113,28 @@ function toggleInputSheet() {
 let laporanBulananTahunAktif = new Date().getFullYear();
 let laporanBulananDetailCache = {}; // key "bulan-tahun" -> hasil getLaporanBulananDetail, biar gak fetch ulang tiap buka/tutup accordion yang sama
 let laporanBulananBulanTerbuka = null; // bulan yang accordion-nya lagi kebuka, null kalau semua tertutup
+let laporanBulananBisaUnduh = false; // diisi dari flag "bisaUnduh" balikan server (SUPERADMIN/ADMIN aja) -- dipakai buat nampilin/nyembunyiin tombol "Unduh"
+
+// Buka viewer PDF laporan bulanan (iframe, TANPA download paksa) + siapin
+// tombol "Unduh" di header viewer buat yang emang mau simpan filenya.
+function openLaporanPdfViewer(linkPreviewEncoded, linkUnduhEncoded, judulEncoded) {
+  const linkPreview = decodeURIComponent(linkPreviewEncoded);
+  const linkUnduh = decodeURIComponent(linkUnduhEncoded);
+  const elUnduhBtn = document.getElementById("laporanPdfViewerUnduhBtn");
+  document.getElementById("laporanPdfViewerTitle").textContent = judulEncoded ? decodeURIComponent(judulEncoded) : "Laporan PDF";
+  document.getElementById("laporanPdfViewerFrame").src = linkPreview;
+  // Tombol "Unduh" cuma ditampilin buat SUPERADMIN/ADMIN (laporanBulananBisaUnduh,
+  // diisi dari flag server) -- server juga udah gak ngirim linkUnduh kalau
+  // bukan admin, jadi linkUnduh bakal kosong buat role lain.
+  if (laporanBulananBisaUnduh && linkUnduh) {
+    elUnduhBtn.href = linkUnduh;
+    elUnduhBtn.style.display = "flex";
+  } else {
+    elUnduhBtn.removeAttribute("href");
+    elUnduhBtn.style.display = "none";
+  }
+  document.getElementById("laporanPdfViewerPage").classList.add("open");
+}
 
 function openLaporanBulanan() {
   document.getElementById("laporanBulananPage").classList.add("open");
@@ -4125,6 +4165,10 @@ function renderLaporanBulananList(data) {
   const el = document.getElementById("laporanBulananContent");
   laporanBulananDetailCache = {}; // ganti tahun -> cache lama gak relevan lagi
   const tahun = data.tahun;
+  // Tombol "Unduh" PDF laporan cuma buat SUPERADMIN/ADMIN -- role lain tetap
+  // bisa "Lihat PDF" (preview), server juga udah gak ngirim linkUnduhPdf
+  // kalau bukan admin (lihat getLaporanBulananList di server).
+  laporanBulananBisaUnduh = !!data.bisaUnduh;
 
   let html = `
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 18px;">
@@ -4157,6 +4201,16 @@ function renderLaporanBulananList(data) {
             <span class="material-symbols-outlined laporan-chevron-${b.bulan}-${b.tahun}" style="font-size: 20px; color: var(--text-muted); transition: transform 0.2s;">expand_more</span>
           </div>
         </button>
+        ${b.adaLinkPdf ? `
+        <div style="display:flex; gap: 8px; padding: 0 16px 14px;">
+          <button type="button" onclick="event.stopPropagation(); openLaporanPdfViewer('${encodeURIComponent(b.linkPreviewPdf)}', '${encodeURIComponent(b.linkUnduhPdf)}', '${encodeURIComponent('Laporan ' + b.namaBulan + ' ' + b.tahun)}')" style="flex:1; display:flex; align-items:center; justify-content:center; gap: 6px; font-size: 11px; font-weight: 700; padding: 8px 10px; border-radius: 10px; background: rgba(34,197,94,0.14); border: 1px solid rgba(34,197,94,0.3); color: #86EFAC; cursor:pointer;">
+            <span class="material-symbols-outlined" style="font-size: 15px;">visibility</span> Lihat PDF
+          </button>
+          ${laporanBulananBisaUnduh ? `
+          <a href="${escapeHtmlHub(b.linkUnduhPdf)}" target="_blank" rel="noopener" style="flex:1; display:flex; align-items:center; justify-content:center; gap: 6px; font-size: 11px; font-weight: 700; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: #E2E8F0; text-decoration:none;">
+            <span class="material-symbols-outlined" style="font-size: 15px;">download</span> Unduh
+          </a>` : ''}
+        </div>` : ''}
         <div id="laporanDetail-${b.bulan}-${b.tahun}" style="display:none; padding: 0 16px 16px;"></div>
       </div>`;
   });
@@ -6622,6 +6676,11 @@ document.getElementById("akunPageClose").addEventListener("click", function () {
 
 document.getElementById("laporanBulananClose").addEventListener("click", function () {
   document.getElementById("laporanBulananPage").classList.remove("open");
+});
+
+document.getElementById("laporanPdfViewerClose").addEventListener("click", function () {
+  document.getElementById("laporanPdfViewerPage").classList.remove("open");
+  document.getElementById("laporanPdfViewerFrame").src = "about:blank"; // stop loading pas ditutup
 });
 
 document.getElementById("dataAnakYatimClose").addEventListener("click", function () {
