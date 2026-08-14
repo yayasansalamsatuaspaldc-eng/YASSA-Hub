@@ -4114,6 +4114,7 @@ let laporanBulananTahunAktif = new Date().getFullYear();
 let laporanBulananDetailCache = {}; // key "bulan-tahun" -> hasil getLaporanBulananDetail, biar gak fetch ulang tiap buka/tutup accordion yang sama
 let laporanBulananBulanTerbuka = null; // bulan yang accordion-nya lagi kebuka, null kalau semua tertutup
 let laporanBulananBisaUnduh = false; // diisi dari flag "bisaUnduh" balikan server (SUPERADMIN/ADMIN aja) -- dipakai buat nampilin/nyembunyiin tombol "Unduh"
+let laporanBulananBisaLihat = false; // diisi dari flag "bisaLihat" balikan server (SUPERADMIN/ADMIN aja) -- PDF laporan ada nomor rekening, jadi "Lihat" (preview) DIKUNCI juga buat role lain, bukan cuma "Unduh"
 
 // Buka viewer PDF laporan bulanan (iframe, TANPA download paksa) + siapin
 // tombol "Unduh" di header viewer buat yang emang mau simpan filenya.
@@ -4165,9 +4166,13 @@ function renderLaporanBulananList(data) {
   const el = document.getElementById("laporanBulananContent");
   laporanBulananDetailCache = {}; // ganti tahun -> cache lama gak relevan lagi
   const tahun = data.tahun;
-  // Tombol "Unduh" PDF laporan cuma buat SUPERADMIN/ADMIN -- role lain tetap
-  // bisa "Lihat PDF" (preview), server juga udah gak ngirim linkUnduhPdf
-  // kalau bukan admin (lihat getLaporanBulananList di server).
+  // "Lihat PDF" (preview) DAN "Unduh" dua-duanya cuma buat SUPERADMIN/ADMIN
+  // -- PDF laporan ada nomor rekening, jadi role lain gak boleh buka
+  // sama sekali (bukan cuma dikunci di tombol Unduh doang). Server juga
+  // udah gak ngirim linkPreviewPdf/linkUnduhPdf kalau bukan admin (lihat
+  // getLaporanBulananList di server), jadi ini murni buat nentuin
+  // tampilan UI-nya aja.
+  laporanBulananBisaLihat = !!data.bisaLihat;
   laporanBulananBisaUnduh = !!data.bisaUnduh;
 
   let html = `
@@ -4201,7 +4206,7 @@ function renderLaporanBulananList(data) {
             <span class="material-symbols-outlined laporan-chevron-${b.bulan}-${b.tahun}" style="font-size: 20px; color: var(--text-muted); transition: transform 0.2s;">expand_more</span>
           </div>
         </button>
-        ${b.adaLinkPdf ? `
+        ${b.adaLinkPdf ? (laporanBulananBisaLihat ? `
         <div style="display:flex; gap: 8px; padding: 0 16px 14px;">
           <button type="button" onclick="event.stopPropagation(); openLaporanPdfViewer('${encodeURIComponent(b.linkPreviewPdf)}', '${encodeURIComponent(b.linkUnduhPdf)}', '${encodeURIComponent('Laporan ' + b.namaBulan + ' ' + b.tahun)}')" style="flex:1; display:flex; align-items:center; justify-content:center; gap: 6px; font-size: 11px; font-weight: 700; padding: 8px 10px; border-radius: 10px; background: rgba(34,197,94,0.14); border: 1px solid rgba(34,197,94,0.3); color: #86EFAC; cursor:pointer;">
             <span class="material-symbols-outlined" style="font-size: 15px;">visibility</span> Lihat PDF
@@ -4210,7 +4215,11 @@ function renderLaporanBulananList(data) {
           <a href="${escapeHtmlHub(b.linkUnduhPdf)}" target="_blank" rel="noopener" style="flex:1; display:flex; align-items:center; justify-content:center; gap: 6px; font-size: 11px; font-weight: 700; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: #E2E8F0; text-decoration:none;">
             <span class="material-symbols-outlined" style="font-size: 15px;">download</span> Unduh
           </a>` : ''}
-        </div>` : ''}
+        </div>` : `
+        <div title="Laporan ada, tapi cuma Superadmin/Admin yang boleh buka (isinya ada nomor rekening)." style="display:flex; align-items:center; gap: 7px; margin: 0 16px 14px; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.04); border: 1px dashed var(--glass-border);">
+          <span class="material-symbols-outlined" style="font-size: 15px; color: var(--text-muted); flex-shrink:0;">lock</span>
+          <span style="font-size: 10px; color: var(--text-muted); font-family: monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; user-select:none;">${escapeHtmlHub(b.linkUnduhPdfSensor || 'laporan••••••••••.pdf')}</span>
+        </div>`) : ''}
         <div id="laporanDetail-${b.bulan}-${b.tahun}" style="display:none; padding: 0 16px 16px;"></div>
       </div>`;
   });
