@@ -873,11 +873,27 @@
         var(--bg-navy-deep);
     }
     .login-card {
-      max-width: 460px;
-      min-height: 760px;
+      max-width: 900px;
+      min-height: 560px;
+      flex-direction: row;
       border-radius: 32px;
       box-shadow: var(--shadow-deep), 0 0 120px rgba(59,130,246,0.12), 0 0 60px rgba(168,85,247,0.08);
       border: 1px solid var(--glass-border);
+    }
+    .login-header-bg {
+      width: 45%;
+      height: auto;
+      min-height: 100%;
+      padding-bottom: 0;
+      border-right: 1px solid var(--glass-border-strong);
+    }
+    .login-form-container {
+      width: 55%;
+      justify-content: center;
+      padding: 40px 50px;
+    }
+    .login-header-wave {
+      display: none;
     }
   }
 
@@ -1017,6 +1033,16 @@
 
   .login-input::placeholder {
     color: var(--text-muted);
+  }
+
+  /* Fix background putih dari Autofill browser di tema gelap */
+  .login-input:-webkit-autofill,
+  .login-input:-webkit-autofill:hover, 
+  .login-input:-webkit-autofill:focus, 
+  .login-input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px var(--bg-navy) inset !important;
+    -webkit-text-fill-color: var(--text-primary) !important;
+    transition: background-color 5000s ease-in-out 0s;
   }
 
   .login-field .login-input { padding-right: 40px; }
