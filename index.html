@@ -4391,11 +4391,36 @@ let fdbAnakFotoUrls = {}; // { "1": urlAkteAnak1, "2": urlAkteAnak2, ... }
 let fdbBerkasUrls = {};   // { fcKK: url, fcSuratKematian: url, fcKTP: url, ssAkun: url }
 let fdbWilayahList = [];
 
+// ------------------------------------------------------------
+// STATE ACCORDION -- form dibagi 5 "kartu" (alm/istri/anak/pendukung/
+// berkas) yang bisa dilipat-buka. Kartu berikutnya otomatis kebuka &
+// yang lama otomatis nutup begitu field wajib di kartu itu udah lengkap
+// & user pencet tombol "Lanjut". Kartu yang belum "dicapai" dikunci
+// (gak bisa di-tap) supaya user gak loncat-loncat sebelum bagian
+// sebelumnya lengkap.
+// ------------------------------------------------------------
+const fdbSectionsOrder = ["alm", "istri", "anak", "pendukung", "berkas"];
+let fdbOpenSection = "alm";       // kartu yang lagi kebuka sekarang
+let fdbMaxReachedIndex = 0;       // index terjauh yang sudah "dibuka kuncinya"
+let fdbSectionDone = { alm: false, istri: false, anak: false, pendukung: false, berkas: false };
+
+// Data Anak dipecah jadi sub-langkah per anak (Anak 1 dulu, baru Anak 2,
+// dst) -- karena cuma 1 anak yang tampil di layar dalam satu waktu, nilai
+// anak yang LAGI GAK TAMPIL harus disimpan ke fdbAnakData dulu (lihat
+// fdbSimpanAnakSaatIni_) sebelum pindah ke anak lain, biar gak ilang.
+let fdbAnakData = {};       // { 1: {nama, jk, ttl, kategori, sekolah, prestasi}, 2: {...}, ... }
+let fdbAnakStepIndex = 1;   // anak keberapa yang lagi diisi sekarang
+
 function openFormulirDataBaru() {
   document.getElementById("formulirDataBaruPage").classList.add("open");
   fdbJumlahAnak = 1;
   fdbAnakFotoUrls = {};
   fdbBerkasUrls = {};
+  fdbAnakData = {};
+  fdbAnakStepIndex = 1;
+  fdbOpenSection = "alm";
+  fdbMaxReachedIndex = 0;
+  fdbSectionDone = { alm: false, istri: false, anak: false, pendukung: false, berkas: false };
   renderFormulirDataBaruForm();
 }
 
@@ -4403,21 +4428,40 @@ function closeFormulirDataBaru() {
   document.getElementById("formulirDataBaruPage").classList.remove("open");
 }
 
+// Bikin 1 "kartu" accordion: header (bisa di-tap buka/tutup/dikunci) +
+// body (isi field-fieldnya, disembunyikan lewat display:none, BUKAN
+// dihapus dari DOM -- jadi nilai yang udah diisi user gak pernah ilang
+// walau kartunya lagi ditutup).
+function fdbSectionCard(key, icon, title, bodyHtml, tombolLanjutHtml) {
+  return `
+    <div style="background: var(--glass-strong); border: 1px solid var(--glass-border); border-radius: 16px; margin-bottom: 12px; overflow: hidden;">
+      <div id="fdbHeader-${key}" onclick="fdbToggleSection('${key}')" style="display:flex; align-items:center; gap:8px; padding: 14px 14px; cursor:pointer; user-select:none;">
+        <span class="material-symbols-outlined" style="font-size:17px; color:#F97316;">${icon}</span>
+        <span style="flex:1; font-size:12.5px; font-weight:700; color:#fff;">${title}</span>
+        <span class="material-symbols-outlined" id="fdbCheck-${key}" style="display:none; font-size:18px; color:#22C55E;">check_circle</span>
+        <span class="material-symbols-outlined" id="fdbLock-${key}" style="display:none; font-size:15px; color:var(--text-muted);">lock</span>
+        <span class="material-symbols-outlined" id="fdbChevron-${key}" style="font-size:20px; color:var(--text-muted); transition:transform .2s;">expand_more</span>
+      </div>
+      <div id="fdbBody-${key}" style="display:none; padding: 0 14px 16px;">
+        ${bodyHtml}
+        ${tombolLanjutHtml || ""}
+      </div>
+    </div>`;
+}
+
+function fdbTombolLanjut(key, teks) {
+  return `
+    <button onclick="fdbLanjutSection('${key}')" style="width:100%; margin-top: 6px; padding: 12px; border-radius: 12px; border: none; background: linear-gradient(135deg, #F97316, #EA580C); color: #fff; font-size: 12.5px; font-weight: 700; cursor: pointer;">
+      ${teks} ▶
+    </button>`;
+}
+
 function renderFormulirDataBaruForm() {
   const el = document.getElementById("formulirDataBaruContent");
   const wilayahSaya = String(currentUser.wilayahAkses || "").toUpperCase() === "ALL" ? "" : (currentUser.wilayahAkses || "");
   const bulanTahunSekarang = new Date().toLocaleDateString("id-ID", { month: "long", year: "numeric" });
 
-  el.innerHTML = `
-    <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 18px; line-height: 1.5;">
-      Isi data pengajuan santunan baru Program Gopay untuk periode <b>${bulanTahunSekarang}</b>. Semua kolom bertanda <span style="color:#F87171;">*</span> wajib diisi.
-    </div>
-
-    <div id="fdbFormError" style="display:none; background: rgba(248,113,113,0.12); border: 1px solid rgba(248,113,113,0.3); color: #FCA5A5; font-size: 11.5px; padding: 10px 12px; border-radius: 12px; margin-bottom: 16px;"></div>
-
-    <div style="font-size: 12.5px; font-weight: 700; color: #F97316; margin: 4px 2px 12px; display:flex; align-items:center; gap:6px;">
-      <span class="material-symbols-outlined" style="font-size:16px;">description</span> Data Almarhum
-    </div>
+  const bodyAlm = `
     <div class="user-form-field">
       <label class="user-form-label">Wilayah <span style="color:#F87171;">*</span></label>
       <select id="fdbWilayah" class="user-form-select"><option value="">Memuat wilayah...</option></select>
@@ -4480,11 +4524,9 @@ function renderFormulirDataBaruForm() {
         <option value="Tidak Aktif">Tidak Aktif</option>
         <option value="Tidak Ada">Tidak Ada</option>
       </select>
-    </div>
+    </div>`;
 
-    <div style="font-size: 12.5px; font-weight: 700; color: #F97316; margin: 22px 2px 12px; display:flex; align-items:center; gap:6px;">
-      <span class="material-symbols-outlined" style="font-size:16px;">family_restroom</span> Data Istri/Wali
-    </div>
+  const bodyIstri = `
     <div class="user-form-field">
       <label class="user-form-label">Hubungan Dengan Almarhum <span style="color:#F87171;">*</span></label>
       <select id="fdbHubungan" class="user-form-select">
@@ -4523,20 +4565,17 @@ function renderFormulirDataBaruForm() {
     <div class="user-form-field">
       <label class="user-form-label">Alamat <span style="color:#F87171;">*</span></label>
       <textarea id="fdbAlamat" class="user-form-input" rows="2" style="resize:vertical;"></textarea>
-    </div>
+    </div>`;
 
-    <div style="font-size: 12.5px; font-weight: 700; color: #F97316; margin: 22px 2px 12px; display:flex; align-items:center; gap:6px;">
-      <span class="material-symbols-outlined" style="font-size:16px;">child_care</span> Data Anak
-    </div>
+  const bodyAnak = `
     <div class="user-form-field">
       <label class="user-form-label">Jumlah Anak (penerima santunan) <span style="color:#F87171;">*</span></label>
       <input type="number" id="fdbJumlahAnakInput" class="user-form-input" min="1" max="10" value="1" oninput="fdbUbahJumlahAnak(this.value)">
+      <div class="user-form-hint">Anak diisi satu per satu -- geser "Anak Berikutnya" kalau sudah selesai satu.</div>
     </div>
-    <div id="fdbAnakWrap"></div>
+    <div id="fdbAnakWrap"></div>`;
 
-    <div style="font-size: 12.5px; font-weight: 700; color: #F97316; margin: 22px 2px 12px; display:flex; align-items:center; gap:6px;">
-      <span class="material-symbols-outlined" style="font-size:16px;">account_balance_wallet</span> Data Pendukung (Rekening/E-Wallet)
-    </div>
+  const bodyPendukung = `
     <div class="user-form-field">
       <label class="user-form-label">Nama Bank/E-Wallet <span style="color:#F87171;">*</span></label>
       <input type="text" id="fdbNamaBank" class="user-form-input">
@@ -4557,25 +4596,122 @@ function renderFormulirDataBaruForm() {
         <option value="Nenek/Kakek">Nenek/Kakek</option>
         <option value="Saudara">Saudara</option>
       </select>
-    </div>
+    </div>`;
 
-    <div style="font-size: 12.5px; font-weight: 700; color: #F97316; margin: 22px 2px 12px; display:flex; align-items:center; gap:6px;">
-      <span class="material-symbols-outlined" style="font-size:16px;">folder_zip</span> Berkas (Foto Dokumen)
-    </div>
-    <div style="font-size: 10.5px; color: var(--text-muted); margin: -4px 2px 14px;">Foto akan otomatis tersimpan ke folder Drive yang sudah ditentukan begitu dipilih.</div>
+  const bodyBerkas = `
+    <div style="font-size: 10.5px; color: var(--text-muted); margin: 0 0 14px;">Foto akan otomatis tersimpan ke folder Drive yang sudah ditentukan begitu dipilih.</div>
     ${fdbBerkasField("fcKK", "FC KK", true, "KK")}
     ${fdbBerkasField("fcSuratKematian", "FC Surat Kematian", true, "SURAT_KEMATIAN")}
     ${fdbBerkasField("fcKTP", "FC KTP", true, "KTP")}
     ${fdbBerkasField("ssAkun", "SS Akun (opsional, kalau ada)", false, "")}
-
-    <button id="fdbSubmitBtn" onclick="submitFormulirDataBaru()" style="width:100%; margin-top: 24px; margin-bottom: 40px; padding: 14px; border-radius: 14px; border: none; background: linear-gradient(135deg, #F97316, #EA580C); color: #fff; font-size: 13.5px; font-weight: 700; cursor: pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+    <button id="fdbSubmitBtn" onclick="submitFormulirDataBaru()" style="width:100%; margin-top: 10px; padding: 14px; border-radius: 14px; border: none; background: linear-gradient(135deg, #F97316, #EA580C); color: #fff; font-size: 13.5px; font-weight: 700; cursor: pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
       <span class="material-symbols-outlined" style="font-size:18px;">send</span> Kirim Data
-    </button>
+    </button>`;
+
+  el.innerHTML = `
+    <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 18px; line-height: 1.5;">
+      Isi data pengajuan santunan baru Program Gopay untuk periode <b>${bulanTahunSekarang}</b>, per bagian. Semua kolom bertanda <span style="color:#F87171;">*</span> wajib diisi.
+    </div>
+
+    <div id="fdbFormError" style="display:none; background: rgba(248,113,113,0.12); border: 1px solid rgba(248,113,113,0.3); color: #FCA5A5; font-size: 11.5px; padding: 10px 12px; border-radius: 12px; margin-bottom: 16px;"></div>
+
+    ${fdbSectionCard("alm", "description", "Data Almarhum", bodyAlm, fdbTombolLanjut("alm", "Lanjut ke Data Istri/Wali"))}
+    ${fdbSectionCard("istri", "family_restroom", "Data Istri/Wali", bodyIstri, fdbTombolLanjut("istri", "Lanjut ke Data Anak"))}
+    ${fdbSectionCard("anak", "child_care", "Data Anak", bodyAnak, "")}
+    ${fdbSectionCard("pendukung", "account_balance_wallet", "Data Pendukung (Rekening/E-Wallet)", bodyPendukung, fdbTombolLanjut("pendukung", "Lanjut ke Berkas"))}
+    ${fdbSectionCard("berkas", "folder_zip", "Berkas (Foto Dokumen)", bodyBerkas, "")}
+    <div style="height: 24px;"></div>
   `;
 
   document.getElementById("fdbTglKirim").valueAsDate = new Date();
-  fdbRenderAnakBlocks();
   fdbMuatWilayah(wilayahSaya);
+  fdbRenderAccordionState();
+}
+
+// ------------------------------------------------------------
+// Buka/tutup 1 kartu. Kartu yang belum "dicapai" (index-nya lebih jauh
+// dari fdbMaxReachedIndex) DIKUNCI -- klik gak ngapa-ngapain -- supaya
+// user gak loncat isi Berkas sebelum Data Almarhum kelar misalnya.
+// Kartu yang sudah pernah dicapai/selesai TETAP bisa di-tap kapan aja
+// buat dibuka lagi & dikoreksi.
+// ------------------------------------------------------------
+function fdbToggleSection(key) {
+  const idx = fdbSectionsOrder.indexOf(key);
+  if (idx > fdbMaxReachedIndex) return; // masih terkunci
+  fdbOpenSection = (fdbOpenSection === key) ? null : key;
+  fdbRenderAccordionState();
+}
+
+function fdbRenderAccordionState() {
+  fdbSectionsOrder.forEach(function (key, idx) {
+    const body = document.getElementById("fdbBody-" + key);
+    const chevron = document.getElementById("fdbChevron-" + key);
+    const lock = document.getElementById("fdbLock-" + key);
+    const check = document.getElementById("fdbCheck-" + key);
+    const header = document.getElementById("fdbHeader-" + key);
+    if (!body) return;
+
+    const isOpen = fdbOpenSection === key;
+    const isLocked = idx > fdbMaxReachedIndex;
+    const isDone = !!fdbSectionDone[key];
+
+    body.style.display = isOpen ? "block" : "none";
+    if (chevron) chevron.style.transform = isOpen ? "rotate(180deg)" : "rotate(0deg)";
+    if (check) check.style.display = isDone ? "inline-block" : "none";
+    if (lock) lock.style.display = (isLocked && !isDone) ? "inline-block" : "none";
+    if (header) {
+      header.style.cursor = isLocked ? "default" : "pointer";
+      header.style.opacity = isLocked ? "0.45" : "1";
+    }
+  });
+
+  // Kartu Data Anak butuh render sub-langkah per anak setiap kali kebuka.
+  if (fdbOpenSection === "anak") fdbRenderAnakStep();
+}
+
+// Validasi field wajib di 1 kartu, lalu -- kalau lolos -- tandai selesai,
+// buka kunci kartu berikutnya, tutup kartu ini & buka kartu berikutnya
+// otomatis, terus scroll ke sana.
+function fdbLanjutSection(key) {
+  const val = (id) => (document.getElementById(id).value || "").trim();
+
+  if (key === "alm") {
+    const wajib = [
+      [val("fdbWilayah"), "Wilayah"], [val("fdbTglKirim"), "Tanggal Kirim Data"],
+      [val("fdbNikKK"), "NIK KK"], [val("fdbNikKTP"), "NIK KTP"],
+      [val("fdbNamaAlm"), "Nama Almarhum"], [val("fdbTglWafat"), "Tanggal Wafat"],
+    ];
+    for (const [nilai, label] of wajib) { if (!nilai) return fdbShowSectionError(label); }
+  } else if (key === "istri") {
+    const wajib = [
+      [val("fdbHubungan"), "Hubungan Dengan Almarhum"], [val("fdbNamaKeluarga"), "Nama Keluarga"],
+      [val("fdbNoTlp"), "No Telp"], [val("fdbAlamat"), "Alamat"],
+    ];
+    for (const [nilai, label] of wajib) { if (!nilai) return fdbShowSectionError(label); }
+  } else if (key === "pendukung") {
+    const wajib = [
+      [val("fdbNamaBank"), "Nama Bank/E-Wallet"], [val("fdbNomorRek"), "Nomor Rek/E-Wallet"],
+      [val("fdbAtasNama"), "Atas Nama"],
+    ];
+    for (const [nilai, label] of wajib) { if (!nilai) return fdbShowSectionError(label); }
+  }
+
+  fdbSectionDone[key] = true;
+  const idx = fdbSectionsOrder.indexOf(key);
+  fdbMaxReachedIndex = Math.max(fdbMaxReachedIndex, idx + 1);
+  const nextKey = fdbSectionsOrder[idx + 1];
+  fdbOpenSection = nextKey || null;
+  fdbRenderAccordionState();
+
+  const scrollTarget = document.getElementById("fdbHeader-" + (nextKey || key));
+  if (scrollTarget) scrollTarget.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function fdbShowSectionError(label) {
+  const errEl = document.getElementById("fdbFormError");
+  errEl.textContent = 'Kolom "' + label + '" wajib diisi.';
+  errEl.style.display = "block";
+  errEl.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 function fdbBerkasField(key, label, wajib, jenisDokumen) {
@@ -4593,91 +4729,143 @@ function fdbBerkasField(key, label, wajib, jenisDokumen) {
     </div>`;
 }
 
-// Render ulang blok-blok anak sesuai fdbJumlahAnak, MEMPERTAHANKAN nilai
-// yang udah diisi user di anak-anak yang masih ada (biar gak ke-reset
-// kalau cuma nambah/kurangin jumlah).
-function fdbRenderAnakBlocks() {
+// Simpan nilai anak yang LAGI TAMPIL di layar (index i) ke fdbAnakData,
+// WAJIB dipanggil sebelum pindah ke anak lain atau sebelum submit --
+// soalnya cuma 1 anak yang ada di DOM dalam satu waktu, jadi kalau gak
+// disimpan dulu nilainya bakal ilang pas ganti anak.
+function fdbSimpanAnakSaatIni_(i) {
+  const namaEl = document.getElementById("fdbAnak_nama");
+  if (!namaEl) return; // kartu Data Anak belum pernah dibuka
+  fdbAnakData[i] = {
+    nama: namaEl.value,
+    jk: document.getElementById("fdbAnak_jk").value,
+    ttl: document.getElementById("fdbAnak_ttl").value,
+    kategori: document.getElementById("fdbAnak_kategori").value,
+    sekolah: document.getElementById("fdbAnak_sekolah").value,
+    prestasi: document.getElementById("fdbAnak_prestasi").value,
+  };
+}
+
+// Flush anak yang lagi tampil ke fdbAnakData, lalu balikin semua data
+// anak yang sudah terkumpul (dipakai pas mau pindah anak & pas submit).
+function fdbSemuaNilaiAnak_() {
+  fdbSimpanAnakSaatIni_(fdbAnakStepIndex);
+  return fdbAnakData;
+}
+
+// Render SATU kartu anak (anak ke fdbAnakStepIndex) + dot-indicator +
+// tombol navigasi Sebelumnya/Berikutnya. Dipanggil tiap kali kartu Data
+// Anak kebuka & tiap kali pindah anak/ganti jumlah anak.
+function fdbRenderAnakStep() {
   const wrap = document.getElementById("fdbAnakWrap");
   if (!wrap) return;
 
-  const nilaiLama = fdbAmbilNilaiAnakSaatIni_();
-  let html = "";
-  for (let i = 1; i <= fdbJumlahAnak; i++) {
-    const v = nilaiLama[i] || {};
-    const fotoUrl = fdbAnakFotoUrls[i];
-    html += `
-      <div style="background: var(--glass-strong); border-radius: 16px; padding: 14px; margin-bottom: 12px; border: 1px solid var(--glass-border); border-left: 3px solid #F97316;">
-        <div style="font-size: 11.5px; font-weight: 700; color: #fff; margin-bottom: 10px;">Anak Ke-${i}</div>
-        <div class="user-form-field">
-          <label class="user-form-label">Nama Anak <span style="color:#F87171;">*</span></label>
-          <input type="text" id="fdbAnak_${i}_nama" class="user-form-input" value="${escapeHtmlHub(v.nama || "")}">
+  const i = fdbAnakStepIndex;
+  const v = fdbAnakData[i] || {};
+  const fotoUrl = fdbAnakFotoUrls[i];
+
+  const dots = Array.from({ length: fdbJumlahAnak }, function (_, idx) {
+    const n = idx + 1;
+    let warna = "rgba(255,255,255,0.2)"; // belum diisi
+    if (n === i) warna = "#F97316"; // lagi diisi sekarang
+    else if (fdbAnakData[n] && fdbAnakData[n].nama) warna = "#22C55E"; // sudah diisi
+    return `<span style="width:6px; height:6px; border-radius:50%; background:${warna};"></span>`;
+  }).join("");
+
+  wrap.innerHTML = `
+    <div style="display:flex; align-items:center; justify-content:space-between; margin: 4px 0 10px;">
+      <div style="font-size: 11px; color: var(--text-muted); font-weight:600;">Anak ke-${i} dari ${fdbJumlahAnak}</div>
+      <div style="display:flex; gap:4px;">${dots}</div>
+    </div>
+    <div style="background: var(--glass-strong); border-radius: 16px; padding: 14px; margin-bottom: 12px; border: 1px solid var(--glass-border); border-left: 3px solid #F97316;">
+      <div class="user-form-field">
+        <label class="user-form-label">Nama Anak <span style="color:#F87171;">*</span></label>
+        <input type="text" id="fdbAnak_nama" class="user-form-input" value="${escapeHtmlHub(v.nama || "")}">
+      </div>
+      <div class="user-form-field">
+        <label class="user-form-label">Jenis Kelamin</label>
+        <select id="fdbAnak_jk" class="user-form-select">
+          <option value="Laki-laki" ${v.jk === "Laki-laki" ? "selected" : ""}>Laki-laki</option>
+          <option value="Perempuan" ${v.jk === "Perempuan" ? "selected" : ""}>Perempuan</option>
+        </select>
+      </div>
+      <div class="user-form-field">
+        <label class="user-form-label">TTL Anak (Tempat, Tanggal Lahir)</label>
+        <input type="text" id="fdbAnak_ttl" class="user-form-input" placeholder="Cth: Jakarta, 12-05-2015" value="${escapeHtmlHub(v.ttl || "")}">
+      </div>
+      <div class="user-form-field">
+        <label class="user-form-label">Kategori Anak</label>
+        <select id="fdbAnak_kategori" class="user-form-select">
+          <option value="Yatim" ${v.kategori === "Yatim" ? "selected" : ""}>Yatim</option>
+          <option value="Yatim Piatu" ${v.kategori === "Yatim Piatu" ? "selected" : ""}>Yatim Piatu</option>
+          <option value="Disabilitas" ${v.kategori === "Disabilitas" ? "selected" : ""}>Disabilitas</option>
+        </select>
+      </div>
+      <div class="user-form-field">
+        <label class="user-form-label">Nama Sekolah & Kelas</label>
+        <input type="text" id="fdbAnak_sekolah" class="user-form-input" value="${escapeHtmlHub(v.sekolah || "")}">
+      </div>
+      <div class="user-form-field">
+        <label class="user-form-label">Prestasi Anak</label>
+        <input type="text" id="fdbAnak_prestasi" class="user-form-input" placeholder="-" value="${escapeHtmlHub(v.prestasi || "")}">
+      </div>
+      <div class="user-form-field" style="margin-bottom:0;">
+        <label class="user-form-label">FC Akte Kelahiran Anak Ke-${i}</label>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <label id="fdbAnakFotoBox" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding: 10px; border-radius: 10px; border: 1px dashed rgba(255,255,255,0.25); background: rgba(255,255,255,0.03); cursor:pointer; font-size: 11.5px; color: var(--text-secondary);">
+            <span class="material-symbols-outlined" id="fdbAnakFotoIcon" style="font-size:16px;">${fotoUrl ? "check_circle" : "upload"}</span>
+            <span id="fdbAnakFotoLabel" style="${fotoUrl ? "color:#86EFAC;" : ""}">${fotoUrl ? "Tersimpan ✓" : "Pilih Foto"}</span>
+            <input type="file" accept="image/*" style="display:none;" onchange="fdbPilihFoto(this, {key: 'anak_${i}', jenis: 'AKTA', boxId: 'fdbAnakFotoBox', iconId: 'fdbAnakFotoIcon', labelId: 'fdbAnakFotoLabel', previewId: 'fdbAnakFotoPreview', urutanAnak: ${i}})">
+          </label>
         </div>
-        <div class="user-form-field">
-          <label class="user-form-label">Jenis Kelamin</label>
-          <select id="fdbAnak_${i}_jk" class="user-form-select">
-            <option value="Laki-laki" ${v.jk === "Laki-laki" ? "selected" : ""}>Laki-laki</option>
-            <option value="Perempuan" ${v.jk === "Perempuan" ? "selected" : ""}>Perempuan</option>
-          </select>
-        </div>
-        <div class="user-form-field">
-          <label class="user-form-label">TTL Anak (Tempat, Tanggal Lahir)</label>
-          <input type="text" id="fdbAnak_${i}_ttl" class="user-form-input" placeholder="Cth: Jakarta, 12-05-2015" value="${escapeHtmlHub(v.ttl || "")}">
-        </div>
-        <div class="user-form-field">
-          <label class="user-form-label">Kategori Anak</label>
-          <select id="fdbAnak_${i}_kategori" class="user-form-select">
-            <option value="Yatim" ${v.kategori === "Yatim" ? "selected" : ""}>Yatim</option>
-            <option value="Yatim Piatu" ${v.kategori === "Yatim Piatu" ? "selected" : ""}>Yatim Piatu</option>
-            <option value="Disabilitas" ${v.kategori === "Disabilitas" ? "selected" : ""}>Disabilitas</option>
-          </select>
-        </div>
-        <div class="user-form-field">
-          <label class="user-form-label">Nama Sekolah & Kelas</label>
-          <input type="text" id="fdbAnak_${i}_sekolah" class="user-form-input" value="${escapeHtmlHub(v.sekolah || "")}">
-        </div>
-        <div class="user-form-field">
-          <label class="user-form-label">Prestasi Anak</label>
-          <input type="text" id="fdbAnak_${i}_prestasi" class="user-form-input" placeholder="-" value="${escapeHtmlHub(v.prestasi || "")}">
-        </div>
-        <div class="user-form-field" style="margin-bottom:0;">
-          <label class="user-form-label">FC Akte Kelahiran Anak Ke-${i}</label>
-          <div style="display:flex; align-items:center; gap:10px;">
-            <label id="fdbAnakFotoBox_${i}" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding: 10px; border-radius: 10px; border: 1px dashed rgba(255,255,255,0.25); background: rgba(255,255,255,0.03); cursor:pointer; font-size: 11.5px; color: var(--text-secondary);">
-              <span class="material-symbols-outlined" id="fdbAnakFotoIcon_${i}" style="font-size:16px;">${fotoUrl ? "check_circle" : "upload"}</span>
-              <span id="fdbAnakFotoLabel_${i}" style="${fotoUrl ? "color:#86EFAC;" : ""}">${fotoUrl ? "Tersimpan ✓" : "Pilih Foto"}</span>
-              <input type="file" accept="image/*" style="display:none;" onchange="fdbPilihFoto(this, {key: 'anak_${i}', jenis: 'AKTA', boxId: 'fdbAnakFotoBox_${i}', iconId: 'fdbAnakFotoIcon_${i}', labelId: 'fdbAnakFotoLabel_${i}', previewId: 'fdbAnakFotoPreview_${i}', urutanAnak: ${i}})">
-            </label>
-          </div>
-          <img id="fdbAnakFotoPreview_${i}" style="display:${fotoUrl ? "block" : "none"}; width:100%; max-height:160px; object-fit:contain; border-radius: 10px; margin-top:8px; border: 2px solid ${fotoUrl ? "#22C55E" : "transparent"}; background:#0B1220;" ${fotoUrl ? `src="${fotoUrl}"` : ""}>
-        </div>
-      </div>`;
-  }
-  wrap.innerHTML = html;
+        <img id="fdbAnakFotoPreview" style="display:${fotoUrl ? "block" : "none"}; width:100%; max-height:160px; object-fit:contain; border-radius: 10px; margin-top:8px; border: 2px solid ${fotoUrl ? "#22C55E" : "transparent"}; background:#0B1220;" ${fotoUrl ? `src="${fotoUrl}"` : ""}>
+      </div>
+    </div>
+    <div style="display:flex; gap:10px;">
+      ${i > 1 ? `<button onclick="fdbAnakSebelumnya()" style="flex:1; padding:12px; border-radius:12px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.04); color:var(--text-secondary); font-size:12.5px; font-weight:600; cursor:pointer;">◀ Sebelumnya</button>` : ""}
+      <button onclick="fdbAnakBerikutnya()" style="flex:2; padding:12px; border-radius:12px; border:none; background:linear-gradient(135deg,#F97316,#EA580C); color:#fff; font-size:12.5px; font-weight:700; cursor:pointer;">
+        ${i >= fdbJumlahAnak ? "Selesai Data Anak" : "Anak Berikutnya"} ▶
+      </button>
+    </div>`;
 }
 
-function fdbAmbilNilaiAnakSaatIni_() {
-  const out = {};
-  for (let i = 1; i <= 10; i++) {
-    const nama = document.getElementById("fdbAnak_" + i + "_nama");
-    if (!nama) continue;
-    out[i] = {
-      nama: nama.value,
-      jk: document.getElementById("fdbAnak_" + i + "_jk").value,
-      ttl: document.getElementById("fdbAnak_" + i + "_ttl").value,
-      kategori: document.getElementById("fdbAnak_" + i + "_kategori").value,
-      sekolah: document.getElementById("fdbAnak_" + i + "_sekolah").value,
-      prestasi: document.getElementById("fdbAnak_" + i + "_prestasi").value,
-    };
+// Pindah ke anak nomor `newIndex` -- simpan dulu anak yang lagi tampil,
+// baru render anak yang dituju.
+function fdbAnakGoto_(newIndex) {
+  fdbSimpanAnakSaatIni_(fdbAnakStepIndex);
+  if (newIndex < 1) newIndex = 1;
+  if (newIndex > fdbJumlahAnak) newIndex = fdbJumlahAnak;
+  fdbAnakStepIndex = newIndex;
+  fdbRenderAnakStep();
+}
+
+function fdbAnakSebelumnya() {
+  fdbAnakGoto_(fdbAnakStepIndex - 1);
+}
+
+// Validasi Nama Anak yang lagi tampil dulu -- kalau ini anak TERAKHIR &
+// lolos, otomatis nutup kartu Data Anak & buka kartu Data Pendukung
+// (behave sama kayak fdbLanjutSection buat kartu-kartu lain).
+function fdbAnakBerikutnya() {
+  const nama = (document.getElementById("fdbAnak_nama").value || "").trim();
+  if (!nama) return fdbShowSectionError("Nama Anak Ke-" + fdbAnakStepIndex);
+
+  if (fdbAnakStepIndex >= fdbJumlahAnak) {
+    fdbSimpanAnakSaatIni_(fdbAnakStepIndex);
+    fdbLanjutSection("anak");
+    return;
   }
-  return out;
+  fdbAnakGoto_(fdbAnakStepIndex + 1);
 }
 
 function fdbUbahJumlahAnak(val) {
   let n = parseInt(val, 10);
   if (!n || n < 1) n = 1;
   if (n > 10) n = 10;
+  fdbSimpanAnakSaatIni_(fdbAnakStepIndex);
   fdbJumlahAnak = n;
-  fdbRenderAnakBlocks();
+  if (fdbAnakStepIndex > n) fdbAnakStepIndex = n;
+  fdbRenderAnakStep();
 }
 
 function fdbMuatWilayah(wilayahSaya) {
@@ -4844,7 +5032,7 @@ function submitFormulirDataBaru() {
     pemilikRek: val("fdbPemilikRek"),
   };
 
-  const nilaiAnak = fdbAmbilNilaiAnakSaatIni_();
+  const nilaiAnak = fdbSemuaNilaiAnak_();
   const anakList = [];
   for (let i = 1; i <= fdbJumlahAnak; i++) {
     const v = nilaiAnak[i] || {};
