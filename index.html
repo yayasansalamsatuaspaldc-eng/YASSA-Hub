@@ -4952,7 +4952,11 @@ function fdbPilihFoto(input, opts) {
   reader.onload = function (e) {
     const base64Data = e.target.result.split(",")[1];
 
-    callGASWithRetry_("cekKualitasFotoAI", [base64Data, opts.jenis || ""])
+    // timeoutMs dinaikin (default 8 detik terlalu singkat) -- Gemini
+    // kadang butuh beberapa detik + backend punya retry sendiri kalau
+    // server AI lagi sibuk, jadi 1 kali panggilan bisa makan waktu lebih
+    // dari 8 detik walau prosesnya normal & bakal berhasil.
+    callGASWithRetry_("cekKualitasFotoAI", [base64Data, opts.jenis || ""], { timeoutMs: 25000 })
       .then(function (hasilAI) {
         if (!hasilAI || hasilAI.status !== "SUKSES") {
           const pesan = (hasilAI && hasilAI.pesan) || "Foto ditolak sistem, silakan foto ulang.";
@@ -4963,7 +4967,7 @@ function fdbPilihFoto(input, opts) {
 
         // Lolos verifikasi AI -> lanjut upload beneran ke Drive.
         if (label) label.textContent = "Mengunggah...";
-        return callGASWithRetry_("uploadFileFormulirDataBaru", [authToken, base64Data, file.type, file.name]);
+        return callGASWithRetry_("uploadFileFormulirDataBaru", [authToken, base64Data, file.type, file.name], { timeoutMs: 20000 });
       })
       .then(function (resUpload) {
         if (!resUpload) return; // udah dihentikan di step AI gagal
