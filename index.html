@@ -2031,9 +2031,24 @@ function callGASWithRetry_(action, args, opts) {
 
   function sekaliCoba(attempt) {
     const controller = new AbortController();
-    const timer = setTimeout(function () { controller.abort(); }, timeoutMs);
+    let timer;
 
-    return fetch(GAS_AUTH_URL, {
+    // 🩹 FIX (spinner nyangkut selamanya di jaringan super lambat/WebView
+    // tertentu): controller.abort() doang KADANG gak beneran mutusin fetch
+    // yang lagi nyangkut (tergantung dukungan AbortController di WebView
+    // pembungkus app) -- akibatnya promise gak pernah reject, timeout gak
+    // efektif, dan retry/pesan error di atas gak pernah kepicu. Makanya di
+    // sini timeout dibikin TIDAK bergantung sama nasib fetch()-nya sendiri:
+    // dipasang lewat Promise.race dengan promise timer terpisah yang PASTI
+    // reject setelah timeoutMs, siapa pun yang menang duluan.
+    const timeoutPromise = new Promise(function (_, reject) {
+      timer = setTimeout(function () {
+        try { controller.abort(); } catch (e) {}
+        reject(new Error("Waktu tunggu habis (koneksi lambat)."));
+      }, timeoutMs);
+    });
+
+    const fetchPromise = fetch(GAS_AUTH_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain" },
       body: JSON.stringify({ action: action, args: args || [] }),
@@ -2052,6 +2067,8 @@ function callGASWithRetry_(action, args, opts) {
         return res._dibungkus ? res.data : res;
       })
       .finally(function () { clearTimeout(timer); });
+
+    return Promise.race([fetchPromise, timeoutPromise]);
   }
 
   return new Promise(function (resolve, reject) {
@@ -4148,10 +4165,16 @@ function loadLaporanBulananList(tahun) {
   const el = document.getElementById("laporanBulananContent");
   el.innerHTML = `
     <div style="display:flex; align-items:center; justify-content:center; padding: 60px 0; color: var(--text-secondary); font-size: 12.5px; gap: 8px;">
-      <span class="material-symbols-outlined spin" style="font-size: 18px;">progress_activity</span> Merangkum jejak amanah donasi kita...
+      <span class="material-symbols-outlined spin" style="font-size: 18px;">progress_activity</span> <span id="laporanBulananLoadingText">Merangkum jejak amanah donasi kita...</span>
     </div>`;
 
-  callGASWithRetry_("getLaporanBulananList", [authToken, tahun])
+  callGASWithRetry_("getLaporanBulananList", [authToken, tahun], {
+    timeoutMs: 12000,
+    onRetry: function (attempt, maxAttempts) {
+      const teksEl = document.getElementById("laporanBulananLoadingText");
+      if (teksEl) teksEl.textContent = "Koneksi lambat, mencoba lagi... (" + attempt + "/" + maxAttempts + ")";
+    },
+  })
     .then(function (data) { renderLaporanBulananList(data); })
     .catch(function (err) {
       el.innerHTML = `
@@ -4216,9 +4239,15 @@ function renderLaporanBulananList(data) {
             <span class="material-symbols-outlined" style="font-size: 15px;">download</span> Unduh
           </a>` : ''}
         </div>` : `
-        <div title="Laporan ada, tapi cuma Superadmin/Admin yang boleh buka (isinya ada nomor rekening)." style="display:flex; align-items:center; gap: 7px; margin: 0 16px 14px; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.04); border: 1px dashed var(--glass-border);">
-          <span class="material-symbols-outlined" style="font-size: 15px; color: var(--text-muted); flex-shrink:0;">lock</span>
-          <span style="font-size: 10px; color: var(--text-muted); font-family: monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; user-select:none;">${escapeHtmlHub(b.linkUnduhPdfSensor || 'laporan••••••••••.pdf')}</span>
+        <div title="Laporan ada, tapi cuma Superadmin/Admin yang boleh buka (isinya ada nomor rekening)." style="margin: 0 16px 14px; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.04); border: 1px dashed var(--glass-border);">
+          <div style="display:flex; align-items:center; gap: 5px; margin-bottom: 4px;">
+            <span class="material-symbols-outlined" style="font-size: 12px; color: var(--text-muted); flex-shrink:0;">cloud</span>
+            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.3px; color: var(--text-muted); text-transform: uppercase;">Tersimpan di Cloud</span>
+          </div>
+          <div style="display:flex; align-items:center; gap: 7px;">
+            <span class="material-symbols-outlined" style="font-size: 15px; color: var(--text-muted); flex-shrink:0;">lock</span>
+            <span style="font-size: 10px; color: var(--text-muted); font-family: monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; user-select:none;">${escapeHtmlHub(b.linkUnduhPdfSensor || 'laporan••••••••••.pdf')}</span>
+          </div>
         </div>`) : ''}
         <div id="laporanDetail-${b.bulan}-${b.tahun}" style="display:none; padding: 0 16px 16px;"></div>
       </div>`;
@@ -4250,9 +4279,15 @@ function toggleLaporanBulananDetail(bulan, tahun) {
     return;
   }
 
-  wrap.innerHTML = `<div style="padding: 16px 0; text-align:center; color: var(--text-secondary); font-size: 11.5px;"><span class="material-symbols-outlined spin" style="font-size: 15px; vertical-align: middle;">progress_activity</span> Membuka berkah bulan ini...</div>`;
+  wrap.innerHTML = `<div style="padding: 16px 0; text-align:center; color: var(--text-secondary); font-size: 11.5px;"><span class="material-symbols-outlined spin" style="font-size: 15px; vertical-align: middle;">progress_activity</span> <span id="laporanDetailLoadingText-${key}">Membuka berkah bulan ini...</span></div>`;
 
-  callGASWithRetry_("getLaporanBulananDetail", [authToken, bulan, tahun])
+  callGASWithRetry_("getLaporanBulananDetail", [authToken, bulan, tahun], {
+    timeoutMs: 12000,
+    onRetry: function (attempt, maxAttempts) {
+      const teksEl = document.getElementById("laporanDetailLoadingText-" + key);
+      if (teksEl) teksEl.textContent = "Koneksi lambat, mencoba lagi... (" + attempt + "/" + maxAttempts + ")";
+    },
+  })
     .then(function (detail) {
       laporanBulananDetailCache[key] = detail;
       // Cek masih ada dibuka & masih bulan yang sama -- cegah race condition
