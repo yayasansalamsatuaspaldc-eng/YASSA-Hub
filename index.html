@@ -4726,6 +4726,7 @@ function fdbPilihFoto(input, opts) {
   const icon = document.getElementById(opts.iconId);
   const label = document.getElementById(opts.labelId);
   const preview = document.getElementById(opts.previewId);
+  const btnSubmit = document.getElementById("fdbSubmitBtn");
 
   function resetKotak(pesanLabel) {
     input.value = "";
@@ -4733,6 +4734,7 @@ function fdbPilihFoto(input, opts) {
     if (icon) icon.textContent = "upload";
     if (label) { label.textContent = pesanLabel || "Pilih Foto"; label.style.color = ""; }
     if (preview) { preview.style.display = "none"; preview.src = ""; preview.style.borderColor = "transparent"; }
+    if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.style.opacity = "1"; }
   }
 
   if (!file.type || file.type.indexOf("image/") !== 0) {
@@ -4751,6 +4753,12 @@ function fdbPilihFoto(input, opts) {
   if (box) { box.style.pointerEvents = "none"; box.style.opacity = "0.6"; }
   if (icon) icon.textContent = "hourglass_top";
   if (label) label.textContent = "⏳ Tunggu sebentar, dokumen sedang dibaca AI...";
+
+  // Kunci tombol Kirim Data utama selama AI bekerja
+  if (btnSubmit) {
+    btnSubmit.disabled = true;
+    btnSubmit.style.opacity = "0.5";
+  }
 
   const reader = new FileReader();
   reader.onload = function (e) {
@@ -4789,6 +4797,13 @@ function fdbPilihFoto(input, opts) {
         if (err && err.message === "__AI_GAGAL__") return; // sudah ditangani di atas
         showModal("Gagal", "Gagal memproses foto: " + String(err && err.message || err));
         resetKotak();
+      })
+      .finally(function () {
+        // Buka kembali tombol Kirim Data setelah semua proses (berhasil/gagal) selesai
+        if (btnSubmit) {
+          btnSubmit.disabled = false;
+          btnSubmit.style.opacity = "1";
+        }
       });
   };
   reader.readAsDataURL(file);
