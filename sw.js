@@ -1,9 +1,9 @@
-// Service worker sederhana untuk YASSA Hub.
+// Service worker sederhana untuk YASSA GOPAY.
 // Hanya nge-cache "app shell" (index.html, manifest, ikon) supaya app tetap
 // bisa kebuka meski koneksi lagi jelek. Konten di dalam iframe (Kotak & Donasi,
 // Absensi, AWG, Penerima Manfaat) TETAP butuh internet karena itu app terpisah.
 
-const CACHE_NAME = "yassa-hub-shell-v7";
+const CACHE_NAME = "yassa-GOPAY-shell-v8";
 const SHELL_FILES = [
   "./",
   "./index.html",
