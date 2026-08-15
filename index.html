@@ -1489,6 +1489,10 @@
         <div class="bell" id="manualRefreshBtn" onclick="forceRefreshApp()" title="Segarkan Aplikasi" aria-label="Segarkan Aplikasi">
           <svg id="manualRefreshIcon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
         </div>
+        <div class="bell" id="kalenderBellBtn" onclick="openKalenderKegiatan()" title="Kalender Kegiatan" aria-label="Kalender Kegiatan">
+          <span class="material-symbols-outlined" style="font-size: 19px;">calendar_month</span>
+          <span class="bell-badge-dot" id="kalenderBellBadge" style="display:none;"></span>
+        </div>
         <div class="bell" id="notifBellBtn" onclick="showNotifikasiModal()" title="Notifikasi" aria-label="Notifikasi">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
           <span class="bell-badge-dot" id="notifBellBadge"></span>
@@ -1688,6 +1692,51 @@
     <div class="akun-content" id="dataAnakYatimContent"></div>
   </div>
 
+  <!-- Halaman Penuh: Kalender Kegiatan -- jadwal santunan/rapat/event.
+       Bisa dibuka dari ikon kalender di header (semua tab) atau dari
+       card "Agenda Mendatang" di Beranda. Reuse class "overlay" yang
+       sama (otomatis kena tombol back fisik Android). -->
+  <div class="overlay" id="kalenderKegiatanPage">
+    <div class="overlay-header">
+      <button class="overlay-close" id="kalenderKegiatanClose">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E2E8F0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <span class="overlay-title">Kalender Kegiatan</span>
+    </div>
+    <div class="akun-content" id="kalenderKegiatanContent" style="padding-top: 16px;">
+
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+        <button class="gtap" onclick="navigasiKalenderBulan(-1)" style="background:rgba(255,255,255,0.06); border:1px solid var(--glass-border); border-radius:10px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+          <span class="material-symbols-outlined" style="font-size:18px; color:#fff;">chevron_left</span>
+        </button>
+        <span id="kalenderBulanLabel" style="font-size:13.5px; font-weight:700;">-</span>
+        <button class="gtap" onclick="navigasiKalenderBulan(1)" style="background:rgba(255,255,255,0.06); border:1px solid var(--glass-border); border-radius:10px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+          <span class="material-symbols-outlined" style="font-size:18px; color:#fff;">chevron_right</span>
+        </button>
+      </div>
+
+      <div id="kalenderFilterChips" style="display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap;"></div>
+
+      <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; text-align:center; margin-bottom:6px;">
+        <span style="font-size:9.5px; color:var(--text-muted);">S</span><span style="font-size:9.5px; color:var(--text-muted);">S</span><span style="font-size:9.5px; color:var(--text-muted);">R</span><span style="font-size:9.5px; color:var(--text-muted);">K</span><span style="font-size:9.5px; color:var(--text-muted);">J</span><span style="font-size:9.5px; color:var(--text-muted);">S</span><span style="font-size:9.5px; color:var(--text-muted);">M</span>
+      </div>
+      <div id="kalenderMiniGrid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:18px;"></div>
+
+      <div style="height:1px; background:var(--glass-border); margin-bottom:16px;"></div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span style="color:var(--text-secondary); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.3px;">Agenda bulan ini</span>
+        <button class="gtap" id="kalenderTambahBtn" onclick="openKegiatanForm(null)" style="display:none; align-items:center; gap:4px; background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.35); color:#4ADE80; font-size:11px; font-weight:700; padding:6px 12px; border-radius:99px; cursor:pointer;">
+          <span class="material-symbols-outlined" style="font-size:14px;">add</span> Tambah
+        </button>
+      </div>
+      <div id="kalenderAgendaList" style="display:flex; flex-direction:column; gap:10px; padding-bottom:20px;">
+        <div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 20px 0;">Memuat agenda…</div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- Halaman Penuh: Formulir Data Baru GOPAY (input data Alm/Keluarga/Anak
        buat pengajuan santunan baru) -- cuma dipicu dari kartu di tab Profil
        yang cuma tampil buat SUPERADMIN/ADMIN/KORWIL (lihat renderProfilTab).
@@ -1768,6 +1817,58 @@
         <div class="user-form-danger-zone" id="ufDangerZone" style="display:none;">
           <button type="button" class="btn-form-reset" onclick="resetUserPassword()">Reset Password</button>
           <button type="button" class="btn-form-toggle" id="ufToggleStatusBtn" onclick="toggleUserStatus()">Nonaktifkan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Form Tambah/Edit Kegiatan (Kalender) -- SUPERADMIN/ADMIN aja yang
+       bisa buka (tombol "Tambah" & tombol edit di detail cuma nongol
+       buat role itu, lihat renderKalenderTambahBtnVisibility_ &
+       openKegiatanDetail). Reuse class "user-form-overlay" yang sama
+       kayak form User biar konsisten & otomatis kena OVERLAY_OPEN_SELECTOR. -->
+  <div class="user-form-overlay" id="kegiatanFormOverlay" onclick="if(event.target===this) closeKegiatanForm()">
+    <div class="user-form-sheet">
+      <div class="user-form-title" id="kegiatanFormTitle">Tambah Kegiatan</div>
+      <form id="kegiatanForm" onsubmit="submitKegiatanForm(event)">
+        <div class="user-form-field">
+          <label class="user-form-label">Judul Kegiatan</label>
+          <input type="text" id="kfJudul" class="user-form-input" required placeholder="Misal: Penyaluran santunan wilayah Barat">
+        </div>
+        <div class="user-form-field">
+          <label class="user-form-label">Jenis</label>
+          <select id="kfJenis" class="user-form-select">
+            <option value="santunan">Santunan</option>
+            <option value="rapat">Rapat</option>
+            <option value="event">Event</option>
+          </select>
+        </div>
+        <div class="user-form-field">
+          <label class="user-form-label">Tanggal</label>
+          <input type="date" id="kfTanggal" class="user-form-input" required>
+        </div>
+        <div class="user-form-field">
+          <label class="user-form-label">Jam</label>
+          <input type="text" id="kfJam" class="user-form-input" placeholder="Misal: 09.00">
+        </div>
+        <div class="user-form-field">
+          <label class="user-form-label">Lokasi</label>
+          <input type="text" id="kfLokasi" class="user-form-input" placeholder="Misal: Sekretariat YASSA / Online (Meet)">
+        </div>
+        <div class="user-form-field">
+          <label class="user-form-label">Wilayah</label>
+          <select id="kfWilayah" class="user-form-select">
+            <option value="ALL">Semua Wilayah</option>
+          </select>
+          <div class="user-form-hint">Pilih wilayah tertentu kalau kegiatan cuma relevan buat 1 wilayah, atau "Semua Wilayah" kalau nasional.</div>
+        </div>
+        <div class="user-form-field">
+          <label class="user-form-label">Deskripsi (opsional)</label>
+          <textarea id="kfDeskripsi" class="user-form-input" rows="3" style="resize:vertical;" placeholder="Catatan tambahan..."></textarea>
+        </div>
+        <div class="user-form-actions">
+          <button type="button" class="btn-form-cancel" onclick="closeKegiatanForm()">Batal</button>
+          <button type="submit" class="btn-form-save" id="kfSaveBtn">Simpan</button>
         </div>
       </form>
     </div>
@@ -3646,6 +3747,17 @@ function renderContent() {
         </div>
       </div>
 
+      <!-- Agenda Mendatang (Kalender Kegiatan) -->
+      <div style="background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid #22C55E;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <h3 style="font-size: 14px; font-weight: 600; margin: 0;">Agenda Mendatang</h3>
+          <a href="#" style="font-size: 11.5px; color: var(--neon-blue); text-decoration: none;" onclick="openKalenderKegiatan(); return false;">Lihat Semua</a>
+        </div>
+        <div id="agendaMendatangList" style="display: flex; flex-direction: column; gap: 10px;">
+          <div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 12px 0;">Memuat agenda…</div>
+        </div>
+      </div>
+
       <!-- Aktivitas Terbaru -->
       <div style="background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid #F97316;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
@@ -3662,6 +3774,7 @@ function renderContent() {
     el.innerHTML = html;
     loadBerandaStats();
     loadDataAnakYatimPreviewBeranda();
+    loadAgendaMendatangBeranda();
     return;
   }
 
@@ -4875,6 +4988,294 @@ function fdbTombolLanjut(key, teks) {
     <button onclick="fdbLanjutSection('${key}')" style="width:100%; margin-top: 6px; padding: 12px; border-radius: 12px; border: none; background: linear-gradient(135deg, #F97316, #EA580C); color: #fff; font-size: 12.5px; font-weight: 700; cursor: pointer;">
       ${teks} ▶
     </button>`;
+}
+
+// ============================================================
+// 📅 KALENDER KEGIATAN -- jadwal santunan/rapat/event. Dibuka dari ikon
+// header (semua tab) atau card "Agenda Mendatang" di Beranda. Data
+// difilter wilayah otomatis di backend (getKegiatanBulan/Mendatang),
+// jadi frontend tinggal render apa yang dibalikin server.
+// ============================================================
+const KEGIATAN_JENIS_META = {
+  santunan: { label: "Santunan", warna: "#4ADE80", bg: "rgba(34,197,94,0.15)" },
+  rapat: { label: "Rapat", warna: "#60A5FA", bg: "rgba(59,130,246,0.15)" },
+  event: { label: "Event", warna: "#C084FC", bg: "rgba(168,85,247,0.15)" },
+};
+const BULAN_LABEL = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+let kalenderBulanAktif = new Date().getMonth() + 1;
+let kalenderTahunAktif = new Date().getFullYear();
+let kalenderFilterJenisAktif = "semua";
+let kalenderBulanCache = []; // hasil getKegiatanBulan buat bulan aktif, biar filter chip gak fetch ulang
+let editingKegiatanId = null;
+
+function bisaKelolaKegiatan_() {
+  return currentUser && ["SUPERADMIN", "ADMIN"].indexOf(currentUser.role) !== -1;
+}
+
+function openKalenderKegiatan() {
+  closeUserMenu();
+  document.getElementById("kalenderKegiatanPage").classList.add("open");
+  document.getElementById("kalenderTambahBtn").style.display = bisaKelolaKegiatan_() ? "flex" : "none";
+  renderKalenderFilterChips();
+  loadKalenderBulanData();
+}
+
+function navigasiKalenderBulan(delta) {
+  kalenderBulanAktif += delta;
+  if (kalenderBulanAktif > 12) { kalenderBulanAktif = 1; kalenderTahunAktif++; }
+  if (kalenderBulanAktif < 1) { kalenderBulanAktif = 12; kalenderTahunAktif--; }
+  loadKalenderBulanData();
+}
+
+function renderKalenderFilterChips() {
+  const el = document.getElementById("kalenderFilterChips");
+  const jenisList = [{ key: "semua", label: "Semua" }].concat(
+    Object.keys(KEGIATAN_JENIS_META).map(function (k) { return { key: k, label: KEGIATAN_JENIS_META[k].label }; })
+  );
+  el.innerHTML = jenisList.map(function (j) {
+    const aktif = kalenderFilterJenisAktif === j.key;
+    const meta = KEGIATAN_JENIS_META[j.key];
+    const bg = aktif ? (meta ? meta.bg : "rgba(255,255,255,0.12)") : "rgba(255,255,255,0.05)";
+    const warna = aktif ? (meta ? meta.warna : "#fff") : "var(--text-secondary)";
+    return `<button class="gtap" onclick="filterKalenderJenis('${j.key}')" style="font-size:10.5px; font-weight:700; padding:5px 12px; border-radius:99px; background:${bg}; color:${warna}; border:1px solid ${aktif ? warna : "var(--glass-border)"}; cursor:pointer;">${j.label}</button>`;
+  }).join("");
+}
+
+function filterKalenderJenis(jenis) {
+  kalenderFilterJenisAktif = jenis;
+  renderKalenderFilterChips();
+  renderKalenderAgendaList(kalenderBulanCache);
+}
+
+function loadKalenderBulanData() {
+  document.getElementById("kalenderBulanLabel").textContent = BULAN_LABEL[kalenderBulanAktif - 1] + " " + kalenderTahunAktif;
+  document.getElementById("kalenderAgendaList").innerHTML = `
+    <div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 20px 0;">Memuat agenda…</div>`;
+  document.getElementById("kalenderMiniGrid").innerHTML = "";
+
+  callGASWithRetry_("getKegiatanBulan", [authToken, kalenderBulanAktif, kalenderTahunAktif])
+    .then(function (data) {
+      kalenderBulanCache = data || [];
+      renderKalenderMiniGrid(kalenderBulanCache);
+      renderKalenderAgendaList(kalenderBulanCache);
+    })
+    .catch(function (err) {
+      document.getElementById("kalenderAgendaList").innerHTML = `
+        <div style="padding: 30px 20px; text-align: center; color: var(--text-secondary); font-size: 12.5px;">
+          Gagal memuat kalender: ${escapeHtmlHub(String(err && err.message || err))}
+          <br><button onclick="loadKalenderBulanData()" style="margin-top: 14px; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 99px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; cursor: pointer;">Coba Lagi</button>
+        </div>`;
+    });
+}
+
+function renderKalenderMiniGrid(data) {
+  const grid = document.getElementById("kalenderMiniGrid");
+  const jumlahHari = new Date(kalenderTahunAktif, kalenderBulanAktif, 0).getDate();
+  const hariPertama = new Date(kalenderTahunAktif, kalenderBulanAktif - 1, 1).getDay(); // 0=Minggu
+  const offset = hariPertama === 0 ? 6 : hariPertama - 1; // geser biar Senin di kolom pertama
+
+  const warnaPerTanggal = {};
+  data.forEach(function (k) {
+    if (!k.tanggal) return;
+    const d = new Date(k.tanggal);
+    const meta = KEGIATAN_JENIS_META[k.jenis];
+    warnaPerTanggal[d.getDate()] = meta ? meta.warna : "#94A3B8";
+  });
+
+  const now = new Date();
+  const isBulanIni = now.getMonth() + 1 === kalenderBulanAktif && now.getFullYear() === kalenderTahunAktif;
+
+  let html = "";
+  for (let i = 0; i < offset; i++) html += "<div></div>";
+  for (let d = 1; d <= jumlahHari; d++) {
+    const isHariIni = isBulanIni && now.getDate() === d;
+    const dot = warnaPerTanggal[d];
+    html += `
+      <div style="display:flex; flex-direction:column; align-items:center; gap:2px; padding:4px 0; border-radius:8px; ${isHariIni ? "background:rgba(34,197,94,0.15);" : ""}">
+        <span style="font-size:11px; color:${isHariIni ? "#4ADE80" : "#CBD5E1"}; font-weight:${isHariIni ? "700" : "400"};">${d}</span>
+        <span style="width:4px; height:4px; border-radius:50%; background:${dot || "transparent"};"></span>
+      </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function renderKalenderAgendaList(data) {
+  const el = document.getElementById("kalenderAgendaList");
+  const filtered = (data || []).filter(function (k) {
+    return kalenderFilterJenisAktif === "semua" || k.jenis === kalenderFilterJenisAktif;
+  });
+
+  if (!filtered.length) {
+    el.innerHTML = `<div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 30px 0;">Belum ada agenda bulan ini.</div>`;
+    return;
+  }
+
+  el.innerHTML = filtered.map(function (k) {
+    const meta = KEGIATAN_JENIS_META[k.jenis] || { label: k.jenis, warna: "#94A3B8", bg: "rgba(255,255,255,0.08)" };
+    const tgl = k.tanggal ? new Date(k.tanggal) : null;
+    const tglNum = tgl ? tgl.getDate() : "-";
+    const tglBulan = tgl ? BULAN_LABEL[tgl.getMonth()].substring(0, 3).toUpperCase() : "";
+    return `
+      <div class="gtap" onclick="openKegiatanDetail('${k.id}')" style="display:flex; gap:10px; background:rgba(255,255,255,0.04); border:1px solid var(--glass-border); border-radius:14px; padding:10px 12px; align-items:center; cursor:pointer;">
+        <div style="width:38px; height:38px; border-radius:10px; background:${meta.bg}; display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0;">
+          <span style="color:${meta.warna}; font-size:13px; font-weight:700; line-height:1;">${tglNum}</span>
+          <span style="color:${meta.warna}; font-size:8px; line-height:1;">${tglBulan}</span>
+        </div>
+        <div style="flex:1; min-width:0;">
+          <div style="color:#F8FAFC; font-size:12.5px; font-weight:600;">${escapeHtmlHub(k.judul)}</div>
+          <div style="color:var(--text-secondary); font-size:11px; margin-top:2px;">${escapeHtmlHub(k.jam || "-")} &middot; ${escapeHtmlHub(k.lokasi || "-")}</div>
+        </div>
+        <span class="material-symbols-outlined" style="font-size:16px; color:var(--text-muted);">chevron_right</span>
+      </div>`;
+  }).join("");
+}
+
+// Card ringkas "Agenda Mendatang" di Beranda -- 3 kegiatan terdekat
+// dari hari ini, lintas bulan (bukan cuma bulan berjalan).
+function loadAgendaMendatangBeranda() {
+  const el = document.getElementById("agendaMendatangList");
+  if (!el) return;
+  callGASWithRetry_("getKegiatanMendatang", [authToken, 3])
+    .then(function (data) {
+      if (!data || !data.length) {
+        el.innerHTML = `<div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 12px 0;">Belum ada agenda mendatang.</div>`;
+        document.getElementById("kalenderBellBadge").style.display = "none";
+        return;
+      }
+      document.getElementById("kalenderBellBadge").style.display = "block";
+      el.innerHTML = data.map(function (k) {
+        const meta = KEGIATAN_JENIS_META[k.jenis] || { warna: "#94A3B8", bg: "rgba(255,255,255,0.08)" };
+        const tgl = k.tanggal ? new Date(k.tanggal) : null;
+        const tglNum = tgl ? tgl.getDate() : "-";
+        const tglBulan = tgl ? BULAN_LABEL[tgl.getMonth()].substring(0, 3).toUpperCase() : "";
+        return `
+          <div class="gtap" onclick="openKalenderKegiatan()" style="display:flex; gap:9px; align-items:center; cursor:pointer;">
+            <div style="width:32px; height:32px; border-radius:9px; background:${meta.bg}; display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0;">
+              <span style="color:${meta.warna}; font-size:11px; font-weight:700; line-height:1;">${tglNum}</span>
+              <span style="color:${meta.warna}; font-size:7px; line-height:1;">${tglBulan}</span>
+            </div>
+            <div style="flex:1; min-width:0;">
+              <div style="color:#F8FAFC; font-size:11.5px; font-weight:600;">${escapeHtmlHub(k.judul)}</div>
+              <div style="color:var(--text-secondary); font-size:10px; margin-top:1px;">${escapeHtmlHub(k.jam || "-")} &middot; ${escapeHtmlHub(k.lokasi || "-")}</div>
+            </div>
+          </div>`;
+      }).join("");
+    })
+    .catch(function () {
+      el.innerHTML = `<div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 12px 0;">Gagal memuat agenda.</div>`;
+    });
+}
+
+// Detail kegiatan -- dibuka via showModal (reuse modal generik yang
+// sudah ada) supaya gak perlu bikin overlay baru lagi. Kalau role
+// SUPERADMIN/ADMIN, ditambahin tombol Edit & Hapus di dalam pesan modal.
+function openKegiatanDetail(id) {
+  const k = kalenderBulanCache.find(function (x) { return x.id === id; });
+  if (!k) return;
+  const meta = KEGIATAN_JENIS_META[k.jenis] || { label: k.jenis };
+  const tgl = k.tanggal ? new Date(k.tanggal) : null;
+  const tglText = tgl ? (tgl.getDate() + " " + BULAN_LABEL[tgl.getMonth()] + " " + tgl.getFullYear()) : "-";
+
+  let html = `
+    <div style="text-align:left; font-size:13px; line-height:1.7;">
+      <div><b>Jenis:</b> ${escapeHtmlHub(meta.label)}</div>
+      <div><b>Tanggal:</b> ${tglText}${k.jam ? " &middot; " + escapeHtmlHub(k.jam) : ""}</div>
+      <div><b>Lokasi:</b> ${escapeHtmlHub(k.lokasi || "-")}</div>
+      <div><b>Wilayah:</b> ${escapeHtmlHub(String(k.wilayah || "ALL").toUpperCase() === "ALL" ? "Semua Wilayah" : k.wilayah)}</div>
+      ${k.deskripsi ? `<div style="margin-top:6px;">${escapeHtmlHub(k.deskripsi)}</div>` : ""}
+    </div>`;
+
+  if (bisaKelolaKegiatan_()) {
+    html += `
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button onclick="closeModal(); openKegiatanForm('${k.id}')" style="flex:1; padding:10px; border:none; border-radius:10px; font-size:12.5px; font-weight:700; cursor:pointer; background:rgba(59,130,246,0.15); color:#60A5FA;">Edit</button>
+        <button onclick="closeModal(); hapusKegiatanConfirm('${k.id}')" style="flex:1; padding:10px; border:none; border-radius:10px; font-size:12.5px; font-weight:700; cursor:pointer; background:rgba(239,68,68,0.15); color:#F87171;">Hapus</button>
+      </div>`;
+  }
+
+  showModal(k.judul, html);
+}
+
+function hapusKegiatanConfirm(id) {
+  showModal("Batalkan Kegiatan?", "Kegiatan ini akan ditandai dibatalkan dan gak lagi muncul di kalender. Lanjutkan?", true, function () {
+    callGASWithRetry_("hapusKegiatan", [authToken, id])
+      .then(function () {
+        loadKalenderBulanData();
+        loadAgendaMendatangBeranda();
+        showModal("Sukses", "Kegiatan berhasil dibatalkan.");
+      })
+      .catch(function (err) { showModal("Gagal", err.message); });
+  });
+}
+
+// ============================================================
+// FORM TAMBAH/EDIT KEGIATAN
+// ============================================================
+function openKegiatanForm(idOrNull) {
+  const isEdit = !!idOrNull;
+  const k = isEdit ? kalenderBulanCache.find(function (x) { return x.id === idOrNull; }) : null;
+  editingKegiatanId = isEdit ? idOrNull : null;
+
+  document.getElementById("kegiatanFormTitle").textContent = isEdit ? "Edit Kegiatan" : "Tambah Kegiatan";
+  document.getElementById("kfJudul").value = isEdit ? k.judul : "";
+  document.getElementById("kfJenis").value = isEdit ? k.jenis : "santunan";
+  document.getElementById("kfTanggal").value = isEdit && k.tanggal ? new Date(k.tanggal).toISOString().slice(0, 10) : "";
+  document.getElementById("kfJam").value = isEdit ? (k.jam || "") : "";
+  document.getElementById("kfLokasi").value = isEdit ? (k.lokasi || "") : "";
+  document.getElementById("kfDeskripsi").value = isEdit ? (k.deskripsi || "") : "";
+
+  loadWilayahListIfNeeded().then(function (list) {
+    const sel = document.getElementById("kfWilayah");
+    sel.innerHTML = `<option value="ALL">Semua Wilayah</option>` +
+      (list || []).map(function (w) { return `<option value="${escapeHtmlHub(w)}">${escapeHtmlHub(w)}</option>`; }).join("");
+    sel.value = isEdit ? (k.wilayah || "ALL") : "ALL";
+  });
+
+  document.getElementById("kegiatanFormOverlay").classList.add("open");
+}
+
+function closeKegiatanForm() {
+  document.getElementById("kegiatanFormOverlay").classList.remove("open");
+  editingKegiatanId = null;
+}
+
+function submitKegiatanForm(event) {
+  event.preventDefault();
+  const btn = document.getElementById("kfSaveBtn");
+  const data = {
+    judul: document.getElementById("kfJudul").value.trim(),
+    jenis: document.getElementById("kfJenis").value,
+    tanggal: document.getElementById("kfTanggal").value,
+    jam: document.getElementById("kfJam").value.trim(),
+    lokasi: document.getElementById("kfLokasi").value.trim(),
+    wilayah: document.getElementById("kfWilayah").value,
+    deskripsi: document.getElementById("kfDeskripsi").value.trim(),
+    dibuatOleh: currentUser ? currentUser.nama : "",
+  };
+
+  if (!data.judul) { showModal("Gagal", "Judul kegiatan wajib diisi."); return; }
+  if (!data.tanggal) { showModal("Gagal", "Tanggal kegiatan wajib diisi."); return; }
+
+  btn.disabled = true;
+  btn.textContent = "Menyimpan...";
+
+  const request = editingKegiatanId
+    ? callGAS("updateKegiatan", [authToken, editingKegiatanId, data])
+    : callGAS("addKegiatan", [authToken, data]);
+
+  request
+    .then(function () {
+      closeKegiatanForm();
+      loadKalenderBulanData();
+      loadAgendaMendatangBeranda();
+      showModal("Sukses", editingKegiatanId ? "Kegiatan berhasil diupdate." : "Kegiatan baru berhasil ditambahkan.");
+    })
+    .catch(function (err) { showModal("Gagal", err.message); })
+    .finally(function () {
+      btn.disabled = false;
+      btn.textContent = "Simpan";
+    });
 }
 
 function renderFormulirDataBaruForm() {
@@ -7002,6 +7403,10 @@ document.getElementById("dataAnakYatimClose").addEventListener("click", function
   document.getElementById("dataAnakYatimPage").classList.remove("open");
 });
 
+document.getElementById("kalenderKegiatanClose").addEventListener("click", function () {
+  document.getElementById("kalenderKegiatanPage").classList.remove("open");
+});
+
 function showModal(title, message, isConfirm = false, onConfirm = null) {
   const modal = document.getElementById('customModalOverlay');
   document.getElementById('customModalTitle').textContent = title;
@@ -7269,7 +7674,7 @@ initGlobalRippleEffect();
 // form user, sheet input, modal konfirmasi, dst) TANPA perlu ubah kode
 // tiap fungsi open/close satu-satu.
 // ============================================================
-const OVERLAY_OPEN_SELECTOR = '.overlay.open, .user-menu.open, #userFormOverlay.open, #customModalOverlay.open, #inputOverlay.open, #forcePwOverlay.open';
+const OVERLAY_OPEN_SELECTOR = '.overlay.open, .user-menu.open, #userFormOverlay.open, #customModalOverlay.open, #inputOverlay.open, #forcePwOverlay.open, #kegiatanFormOverlay.open';
 
 let backExitArmed = false; // true sesaat setelah toast "tekan lagi buat keluar" muncul
 
@@ -7292,6 +7697,7 @@ function closeTopmostOverlay() {
     if (el.id === "userFormOverlay" && typeof closeUserForm === "function") { closeUserForm(); return; }
     if (el.id === "customModalOverlay" && typeof closeModal === "function") { closeModal(); return; }
     if (el.id === "inputOverlay") { toggleInputSheet(); return; }
+    if (el.id === "kegiatanFormOverlay" && typeof closeKegiatanForm === "function") { closeKegiatanForm(); return; }
     el.classList.remove("open"); // fallback generic
   });
   return true;
