@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>YASSA Hub</title>
+<title>YASSA GOPAY</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#121A2F">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="YASSA Hub">
+<meta name="apple-mobile-web-app-title" content="YASSA GOPAY">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
@@ -1255,7 +1255,7 @@
     </text>
   </svg>
   <div class="post-login-splash-arabic">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
-  <div class="post-login-splash-sub" id="postLoginSplashSub">Kita akan membuka YASSA Hub...</div>
+  <div class="post-login-splash-sub" id="postLoginSplashSub">Kita akan membuka YASSA GOPAY...</div>
   <div class="post-login-splash-spinner"></div>
   <div class="post-login-splash-status" id="postLoginSplashStatus">Menyiapkan aplikasi...</div>
 </div>
@@ -1694,7 +1694,7 @@
   <div class="force-pw-overlay" id="forcePwOverlay">
     <div class="force-pw-sheet">
       <div class="force-pw-title">Ganti Password Dulu, Yuk</div>
-      <div class="force-pw-desc">Akun ini masih pakai password bawaan. Demi keamanan, wajib ganti password dulu sebelum lanjut pakai YASSA Hub.</div>
+      <div class="force-pw-desc">Akun ini masih pakai password bawaan. Demi keamanan, wajib ganti password dulu sebelum lanjut pakai YASSA GOPAY.</div>
       <div id="forcePwError" class="login-error" style="display:none;"></div>
       <form id="forcePwForm" onsubmit="submitForceChangePassword(event)">
         <div class="user-form-field">
@@ -3555,7 +3555,7 @@ function renderContent() {
       </div>
       
     `;
-    html += `<div class="app-version-footer">YASSA Hub v${APP_VERSION}</div>`;
+    html += `<div class="app-version-footer">YASSA GOPAY v${APP_VERSION}</div>`;
     el.innerHTML = html;
     loadBerandaStats();
     loadDataAnakYatimPreviewBeranda();
@@ -5668,7 +5668,7 @@ function handleUserMenuClick(action) {
       } else if (action === "pengaturan") {
         setActive("pengaturan");
   } else if (action === "logout") {
-    showModal("Logout", "Yakin ingin keluar dari YASSA Hub?", true, function() {
+    showModal("Logout", "Yakin ingin keluar dari YASSA GOPAY?", true, function() {
       doLogout();
     });
   }
@@ -5685,7 +5685,7 @@ function showProfileQR() {
     
     // Format vCard standar. Ditambahkan parameter NOTE (Catatan) berisi Jabatan & Wilayah
     // agar data tersebut PASTI muncul di layar semua jenis scanner (termasuk Google Lens)
-    const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${nama}\nTITLE:${jabatan}\nORG:YASSA Hub\nTEL;TYPE=CELL:${telp}\nNOTE:Jabatan: ${jabatan} | Wilayah: ${wilayah}\nEND:VCARD`;
+    const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${nama}\nTITLE:${jabatan}\nORG:YASSA GOPAY\nTEL;TYPE=CELL:${telp}\nNOTE:Jabatan: ${jabatan} | Wilayah: ${wilayah}\nEND:VCARD`;
     
     // Menggunakan QuickChart API untuk render QR (stabil dan aman tanpa library tambahan)
     const qrUrl = "https://quickchart.io/qr?size=250&margin=2&text=" + encodeURIComponent(vcard);
