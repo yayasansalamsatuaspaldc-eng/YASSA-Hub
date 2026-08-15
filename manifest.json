@@ -1,6 +1,6 @@
 {
-  "name": "YASSA Hub",
-  "short_name": "YASSA Hub",
+  "name": "YASSA GOPAY",
+  "short_name": "YASSA GOPAY",
   "description": "Pusat akses semua aplikasi Yayasan Salam Satu Aspal",
   "start_url": "./index.html",
   "scope": "./",
