@@ -2299,7 +2299,11 @@ function handleLoginSubmit(event) {
   btn.disabled = true;
   btn.textContent = "Memproses...";
 
-  callGASWithRetry_("login", [email, password])
+  callGASWithRetry_("login", [email, password], {
+    onRetry: function (attempt, maxAttempts) {
+      btn.textContent = "Koneksi lambat, mencoba lagi... (" + attempt + "/" + maxAttempts + ")";
+    },
+  })
     .then(function (res) {
       pendingOldPassword = password; 
       onLoginSuccess(res);
