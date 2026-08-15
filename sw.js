@@ -71,7 +71,7 @@ self.addEventListener("fetch", function (event) {
   if (new URL(event.request.url).origin !== self.location.origin) return;
 
   // NETWORK-FIRST khusus buat halaman HTML (index.html): selalu coba ambil
-  // versi terbaru dulu dari server tiap dibuka, biar update Hub langsung
+  // versi terbaru dulu dari server tiap dibuka, biar update GOPAY langsung
   // kepakai tanpa perlu clear cache manual. Baru fallback ke cache kalau
   // lagi offline/gagal fetch.
   const isHTMLRequest =
