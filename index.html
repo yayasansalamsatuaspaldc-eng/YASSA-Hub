@@ -189,6 +189,7 @@
   .header-greet-meta { font-size: 12px; font-weight: 500; opacity: 0.8; color: var(--text-secondary); margin-top: 2px; }
 
   .bell {
+    position: relative;
     width: 42px;
     height: 42px;
     border-radius: 50%;
@@ -202,6 +203,24 @@
     transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
   }
   .bell:active { transform: scale(0.92); background: rgba(255,255,255,0.15); box-shadow: var(--shadow-glow-cyan); }
+
+  /* 🔔 Titik merah penanda ada notifikasi/aktivitas baru yang belum dibuka
+     lewat bell. Disembunyikan default (display:none), dimunculkan lewat JS
+     (updateNotifBadge()) begitu ada aktivitas lebih baru dari terakhir kali
+     modal notifikasi dibuka user. */
+  .bell-badge-dot {
+    display: none;
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #EF4444;
+    border: 2px solid var(--bg-navy);
+    box-shadow: 0 0 6px rgba(239,68,68,0.7);
+  }
+  .bell-badge-dot.show { display: block; }
 
   .header-logo-btn {
     width: 46px;
@@ -1397,8 +1416,9 @@
         <div class="bell" id="manualRefreshBtn" onclick="forceRefreshApp()" title="Segarkan Aplikasi" aria-label="Segarkan Aplikasi">
           <svg id="manualRefreshIcon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
         </div>
-        <div class="bell" id="notifBellBtn" onclick="showModal('Notifikasi', 'Tidak ada notifikasi baru hari ini.')">
+        <div class="bell" id="notifBellBtn" onclick="showNotifikasiModal()" title="Notifikasi" aria-label="Notifikasi">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          <span class="bell-badge-dot" id="notifBellBadge"></span>
         </div>
       </div>
     </div>
@@ -2776,6 +2796,115 @@ function renderAktivitasTerbaru(data, gagal) {
       ${divider}
     `;
   }).join("");
+
+  // 🔔 Aktivitas yang dipakai buat kartu Beranda ini adalah SUMBER data yang
+  // sama persis dengan yang dipakai modal Notifikasi (lonceng di header) --
+  // jadi tiap kali kartu ini di-render ulang (baik dari cache lokal maupun
+  // hasil segar dari server), sekalian cek juga apa perlu nyalain titik
+  // merah di lonceng.
+  updateNotifBadge(list);
+}
+
+// ============================================================
+// 🔔 NOTIFIKASI (bell di header)
+// ------------------------------------------------------------
+// Sebelumnya tombol lonceng cuma nampilin teks statis "Tidak ada notifikasi
+// baru hari ini." lewat showModal(), gak peduli ada aktivitas beneran atau
+// enggak. Sekarang dibikin nyambung ke data ASLI: sumbernya sama persis
+// kayak kartu "Aktivitas Terbaru" di Beranda (Log_Aktivitas lewat
+// getAktivitasTerbaru / getBerandaBundle) -- TIDAK perlu endpoint baru di
+// backend, tinggal dipakai ulang (reuse) datanya di sini.
+//
+// "Belum dibaca" ditentukan dengan bandingin timestamp aktivitas TERBARU
+// vs timestamp terakhir kali user MEMBUKA modal notifikasi (disimpan di
+// localStorage per-device, key yassa_hub_notif_last_seen). Titik merah di
+// lonceng nyala kalau ada aktivitas yang timestamp-nya lebih baru dari itu.
+// ============================================================
+const NOTIF_LAST_SEEN_KEY = "yassa_hub_notif_last_seen";
+
+function getNotifLastSeen_() {
+  try { return localStorage.getItem(NOTIF_LAST_SEEN_KEY) || null; } catch (e) { return null; }
+}
+
+function setNotifLastSeen_(isoString) {
+  try { localStorage.setItem(NOTIF_LAST_SEEN_KEY, isoString); } catch (e) {}
+}
+
+// Nyalain/matiin titik merah di lonceng berdasarkan list aktivitas yang
+// LAGI ADA di tangan (cache atau hasil server) -- gak nembak server sendiri.
+function updateNotifBadge(list) {
+  const badge = document.getElementById("notifBellBadge");
+  if (!badge) return;
+
+  const data = Array.isArray(list) ? list : (berandaStatsCache.aktivitas || []);
+  if (!data.length) { badge.classList.remove("show"); return; }
+
+  // Data dari getAktivitasTerbaru sudah diurutkan terbaru duluan (lihat
+  // Code_gs_HUB.gs), jadi index 0 = paling baru.
+  const terbaruTs = data[0].timestamp;
+  const lastSeen = getNotifLastSeen_();
+
+  const adaYangBaru = !lastSeen || new Date(terbaruTs) > new Date(lastSeen);
+  badge.classList.toggle("show", adaYangBaru);
+}
+
+// Bangun isi modal notifikasi dari list aktivitas -- tampilannya sengaja
+// dibikin mirip kartu "Aktivitas Terbaru" di Beranda (ikon + warna per app
+// dari AKTIVITAS_APP_META, waktu relatif dari formatWaktuAktivitas) biar
+// konsisten, cuma dibungkus lebih rapat karena tampil di dalam modal kecil.
+function renderNotifikasiModalHtml_(list) {
+  if (!list || !list.length) {
+    return '<div style="text-align:center; padding: 8px 0; color: var(--text-secondary);">Belum ada aktivitas atau notifikasi baru.</div>';
+  }
+  const items = list.map(function (item, idx) {
+    const meta = AKTIVITAS_APP_META[item.app] || { icon: "notifications", color: "var(--text-secondary)" };
+    const sub = item.detail
+      ? item.detail + (item.oleh ? " · oleh " + item.oleh : "")
+      : (item.oleh ? "oleh " + item.oleh : "");
+    const divider = idx < list.length - 1 ? '<div style="height:1px; background: var(--glass-border); margin: 8px 0;"></div>' : "";
+    return `
+      <div style="display:flex; align-items:flex-start; gap: 10px; text-align:left;">
+        <div style="width: 30px; height: 30px; border-radius: 50%; background: var(--glass); color: ${meta.color}; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px;"><span class="material-symbols-outlined" style="font-size:15px;">${meta.icon}</span></div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:13px; font-weight:600;">${item.aksi}</div>
+          ${sub ? `<div style="font-size:11.5px; color: var(--text-muted); margin-top:1px;">${sub}</div>` : ""}
+          <div style="font-size:10.5px; color: var(--text-muted); margin-top:3px;">${formatWaktuAktivitas(item.timestamp)}</div>
+        </div>
+      </div>
+      ${divider}
+    `;
+  }).join("");
+  return `<div style="max-height: 55vh; overflow-y: auto; text-align:left;">${items}</div>`;
+}
+
+// Dipanggil pas tombol lonceng ditekan. Prioritas: pakai cache yang udah
+// ada di tangan (instan, gak perlu nunggu jaringan) -- kalau belum ada
+// cache sama sekali (mis. lonceng dipencet sebelum kartu Beranda kelar
+// loading pertama kali), baru fallback nembak server sendiri.
+function showNotifikasiModal() {
+  if (berandaStatsCache.aktivitas) {
+    tampilkanNotifikasiDariData_(berandaStatsCache.aktivitas);
+    return;
+  }
+  showModal("Notifikasi", '<div style="text-align:center; padding: 8px 0; color: var(--text-secondary);">Memuat notifikasi…</div>');
+  callGASWithRetry_("getAktivitasTerbaru", [authToken])
+    .then(function (list) {
+      berandaStatsCache.aktivitas = list;
+      saveBerandaCacheHub();
+      tampilkanNotifikasiDariData_(list);
+    })
+    .catch(function () {
+      document.getElementById("customModalMessage").innerHTML =
+        '<div style="text-align:center; padding: 8px 0; color: var(--text-secondary);">Gagal memuat notifikasi. Coba lagi.</div>';
+    });
+}
+
+function tampilkanNotifikasiDariData_(list) {
+  showModal("Notifikasi", renderNotifikasiModalHtml_(list));
+  // Ditandai "sudah dibaca" begitu modal beneran dibuka & isinya tampil --
+  // titik merah langsung padam, gak nunggu ditutup dulu.
+  if (list && list.length) setNotifLastSeen_(list[0].timestamp);
+  updateNotifBadge(list);
 }
 
 // ============================================================
