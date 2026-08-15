@@ -1211,6 +1211,66 @@
   .aksi-online-label {
     font-size: 11px; font-weight: 700; color: #3B82F6; text-align: center; line-height: 1.2;
   }
+
+  /* ============================================================
+     📲 POPUP AJAKAN INSTALL APLIKASI (PWA "Add to Home Screen")
+     Muncul otomatis begitu splash selesai & browser bilang app ini
+     "installable" (event beforeinstallprompt), ATAU di iOS Safari
+     yang gak punya event itu (dikasih instruksi manual Share > Add
+     to Home Screen). Ada tombol "Nanti Saja" yang nyimpen cooldown
+     ke localStorage biar gak morotin muncul tiap buka.
+     ============================================================ */
+  .pwa-install-backdrop {
+    position: fixed; inset: 0; z-index: 9998;
+    background: rgba(6,9,18,0.62);
+    backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+    display: none; align-items: flex-end; justify-content: center;
+    padding: 0 14px 14px;
+    opacity: 0; transition: opacity 0.25s ease;
+  }
+  .pwa-install-backdrop.show { display: flex; opacity: 1; }
+  @media (min-width: 720px) {
+    .pwa-install-backdrop { align-items: center; padding: 14px; }
+  }
+  .pwa-install-card {
+    width: 100%; max-width: 420px;
+    background: linear-gradient(160deg, rgba(30,41,66,0.97) 0%, rgba(18,26,47,0.98) 100%);
+    border: 1px solid var(--glass-border-strong);
+    border-radius: 22px;
+    padding: 20px 20px 16px;
+    box-shadow: var(--shadow-deep), 0 0 40px rgba(34,197,94,0.12);
+    transform: translateY(24px);
+    transition: transform 0.28s cubic-bezier(0.22,1,0.36,1);
+  }
+  .pwa-install-backdrop.show .pwa-install-card { transform: translateY(0); }
+  .pwa-install-top { display: flex; align-items: center; gap: 14px; }
+  .pwa-install-icon {
+    width: 54px; height: 54px; border-radius: 15px; flex-shrink: 0;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35), 0 0 0 1px var(--glass-border-strong);
+  }
+  .pwa-install-title { font-size: 15.5px; font-weight: 800; color: var(--text-primary); margin: 0 0 3px; }
+  .pwa-install-sub { font-size: 12.5px; color: var(--text-secondary); margin: 0; line-height: 1.35; }
+  .pwa-install-desc {
+    font-size: 12.5px; color: var(--text-secondary); line-height: 1.55;
+    margin: 14px 0 0; padding: 12px 13px;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+    border-radius: 13px;
+  }
+  .pwa-install-desc b { color: var(--text-primary); font-weight: 700; }
+  .pwa-install-actions { display: flex; gap: 10px; margin-top: 16px; }
+  .pwa-install-btn {
+    flex: 1; border: none; border-radius: 13px; padding: 12px 14px;
+    font-size: 13.5px; font-weight: 700; cursor: pointer;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  .pwa-install-btn.ghost {
+    background: rgba(255,255,255,0.05); color: var(--text-secondary);
+    border: 1px solid var(--glass-border-strong);
+  }
+  .pwa-install-btn.primary {
+    background: var(--grad-primary); color: #06210f;
+    box-shadow: var(--shadow-glow-blue);
+  }
 </style>
 </head>
 <body>
@@ -7228,5 +7288,125 @@ function bootApp() {
 
 bootApp();
 </script>
+
+<!-- ============ POPUP AJAKAN INSTALL APLIKASI (PWA) ============ -->
+<div class="pwa-install-backdrop" id="pwaInstallBackdrop">
+  <div class="pwa-install-card">
+    <div class="pwa-install-top">
+      <img class="pwa-install-icon" src="icon-192.png" alt="YASSA GOPAY">
+      <div>
+        <p class="pwa-install-title">Install YASSA GOPAY?</p>
+        <p class="pwa-install-sub" id="pwaInstallSub">Biar buka aplikasi lebih cepat, langsung dari layar utama HP.</p>
+      </div>
+    </div>
+    <div class="pwa-install-desc" id="pwaInstallDesc" style="display:none;"></div>
+    <div class="pwa-install-actions">
+      <button class="pwa-install-btn ghost gtap" id="pwaInstallLater">Nanti Saja</button>
+      <button class="pwa-install-btn primary gtap" id="pwaInstallNow">Install</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// 📲 POPUP AJAKAN INSTALL APLIKASI (PWA "Add to Home Screen")
+// - Android/Chrome/Edge: nangkep event "beforeinstallprompt", browser
+//   otomatis kasih event ini kalau manifest.json + service worker +
+//   HTTPS udah oke (syarat installable). Kita cegah banner bawaan
+//   browser (preventDefault) terus tampilin popup versi kita sendiri
+//   yang lebih match sama desain app, tombol "Install" manggil
+//   deferredPrompt.prompt().
+// - iOS Safari: gak punya event beforeinstallprompt sama sekali (Apple
+//   emang gak nyediain), jadi kalau kedeteksi iOS & belum ke-install,
+//   popup tetep muncul tapi isinya instruksi manual "Share > Add to
+//   Home Screen" (gak ada tombol Install fungsional, cuma info).
+// - Gak muncul kalau app udah kebuka dalam mode "standalone" (artinya
+//   emang udah ke-install), dan ada cooldown 7 hari di localStorage
+//   kalau user pencet "Nanti Saja" biar gak morotin tiap buka app.
+// ============================================================
+(function () {
+  var STORAGE_KEY = "pwaInstallDismissedAt";
+  var COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 7 hari
+
+  function isStandalone() {
+    return window.matchMedia("(display-mode: standalone)").matches ||
+      window.navigator.standalone === true; // iOS Safari
+  }
+
+  function isDismissedRecently() {
+    try {
+      var t = localStorage.getItem(STORAGE_KEY);
+      return t && (Date.now() - parseInt(t, 10)) < COOLDOWN_MS;
+    } catch (e) { return false; }
+  }
+
+  function markDismissed() {
+    try { localStorage.setItem(STORAGE_KEY, String(Date.now())); } catch (e) {}
+  }
+
+  function isIOS() {
+    return /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); // iPadOS 13+
+  }
+
+  if (isStandalone() || isDismissedRecently()) return;
+
+  var backdrop = document.getElementById("pwaInstallBackdrop");
+  var btnNow = document.getElementById("pwaInstallNow");
+  var btnLater = document.getElementById("pwaInstallLater");
+  var descBox = document.getElementById("pwaInstallDesc");
+  var subText = document.getElementById("pwaInstallSub");
+  var deferredPrompt = null;
+
+  function closePopup() {
+    backdrop.classList.remove("show");
+  }
+
+  function openPopup() {
+    // Kasih jeda dikit biar gak numpuk sama animasi splash/login yang
+    // baru aja kelar, jadi kerasa muncul dengan mulus bukan tiba-tiba.
+    setTimeout(function () { backdrop.classList.add("show"); }, 900);
+  }
+
+  btnLater.addEventListener("click", function () {
+    markDismissed();
+    closePopup();
+  });
+
+  btnNow.addEventListener("click", function () {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.finally(function () {
+        deferredPrompt = null;
+        closePopup();
+      });
+    } else {
+      // iOS / browser lain yang gak support prompt otomatis -> cukup tutup,
+      // instruksi manual udah ditampilin di descBox.
+      closePopup();
+    }
+  });
+
+  window.addEventListener("beforeinstallprompt", function (e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    openPopup();
+  });
+
+  window.addEventListener("appinstalled", function () {
+    markDismissed();
+    closePopup();
+  });
+
+  if (isIOS()) {
+    subText.textContent = "Tambahkan ke Layar Utama biar buka aplikasi lebih cepat.";
+    descBox.style.display = "block";
+    descBox.innerHTML = "Ketuk ikon <b>Bagikan (Share)</b> di Safari, lalu pilih <b>\"Tambah ke Layar Utama\"</b> (Add to Home Screen).";
+    btnNow.textContent = "Mengerti";
+    openPopup();
+  }
+})();
+</script>
+
 </body>
 </html>
