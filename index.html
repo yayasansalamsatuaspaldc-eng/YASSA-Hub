@@ -4128,20 +4128,30 @@ function openMobileAppForNotif() {
   // Notification.requestPermission() hanya boleh dipanggil dari konteks
   // top-level, tidak dari iframe cross-origin.
   // Tetap dikasih tiket SSO juga biar gak perlu login manual di tab baru ini.
+  // 🔒 notifOnly=1 -- penanda buat YASSA Mobile bahwa tab ini dibuka
+  // KHUSUS minta izin notifikasi, BUKAN buat dipakai sebagai app biasa.
+  // Mobile (sisi client-nya) HARUS baca parameter ini: kalau ada &
+  // bernilai 1, jangan render dashboard/menu app sama sekali -- cukup
+  // proses ssoLogin diam-diam, minta Notification.requestPermission(),
+  // lapor hasilnya ke Hub lewat postMessage, panggil action 'logout'
+  // buat matiin sesinya sendiri, lalu tampilkan layar kosong "boleh
+  // ditutup" (atau window.close() otomatis). Ini nutup celah supaya tab
+  // ini gak bisa dipakai buat "beneran login & buka-buka data" walau
+  // niatnya cuma minta izin notifikasi.
   callGASWithRetry_("generateSsoToken", [authToken])
     .then(function (res) {
       const ssoToken = res && res.ssoToken;
       const url = ssoToken
-        ? MENUS.mobile.baseUrl + "?sso=" + encodeURIComponent(ssoToken)
-        : MENUS.mobile.baseUrl;
+        ? MENUS.mobile.baseUrl + "?sso=" + encodeURIComponent(ssoToken) + "&notifOnly=1"
+        : MENUS.mobile.baseUrl + "?notifOnly=1";
       window.open(url, "_blank");
     })
     .catch(function () {
-      window.open(MENUS.mobile.baseUrl, "_blank");
+      window.open(MENUS.mobile.baseUrl + "?notifOnly=1", "_blank");
     });
   showModal(
     "Aktifkan Notifikasi",
-    "Tab baru YASSA Mobile sudah dibuka. Silakan tekan \"Allow\" saat browser minta izin notifikasi (login otomatis kalau tiketnya masih berlaku). Setelah itu tab tersebut boleh ditutup — notifikasi akan tetap aktif meski selanjutnya kamu pakai YASSA Mobile lewat Hub."
+    "Tab baru YASSA Mobile sudah dibuka. Silakan tekan \"Allow\" saat browser minta izin notifikasi. Tab itu HANYA dipakai buat minta izin -- begitu selesai, sesinya otomatis logout & tab boleh ditutup (atau nutup sendiri)."
   );
 }
 
