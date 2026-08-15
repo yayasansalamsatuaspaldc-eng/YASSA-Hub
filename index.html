@@ -581,6 +581,19 @@
   }
   #overlaySsoLoadingText { color: var(--text-muted); font-size: 12.5px; font-weight: 600; }
   @keyframes overlaySsoSpin { to { transform: rotate(360deg); } }
+  /* 🚧 Strip peringatan "masih tahap pengembangan" -- muncul MENEMPEL DI
+     ATAS iframe (bukan cuma di card pemilihan app), jadi keliatan terus
+     selama user beneran lagi pakai app-nya & baca datanya. Ditoggle lewat
+     class "show" oleh openApp() -- cuma nyala pas active === "bukubesar". */
+  .overlay-dev-notice {
+    display: none; align-items: center; gap: 8px;
+    background: rgba(245,158,11,0.14); border-bottom: 1px solid rgba(245,158,11,0.35);
+    color: #F59E0B; font-size: 11.5px; font-weight: 700;
+    padding: 8px 16px; text-align: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .overlay-dev-notice.show { display: flex; }
+  .overlay-dev-notice .material-symbols-outlined { font-size: 15px; }
   .overlay.open { display: flex; animation: slideUpApp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   @keyframes slideUpApp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
@@ -1578,6 +1591,16 @@
       </button>
       <span class="overlay-title" id="overlayTitle">Aplikasi</span>
     </div>
+    <!-- 🚧 Peringatan "masih tahap pengembangan" -- default disembunyikan,
+         ditampilkan lewat toggleOverlayDevNotice_() di openApp() KHUSUS
+         pas app yang dibuka termasuk daftar OVERLAY_DEV_NOTICE_APPS di
+         bawah (sekarang cuma "bukubesar"). Taruh di sini (bukan di dalam
+         iframe) supaya gak ketimpa/hilang walau app di dalam iframe
+         pindah-pindah tab sendiri. -->
+    <div class="overlay-dev-notice" id="overlayDevNotice">
+      <span class="material-symbols-outlined">construction</span>
+      <span>Masih Tahap Pengembangan — Data mungkin tidak Akurat</span>
+    </div>
     <iframe id="overlayFrame" src="about:blank" allow="camera; geolocation"></iframe>
     <!-- 🩹 FIX: indikator "menghubungkan..." dipasang MENUTUPI iframe
          selama Hub masih minta/nyoba-ulang tiket SSO ke server (khusus
@@ -1960,6 +1983,22 @@ function visibleTabs() {
 function aksesMenuListUntuk(appKey) {
   if (!currentUser || !currentUser.aksesMenu) return null;
   return currentUser.aksesMenu[appKey] || null;
+}
+
+// 🚧 Daftar key app yang masih tahap pengembangan -- munculin strip
+// peringatan kuning nempel di atas iframe-nya selama app itu dibuka
+// (bukan cuma di card pemilihan app). Tinggal tambah/hapus key di sini
+// kalau status app lain berubah, gak perlu ubah logika lain.
+const OVERLAY_DEV_NOTICE_APPS = ["bukubesar"];
+
+function toggleOverlayDevNotice_(appKey) {
+  const el = document.getElementById("overlayDevNotice");
+  if (!el) return;
+  if (OVERLAY_DEV_NOTICE_APPS.indexOf(appKey) !== -1) {
+    el.classList.add("show");
+  } else {
+    el.classList.remove("show");
+  }
 }
 
 // Dipakai buat kartu app di tab "Semua Aplikasi": tampil kalau MINIMAL SATU
@@ -3673,12 +3712,23 @@ function renderContent() {
       { key: "absensi", grad: "linear-gradient(135deg, #60A5FA 0%, #1D4ED8 100%)", glow: "rgba(59,130,246,0.35)", icon: "assignment", title: "Kehadiran", desc: "Catat kehadiran<br>kegiatan" },
       { key: "awg", grad: "linear-gradient(135deg, #E879F9 0%, #7E22CE 100%)", glow: "rgba(168,85,247,0.35)", icon: "favorite", title: "AWG", desc: "Ahli Waris<br>Akun" },
       { key: "pm", grad: "linear-gradient(135deg, #FCD34D 0%, #D97706 100%)", glow: "rgba(251,191,36,0.35)", icon: "group", title: "Penerima Manfaat", desc: "Data penerima<br>manfaat" },
-      { key: "bukubesar", grad: "linear-gradient(135deg, #67E8F9 0%, #0E7490 100%)", glow: "rgba(34,211,238,0.35)", icon: "menu_book", title: "Cloud Buku", desc: "Pembukuan Digital<br>Yayasan" },
+      // 🚧 notice: dipakai buat nampilin badge peringatan "masih tahap
+      // pengembangan" di card grid App. Field ini sengaja dibikin generik
+      // (bukan cuma khusus bukubesar) supaya gampang dipasang/dicopot di
+      // app lain juga nanti kalau statusnya berubah -- tinggal
+      // tambah/hapus baris "notice" di object card-nya, gak perlu ubah
+      // logika render di bawah.
+      { key: "bukubesar", grad: "linear-gradient(135deg, #67E8F9 0%, #0E7490 100%)", glow: "rgba(34,211,238,0.35)", icon: "menu_book", title: "Cloud Buku", desc: "Pembukuan Digital<br>Yayasan", notice: "Masih Tahap Pengembangan, Data mungkin tidak Akurat" },
     ];
 
     APP_CARDS.filter(function (c) { return isAppVisible(c.key); }).forEach(function (c) {
       html += `
-        <button onclick="setActive('${c.key}')" style="background: var(--glass-strong); padding: 20px 16px 22px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; gap: 14px; border: 1px solid var(--glass-border); cursor: pointer;">
+        <button onclick="setActive('${c.key}')" style="position: relative; background: var(--glass-strong); padding: 20px 16px 22px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; gap: 14px; border: 1px solid var(--glass-border); cursor: pointer;">
+          ${c.notice ? `
+          <div style="position: absolute; top: 10px; right: 10px; display: flex; align-items: center; gap: 3px; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.4); color: #F59E0B; font-size: 9px; font-weight: 700; padding: 3px 7px; border-radius: 999px; line-height: 1;" title="${c.notice}">
+            <span class="material-symbols-outlined" style="font-size: 11px;">construction</span>
+            Uji Coba
+          </div>` : ``}
           <div style="position: relative; width: 64px; height: 64px; border-radius: 20px; background: ${c.grad}; box-shadow: 0 10px 22px ${c.glow}, inset 0 1px 0 rgba(255,255,255,0.35); display: flex; align-items: center; justify-content: center; overflow: hidden;">
             <div style="position: absolute; top: -18px; left: -14px; width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.22); filter: blur(2px);"></div>
             <span class="material-symbols-outlined" style="position: relative; font-size: 30px; color: #fff; font-variation-settings: 'FILL' 1; text-shadow: 0 1px 3px rgba(0,0,0,0.25);">${c.icon}</span>
@@ -3686,6 +3736,7 @@ function renderContent() {
           <div style="text-align: center;">
             <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">${c.title}</div>
             <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.2;">${c.desc}</div>
+            ${c.notice ? `<div style="font-size: 9px; color: #F59E0B; line-height: 1.3; margin-top: 6px; font-weight: 600;">${c.notice}</div>` : ``}
           </div>
         </button>
       `;
@@ -4061,6 +4112,7 @@ function openMobileApp() {
   const menu = MENUS.mobile;
   document.getElementById("overlayTitle").textContent = menu.title;
   document.getElementById("overlay").classList.add("open");
+  toggleOverlayDevNotice_("mobile");
 
   // 🔗 SSO: minta "tiket" sekali-pakai ke backend Hub, ditempel ke URL
   // Mobile biar user gak perlu login manual lagi (hak akses tetap
@@ -6762,6 +6814,7 @@ function openApp(index) {
   const item = menu.items[index];
 
   document.getElementById("overlayTitle").textContent = item.label;
+  toggleOverlayDevNotice_(active);
 
   // 🩹 FIX: dulu YASSA Mobile SELALU masuk jalur reload-total + minta tiket
   // SSO baru di SETIAP klik menu (walau app-nya masih sama & masih hidup di
