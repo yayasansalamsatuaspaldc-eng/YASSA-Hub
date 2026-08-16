@@ -1728,6 +1728,28 @@
         <div id="kalenderMiniGrid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:3px;"></div>
         <div style="font-size:9px; color:var(--text-muted); text-align:center; margin-top:10px; line-height:1.4;">*Tanggal Hijriyah &amp; pasaran cuma perkiraan/pengingat, bukan acuan resmi ibadah.</div>
 
+        <!-- Muncul begitu ada tanggal yang ditap di grid -- nampilin detail
+             tanggal itu dengan font BESAR (grid-nya sendiri sengaja dibikin
+             kecil biar 1 bulan penuh muat, jadi detailnya dipindah ke sini
+             biar kebaca jelas). Disembunyikan (display:none) kalau belum
+             ada tanggal dipilih. -->
+        <div id="kalenderTanggalDetailCard" style="display:none; margin-top:14px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); border-radius:16px; padding:14px 16px; flex-direction:column; gap:12px;">
+          <div style="display:flex; align-items:center; gap:14px;">
+            <div id="kdcTanggalBesar" style="font-size:32px; font-weight:800; color:#4ADE80; line-height:1;">-</div>
+            <div style="flex:1; min-width:0;">
+              <div id="kdcHariTanggal" style="font-size:14px; font-weight:700; color:#F8FAFC;">-</div>
+              <div id="kdcHijri" style="font-size:12px; color:var(--text-secondary); margin-top:2px;">-</div>
+              <div id="kdcPasaran" style="font-size:12px; color:var(--text-secondary); margin-top:1px;">-</div>
+            </div>
+            <button class="gtap" onclick="pilihTanggalKalender(kalenderTanggalTerpilih)" style="background:rgba(255,255,255,0.08); border:1px solid var(--glass-border-strong); border-radius:10px; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;">
+              <span class="material-symbols-outlined" style="font-size:16px; color:#fff;">close</span>
+            </button>
+          </div>
+          <button class="gtap" id="kdcTambahBtn" onclick="openKegiatanForm(null, kalenderTanggalTerpilih)" style="display:none; align-items:center; justify-content:center; gap:6px; background:var(--bento-primary); border:none; color:#0B101E; font-size:12.5px; font-weight:800; padding:10px; border-radius:10px; cursor:pointer;">
+            <span class="material-symbols-outlined" style="font-size:16px;">edit_calendar</span> Tulis Jadwal di Tanggal Ini
+          </button>
+        </div>
+
       </div>
 
       <!-- Kartu Agenda -->
@@ -5121,6 +5143,26 @@ function pilihTanggalKalender(tanggal) {
   kalenderTanggalTerpilih = kalenderTanggalTerpilih === tanggal ? null : tanggal;
   renderKalenderMiniGrid(kalenderBulanCache);
   renderKalenderAgendaList(kalenderBulanCache);
+  renderKalenderTanggalDetailCard();
+}
+
+const NAMA_HARI_MASEHI = ["Ahad", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+
+function renderKalenderTanggalDetailCard() {
+  const card = document.getElementById("kalenderTanggalDetailCard");
+  if (!kalenderTanggalTerpilih) { card.style.display = "none"; return; }
+
+  const d = kalenderTanggalTerpilih;
+  const hari = NAMA_HARI_MASEHI[new Date(kalenderTahunAktif, kalenderBulanAktif - 1, d).getDay()];
+  const pasaran = pasaranOf_(kalenderTahunAktif, kalenderBulanAktif, d);
+  const hijri = hijriApprox_(kalenderTahunAktif, kalenderBulanAktif, d);
+
+  document.getElementById("kdcTanggalBesar").textContent = d;
+  document.getElementById("kdcHariTanggal").textContent = hari + ", " + d + " " + BULAN_LABEL[kalenderBulanAktif - 1] + " " + kalenderTahunAktif;
+  document.getElementById("kdcHijri").textContent = hijri.hari + " " + HIJRI_BULAN[hijri.bulan - 1] + " " + hijri.tahun + "H (estimasi)";
+  document.getElementById("kdcPasaran").textContent = "Pasaran: " + pasaran;
+  document.getElementById("kdcTambahBtn").style.display = bisaKelolaKegiatan_() ? "flex" : "none";
+  card.style.display = "flex";
 }
 
 function renderKalenderFilterChips() {
@@ -5149,6 +5191,7 @@ function filterKalenderJenis(jenis) {
 function loadKalenderBulanData() {
   document.getElementById("kalenderBulanLabel").textContent = BULAN_LABEL[kalenderBulanAktif - 1] + " " + kalenderTahunAktif;
   document.getElementById("kalenderHijriLabel").textContent = labelHijriBulan_(kalenderTahunAktif, kalenderBulanAktif);
+  document.getElementById("kalenderTanggalDetailCard").style.display = "none";
   document.getElementById("kalenderAgendaList").innerHTML = `
     <div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 20px 0;">Memuat agenda…</div>`;
   document.getElementById("kalenderMiniGrid").innerHTML = "";
@@ -5199,7 +5242,7 @@ function renderKalenderMiniGrid(data) {
     let warnaTeks = "#E2E8F0";
     let warnaSub = "var(--text-muted)";
     let fontWeight = "600";
-    if (isTerpilih) { bg = "var(--bento-primary)"; warnaTeks = "#0B101E"; warnaSub = "rgba(11,16,30,0.65)"; fontWeight = "800"; }
+    if (isTerpilih) { bg = "rgba(34,197,94,0.22)"; border = "2px solid var(--bento-primary)"; warnaTeks = "#4ADE80"; warnaSub = "#86EFAC"; fontWeight = "800"; }
     else if (isHariIni) { bg = "rgba(34,197,94,0.16)"; border = "1px solid rgba(34,197,94,0.5)"; warnaTeks = "#4ADE80"; fontWeight = "800"; }
     else if (dot) { bg = "rgba(255,255,255,0.045)"; }
 
@@ -5208,7 +5251,7 @@ function renderKalenderMiniGrid(data) {
         <span style="font-size:13px; color:${warnaTeks}; font-weight:${fontWeight}; line-height:1;">${d}</span>
         <span style="font-size:7.5px; color:${warnaSub}; line-height:1.3;">${hijri.hari}H</span>
         <span style="font-size:7.5px; color:${warnaSub}; line-height:1.2; font-style:italic;">${pasaran}</span>
-        <span style="width:4px; height:4px; border-radius:50%; background:${isTerpilih ? "#0B101E" : (dot || "transparent")}; margin-top:1px;"></span>
+        <span style="width:4px; height:4px; border-radius:50%; background:${dot || (isTerpilih ? "transparent" : "transparent")}; margin-top:1px;"></span>
       </div>`;
   }
   grid.innerHTML = html;
@@ -5339,7 +5382,7 @@ function hapusKegiatanConfirm(id) {
 // ============================================================
 // FORM TAMBAH/EDIT KEGIATAN
 // ============================================================
-function openKegiatanForm(idOrNull) {
+function openKegiatanForm(idOrNull, tanggalPrefill) {
   const isEdit = !!idOrNull;
   const k = isEdit ? kalenderBulanCache.find(function (x) { return x.id === idOrNull; }) : null;
   editingKegiatanId = isEdit ? idOrNull : null;
@@ -5347,7 +5390,17 @@ function openKegiatanForm(idOrNull) {
   document.getElementById("kegiatanFormTitle").textContent = isEdit ? "Edit Kegiatan" : "Tambah Kegiatan";
   document.getElementById("kfJudul").value = isEdit ? k.judul : "";
   document.getElementById("kfJenis").value = isEdit ? k.jenis : "santunan";
-  document.getElementById("kfTanggal").value = isEdit && k.tanggal ? new Date(k.tanggal).toISOString().slice(0, 10) : "";
+  if (isEdit && k.tanggal) {
+    document.getElementById("kfTanggal").value = new Date(k.tanggal).toISOString().slice(0, 10);
+  } else if (!isEdit && tanggalPrefill) {
+    // Tanggal diisi otomatis dari tanggal yang lagi ditap di kalender --
+    // format manual (BUKAN toISOString) biar gak kena geser timezone.
+    const mm = String(kalenderBulanAktif).padStart(2, "0");
+    const dd = String(tanggalPrefill).padStart(2, "0");
+    document.getElementById("kfTanggal").value = kalenderTahunAktif + "-" + mm + "-" + dd;
+  } else {
+    document.getElementById("kfTanggal").value = "";
+  }
   document.getElementById("kfJam").value = isEdit ? (k.jam || "") : "";
   document.getElementById("kfLokasi").value = isEdit ? (k.lokasi || "") : "";
   document.getElementById("kfDeskripsi").value = isEdit ? (k.deskripsi || "") : "";
