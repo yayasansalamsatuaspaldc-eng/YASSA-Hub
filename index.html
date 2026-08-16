@@ -1705,33 +1705,42 @@
     </div>
     <div class="akun-content" id="kalenderKegiatanContent" style="padding-top: 16px;">
 
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
-        <button class="gtap" onclick="navigasiKalenderBulan(-1)" style="background:rgba(255,255,255,0.06); border:1px solid var(--glass-border); border-radius:10px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer;">
-          <span class="material-symbols-outlined" style="font-size:18px; color:#fff;">chevron_left</span>
-        </button>
-        <span id="kalenderBulanLabel" style="font-size:13.5px; font-weight:700;">-</span>
-        <button class="gtap" onclick="navigasiKalenderBulan(1)" style="background:rgba(255,255,255,0.06); border:1px solid var(--glass-border); border-radius:10px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer;">
-          <span class="material-symbols-outlined" style="font-size:18px; color:#fff;">chevron_right</span>
-        </button>
+      <!-- Kartu Navigasi Bulan + Filter + Grid -->
+      <div style="background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-bottom: 16px; border: 1px solid var(--glass-border); box-shadow: 0 8px 24px rgba(0,0,0,0.18);">
+
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+          <button class="gtap" onclick="navigasiKalenderBulan(-1)" style="background:rgba(255,255,255,0.06); border:1px solid var(--glass-border-strong); border-radius:12px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition: background 0.15s;">
+            <span class="material-symbols-outlined" style="font-size:19px; color:#fff;">chevron_left</span>
+          </button>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
+            <span id="kalenderBulanLabel" style="font-size:15px; font-weight:700; letter-spacing:0.2px;">-</span>
+            <span class="gtap" onclick="kalenderKeHariIni()" style="font-size:10px; font-weight:600; color: var(--neon-blue); cursor:pointer;">Hari Ini</span>
+          </div>
+          <button class="gtap" onclick="navigasiKalenderBulan(1)" style="background:rgba(255,255,255,0.06); border:1px solid var(--glass-border-strong); border-radius:12px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition: background 0.15s;">
+            <span class="material-symbols-outlined" style="font-size:19px; color:#fff;">chevron_right</span>
+          </button>
+        </div>
+
+        <div id="kalenderFilterChips" style="display:flex; gap:7px; margin-bottom:18px; flex-wrap:wrap;"></div>
+
+        <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:2px; text-align:center; margin-bottom:8px;">
+          <span style="font-size:10px; color:var(--text-muted); font-weight:700;">S</span><span style="font-size:10px; color:var(--text-muted); font-weight:700;">S</span><span style="font-size:10px; color:var(--text-muted); font-weight:700;">R</span><span style="font-size:10px; color:var(--text-muted); font-weight:700;">K</span><span style="font-size:10px; color:var(--text-muted); font-weight:700;">J</span><span style="font-size:10px; color:var(--text-muted); font-weight:700;">S</span><span style="font-size:10px; color:var(--text-muted); font-weight:700;">M</span>
+        </div>
+        <div id="kalenderMiniGrid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:3px;"></div>
+
       </div>
 
-      <div id="kalenderFilterChips" style="display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap;"></div>
-
-      <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; text-align:center; margin-bottom:6px;">
-        <span style="font-size:9.5px; color:var(--text-muted);">S</span><span style="font-size:9.5px; color:var(--text-muted);">S</span><span style="font-size:9.5px; color:var(--text-muted);">R</span><span style="font-size:9.5px; color:var(--text-muted);">K</span><span style="font-size:9.5px; color:var(--text-muted);">J</span><span style="font-size:9.5px; color:var(--text-muted);">S</span><span style="font-size:9.5px; color:var(--text-muted);">M</span>
-      </div>
-      <div id="kalenderMiniGrid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:18px;"></div>
-
-      <div style="height:1px; background:var(--glass-border); margin-bottom:16px;"></div>
-
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <span style="color:var(--text-secondary); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.3px;">Agenda bulan ini</span>
-        <button class="gtap" id="kalenderTambahBtn" onclick="openKegiatanForm(null)" style="display:none; align-items:center; gap:4px; background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.35); color:#4ADE80; font-size:11px; font-weight:700; padding:6px 12px; border-radius:99px; cursor:pointer;">
-          <span class="material-symbols-outlined" style="font-size:14px;">add</span> Tambah
-        </button>
-      </div>
-      <div id="kalenderAgendaList" style="display:flex; flex-direction:column; gap:10px; padding-bottom:20px;">
-        <div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 20px 0;">Memuat agenda…</div>
+      <!-- Kartu Agenda -->
+      <div style="background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); box-shadow: 0 8px 24px rgba(0,0,0,0.18);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <h3 style="font-size: 13px; font-weight: 700; margin: 0; color: var(--text-secondary); text-transform:uppercase; letter-spacing:0.4px;">Agenda Bulan Ini</h3>
+          <button class="gtap" id="kalenderTambahBtn" onclick="openKegiatanForm(null)" style="display:none; align-items:center; gap:4px; background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.35); color:#4ADE80; font-size:11px; font-weight:700; padding:6px 12px; border-radius:99px; cursor:pointer;">
+            <span class="material-symbols-outlined" style="font-size:14px;">add</span> Tambah
+          </button>
+        </div>
+        <div id="kalenderAgendaList" style="display:flex; flex-direction:column; gap:10px;">
+          <div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 20px 0;">Memuat agenda…</div>
+        </div>
       </div>
 
     </div>
@@ -5007,6 +5016,7 @@ let kalenderBulanAktif = new Date().getMonth() + 1;
 let kalenderTahunAktif = new Date().getFullYear();
 let kalenderFilterJenisAktif = "semua";
 let kalenderBulanCache = []; // hasil getKegiatanBulan buat bulan aktif, biar filter chip gak fetch ulang
+let kalenderTanggalTerpilih = null; // null = tampilin semua tanggal di bulan ini
 let editingKegiatanId = null;
 
 function bisaKelolaKegiatan_() {
@@ -5017,6 +5027,7 @@ function openKalenderKegiatan() {
   closeUserMenu();
   document.getElementById("kalenderKegiatanPage").classList.add("open");
   document.getElementById("kalenderTambahBtn").style.display = bisaKelolaKegiatan_() ? "flex" : "none";
+  kalenderTanggalTerpilih = null;
   renderKalenderFilterChips();
   loadKalenderBulanData();
 }
@@ -5025,7 +5036,22 @@ function navigasiKalenderBulan(delta) {
   kalenderBulanAktif += delta;
   if (kalenderBulanAktif > 12) { kalenderBulanAktif = 1; kalenderTahunAktif++; }
   if (kalenderBulanAktif < 1) { kalenderBulanAktif = 12; kalenderTahunAktif--; }
+  kalenderTanggalTerpilih = null;
   loadKalenderBulanData();
+}
+
+function kalenderKeHariIni() {
+  const now = new Date();
+  kalenderBulanAktif = now.getMonth() + 1;
+  kalenderTahunAktif = now.getFullYear();
+  kalenderTanggalTerpilih = null;
+  loadKalenderBulanData();
+}
+
+function pilihTanggalKalender(tanggal) {
+  kalenderTanggalTerpilih = kalenderTanggalTerpilih === tanggal ? null : tanggal;
+  renderKalenderMiniGrid(kalenderBulanCache);
+  renderKalenderAgendaList(kalenderBulanCache);
 }
 
 function renderKalenderFilterChips() {
@@ -5036,9 +5062,12 @@ function renderKalenderFilterChips() {
   el.innerHTML = jenisList.map(function (j) {
     const aktif = kalenderFilterJenisAktif === j.key;
     const meta = KEGIATAN_JENIS_META[j.key];
-    const bg = aktif ? (meta ? meta.bg : "rgba(255,255,255,0.12)") : "rgba(255,255,255,0.05)";
-    const warna = aktif ? (meta ? meta.warna : "#fff") : "var(--text-secondary)";
-    return `<button class="gtap" onclick="filterKalenderJenis('${j.key}')" style="font-size:10.5px; font-weight:700; padding:5px 12px; border-radius:99px; background:${bg}; color:${warna}; border:1px solid ${aktif ? warna : "var(--glass-border)"}; cursor:pointer;">${j.label}</button>`;
+    const warna = meta ? meta.warna : "#E2E8F0";
+    const bg = aktif ? (meta ? meta.bg : "rgba(255,255,255,0.14)") : "rgba(255,255,255,0.04)";
+    const border = aktif ? warna : "var(--glass-border-strong)";
+    const teks = aktif ? (meta ? warna : "#fff") : "var(--text-secondary)";
+    const dot = meta ? `<span style="width:6px; height:6px; border-radius:50%; background:${warna}; display:inline-block;"></span>` : "";
+    return `<button class="gtap" onclick="filterKalenderJenis('${j.key}')" style="display:flex; align-items:center; gap:5px; font-size:11px; font-weight:700; padding:7px 13px; border-radius:99px; background:${bg}; color:${teks}; border:1px solid ${border}; cursor:pointer; transition: all 0.15s;">${dot}${j.label}</button>`;
   }).join("");
 }
 
@@ -5090,11 +5119,21 @@ function renderKalenderMiniGrid(data) {
   for (let i = 0; i < offset; i++) html += "<div></div>";
   for (let d = 1; d <= jumlahHari; d++) {
     const isHariIni = isBulanIni && now.getDate() === d;
+    const isTerpilih = kalenderTanggalTerpilih === d;
     const dot = warnaPerTanggal[d];
+
+    let bg = "transparent";
+    let border = "1px solid transparent";
+    let warnaTeks = "#CBD5E1";
+    let fontWeight = "500";
+    if (isTerpilih) { bg = "var(--bento-primary)"; warnaTeks = "#0B101E"; fontWeight = "800"; }
+    else if (isHariIni) { bg = "rgba(34,197,94,0.16)"; border = "1px solid rgba(34,197,94,0.5)"; warnaTeks = "#4ADE80"; fontWeight = "800"; }
+    else if (dot) { bg = "rgba(255,255,255,0.045)"; }
+
     html += `
-      <div style="display:flex; flex-direction:column; align-items:center; gap:2px; padding:4px 0; border-radius:8px; ${isHariIni ? "background:rgba(34,197,94,0.15);" : ""}">
-        <span style="font-size:11px; color:${isHariIni ? "#4ADE80" : "#CBD5E1"}; font-weight:${isHariIni ? "700" : "400"};">${d}</span>
-        <span style="width:4px; height:4px; border-radius:50%; background:${dot || "transparent"};"></span>
+      <div class="gtap" onclick="pilihTanggalKalender(${d})" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; aspect-ratio:1; border-radius:10px; background:${bg}; border:${border}; cursor:pointer; transition: background 0.15s;">
+        <span style="font-size:12px; color:${warnaTeks}; font-weight:${fontWeight};">${d}</span>
+        <span style="width:4px; height:4px; border-radius:50%; background:${isTerpilih ? "#0B101E" : (dot || "transparent")};"></span>
       </div>`;
   }
   grid.innerHTML = html;
@@ -5103,11 +5142,20 @@ function renderKalenderMiniGrid(data) {
 function renderKalenderAgendaList(data) {
   const el = document.getElementById("kalenderAgendaList");
   const filtered = (data || []).filter(function (k) {
-    return kalenderFilterJenisAktif === "semua" || k.jenis === kalenderFilterJenisAktif;
+    const cocokJenis = kalenderFilterJenisAktif === "semua" || k.jenis === kalenderFilterJenisAktif;
+    const cocokTanggal = !kalenderTanggalTerpilih || (k.tanggal && new Date(k.tanggal).getDate() === kalenderTanggalTerpilih);
+    return cocokJenis && cocokTanggal;
   });
 
   if (!filtered.length) {
-    el.innerHTML = `<div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 30px 0;">Belum ada agenda bulan ini.</div>`;
+    const teksKosong = kalenderTanggalTerpilih
+      ? "Gak ada agenda di tanggal ini."
+      : "Belum ada agenda bulan ini.";
+    el.innerHTML = `
+      <div style="text-align:center; padding:34px 16px;">
+        <span class="material-symbols-outlined" style="font-size:34px; color:var(--text-muted); opacity:0.5;">event_busy</span>
+        <div style="font-size:12.5px; color:var(--text-muted); margin-top:8px;">${teksKosong}</div>
+      </div>`;
     return;
   }
 
@@ -5117,14 +5165,18 @@ function renderKalenderAgendaList(data) {
     const tglNum = tgl ? tgl.getDate() : "-";
     const tglBulan = tgl ? BULAN_LABEL[tgl.getMonth()].substring(0, 3).toUpperCase() : "";
     return `
-      <div class="gtap" onclick="openKegiatanDetail('${k.id}')" style="display:flex; gap:10px; background:rgba(255,255,255,0.04); border:1px solid var(--glass-border); border-radius:14px; padding:10px 12px; align-items:center; cursor:pointer;">
-        <div style="width:38px; height:38px; border-radius:10px; background:${meta.bg}; display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0;">
-          <span style="color:${meta.warna}; font-size:13px; font-weight:700; line-height:1;">${tglNum}</span>
-          <span style="color:${meta.warna}; font-size:8px; line-height:1;">${tglBulan}</span>
+      <div class="gtap" onclick="openKegiatanDetail('${k.id}')" style="display:flex; gap:11px; background:rgba(255,255,255,0.045); border:1px solid var(--glass-border-strong); border-left:3px solid ${meta.warna}; border-radius:14px; padding:11px 13px; align-items:center; cursor:pointer; transition: background 0.15s;">
+        <div style="width:40px; height:40px; border-radius:11px; background:${meta.bg}; display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0;">
+          <span style="color:${meta.warna}; font-size:14px; font-weight:800; line-height:1;">${tglNum}</span>
+          <span style="color:${meta.warna}; font-size:8px; line-height:1.3; font-weight:700;">${tglBulan}</span>
         </div>
         <div style="flex:1; min-width:0;">
           <div style="color:#F8FAFC; font-size:12.5px; font-weight:600;">${escapeHtmlHub(k.judul)}</div>
-          <div style="color:var(--text-secondary); font-size:11px; margin-top:2px;">${escapeHtmlHub(k.jam || "-")} &middot; ${escapeHtmlHub(k.lokasi || "-")}</div>
+          <div style="color:var(--text-secondary); font-size:11px; margin-top:3px; display:flex; align-items:center; gap:4px;">
+            <span class="material-symbols-outlined" style="font-size:12px;">schedule</span>${escapeHtmlHub(k.jam || "-")}
+            <span style="opacity:0.5;">&middot;</span>
+            <span class="material-symbols-outlined" style="font-size:12px;">location_on</span>${escapeHtmlHub(k.lokasi || "-")}
+          </div>
         </div>
         <span class="material-symbols-outlined" style="font-size:16px; color:var(--text-muted);">chevron_right</span>
       </div>`;
