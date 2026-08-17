@@ -130,6 +130,8 @@
   html[data-theme="light"] .pale-amber-text { color: #B45309 !important; }
   html[data-theme="light"] .pale-blue-text { color: #1D4ED8 !important; }
   html[data-theme="light"] .pale-green-text { color: #15803D !important; }
+  html[data-theme="light"] .pale-red-text { color: #B91C1C !important; }
+  html[data-theme="light"] .pale-lightgreen-text { color: #15803D !important; }
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -3504,6 +3506,8 @@ function terapkanKeuanganStats(hasil) {
           ? "Rate santunan belum diisi"
           : (kurang ? formatRupiahHub(selisih) : "Target Tercapai! \ud83c\udf89");
         elSelisihNominal.style.color = belumAdaRate ? WARNA_BELUM_ADA_RATE : (kurang ? "#FCA5A5" : "#BBF7D0");
+        elSelisihNominal.classList.remove("pale-amber-text", "pale-red-text", "pale-lightgreen-text");
+        elSelisihNominal.classList.add(belumAdaRate ? "pale-amber-text" : (kurang ? "pale-red-text" : "pale-lightgreen-text"));
       }
       if (elSelisihLabel) {
         elSelisihLabel.textContent = belumAdaRate
@@ -3512,12 +3516,16 @@ function terapkanKeuanganStats(hasil) {
         elSelisihLabel.style.color = belumAdaRate
           ? "rgba(253, 230, 138, 0.85)"
           : (kurang ? "rgba(252, 165, 165, 0.85)" : "rgba(187, 247, 208, 0.85)");
+        elSelisihLabel.classList.remove("pale-amber-text", "pale-red-text", "pale-lightgreen-text");
+        elSelisihLabel.classList.add(belumAdaRate ? "pale-amber-text" : (kurang ? "pale-red-text" : "pale-lightgreen-text"));
       }
       if (elSelisihIconWrap) {
         elSelisihIconWrap.style.background = belumAdaRate
           ? "rgba(251, 191, 36, 0.15)"
           : (kurang ? "rgba(239, 68, 68, 0.15)" : "rgba(34, 197, 94, 0.18)");
         elSelisihIconWrap.style.color = belumAdaRate ? WARNA_BELUM_ADA_RATE : (kurang ? "#EF4444" : "var(--bento-primary)");
+        elSelisihIconWrap.classList.remove("pale-amber-text");
+        if (belumAdaRate) elSelisihIconWrap.classList.add("pale-amber-text");
       }
       if (elSelisihIcon) elSelisihIcon.textContent = belumAdaRate ? "hourglass_empty" : (kurang ? "arrow_downward" : "celebration");
       if (elStatusBanner) {
