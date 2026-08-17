@@ -122,6 +122,12 @@
   html[data-theme="light"] .summary-card .summary-label,
   html[data-theme="light"] .summary-card .summary-sub-label { color: #F1F5F9; }
   html[data-theme="light"] .summary-sub-row { border-top-color: rgba(255,255,255,0.14); }
+  /* Kotak mini "Yatim Piatu" & "Disabilitas" (kartu Keuangan + modal Laporan
+     Bulanan) pakai warna teks pucat yang di-hardcode buat kontras di atas
+     latar gelap. Di Mode Terang latarnya jadi tint sangat muda, jadi teksnya
+     ditimpa ke warna yang lebih gelap biar tetap kebaca. */
+  html[data-theme="light"] .pale-purple-text { color: #7E22CE !important; }
+  html[data-theme="light"] .pale-amber-text { color: #B45309 !important; }
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -4071,16 +4077,16 @@ function renderContent() {
           <div style="flex: 1; background: rgba(168, 85, 247, 0.10); border: 1px solid rgba(168, 85, 247, 0.25); border-left: 3px solid #A855F7; border-radius: 14px; padding: 12px;">
             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
               <span class="material-symbols-outlined" style="font-size: 15px; color: #C084FC;">diversity_1</span>
-              <span style="font-size: 10.5px; color: #D8B4FE;">Yatim Piatu</span>
+              <span class="pale-purple-text" style="font-size: 10.5px; color: #D8B4FE;">Yatim Piatu</span>
             </div>
-            <div style="font-size: 20px; font-weight: 700; color: #E9D5FF;" id="keuanganYatimPiatu"><span class="kv-loading">...</span></div>
+            <div class="pale-purple-text" style="font-size: 20px; font-weight: 700; color: #E9D5FF;" id="keuanganYatimPiatu"><span class="kv-loading">...</span></div>
           </div>
           <div style="flex: 1; background: rgba(245, 158, 11, 0.10); border: 1px solid rgba(245, 158, 11, 0.25); border-left: 3px solid #FBBF24; border-radius: 14px; padding: 12px;">
             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
               <span class="material-symbols-outlined" style="font-size: 15px; color: #FBBF24;">accessible</span>
-              <span style="font-size: 10.5px; color: #FDE68A;">Disabilitas</span>
+              <span class="pale-amber-text" style="font-size: 10.5px; color: #FDE68A;">Disabilitas</span>
             </div>
-            <div style="font-size: 20px; font-weight: 700; color: #FEF3C7;" id="keuanganDisabilitas"><span class="kv-loading">...</span></div>
+            <div class="pale-amber-text" style="font-size: 20px; font-weight: 700; color: #FEF3C7;" id="keuanganDisabilitas"><span class="kv-loading">...</span></div>
           </div>
         </div>
 
@@ -4858,11 +4864,11 @@ function renderLaporanBulananDetail(wrap, d) {
           <div style="font-size:9px; color: var(--text-muted);">Yatim</div>
         </div>
         <div style="flex:1; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: 10px; padding: 8px 10px; text-align:center;">
-          <div style="font-size:15px; font-weight:800; color:#D8B4FE;">${d.pengeluaran.jumlahYatimPiatu}</div>
+          <div class="pale-purple-text" style="font-size:15px; font-weight:800; color:#D8B4FE;">${d.pengeluaran.jumlahYatimPiatu}</div>
           <div style="font-size:9px; color: var(--text-muted);">Yatim Piatu</div>
         </div>
         <div style="flex:1; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 10px; padding: 8px 10px; text-align:center;">
-          <div style="font-size:15px; font-weight:800; color:#FDE68A;">${d.pengeluaran.jumlahDisabilitas}</div>
+          <div class="pale-amber-text" style="font-size:15px; font-weight:800; color:#FDE68A;">${d.pengeluaran.jumlahDisabilitas}</div>
           <div style="font-size:9px; color: var(--text-muted);">Disabilitas</div>
         </div>
       </div>
