@@ -128,6 +128,8 @@
      ditimpa ke warna yang lebih gelap biar tetap kebaca. */
   html[data-theme="light"] .pale-purple-text { color: #7E22CE !important; }
   html[data-theme="light"] .pale-amber-text { color: #B45309 !important; }
+  html[data-theme="light"] .pale-blue-text { color: #1D4ED8 !important; }
+  html[data-theme="light"] .pale-green-text { color: #15803D !important; }
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -3831,19 +3833,19 @@ function renderContent() {
         </div>
         <div style="display:flex; gap:8px;">
           <div style="flex:1; background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
-            <div style="font-size:15px; font-weight:800; color:#93C5FD;" id="berandaAnakYatimKK"><span class="kv-loading">...</span></div>
+            <div class="pale-blue-text" style="font-size:15px; font-weight:800; color:#93C5FD;" id="berandaAnakYatimKK"><span class="kv-loading">...</span></div>
             <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">KK</div>
           </div>
           <div style="flex:1; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
-            <div style="font-size:15px; font-weight:800; color:#86EFAC;" id="berandaAnakYatimYatim"><span class="kv-loading">...</span></div>
+            <div class="pale-green-text" style="font-size:15px; font-weight:800; color:#86EFAC;" id="berandaAnakYatimYatim"><span class="kv-loading">...</span></div>
             <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Yatim</div>
           </div>
           <div style="flex:1; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
-            <div style="font-size:15px; font-weight:800; color:#D8B4FE;" id="berandaAnakYatimPiatu"><span class="kv-loading">...</span></div>
+            <div class="pale-purple-text" style="font-size:15px; font-weight:800; color:#D8B4FE;" id="berandaAnakYatimPiatu"><span class="kv-loading">...</span></div>
             <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Yatim Piatu</div>
           </div>
           <div style="flex:1; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
-            <div style="font-size:15px; font-weight:800; color:#FDE68A;" id="berandaAnakYatimDisabilitas"><span class="kv-loading">...</span></div>
+            <div class="pale-amber-text" style="font-size:15px; font-weight:800; color:#FDE68A;" id="berandaAnakYatimDisabilitas"><span class="kv-loading">...</span></div>
             <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Disabilitas</div>
           </div>
         </div>
@@ -5009,19 +5011,19 @@ function renderDataAnakYatim(data, dariCache) {
 
     <div style="display:flex; gap:8px; margin-bottom: 18px;">
       <div style="flex:1; background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); border-radius: 12px; padding: 10px 8px; text-align:center;">
-        <div style="font-size:17px; font-weight:800; color:#93C5FD;">${Number(data.totalKK || 0)}</div>
+        <div class="pale-blue-text" style="font-size:17px; font-weight:800; color:#93C5FD;">${Number(data.totalKK || 0)}</div>
         <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">KK</div>
       </div>
       <div style="flex:1; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); border-radius: 12px; padding: 10px 8px; text-align:center;">
-        <div style="font-size:17px; font-weight:800; color:#86EFAC;">${Number(data.totalYatim || 0)}</div>
+        <div class="pale-green-text" style="font-size:17px; font-weight:800; color:#86EFAC;">${Number(data.totalYatim || 0)}</div>
         <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Yatim</div>
       </div>
       <div style="flex:1; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; padding: 10px 8px; text-align:center;">
-        <div style="font-size:17px; font-weight:800; color:#D8B4FE;">${Number(data.totalYatimPiatu || 0)}</div>
+        <div class="pale-purple-text" style="font-size:17px; font-weight:800; color:#D8B4FE;">${Number(data.totalYatimPiatu || 0)}</div>
         <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Yatim Piatu</div>
       </div>
       <div style="flex:1; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; padding: 10px 8px; text-align:center;">
-        <div style="font-size:17px; font-weight:800; color:#FDE68A;">${Number(data.totalDisabilitas || 0)}</div>
+        <div class="pale-amber-text" style="font-size:17px; font-weight:800; color:#FDE68A;">${Number(data.totalDisabilitas || 0)}</div>
         <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Disabilitas</div>
       </div>
     </div>
@@ -5036,10 +5038,10 @@ function renderDataAnakYatim(data, dariCache) {
         <div style="background: var(--glass-strong); border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; border: 1px solid var(--glass-border);">
           <div style="font-size: 12.5px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${escapeHtmlHub(r.wilayah)}</div>
           <div style="display:flex; gap: 14px; flex-wrap: wrap;">
-            <div style="font-size: 11px; color: var(--text-secondary);">KK <b style="color:#93C5FD;">${Number(r.jumlahKK || 0)}</b></div>
-            <div style="font-size: 11px; color: var(--text-secondary);">Yatim <b style="color:#86EFAC;">${Number(r.jumlahYatim || 0)}</b></div>
-            <div style="font-size: 11px; color: var(--text-secondary);">Yatim Piatu <b style="color:#D8B4FE;">${Number(r.jumlahYatimPiatu || 0)}</b></div>
-            <div style="font-size: 11px; color: var(--text-secondary);">Disabilitas <b style="color:#FDE68A;">${Number(r.jumlahDisabilitas || 0)}</b></div>
+            <div style="font-size: 11px; color: var(--text-secondary);">KK <b class="pale-blue-text" style="color:#93C5FD;">${Number(r.jumlahKK || 0)}</b></div>
+            <div style="font-size: 11px; color: var(--text-secondary);">Yatim <b class="pale-green-text" style="color:#86EFAC;">${Number(r.jumlahYatim || 0)}</b></div>
+            <div style="font-size: 11px; color: var(--text-secondary);">Yatim Piatu <b class="pale-purple-text" style="color:#D8B4FE;">${Number(r.jumlahYatimPiatu || 0)}</b></div>
+            <div style="font-size: 11px; color: var(--text-secondary);">Disabilitas <b class="pale-amber-text" style="color:#FDE68A;">${Number(r.jumlahDisabilitas || 0)}</b></div>
           </div>
         </div>`;
     });
@@ -5356,12 +5358,12 @@ function renderKalenderMiniGrid(data) {
 
     let bg = "transparent";
     let border = "1px solid transparent";
-    let warnaTeks = "#E2E8F0";
+    let warnaTeks = "var(--text-primary)";
     let warnaSub = "var(--text-muted)";
     let fontWeight = "600";
-    if (isTerpilih) { bg = "rgba(34,197,94,0.22)"; border = "2px solid var(--bento-primary)"; warnaTeks = "#4ADE80"; warnaSub = "#86EFAC"; fontWeight = "800"; }
-    else if (isHariIni) { bg = "rgba(34,197,94,0.16)"; border = "1px solid rgba(34,197,94,0.5)"; warnaTeks = "#4ADE80"; fontWeight = "800"; }
-    else if (dot) { bg = "rgba(255,255,255,0.045)"; }
+    if (isTerpilih) { bg = "rgba(34,197,94,0.22)"; border = "2px solid var(--bento-primary)"; warnaTeks = "var(--bento-primary)"; warnaSub = "var(--bento-primary)"; fontWeight = "800"; }
+    else if (isHariIni) { bg = "rgba(34,197,94,0.16)"; border = "1px solid rgba(34,197,94,0.5)"; warnaTeks = "var(--bento-primary)"; fontWeight = "800"; }
+    else if (dot) { bg = "rgba(var(--bento-primary-rgb),0.06)"; }
 
     html += `
       <div class="gtap" onclick="pilihTanggalKalender(${d})" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; min-height:58px; border-radius:10px; background:${bg}; border:${border}; cursor:pointer; transition: background 0.15s; padding:4px 0;">
@@ -5400,13 +5402,13 @@ function renderKalenderAgendaList(data) {
     const tglNum = tgl ? tgl.getDate() : "-";
     const tglBulan = tgl ? BULAN_LABEL[tgl.getMonth()].substring(0, 3).toUpperCase() : "";
     return `
-      <div class="gtap" onclick="openKegiatanDetail('${k.id}')" style="display:flex; gap:11px; background:rgba(255,255,255,0.045); border:1px solid var(--glass-border-strong); border-left:3px solid ${meta.warna}; border-radius:14px; padding:11px 13px; align-items:center; cursor:pointer; transition: background 0.15s;">
+      <div class="gtap" onclick="openKegiatanDetail('${k.id}')" style="display:flex; gap:11px; background:var(--glass); border:1px solid var(--glass-border-strong); border-left:3px solid ${meta.warna}; border-radius:14px; padding:11px 13px; align-items:center; cursor:pointer; transition: background 0.15s;">
         <div style="width:40px; height:40px; border-radius:11px; background:${meta.bg}; display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0;">
           <span style="color:${meta.warna}; font-size:14px; font-weight:800; line-height:1;">${tglNum}</span>
           <span style="color:${meta.warna}; font-size:8px; line-height:1.3; font-weight:700;">${tglBulan}</span>
         </div>
         <div style="flex:1; min-width:0;">
-          <div style="color:#F8FAFC; font-size:12.5px; font-weight:600;">${escapeHtmlHub(k.judul)}</div>
+          <div style="color:var(--text-primary); font-size:12.5px; font-weight:600;">${escapeHtmlHub(k.judul)}</div>
           <div style="color:var(--text-secondary); font-size:11px; margin-top:3px; display:flex; align-items:center; gap:4px;">
             <span class="material-symbols-outlined" style="font-size:12px;">schedule</span>${escapeHtmlHub(k.jam || "-")}
             <span style="opacity:0.5;">&middot;</span>
@@ -5443,7 +5445,7 @@ function loadAgendaMendatangBeranda() {
               <span style="color:${meta.warna}; font-size:7px; line-height:1;">${tglBulan}</span>
             </div>
             <div style="flex:1; min-width:0;">
-              <div style="color:#F8FAFC; font-size:11.5px; font-weight:600;">${escapeHtmlHub(k.judul)}</div>
+              <div style="color:var(--text-primary); font-size:11.5px; font-weight:600;">${escapeHtmlHub(k.judul)}</div>
               <div style="color:var(--text-secondary); font-size:10px; margin-top:1px;">${escapeHtmlHub(k.jam || "-")} &middot; ${escapeHtmlHub(k.lokasi || "-")}</div>
             </div>
           </div>`;
