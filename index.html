@@ -885,16 +885,71 @@
   /* Splash / loading awal pas aplikasi dibuka (bersihin cache + refresh data) */
   .app-splash {
     position: fixed; inset: 0; z-index: 9999;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
     background: var(--bg-navy-deep);
     transition: opacity 0.35s ease;
+    overflow: hidden;
   }
   .app-splash.hide { opacity: 0; pointer-events: none; }
-  .app-splash-logo { width: 84px; height: 84px; }
+  .app-splash > * { position: relative; z-index: 1; }
+
+  /* Latar ambient glow + dot-grid halus, dipakai bareng oleh appSplash & postLoginSplash */
+  .app-splash::before, .post-login-splash::before {
+    content: ""; position: absolute; inset: -20%;
+    background:
+      radial-gradient(circle at 18% 18%, rgba(34,197,94,0.30), transparent 42%),
+      radial-gradient(circle at 85% 12%, rgba(168,85,247,0.22), transparent 46%),
+      radial-gradient(circle at 50% 92%, rgba(34,211,238,0.18), transparent 52%);
+    animation: splashGlowDrift 8s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+  .app-splash::after, .post-login-splash::after {
+    content: ""; position: absolute; inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 26px 26px;
+    pointer-events: none;
+  }
+  html[data-theme="light"] .app-splash::before, html[data-theme="light"] .post-login-splash::before {
+    background:
+      radial-gradient(circle at 18% 18%, rgba(34,197,94,0.16), transparent 42%),
+      radial-gradient(circle at 85% 12%, rgba(168,85,247,0.13), transparent 46%),
+      radial-gradient(circle at 50% 92%, rgba(34,211,238,0.12), transparent 52%);
+  }
+  html[data-theme="light"] .app-splash::after, html[data-theme="light"] .post-login-splash::after {
+    background-image: radial-gradient(rgba(15,23,42,0.07) 1px, transparent 1px);
+  }
+  @keyframes splashGlowDrift {
+    0% { transform: scale(1) translate(0,0); }
+    100% { transform: scale(1.18) translate(-2%, 2%); }
+  }
+
+  /* Badge lingkaran gelap bercahaya buat bungkus logo -- warnanya sengaja
+     tetap gelap di kedua tema biar logo (fill putih/hijau hardcode) selalu kontras. */
+  .splash-logo-badge {
+    position: relative; width: 112px; height: 112px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: radial-gradient(circle at 34% 28%, #1C2C48 0%, #0A0F1C 72%);
+    box-shadow: 0 0 0 1px rgba(34,197,94,0.35), 0 0 44px rgba(34,197,94,0.32), 0 22px 44px rgba(0,0,0,0.45);
+  }
+  .splash-logo-badge::before, .splash-logo-badge::after {
+    content: ""; position: absolute; border-radius: 50%;
+    border: 1.5px solid rgba(34,197,94,0.4);
+    animation: splashRingPulse 2.6s cubic-bezier(0.3,0.6,0.4,1) infinite;
+  }
+  .splash-logo-badge::before { inset: -10px; }
+  .splash-logo-badge::after { inset: -24px; animation-delay: 0.7s; border-color: rgba(34,211,238,0.28); }
+  @keyframes splashRingPulse {
+    0% { transform: scale(0.82); opacity: 0.8; }
+    100% { transform: scale(1.3); opacity: 0; }
+  }
+
+  .app-splash-logo { width: 62px; height: 62px; }
   .app-splash-spinner {
-    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
-    border: 3px solid rgba(34,211,238,0.2); border-top-color: var(--neon-cyan);
+    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+    border: 3px solid rgba(34,211,238,0.18); border-top-color: var(--neon-cyan); border-right-color: var(--neon-purple);
     animation: appSplashSpin 0.8s linear infinite;
+    filter: drop-shadow(0 0 8px rgba(34,211,238,0.45));
   }
   @keyframes appSplashSpin { to { transform: rotate(360deg); } }
   #manualRefreshIcon.spin { animation: appSplashSpin 0.7s linear infinite; }
@@ -911,7 +966,12 @@
   .kv-banner-error { background: rgba(239,68,68,0.10); border: 1px solid rgba(239,68,68,0.3); }
   .kv-banner-error #keuanganLoadingIcon { color: #F87171; }
   .kv-banner-error #keuanganLoadingBannerText { color: #FCA5A5; }
-  .app-splash-status { font-size: 13px; color: var(--text-muted); font-weight: 600; letter-spacing: 0.2px; }
+  .app-splash-status {
+    font-size: 12.5px; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.2px;
+    padding: 6px 16px; border-radius: 999px;
+    background: var(--glass); border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
+  }
 
   /* Status "sedang masuk" pas proses login Google */
   .google-login-status {
@@ -930,32 +990,47 @@
      BUKAN dipakai pas restore sesi/refresh -- cuma pas login baru. */
   .post-login-splash {
     position: fixed; inset: 0; z-index: 9999;
-    display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    display: none; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
     background: var(--bg-navy-deep);
     transition: opacity 0.4s ease;
     padding: 24px; text-align: center;
+    overflow: hidden;
   }
   .post-login-splash.show { display: flex; }
   .post-login-splash.hide { opacity: 0; pointer-events: none; }
-  .post-login-splash-logo { width: 80px; height: 80px; }
+  .post-login-splash > * { position: relative; z-index: 1; }
+  .post-login-splash-logo { width: 58px; height: 58px; }
   .post-login-splash-arabic {
-    font-size: 26px; line-height: 1.9; color: var(--text-primary);
+    font-size: 27px; line-height: 1.9;
     font-family: "Traditional Arabic", "Scheherazade New", "Amiri", serif;
     direction: rtl;
+    background: linear-gradient(135deg, var(--text-primary) 20%, var(--neon-cyan) 65%, var(--neon-purple) 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 2px 14px rgba(34,211,238,0.25));
+    animation: splashFadeUp 0.7s ease both;
   }
   .post-login-splash-sub {
-    font-size: 14px; font-weight: 600; color: var(--text-secondary);
+    font-size: 13.5px; font-weight: 600; color: var(--text-secondary);
     letter-spacing: 0.2px;
+    padding: 7px 16px; border-radius: 999px;
+    background: var(--glass); border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
+    animation: splashFadeUp 0.7s ease 0.1s both;
   }
   .post-login-splash-status {
     font-size: 12.5px; color: var(--text-muted); font-weight: 500;
     min-height: 18px;
   }
   .post-login-splash-spinner {
-    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
-    border: 3px solid rgba(34,211,238,0.2); border-top-color: var(--neon-cyan);
+    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+    border: 3px solid rgba(34,211,238,0.18); border-top-color: var(--neon-cyan); border-right-color: var(--neon-purple);
     animation: appSplashSpin 0.8s linear infinite;
+    filter: drop-shadow(0 0 8px rgba(34,211,238,0.45));
     margin-top: 4px;
+  }
+  @keyframes splashFadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .login-card {
@@ -1370,17 +1445,19 @@
 
 <!-- ============ SPLASH / LOADING AWAL ============ -->
 <div id="appSplash" class="app-splash">
-  <svg viewBox="0 0 100 100" class="app-splash-logo" aria-label="YASSA Logo">
-    <circle cx="28" cy="38" r="6" fill="#22C55E"/>
-    <path d="M13 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
-    <circle cx="72" cy="38" r="6" fill="#22C55E"/>
-    <path d="M57 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
-    <circle cx="50" cy="28" r="7.5" fill="#22C55E"/>
-    <path d="M30 53 a 20 20 0 0 1 40 0" fill="none" stroke="#22C55E" stroke-width="6.5" stroke-linecap="round"/>
-    <text x="50" y="76" font-family="'Inter', sans-serif" font-weight="900" font-size="24" text-anchor="middle" letter-spacing="-0.5">
-      <tspan fill="#ffffff">YAS</tspan><tspan fill="#22C55E">SA</tspan>
-    </text>
-  </svg>
+  <div class="splash-logo-badge">
+    <svg viewBox="0 0 100 100" class="app-splash-logo" aria-label="YASSA Logo">
+      <circle cx="28" cy="38" r="6" fill="#22C55E"/>
+      <path d="M13 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="72" cy="38" r="6" fill="#22C55E"/>
+      <path d="M57 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="50" cy="28" r="7.5" fill="#22C55E"/>
+      <path d="M30 53 a 20 20 0 0 1 40 0" fill="none" stroke="#22C55E" stroke-width="6.5" stroke-linecap="round"/>
+      <text x="50" y="76" font-family="'Inter', sans-serif" font-weight="900" font-size="24" text-anchor="middle" letter-spacing="-0.5">
+        <tspan fill="#ffffff">YAS</tspan><tspan fill="#22C55E">SA</tspan>
+      </text>
+    </svg>
+  </div>
   <div class="app-splash-spinner"></div>
   <div class="app-splash-status" id="appSplashStatus">Menyiapkan aplikasi...</div>
 </div>
@@ -1390,17 +1467,19 @@
      sesi/refresh). Nutupin layar 30 detik selagi data awal Beranda
      diam-diam diambil di belakang layar lewat onLoginSuccess() -> showApp(). -->
 <div id="postLoginSplash" class="post-login-splash">
-  <svg viewBox="0 0 100 96" class="post-login-splash-logo" aria-label="YASSA Logo">
-    <circle cx="22" cy="36" r="6.5" fill="#22C55E"/>
-    <path d="M8 58 a 14 14 0 0 1 28 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
-    <circle cx="78" cy="36" r="6.5" fill="#22C55E"/>
-    <path d="M64 58 a 14 14 0 0 1 28 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
-    <circle cx="50" cy="23" r="9" fill="#22C55E"/>
-    <path d="M27 55 a 23 23 0 0 1 46 0" fill="none" stroke="#22C55E" stroke-width="7" stroke-linecap="round"/>
-    <text x="50" y="88" font-family="'Inter', sans-serif" font-weight="900" font-size="22" text-anchor="middle" letter-spacing="-0.3">
-      <tspan fill="#ffffff">YAS</tspan><tspan fill="#22C55E">SA</tspan>
-    </text>
-  </svg>
+  <div class="splash-logo-badge">
+    <svg viewBox="0 0 100 96" class="post-login-splash-logo" aria-label="YASSA Logo">
+      <circle cx="22" cy="36" r="6.5" fill="#22C55E"/>
+      <path d="M8 58 a 14 14 0 0 1 28 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="78" cy="36" r="6.5" fill="#22C55E"/>
+      <path d="M64 58 a 14 14 0 0 1 28 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="50" cy="23" r="9" fill="#22C55E"/>
+      <path d="M27 55 a 23 23 0 0 1 46 0" fill="none" stroke="#22C55E" stroke-width="7" stroke-linecap="round"/>
+      <text x="50" y="88" font-family="'Inter', sans-serif" font-weight="900" font-size="22" text-anchor="middle" letter-spacing="-0.3">
+        <tspan fill="#ffffff">YAS</tspan><tspan fill="#22C55E">SA</tspan>
+      </text>
+    </svg>
+  </div>
   <div class="post-login-splash-arabic">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
   <div class="post-login-splash-sub" id="postLoginSplashSub">Kita akan membuka YASSA GOPAY...</div>
   <div class="post-login-splash-spinner"></div>
