@@ -4,6 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>YASSA GOPAY</title>
+<script>
+  // 🌞 Terapkan tema (gelap/terang) SEBELUM CSS/HTML lain di-render, supaya
+  // gak ada "kedipan" balik ke tema gelap sesaat pas app baru dibuka
+  // (FOUC). Preferensi disimpan di localStorage lewat toggleTheme() di
+  // bagian <script> utama bawah.
+  (function () {
+    try {
+      if (localStorage.getItem("yassa_gopay_theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    } catch (e) {}
+  })();
+</script>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#121A2F">
 <meta name="mobile-web-app-capable" content="yes">
@@ -58,6 +71,57 @@
     --bento-error-rgb: 239,68,68;
     --bento-on-surface-variant: #9AA8C7;
   }
+
+  /* ============================================================
+     ☀️ MODE TERANG ("Outdoor") — supaya app tetap kebaca pas dipakai
+     di luar ruangan / siang hari kena matahari langsung. Diaktifkan
+     lewat atribut data-theme="light" di <html> (toggle via tombol
+     "Mode Tampilan" di Menu Akun -> lihat toggleTheme() di <script>
+     bawah). Cukup nimpa CSS variable inti di sini; sisanya otomatis
+     ikut berubah karena hampir semua komponen sudah pakai var(--...).
+     Beberapa komponen yang sengaja punya warna gelap hardcode (kartu
+     ringkasan hijau, header, dropdown menu, modal, dll) ditimpa manual
+     di blok override bawahnya biar tetap kontras & konsisten.
+     ============================================================ */
+  html[data-theme="light"] {
+    --bg-navy: #EEF2F7;
+    --bg-navy-deep: #E2E8F0;
+    --glass: rgba(255,255,255,0.72);
+    --glass-strong: rgba(255,255,255,0.92);
+    --glass-border: rgba(15,23,42,0.08);
+    --glass-border-strong: rgba(15,23,42,0.14);
+    --text-primary: #0F172A;
+    --text-secondary: #475569;
+    --text-muted: #64748B;
+    --bento-on-surface-variant: #475569;
+    --shadow-deep: 0 20px 50px rgba(15,23,42,0.14);
+  }
+  /* Komponen dengan latar gelap hardcode (bukan var), ditimpa manual
+     biar teks di atasnya tetap kebaca di Mode Terang. */
+  html[data-theme="light"] .overlay-header { background: rgba(255,255,255,0.92); }
+  html[data-theme="light"] .overlay iframe { background: var(--bg-navy); }
+  html[data-theme="light"] .bottom-nav { background: rgba(255,255,255,0.88); box-shadow: 0 -8px 32px rgba(15,23,42,0.08); }
+  html[data-theme="light"] .user-menu { background: linear-gradient(180deg, #FFFFFF 0%, #F1F5F9 100%); }
+  html[data-theme="light"] .user-menu-item:active, html[data-theme="light"] .user-menu-item:hover { background: rgba(15,23,42,0.05); }
+  html[data-theme="light"] .custom-modal,
+  html[data-theme="light"] .user-form-sheet,
+  html[data-theme="light"] .force-pw-sheet { background: #FFFFFF; }
+  html[data-theme="light"] .wilayah-dropdown-panel { background: #FFFFFF; }
+  html[data-theme="light"] .wilayah-option:hover { background: rgba(15,23,42,0.05); }
+  html[data-theme="light"] .btn-cancel, html[data-theme="light"] .btn-form-cancel { background: rgba(15,23,42,0.06); }
+  html[data-theme="light"] .user-form-input, html[data-theme="light"] .user-form-select { background: rgba(15,23,42,0.03); }
+  html[data-theme="light"] .user-row:active { background: rgba(15,23,42,0.04); }
+  html[data-theme="light"] .overlay-close:active { background: rgba(15,23,42,0.08); }
+  html[data-theme="light"] .overlay-close svg { stroke: var(--text-primary) !important; }
+  html[data-theme="light"] .header-logo-btn { background: #FFFFFF; }
+  /* Kartu ringkasan finansial di Beranda gradasi hijau tua & header hijau/biru
+     sengaja TETAP gelap di kedua mode (biar identitas visualnya konsisten),
+     jadi teksnya dipaksa tetap terang biar gak ketiban var(--text-primary)
+     yang sudah jadi gelap di Mode Terang. */
+  html[data-theme="light"] .summary-card .summary-value,
+  html[data-theme="light"] .summary-card .summary-label,
+  html[data-theme="light"] .summary-card .summary-sub-label { color: #F1F5F9; }
+  html[data-theme="light"] .summary-sub-row { border-top-color: rgba(255,255,255,0.14); }
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -1549,6 +1613,10 @@
       <span class="user-menu-icon tone-amber"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span>
       Tutorial Penggunaan
     </button>
+    <button class="user-menu-item" id="themeToggleBtn" onclick="toggleTheme()">
+      <span class="user-menu-icon tone-cyan" id="themeToggleIcon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></span>
+      <span id="themeToggleLabel">Mode Terang (Outdoor)</span>
+    </button>
 
     <div class="user-menu-divider"></div>
 
@@ -2394,6 +2462,49 @@ window.addEventListener("offline", function () { updateNetworkStatusBanner(false
 // keadaan offline SEBELUM app ini dimuat, bukan cuma pas berubah).
 document.addEventListener("DOMContentLoaded", function () {
   if (!navigator.onLine) updateNetworkStatusBanner(false);
+});
+
+// ============================================================
+// ☀️ MODE TERANG (Outdoor) — toggle tema gelap/terang, disimpan di
+// localStorage supaya "nempel" tiap kali app dibuka lagi. Atribut
+// data-theme sudah diterapkan lebih awal (lihat <script> kecil di
+// <head>) buat cegah kedipan; fungsi di sini cuma nambahin logika
+// toggle + sinkronisasi ikon/label tombol & warna status bar HP.
+// ============================================================
+const THEME_STORAGE_KEY = "yassa_gopay_theme";
+
+function applyThemeUI_(theme) {
+  const icon = document.getElementById("themeToggleIcon");
+  const label = document.getElementById("themeToggleLabel");
+  const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+  if (theme === "light") {
+    if (label) label.textContent = "Mode Gelap (Default)";
+    if (icon) icon.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>';
+    if (metaThemeColor) metaThemeColor.setAttribute("content", "#EEF2F7");
+  } else {
+    if (label) label.textContent = "Mode Terang (Outdoor)";
+    if (icon) icon.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+    if (metaThemeColor) metaThemeColor.setAttribute("content", "#121A2F");
+  }
+}
+
+function toggleTheme() {
+  const isLight = document.documentElement.getAttribute("data-theme") === "light";
+  const next = isLight ? "dark" : "light";
+  if (next === "light") {
+    document.documentElement.setAttribute("data-theme", "light");
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+  }
+  try { localStorage.setItem(THEME_STORAGE_KEY, next); } catch (e) {}
+  applyThemeUI_(next);
+}
+
+// Sinkronkan tombol (ikon + teks) begitu app selesai dimuat, sesuai
+// tema yang sudah aktif (baik default gelap maupun terang tersimpan).
+document.addEventListener("DOMContentLoaded", function () {
+  const current = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+  applyThemeUI_(current);
 });
 
 function togglePasswordVisibility(inputId, btn) {
