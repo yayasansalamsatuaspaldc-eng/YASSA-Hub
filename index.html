@@ -2397,6 +2397,13 @@ const MENUS = {
       { label: "Profil", icon: "user", color: "amber", tab: "aksi", desc: "Akun & pengaturan" },
     ],
   },
+  lentera: {
+    title: "Lentera Yassa",
+    baseUrl: "https://yassa-mobile.github.io/lenterayassa/",
+    items: [
+      { label: "Buka Lentera", icon: "lightbulb", color: "amber", url: "https://yassa-mobile.github.io/lenterayassa/", desc: "Masuk ke Aplikasi Lentera Yassa" }
+    ],
+  },
   pengaturan: { title: "Pengaturan" }, // dirender khusus lewat renderPengaturanPanel(), bukan menu-grid biasa
 };
 
@@ -4087,6 +4094,7 @@ function renderContent() {
       // tambah/hapus baris "notice" di object card-nya, gak perlu ubah
       // logika render di bawah.
       { key: "bukubesar", grad: "linear-gradient(135deg, #67E8F9 0%, #0E7490 100%)", glow: "rgba(34,211,238,0.35)", icon: "menu_book", title: "Cloud Buku", desc: "Pembukuan Digital<br>Yayasan", notice: "Masih Tahap Pengembangan, Data mungkin tidak Akurat" },
+      { key: "lentera", grad: "linear-gradient(135deg, #FBBF24 0%, #D97706 100%)", glow: "rgba(251,191,36,0.35)", icon: "lightbulb", title: "Lentera Yassa", desc: "Aplikasi<br>Lentera Yassa" },
     ];
 
     APP_CARDS.filter(function (c) { return isAppVisible(c.key); }).forEach(function (c) {
