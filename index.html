@@ -6696,9 +6696,60 @@ function showQrCodeDonasiCepat() {
       <div style="font-size:11.5px; color:var(--text-secondary); text-align:center; line-height:1.4;">
         <b>Scan QR ini buat donasi cepat</b><br>Lewat GoPay / QRIS langsung dari HP donatur.
       </div>
+      <div style="width:100%; height:1px; background:var(--glass-border); margin:4px 0;"></div>
+      <div style="width:100%; display:flex; flex-direction:column; gap:10px;">
+        ${rekeningDonasiCardHtml("BJB", "0128-3468-5610-0", "YAYASAN SALAM SATU ASPAL")}
+        ${rekeningDonasiCardHtml("BSI", "7216-7944-13", "UPZ YAYASAN SALAM SATU ASPAL")}
+      </div>
     </div>
   `;
   showModal("QR Code Donasi", modalHtml);
+}
+
+// 🏦 Kartu Rekening Donasi (dipakai di modal QR Donasi & tempat lain) --
+// nomor rekening bisa langsung di-copy dengan tap tombol copy-nya lewat
+// copyRekeningDonasi() di bawah.
+function rekeningDonasiCardHtml(bank, nomor, atasNama) {
+  const idAman = "rek_" + bank.replace(/[^a-zA-Z0-9]/g, "");
+  return `
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--glass-strong); border:1px solid var(--glass-border); border-radius:14px; padding:12px 14px;">
+      <div style="min-width:0;">
+        <div style="font-size:11px; color:var(--text-secondary); margin-bottom:2px;">Rekening Donasi &middot; ${escapeHtmlHub(bank)}</div>
+        <div id="${idAman}" style="font-size:14px; font-weight:700; color:var(--text-primary); letter-spacing:0.2px;">${escapeHtmlHub(nomor)}</div>
+        <div style="font-size:10.5px; color:var(--text-muted); margin-top:2px;">a.n. ${escapeHtmlHub(atasNama)}</div>
+      </div>
+      <button onclick="copyRekeningDonasi('${idAman}', this)" style="flex-shrink:0; display:flex; align-items:center; gap:5px; background:var(--bento-primary); color:#0B101E; border:none; border-radius:10px; padding:8px 12px; font-size:11.5px; font-weight:700; cursor:pointer;">
+        <span class="material-symbols-outlined" style="font-size:16px;">content_copy</span>Copy
+      </button>
+    </div>
+  `;
+}
+
+function copyRekeningDonasi(elId, btnEl) {
+  const nomor = document.getElementById(elId) ? document.getElementById(elId).textContent.trim() : "";
+  if (!nomor) return;
+  const selesai = () => {
+    if (!btnEl) return;
+    const asli = btnEl.innerHTML;
+    btnEl.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">check</span>Tersalin';
+    setTimeout(() => { btnEl.innerHTML = asli; }, 1500);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(nomor).then(selesai).catch(() => {
+      showModal("Gagal Menyalin", "Nomor rekening: " + nomor + "<br>Silakan salin manual.");
+    });
+  } else {
+    const ta = document.createElement("textarea");
+    ta.value = nomor;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); selesai(); } catch (e) {
+      showModal("Gagal Menyalin", "Nomor rekening: " + nomor + "<br>Silakan salin manual.");
+    }
+    document.body.removeChild(ta);
+  }
 }
 
 let userListCache = [];
