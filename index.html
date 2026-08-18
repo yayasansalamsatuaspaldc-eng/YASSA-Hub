@@ -8335,56 +8335,56 @@ bootApp();
     openPopup();
   });
 
+  var pwaAppInstalledHandled = false; // cegah overlay dobel -- event "appinstalled" kadang nembak 2x di sebagian Android/Chrome
+
   window.addEventListener("appinstalled", function () {
+    if (pwaAppInstalledHandled) return;
+    pwaAppInstalledHandled = true;
     markDismissed();
     closePopup();
     showInstalledSuccessOverlay();
   });
 
-  // 🩹 Setelah install SUKSES, idealnya tab browser ini nutup sendiri biar
-  // user lanjut pakai lewat ikon aplikasi yang baru keinstall di layar
-  // utama/app drawer -- BUKAN nerusin pakai versi tab browser.
-  // Catatan penting: window.close() lewat script CUMA diizinkan browser
-  // kalau tab ini dibuka OLEH script lain (window.open()). Tab yang dibuka
-  // user sendiri lewat klik link (kasus ini) TIDAK BISA ditutup paksa dari
-  // JS -- dibatasi browser demi keamanan (situs gak boleh nutup-nutup tab
-  // user seenaknya). Jadi kita tetap coba window.close(), tapi kalau
-  // gagal (tab masih kebuka setelah dicoba), tampilkan overlay yang minta
-  // user nutup manual & buka dari ikon aplikasinya.
+  // 🩹 CATATAN: window.close() lewat script CUMA diizinkan browser kalau tab
+  // ini dibuka OLEH script lain (window.open()). Tab yang dibuka user
+  // sendiri lewat klik link (kasus ini) TIDAK BISA ditutup paksa dari JS --
+  // ini batas keamanan browser, gak ada cara buat mem-bypass-nya. Jadi
+  // daripada nampilin tombol "Tutup Tab" yang keliatan ada tapi gak pernah
+  // beneran nutup (bikin bingung), overlay ini kasih instruksi jujur +
+  // visual cara nutup tab manual, dan tombolnya cuma buat nutup overlay
+  // (mengerti), bukan pura-pura nutup tab.
   function showInstalledSuccessOverlay() {
     var ov = document.createElement("div");
-    ov.style.cssText = "position:fixed; inset:0; z-index:99999; background:rgba(15,23,42,0.92); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:32px 24px; gap:16px; color:#fff;";
+    ov.style.cssText = "position:fixed; inset:0; z-index:99999; background:rgba(15,23,42,0.94); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:32px 24px; gap:14px; color:#fff;";
     ov.innerHTML = `
       <div style="width:72px; height:72px; border-radius:50%; background:rgba(34,197,94,0.18); display:flex; align-items:center; justify-content:center;">
         <span class="material-symbols-outlined" style="font-size:38px; color:#4ADE80;">check_circle</span>
       </div>
       <div style="font-weight:700; font-size:18px;">Aplikasi Berhasil Diinstall</div>
-      <div style="font-size:13.5px; color:#CBD5E1; max-width:280px; line-height:1.5;">
-        Tab browser ini boleh ditutup. Selanjutnya buka YASSA GOPAY lewat ikon yang baru muncul di layar utama / app drawer HP kamu.
+      <div style="font-size:13.5px; color:#CBD5E1; max-width:290px; line-height:1.5;">
+        Selanjutnya buka YASSA GOPAY lewat ikon yang baru muncul di layar utama / app drawer HP kamu -- bukan dari tab browser ini lagi.
+      </div>
+      <div style="width:100%; max-width:300px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:14px 16px; text-align:left; display:flex; flex-direction:column; gap:10px; margin-top:4px;">
+        <div style="font-size:11.5px; font-weight:700; color:#94A3B8; letter-spacing:0.3px;">CARA TUTUP TAB INI (MANUAL)</div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span class="material-symbols-outlined" style="font-size:20px; color:#4ADE80; flex-shrink:0;">tab</span>
+          <span style="font-size:12.5px; color:#E2E8F0; line-height:1.4;">Ketuk ikon jumlah tab (angka) di pojok kanan atas layar, dekat address bar.</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span class="material-symbols-outlined" style="font-size:20px; color:#4ADE80; flex-shrink:0;">swipe_up</span>
+          <span style="font-size:12.5px; color:#E2E8F0; line-height:1.4;">Cari kartu tab ini, lalu geser ke atas/samping (atau ketuk "X") buat menutupnya.</span>
+        </div>
       </div>
       <button id="pwaCloseTabBtn" style="margin-top:6px; padding:12px 28px; border-radius:14px; background:#22C55E; color:#0F172A; font-weight:700; font-size:14px; border:none; cursor:pointer;">
-        Tutup Tab
+        Mengerti
       </button>
     `;
     document.body.appendChild(ov);
     document.getElementById("pwaCloseTabBtn").addEventListener("click", function () {
+      ov.remove();
+      // Tetap dicoba diam-diam, siapa tau di browser tertentu memang diizinkan.
       try { window.close(); } catch (e) {}
-      // Kalau setelah dicoba tab masih kebuka (kemungkinan besar, karena
-      // browser blok), kasih tahu jujur -- daripada tombol keliatan gak
-      // ngapa-ngapain.
-      setTimeout(function () {
-        var hint = document.getElementById("pwaCloseTabHint");
-        if (!hint) {
-          hint = document.createElement("div");
-          hint.id = "pwaCloseTabHint";
-          hint.style.cssText = "font-size:12px; color:#94A3B8; max-width:260px; line-height:1.4;";
-          hint.textContent = "Browser gak ngizinin tab ditutup otomatis -- silakan tutup manual lewat tombol/gesture close tab HP kamu ya.";
-          ov.appendChild(hint);
-        }
-      }, 300);
     });
-    // Coba tutup otomatis juga tanpa nunggu klik, siapa tau di browser ini diizinkan.
-    try { window.close(); } catch (e) {}
   }
 
   if (isIOS()) {
