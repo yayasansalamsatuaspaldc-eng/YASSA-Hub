@@ -4596,11 +4596,31 @@ function openMobileAppForNotif() {
 // supaya tetap jalan walau YASSA Mobile pindah domain/custom domain nanti;
 // validasi utama ada di e.data.type sebagai tanda pesan ini memang dari
 // YASSA Mobile, bukan skrip pihak ketiga sembarangan.
+// 🩹 FIX RACE CONDITION: dulu begitu pesan status notif dari tab YASSA
+// Mobile masuk, Hub LANGSUNG active='beranda' + render() -- padahal modal
+// info "Aktifkan Notifikasi" (tombol "Mengerti") yang muncul pas
+// openMobileAppForNotif() bisa jadi MASIH KEBUKA di layar (tab baru sering
+// selesai proses & lapor balik dalam hitungan detik, lebih cepat dari user
+// baca modalnya). Efeknya: render() ke Beranda kepanggil duluan ->
+// maybeStartTour() ikut auto-jalan juga, jadi tur tutorial nongol
+// nyelonong padahal user belum sempat tekan "Mengerti".
+// Solusi: kalau modal itu masih 'open' pas pesan masuk, JANGAN pindah ke
+// Beranda dulu -- tunda (pendingNotifStatusTransition) sampai user beneran
+// nutup modalnya lewat closeModal().
+let pendingNotifStatusTransition = false;
+
 window.addEventListener("message", function (e) {
   if (!e.data || e.data.type !== "yassa-mobile-notif-status") return;
   const sedangDiGateApp = (active === "app"); // gate notifikasi lagi nongol
   localStorage.setItem("yassa_mobile_notif_status", e.data.status);
-  if (sedangDiGateApp) { active = "beranda"; render(); }
+  if (sedangDiGateApp) {
+    const modalMasihKebuka = document.getElementById('customModalOverlay').classList.contains('open');
+    if (modalMasihKebuka) {
+      pendingNotifStatusTransition = true; // tunda dulu, tunggu user tekan "Mengerti"
+    } else {
+      active = "beranda"; render();
+    }
+  }
   else if (active === "mobile") render();
 });
 
@@ -7848,6 +7868,15 @@ function showModal(title, message, isConfirm = false, onConfirm = null) {
 
 function closeModal() {
   document.getElementById('customModalOverlay').classList.remove('open');
+  // 🩹 Lanjutan fix race condition notifikasi: kalau tadi ada transisi ke
+  // Beranda yang ditunda karena modal masih kebuka, baru sekarang (SETELAH
+  // user tekan "Mengerti"/nutup modal) kita pindah ke Beranda & render()
+  // -- termasuk trigger tur tutorial kalau memang belum pernah keliatan.
+  if (pendingNotifStatusTransition) {
+    pendingNotifStatusTransition = false;
+    active = "beranda";
+    render();
+  }
 }
 
 function setSplashStatus(msg) {
