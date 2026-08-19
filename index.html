@@ -2401,18 +2401,21 @@ const MENUS = {
     title: "Lentera Yassa",
     baseUrl: "https://yassa-mobile.github.io/lenterayassa/",
     // 🔄 UPDATE: dulu cuma 1 tombol "Buka Lentera" pakai url statis (item.url),
-    // jadi tiap dibuka SELALU reload penuh dari nol -- gak ikut jalur
-    // postMessage-nav kayak AWG/PM/Buku Besar/Mobile (lihat
-    // APPS_WITH_POSTMESSAGE_NAV di openApp()). Sekarang disamakan: item pakai
-    // "tab" (bukan "url" mentah), jadi Hub buka lewat baseUrl + "?embed=1&tab=..."
+    // beda sendiri dari app lain yang selalu punya beberapa menu di grid App
+    // (Dashboard/Info Kotak/dst). Sekarang dipecah jadi 4 menu, 1-1 sesuai 4
+    // tab asli yang memang sudah ada di dalam app Lentera sendiri (lihat
+    // bottom-nav di index_lentera_yassa.html: quran/yasin/yassa/sholat).
+    // Item pakai "tab" (bukan "url" mentah) + didaftarkan di
+    // APPS_WITH_POSTMESSAGE_NAV, jadi Hub buka lewat baseUrl + "?embed=1&tab=..."
     // dan kalau app-nya masih hidup di iframe pas ganti menu, cukup kirim
-    // postMessage "YASSA_HUB_NAVIGATE" tanpa reload ulang.
-    // CATATAN: ini asumsi app Lentera (lenterayassa/) sudah/segera mendukung
-    // parameter ?embed=1&tab=home dan listener postMessage YASSA_HUB_NAVIGATE
-    // (balas YASSA_HUB_NAV_ACK) persis kayak app lain -- kalau source Lentera
-    // belum diimplementasikan begitu, sesuaikan dulu di sisi Lentera-nya.
+    // postMessage "YASSA_HUB_NAVIGATE" tanpa reload ulang -- app Lentera
+    // sudah diupdate juga buat baca ?tab= saat load & dengerin pesan itu
+    // (balas "YASSA_HUB_NAV_ACK"), persis pola Kotak & Donasi.
     items: [
-      { label: "Buka Lentera", icon: "lightbulb", color: "amber", tab: "home", desc: "Masuk ke Aplikasi Lentera Yassa" }
+      { label: "Al-Quran", icon: "bookopen", color: "teal", tab: "quran", desc: "Baca Al-Quran digital" },
+      { label: "Yasin & Tahlil", icon: "heart", color: "amber", tab: "yasin", desc: "Bacaan Yasin & Tahlil" },
+      { label: "Pejuang Yatim", icon: "users", color: "coral", tab: "yassa", desc: "Galeri kenangan YASSA" },
+      { label: "Jadwal Sholat", icon: "calendar", color: "purple", tab: "sholat", desc: "Jadwal sholat harian" }
     ],
   },
   pengaturan: { title: "Pengaturan" }, // dirender khusus lewat renderPengaturanPanel(), bukan menu-grid biasa
