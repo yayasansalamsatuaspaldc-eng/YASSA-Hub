@@ -232,7 +232,7 @@
       -webkit-column-break-after: avoid;
     }
     /* Tambahan width: 100% agar header tidak menyusut (squished) ke tengah layar */
-    .header, .summary-card { width: 100%; max-width: 1360px; margin-left: auto; margin-right: auto; }
+    .header, .summary-card, .program-selector-wrap { width: 100%; max-width: 1360px; margin-left: auto; margin-right: auto; }
     .summary-card { margin-top: -30px; }
     /* Hapus aturan .bottom-nav di sini karena posisi absolute bawaan mobile (left:0, right:0) sudah membuatnya pas 100% mengikuti lebar #app */
   }
@@ -316,6 +316,14 @@
   .header-logo-svg { width: 90%; height: 90%; display: block; }
   .header-avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
+  /* Wrapper selector program: margin kiri/kanan sama kayak .summary-card
+     (20px) biar sejajar, margin-top negatif dikit lebih kecil supaya gak
+     numpuk sama lengkung header di atasnya. */
+  .program-selector-wrap {
+    margin: -14px 20px 0;
+    position: relative;
+    z-index: 2;
+  }
   .summary-card {
     margin: -30px 20px 0;
     background: linear-gradient(135deg, #1A3B35 0%, #0F2220 100%);
@@ -1718,6 +1726,13 @@
       </div>
     </div>
   </div>
+
+  <!-- Selector "PILIH PROGRAM YASSA" -- sengaja ditaruh di sini (SEBELUM
+       summaryCard di DOM), bukan di dalam konten Beranda, biar urutan
+       tampilnya selalu di ATAS kartu "Total Santunan Diperlukan", persis
+       kayak posisi visual yang diminta. Diisi & di-toggle dari
+       renderContent() (lihat programSelectorWrap). -->
+  <div class="program-selector-wrap" id="programSelectorWrap" style="display:none;"></div>
 
   <!-- Kartu Mengambang -->
   <div class="summary-card" id="summaryCard">
@@ -4049,6 +4064,16 @@ function renderContent() {
   el.classList.add("animate-fade-up");
 
   summary.style.display = active === "beranda" ? "flex" : "none";
+  // Selector "PILIH PROGRAM YASSA" -- hidup di wrapper terpisah (di ATAS
+  // summaryCard di DOM), diisi ulang tiap kali masuk tab Beranda supaya
+  // status kartu aktif (activeProgram) selalu sinkron.
+  const programSelectorWrap = document.getElementById("programSelectorWrap");
+  if (active === "beranda") {
+    programSelectorWrap.innerHTML = renderProgramSelectorHtml_();
+    programSelectorWrap.style.display = "";
+  } else {
+    programSelectorWrap.style.display = "none";
+  }
   document.getElementById("appHeader").classList.toggle("header-compact", active !== "beranda");
   // Tab Profil punya kartu profil sendiri (foto, nama, no. HP) di bagian atas,
   // jadi header sapaan umum ("Selamat datang, ...") tidak perlu ditampilkan lagi di tab ini.
@@ -4056,8 +4081,6 @@ function renderContent() {
 
   if (active === "beranda") {
     let html = `
-      ${renderProgramSelectorHtml_()}
-
       <!-- Panel Program GO-PAY (satu-satunya yang punya data LIVE sekarang) --
            Ringkasan Angka (Anak, Wilayah, Pengurus) + Data Anak Yatim, semua
            konten yang SEBELUMNYA tampil langsung di Beranda, sekarang
