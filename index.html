@@ -6966,90 +6966,42 @@ function submitChangePassword(event) {
 function handleUserMenuClick(action) {
   closeUserMenu();
   if (action === "profile") {
-    const wilayahText = currentUser.wilayahAkses === "ALL" ? "Semua wilayah" : currentUser.wilayahAkses;
-    const fotoProfil = currentUser.fotoUrl ? currentUser.fotoUrl : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
-    const badgeLabel = currentUser.jabatan ? currentUser.jabatan : roleLabel(currentUser.role);
-    const kontakList = [currentUser.username, currentUser.email].filter(Boolean);
-
-    let infoRows = "";
-    kontakList.forEach(function (k) {
-      infoRows += `
-        <div class="profile-info-row">
-          <div class="profile-info-icon">${iconSvg("phone", "#22D3EE", 15)}</div>
-          <div class="profile-info-text">${escapeHtmlHub(k)}</div>
-        </div>`;
-    });
-    infoRows += `
-        <div class="profile-info-row">
-          <div class="profile-info-icon">${iconSvg("mapPin", "#22D3EE", 15)}</div>
-          <div class="profile-info-text">
-            <div class="profile-info-label">Akses wilayah</div>
-            ${escapeHtmlHub(wilayahText)}
-          </div>
-        </div>`;
-    if (currentUser.bolehPrint) {
-      infoRows += `
-        <div class="profile-info-row">
-          <div class="profile-info-icon">${iconSvg("printer", "#22D3EE", 15)}</div>
-          <div class="profile-info-text">Boleh print dokumen</div>
-        </div>`;
-    }
-
-    const kontenProfil = `
-          <div class="profile-card-head">
-            <div class="profile-avatar-wrap">
-              <img class="profile-avatar" src="${fotoProfil}" alt="Foto Profil" style="cursor: pointer;" onclick="showProfileQR()">
-              <label class="profile-avatar-edit" for="inputFotoProfile" id="labelUploadFoto">
-                ${iconSvg("edit", "#fff", 12)}
-              </label>
-              <input type="file" id="inputFotoProfile" accept="image/*" style="display: none;" onchange="uploadFoto(this)">
-            </div>
-            <div>
-              <div class="profile-name">${escapeHtmlHub(currentUser.nama)}</div>
-              <span class="profile-badge">${iconSvg("award", "#92400E", 13)} ${escapeHtmlHub(badgeLabel)}</span>
-            </div>
-          </div>
-          <div class="profile-divider"></div>
-          <div class="profile-info-list">${infoRows}</div>
-        `;
-
-        document.querySelector('#akunPage .overlay-title').textContent = "Profile YASSA";
-        document.getElementById("akunContent").innerHTML =
-          '<div class="akun-card">' + kontenProfil + '</div>' +
-          '<div class="akun-card" style="margin-top:12px;">' +
-            '<div style="font-size:13px; font-weight:700; color: var(--text-primary); margin-bottom:12px;">Sekretariat YASSA</div>' +
-            '<div class="profile-info-list">' +
-              '<div class="profile-info-row">' +
-                '<div class="profile-info-icon">' + iconSvg("mapPin", "#22D3EE", 15) + '</div>' +
-                '<div class="profile-info-text">' +
-                  '<div class="profile-info-label">Alamat Sekretariat</div>' +
-                  'Jl. H. Mean Raya RT01 RW02, Kelurahan Karang Timur, Kecamatan Karang Tengah, Kota Tangerang, Banten 15157' +
-                '</div>' +
-              '</div>' +
-              '<div class="profile-info-row">' +
-                '<div class="profile-info-icon">' + iconSvg("phone", "#22D3EE", 15) + '</div>' +
-                '<div class="profile-info-text">' +
-                  '<div class="profile-info-label">Kontak</div>' +
-                  '0813-8500-9062' +
-                '</div>' +
-              '</div>' +
-              '<div class="profile-info-row">' +
-                '<div class="profile-info-icon">' + iconSvg("clipboard", "#22D3EE", 15) + '</div>' +
-                '<div class="profile-info-text">' +
-                  '<div class="profile-info-label">No. AHU</div>' +
-                  'AHU-0016086.AH.01.04.Tahun 2022' +
-                '</div>' +
-              '</div>' +
-              '<div class="profile-info-row">' +
-                '<div class="profile-info-icon">' + iconSvg("clipboard", "#22D3EE", 15) + '</div>' +
-                '<div class="profile-info-text">' +
-                  '<div class="profile-info-label">NPWP</div>' +
-                  '61.030.342.2-416.000' +
-                '</div>' +
-              '</div>' +
+    document.querySelector('#akunPage .overlay-title').textContent = "Profile YASSA";
+    document.getElementById("akunContent").innerHTML =
+      '<div class="akun-card">' +
+        '<div style="font-size:13px; font-weight:700; color: var(--text-primary); margin-bottom:12px;">Sekretariat YASSA</div>' +
+        '<div class="profile-info-list">' +
+          '<div class="profile-info-row" style="cursor:pointer;" onclick="window.open(\'https://maps.app.goo.gl/ZYe1pXSzxWqWV1Rm7\', \'_blank\')">' +
+            '<div class="profile-info-icon">' + iconSvg("mapPin", "#22D3EE", 15) + '</div>' +
+            '<div class="profile-info-text">' +
+              '<div class="profile-info-label">Alamat Sekretariat</div>' +
+              'Jl. H. Mean Raya RT01 RW02, Kelurahan Karang Timur, Kecamatan Karang Tengah, Kota Tangerang, Banten 15157' +
             '</div>' +
-          '</div>';
-        document.getElementById("akunPage").classList.add("open");
+          '</div>' +
+          '<div class="profile-info-row">' +
+            '<div class="profile-info-icon">' + iconSvg("phone", "#22D3EE", 15) + '</div>' +
+            '<div class="profile-info-text">' +
+              '<div class="profile-info-label">Kontak</div>' +
+              '0813-8500-9062' +
+            '</div>' +
+          '</div>' +
+          '<div class="profile-info-row">' +
+            '<div class="profile-info-icon">' + iconSvg("clipboard", "#22D3EE", 15) + '</div>' +
+            '<div class="profile-info-text">' +
+              '<div class="profile-info-label">No. AHU</div>' +
+              'AHU-0016086.AH.01.04.Tahun 2022' +
+            '</div>' +
+          '</div>' +
+          '<div class="profile-info-row">' +
+            '<div class="profile-info-icon">' + iconSvg("clipboard", "#22D3EE", 15) + '</div>' +
+            '<div class="profile-info-text">' +
+              '<div class="profile-info-label">NPWP</div>' +
+              '61.030.342.2-416.000' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    document.getElementById("akunPage").classList.add("open");
       } else if (action === "pengurus") {
         document.querySelector('#akunPage .overlay-title').textContent = "Struktur Pengurus";
         document.getElementById("akunContent").innerHTML = '<div style="text-align:center;color:#94A3B8;font-size:13px;padding:20px 0;">Memuat data pengurus...</div>';
