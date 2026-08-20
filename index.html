@@ -1914,6 +1914,19 @@
     <div class="akun-content" id="dataAnakYatimContent"></div>
   </div>
 
+  <!-- Halaman Penuh: Data Anak Asuh (Program SAPA) -- mirror persis
+       "Data Anak Yatim Gopay" di atas, narik LIVE dari YASSA Mobile lewat
+       action "getDataAnakAsuh" tiap dibuka. -->
+  <div class="overlay" id="dataAnakAsuhPage">
+    <div class="overlay-header">
+      <button class="overlay-close" id="dataAnakAsuhClose">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E2E8F0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <span class="overlay-title">Data Anak Asuh SAPA</span>
+    </div>
+    <div class="akun-content" id="dataAnakAsuhContent"></div>
+  </div>
+
   <!-- Halaman Penuh: Kalender Kegiatan -- jadwal santunan/rapat/event.
        Bisa dibuka dari ikon kalender di header (semua tab) atau dari
        card "Agenda Mendatang" di Beranda. Reuse class "overlay" yang
@@ -2484,7 +2497,7 @@ const YASSA_PROGRAMS = [
   { key: "batan", label: "BATAN", sub: "Bantuan Kesehatan", icon: "favorite", color: "#14B8A6", bg: "rgba(20,184,166,0.15)", ready: false },
   { key: "baso", label: "BASO", sub: "Bantuan Sembako", icon: "shopping_bag", color: "#F59E0B", bg: "rgba(245,158,11,0.15)", ready: false },
   { key: "pedas", label: "PEDAS", sub: "Peduli Disabilitas", icon: "accessible", color: "#A855F7", bg: "rgba(168,85,247,0.15)", ready: false },
-  { key: "sapa", label: "SAPA", sub: "Sahabat Peduli Anak", icon: "diversity_1", color: "#EC4899", bg: "rgba(236,72,153,0.15)", ready: false },
+  { key: "sapa", label: "SAPA", sub: "Sahabat Peduli Anak", icon: "diversity_1", color: "#EC4899", bg: "rgba(236,72,153,0.15)", ready: true },
 ];
 let activeProgram = "gopay";
 
@@ -4105,9 +4118,48 @@ function renderContent() {
       </div>
       <!-- /Panel Program GO-PAY -->
 
-      <!-- Panel placeholder buat program lain (BADIK, BATAN, BASO, PEDAS,
-           SAPA) -- disembunyikan default, tinggal disambung ke sumber data
-           masing-masing pas sudah tersedia (lihat YASSA_PROGRAMS di atas). -->
+      <!-- Panel Program SAPA (Sahabat Peduli Anak / Anak Asuh) -- data LIVE
+           dari YASSA Mobile lewat action "getDataAnakAsuh" (Hub), mirror
+           persis pola panel GO-PAY di atas. Disembunyikan default karena
+           GO-PAY yang aktif duluan (lihat activeProgram). -->
+      <div class="program-panel" id="programPanel-sapa" style="display:none;">
+        <div onclick="openDataAnakAsuh()" style="background: var(--glass-strong); border-radius: 20px; padding: 18px 18px 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid #EC4899; cursor: pointer;">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
+            <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(236,72,153,0.15); color: #F9A8D4; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <span class="material-symbols-outlined" style="font-size: 21px; font-variation-settings: 'FILL' 1;">diversity_1</span>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <h3 style="font-size: 14px; font-weight: 700; margin: 0;">Data Anak Asuh SAPA</h3>
+              <div style="font-size: 10.5px; color: var(--text-secondary); margin-top: 1px;">Semua Wilayah</div>
+            </div>
+            <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted); flex-shrink: 0;">chevron_right</span>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <div style="flex:1; background: rgba(236,72,153,0.08); border: 1px solid rgba(236,72,153,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+              <div style="font-size:15px; font-weight:800; color:#F9A8D4;" id="berandaAnakAsuhKK"><span class="kv-loading">...</span></div>
+              <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">KK</div>
+            </div>
+            <div style="flex:1; background: rgba(219,39,119,0.08); border: 1px solid rgba(219,39,119,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+              <div style="font-size:15px; font-weight:800; color:#F472B6;" id="berandaAnakAsuhAnak"><span class="kv-loading">...</span></div>
+              <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Anak Asuh</div>
+            </div>
+            <div style="flex:1; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+              <div class="pale-purple-text" style="font-size:15px; font-weight:800; color:#D8B4FE;" id="berandaAnakAsuhPiatu"><span class="kv-loading">...</span></div>
+              <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Yatim Piatu</div>
+            </div>
+            <div style="flex:1; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+              <div class="pale-amber-text" style="font-size:15px; font-weight:800; color:#FDE68A;" id="berandaAnakAsuhDisabilitas"><span class="kv-loading">...</span></div>
+              <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Disabilitas</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- /Panel Program SAPA -->
+
+      <!-- Panel placeholder buat program lain yang belum ada datanya
+           (BADIK, BATAN, BASO, PEDAS) -- disembunyikan default, tinggal
+           disambung ke sumber data masing-masing pas sudah tersedia
+           (lihat YASSA_PROGRAMS di atas). -->
       ${YASSA_PROGRAMS.filter(function (p) { return !p.ready; })
         .map(function (p) {
           return '<div class="program-panel" id="programPanel-' + p.key + '" style="display:none;">' + renderProgramComingSoonHtml_(p) + '</div>';
@@ -4187,6 +4239,7 @@ function renderContent() {
     el.innerHTML = html;
     loadBerandaStats();
     loadDataAnakYatimPreviewBeranda();
+    loadDataAnakAsuhPreviewBeranda();
     loadAgendaMendatangBeranda();
     return;
   }
@@ -5324,6 +5377,135 @@ function renderDataAnakYatim(data, dariCache) {
           <div style="display:flex; gap: 14px; flex-wrap: wrap;">
             <div style="font-size: 11px; color: var(--text-secondary);">KK <b class="pale-blue-text" style="color:#93C5FD;">${Number(r.jumlahKK || 0)}</b></div>
             <div style="font-size: 11px; color: var(--text-secondary);">Yatim <b class="pale-green-text" style="color:#86EFAC;">${Number(r.jumlahYatim || 0)}</b></div>
+            <div style="font-size: 11px; color: var(--text-secondary);">Yatim Piatu <b class="pale-purple-text" style="color:#D8B4FE;">${Number(r.jumlahYatimPiatu || 0)}</b></div>
+            <div style="font-size: 11px; color: var(--text-secondary);">Disabilitas <b class="pale-amber-text" style="color:#FDE68A;">${Number(r.jumlahDisabilitas || 0)}</b></div>
+          </div>
+        </div>`;
+    });
+  }
+
+  el.innerHTML = html;
+}
+
+// ============================================================
+// 👶 DATA ANAK ASUH (program SAPA) -- mirror PERSIS blok Data Anak Yatim di
+// atas (cache localStorage, preview kartu Beranda, halaman detail per
+// wilayah), cuma sumbernya action "getDataAnakAsuh".
+// ============================================================
+let dataAnakAsuhCache = (function () {
+  try {
+    const cached = localStorage.getItem("yassa_hub_anak_asuh_cache");
+    if (cached) return JSON.parse(cached);
+  } catch (e) {}
+  return null;
+})();
+
+function saveDataAnakAsuhCacheHub() {
+  try {
+    localStorage.setItem("yassa_hub_anak_asuh_cache", JSON.stringify(dataAnakAsuhCache));
+  } catch (e) {}
+}
+
+function loadDataAnakAsuhPreviewBeranda() {
+  const elKK = document.getElementById("berandaAnakAsuhKK");
+  const elAnak = document.getElementById("berandaAnakAsuhAnak");
+  const elPiatu = document.getElementById("berandaAnakAsuhPiatu");
+  const elDsb = document.getElementById("berandaAnakAsuhDisabilitas");
+
+  function terapkan(data) {
+    if (elKK) elKK.textContent = Number(data.totalKK || 0);
+    if (elAnak) elAnak.textContent = Number(data.totalAnakAsuh || 0);
+    if (elPiatu) elPiatu.textContent = Number(data.totalYatimPiatu || 0);
+    if (elDsb) elDsb.textContent = Number(data.totalDisabilitas || 0);
+  }
+
+  if (dataAnakAsuhCache) terapkan(dataAnakAsuhCache);
+
+  callGASWithRetry_("getDataAnakAsuh", [authToken])
+    .then(function (data) {
+      dataAnakAsuhCache = data;
+      saveDataAnakAsuhCacheHub();
+      terapkan(data);
+    })
+    .catch(function () {
+      // Gagal fetch -- biarin cache lama (kalau ada) tetap tampil.
+    });
+}
+
+function openDataAnakAsuh() {
+  document.getElementById("dataAnakAsuhPage").classList.add("open");
+  loadDataAnakAsuh();
+}
+
+function loadDataAnakAsuh() {
+  const el = document.getElementById("dataAnakAsuhContent");
+
+  if (dataAnakAsuhCache) {
+    renderDataAnakAsuh(dataAnakAsuhCache, true);
+  } else {
+    el.innerHTML = `
+      <div style="display:flex; align-items:center; justify-content:center; padding: 60px 0; color: var(--text-secondary); font-size: 12.5px; gap: 8px;">
+        <span class="material-symbols-outlined spin" style="font-size: 18px;">progress_activity</span> Mengambil data Anak Asuh dari YASSA Mobile...
+      </div>`;
+  }
+
+  callGASWithRetry_("getDataAnakAsuh", [authToken])
+    .then(function (data) {
+      dataAnakAsuhCache = data;
+      saveDataAnakAsuhCacheHub();
+      renderDataAnakAsuh(data, false);
+    })
+    .catch(function (err) {
+      if (dataAnakAsuhCache) return;
+      el.innerHTML = `
+        <div style="padding: 40px 20px; text-align: center; color: var(--text-secondary); font-size: 12.5px;">
+          Gagal memuat data: ${escapeHtmlHub(String(err && err.message || err))}
+          <br><button onclick="loadDataAnakAsuh()" style="margin-top: 14px; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 99px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--text-primary); cursor: pointer;">Coba Lagi</button>
+        </div>`;
+    });
+}
+
+function renderDataAnakAsuh(data, dariCache) {
+  const el = document.getElementById("dataAnakAsuhContent");
+  const rincian = data.rincianWilayah || [];
+
+  let html = `
+    <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;">
+      Data <b>khusus Program SAPA (Anak Asuh)</b>, diambil langsung dari YASSA Mobile untuk SEMUA wilayah.
+      ${dariCache ? '<span style="color: #EC4899;">Sedang memperbarui...</span>' : ''}
+    </div>
+
+    <div style="display:flex; gap:8px; margin-bottom: 18px;">
+      <div style="flex:1; background: rgba(236,72,153,0.08); border: 1px solid rgba(236,72,153,0.2); border-radius: 12px; padding: 10px 8px; text-align:center;">
+        <div style="font-size:17px; font-weight:800; color:#F9A8D4;">${Number(data.totalKK || 0)}</div>
+        <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">KK</div>
+      </div>
+      <div style="flex:1; background: rgba(219,39,119,0.08); border: 1px solid rgba(219,39,119,0.2); border-radius: 12px; padding: 10px 8px; text-align:center;">
+        <div style="font-size:17px; font-weight:800; color:#F472B6;">${Number(data.totalAnakAsuh || 0)}</div>
+        <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Anak Asuh</div>
+      </div>
+      <div style="flex:1; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; padding: 10px 8px; text-align:center;">
+        <div class="pale-purple-text" style="font-size:17px; font-weight:800; color:#D8B4FE;">${Number(data.totalYatimPiatu || 0)}</div>
+        <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Yatim Piatu</div>
+      </div>
+      <div style="flex:1; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; padding: 10px 8px; text-align:center;">
+        <div class="pale-amber-text" style="font-size:17px; font-weight:800; color:#FDE68A;">${Number(data.totalDisabilitas || 0)}</div>
+        <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Disabilitas</div>
+      </div>
+    </div>
+
+    <div style="font-size: 11px; font-weight: 700; color: var(--text-primary); margin: 0 2px 10px;">Rincian per Wilayah (${rincian.length})</div>`;
+
+  if (!rincian.length) {
+    html += `<div style="font-size: 11px; color: var(--text-muted); padding: 20px 0; text-align:center;">Belum ada data wilayah.</div>`;
+  } else {
+    rincian.forEach(function (r) {
+      html += `
+        <div style="background: var(--glass-strong); border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; border: 1px solid var(--glass-border);">
+          <div style="font-size: 12.5px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${escapeHtmlHub(r.wilayah)}</div>
+          <div style="display:flex; gap: 14px; flex-wrap: wrap;">
+            <div style="font-size: 11px; color: var(--text-secondary);">KK <b style="color:#F9A8D4;">${Number(r.jumlahKK || 0)}</b></div>
+            <div style="font-size: 11px; color: var(--text-secondary);">Anak Asuh <b style="color:#F472B6;">${Number(r.jumlahAnakAsuh || 0)}</b></div>
             <div style="font-size: 11px; color: var(--text-secondary);">Yatim Piatu <b class="pale-purple-text" style="color:#D8B4FE;">${Number(r.jumlahYatimPiatu || 0)}</b></div>
             <div style="font-size: 11px; color: var(--text-secondary);">Disabilitas <b class="pale-amber-text" style="color:#FDE68A;">${Number(r.jumlahDisabilitas || 0)}</b></div>
           </div>
@@ -8035,6 +8217,10 @@ document.getElementById("laporanPdfViewerClose").addEventListener("click", funct
 
 document.getElementById("dataAnakYatimClose").addEventListener("click", function () {
   document.getElementById("dataAnakYatimPage").classList.remove("open");
+});
+
+document.getElementById("dataAnakAsuhClose").addEventListener("click", function () {
+  document.getElementById("dataAnakAsuhPage").classList.remove("open");
 });
 
 document.getElementById("kalenderKegiatanClose").addEventListener("click", function () {
