@@ -241,7 +241,7 @@
     background: linear-gradient(135deg, rgba(var(--bento-primary-rgb),0.30) 0%, rgba(59,130,246,0.28) 55%, rgba(var(--bento-tertiary-rgb),0.28) 100%);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-    padding: 24px 24px 50px;
+    padding: 18px 20px 50px;
     color: var(--text-primary);
     border-bottom-left-radius: 28px;
     border-bottom-right-radius: 28px;
@@ -256,16 +256,16 @@
   .header.header-compact { padding-bottom: 22px; }
   .header-top { display: flex; justify-content: space-between; align-items: center; }
 
-  .header-user { display: flex; align-items: center; gap: 12px; }
-  .header-org-name { font-size: 10.5px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; opacity: 0.65; color: var(--text-secondary); margin-bottom: 3px; }
-  .header-greet-sub { font-size: 13px; font-weight: 400; opacity: 0.85; margin-bottom: 2px; color: var(--text-secondary); }
-  .header-greet-name { font-size: 19px; font-weight: 700; letter-spacing: -0.3px; color: var(--text-primary); }
-  .header-greet-meta { font-size: 12px; font-weight: 500; opacity: 0.8; color: var(--text-secondary); margin-top: 2px; }
+  .header-user { display: flex; align-items: center; gap: 10px; }
+  .header-org-name { font-size: 10px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; opacity: 0.65; color: var(--text-secondary); margin-bottom: 2px; }
+  .header-greet-sub { font-size: 12px; font-weight: 400; opacity: 0.85; margin-bottom: 1px; color: var(--text-secondary); }
+  .header-greet-name { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; color: var(--text-primary); }
+  .header-greet-meta { font-size: 11px; font-weight: 500; opacity: 0.8; color: var(--text-secondary); margin-top: 1px; }
 
   .bell {
     position: relative;
-    width: 42px;
-    height: 42px;
+    width: 37px;
+    height: 37px;
     border-radius: 50%;
     background: var(--glass-strong);
     border: 1px solid var(--glass-border-strong);
@@ -297,8 +297,8 @@
   .bell-badge-dot.show { display: block; }
 
   .header-logo-btn {
-    width: 46px;
-    height: 46px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     border: 2px solid rgba(var(--bento-primary-rgb),0.45);
     background: #0B101E;
@@ -322,7 +322,7 @@
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-radius: 18px;
-    padding: 16px;
+    padding: 14px;
     position: relative;
     z-index: 2;
     overflow: hidden;
@@ -334,26 +334,26 @@
   .summary-card::before {
     content: "";
     position: absolute;
-    top: -40px; right: -40px;
-    width: 130px; height: 130px;
+    top: -34px; right: -34px;
+    width: 92px; height: 92px;
     background: rgba(var(--bento-primary-rgb),0.16);
     border-radius: 50%;
-    filter: blur(28px);
+    filter: blur(24px);
     pointer-events: none;
   }
-  .summary-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; position: relative; z-index: 1; }
+  .summary-top { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; position: relative; z-index: 1; }
   .summary-icon {
-    width: 30px; height: 30px; border-radius: 50%;
+    width: 27px; height: 27px; border-radius: 50%;
     background: rgba(var(--bento-primary-rgb),0.18);
     color: var(--bento-primary);
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
   }
-  .summary-icon .material-symbols-outlined { font-size: 16px; }
-  .summary-label { font-size: 10px; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 3px; }
-  .summary-value { font-size: 21px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; position: relative; z-index: 1; }
+  .summary-icon .material-symbols-outlined { font-size: 14.5px; }
+  .summary-label { font-size: 9.5px; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 3px; }
+  .summary-value { font-size: 18.5px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; position: relative; z-index: 1; }
   .summary-sub-row {
-    margin-top: 12px; padding-top: 10px;
+    margin-top: 10px; padding-top: 9px;
     border-top: 1px solid var(--glass-border);
     display: flex; align-items: center; gap: 8px; position: relative; z-index: 1;
     min-width: 0;
@@ -406,17 +406,17 @@
   .program-select-label { font-size: 11.5px; font-weight: 800; color: var(--text-primary); letter-spacing: 0.2px; }
   .program-select-sub { font-size: 8.5px; color: var(--text-secondary); line-height: 1.25; }
   .summary-sub-icon {
-    width: 22px; height: 22px; border-radius: 7px;
+    width: 20px; height: 20px; border-radius: 6px;
     background: rgba(var(--bento-amber-rgb),0.18);
     color: var(--bento-amber);
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
-  .summary-sub-icon .material-symbols-outlined { font-size: 13px; }
+  .summary-sub-icon .material-symbols-outlined { font-size: 12px; }
   /* Label + value ditumpuk vertikal (bukan sebaris) supaya nominal Rupiah yang
      panjang tetap punya ruang penuh selebar kartu dan gak kepotong di layar sempit. */
   .summary-sub-text { flex: 1; min-width: 0; }
-  .summary-sub-label { font-size: 10px; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; margin-bottom: 2px; }
-  .summary-sub-value { font-size: 13.5px; color: var(--bento-amber); font-weight: 700; letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .summary-sub-label { font-size: 9.5px; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; margin-bottom: 2px; }
+  .summary-sub-value { font-size: 12.5px; color: var(--bento-amber); font-weight: 700; letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   /* Efek nyala buat "Kekurangan Santunan" pas masih ada kekurangan bulan
      ini, biar jelas keliatan & narik perhatian yang buka app -- ikon
@@ -432,7 +432,7 @@
   }
   .summary-sub-value.value-kekurangan-urgent {
     color: #FCA5A5 !important;
-    font-size: 16px !important;
+    font-size: 14.5px !important;
     font-weight: 800 !important;
     animation: summaryUrgentTextGlow 1.6s ease-in-out infinite;
   }
@@ -442,9 +442,9 @@
   }
   .summary-kekurangan-badge {
     display: inline-flex; align-items: center; gap: 3px;
-    font-size: 8.5px; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase;
+    font-size: 8px; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase;
     color: #FCA5A5; background: rgba(239, 68, 68, 0.16); border: 1px solid rgba(239, 68, 68, 0.35);
-    padding: 1px 6px; border-radius: 99px; margin-left: 6px; vertical-align: middle;
+    padding: 1px 5px; border-radius: 99px; margin-left: 6px; vertical-align: middle;
   }
   /* Kondisi udah tercapai -- ikon & teks jadi hijau tenang, gak berdenyut. */
   .summary-sub-icon.icon-kekurangan-tercapai {
@@ -633,6 +633,13 @@
     max-width: 300px; z-index: 21;
     display: none; padding: 10px;
     transform-origin: top left;
+    /* 🩹 FIX: dulu gak ada max-height/scroll, jadi kalau isi menu makin
+       panjang (mis. section Dokumen Yayasan nambah), item paling bawah
+       (Logout) ke-dorong keluar layar & gak bisa dijangkau. Sekarang
+       dropdown dibatasi tinggi layar & bisa discroll sendiri. */
+    max-height: calc(100dvh - 76px - 16px - env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .user-menu.open { display: block; animation: scaleIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
