@@ -7014,7 +7014,41 @@ function handleUserMenuClick(action) {
         `;
 
         document.querySelector('#akunPage .overlay-title').textContent = "Profile YASSA";
-        document.getElementById("akunContent").innerHTML = '<div class="akun-card">' + kontenProfil + '</div>';
+        document.getElementById("akunContent").innerHTML =
+          '<div class="akun-card">' + kontenProfil + '</div>' +
+          '<div class="akun-card" style="margin-top:12px;">' +
+            '<div style="font-size:13px; font-weight:700; color: var(--text-primary); margin-bottom:12px;">Sekretariat YASSA</div>' +
+            '<div class="profile-info-list">' +
+              '<div class="profile-info-row">' +
+                '<div class="profile-info-icon">' + iconSvg("mapPin", "#22D3EE", 15) + '</div>' +
+                '<div class="profile-info-text">' +
+                  '<div class="profile-info-label">Alamat Sekretariat</div>' +
+                  'Jl. H. Mean Raya RT01 RW02, Kelurahan Karang Timur, Kecamatan Karang Tengah, Kota Tangerang, Banten 15157' +
+                '</div>' +
+              '</div>' +
+              '<div class="profile-info-row">' +
+                '<div class="profile-info-icon">' + iconSvg("phone", "#22D3EE", 15) + '</div>' +
+                '<div class="profile-info-text">' +
+                  '<div class="profile-info-label">Kontak</div>' +
+                  '0813-8500-9062' +
+                '</div>' +
+              '</div>' +
+              '<div class="profile-info-row">' +
+                '<div class="profile-info-icon">' + iconSvg("clipboard", "#22D3EE", 15) + '</div>' +
+                '<div class="profile-info-text">' +
+                  '<div class="profile-info-label">No. AHU</div>' +
+                  'AHU-0016086.AH.01.04.Tahun 2022' +
+                '</div>' +
+              '</div>' +
+              '<div class="profile-info-row">' +
+                '<div class="profile-info-icon">' + iconSvg("clipboard", "#22D3EE", 15) + '</div>' +
+                '<div class="profile-info-text">' +
+                  '<div class="profile-info-label">NPWP</div>' +
+                  '61.030.342.2-416.000' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
         document.getElementById("akunPage").classList.add("open");
       } else if (action === "pengurus") {
         document.querySelector('#akunPage .overlay-title').textContent = "Struktur Pengurus";
