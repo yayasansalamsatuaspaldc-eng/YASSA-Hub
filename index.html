@@ -1760,12 +1760,20 @@
     <div class="user-menu-section-label">Akun</div>
     <button class="user-menu-item" onclick="handleUserMenuClick('profile')">
       <span class="user-menu-icon tone-green"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
-      Profil Saya
+      Profile YASSA
+    </button>
+    <button class="user-menu-item" onclick="openDocViewer('1zzLqjhysg9hxwGF8jLeuMgs5Hz7er39k', 'Sejarah YASSA')">
+      <span class="user-menu-icon tone-purple"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg></span>
+      Sejarah YASSA
     </button>
     <button class="user-menu-item" onclick="handleUserMenuClick('pengurus')">
       <span class="user-menu-icon tone-cyan"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
       Daftar Pengurus
     </button>
+
+    <div class="user-menu-divider"></div>
+
+    <div class="user-menu-section-label">Lainnya</div>
     <button class="user-menu-item" onclick="replayTour()">
       <span class="user-menu-icon tone-amber"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span>
       Tutorial Penggunaan
@@ -7005,7 +7013,7 @@ function handleUserMenuClick(action) {
           <div class="profile-info-list">${infoRows}</div>
         `;
 
-        document.querySelector('#akunPage .overlay-title').textContent = "Profil Saya";
+        document.querySelector('#akunPage .overlay-title').textContent = "Profile YASSA";
         document.getElementById("akunContent").innerHTML = '<div class="akun-card">' + kontenProfil + '</div>';
         document.getElementById("akunPage").classList.add("open");
       } else if (action === "pengurus") {
