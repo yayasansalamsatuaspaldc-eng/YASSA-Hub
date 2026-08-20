@@ -316,16 +316,16 @@
   .header-logo-svg { width: 90%; height: 90%; display: block; }
   .header-avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-  /* Wrapper selector program: margin kiri/kanan sama kayak .summary-card
-     (20px) biar sejajar, margin-top negatif dikit lebih kecil supaya gak
-     numpuk sama lengkung header di atasnya. */
+  /* Wrapper selector program: sekarang ini yang "mengambang" tumpang-tindih
+     dikit ke header (gantiin peran summary-card sebelumnya), margin kiri/
+     kanan 20px biar sejajar sama summary-card di bawahnya. */
   .program-selector-wrap {
-    margin: -14px 20px 0;
+    margin: -30px 20px 0;
     position: relative;
     z-index: 2;
   }
   .summary-card {
-    margin: -30px 20px 0;
+    margin: 16px 20px 0;
     background: linear-gradient(135deg, #1A3B35 0%, #0F2220 100%);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
