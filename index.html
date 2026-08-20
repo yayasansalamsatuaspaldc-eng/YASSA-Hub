@@ -358,6 +358,53 @@
     display: flex; align-items: center; gap: 8px; position: relative; z-index: 1;
     min-width: 0;
   }
+
+  /* ===== Selector "PILIH PROGRAM YASSA" (tab Beranda) =====
+     Baris kartu program yang bisa di-scroll horizontal. Klik salah satu
+     kartu -> tampilkan panel data program itu di bawahnya (lihat
+     selectProgramTab() & .program-panel). Cuma GO-PAY yang punya data
+     LIVE sekarang, program lain nampilin placeholder "segera hadir". */
+  .program-select-scroll {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 2px 2px 6px;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .program-select-scroll::-webkit-scrollbar { display: none; }
+  .program-select-card {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    width: 92px;
+    background: var(--glass-strong);
+    border: 1.5px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 14px 8px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, transform 0.15s;
+  }
+  .program-select-card:active { transform: scale(0.96); }
+  .program-select-card.active {
+    border-color: var(--prog-color, var(--bento-primary));
+    background: var(--prog-bg, rgba(var(--bento-primary-rgb),0.12));
+    box-shadow: 0 0 0 1px var(--prog-color, var(--bento-primary)) inset;
+  }
+  .program-select-icon {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--prog-bg, rgba(148,163,184,0.15));
+    color: var(--prog-color, var(--text-secondary));
+    display: flex; align-items: center; justify-content: center;
+  }
+  .program-select-icon .material-symbols-outlined { font-size: 20px; }
+  .program-select-label { font-size: 11.5px; font-weight: 800; color: var(--text-primary); letter-spacing: 0.2px; }
+  .program-select-sub { font-size: 8.5px; color: var(--text-secondary); line-height: 1.25; }
   .summary-sub-icon {
     width: 22px; height: 22px; border-radius: 7px;
     background: rgba(var(--bento-amber-rgb),0.18);
@@ -2426,6 +2473,77 @@ let currentUser = null;
 let authToken = null;
 let pendingOldPassword = null; 
 
+// ===== Daftar Program YASSA (selector "PILIH PROGRAM YASSA" di Beranda) =====
+// GO-PAY sudah punya data LIVE (sumber sama kayak summaryCard & Data Anak
+// Yatim yang udah ada). Program lain (BADIK, BATAN, BASO, PEDAS, SAPA)
+// masih placeholder "segera hadir" -- nanti tinggal disambung ke sumber
+// data masing-masing pas sudah tersedia.
+const YASSA_PROGRAMS = [
+  { key: "gopay", label: "GO-PAY", sub: "Gojek Peduli Anak Yatim", icon: "volunteer_activism", color: "#22C55E", bg: "rgba(34,197,94,0.15)", ready: true },
+  { key: "badik", label: "BADIK", sub: "Bantuan Pendidikan", icon: "school", color: "#3B82F6", bg: "rgba(59,130,246,0.15)", ready: false },
+  { key: "batan", label: "BATAN", sub: "Bantuan Kesehatan", icon: "favorite", color: "#14B8A6", bg: "rgba(20,184,166,0.15)", ready: false },
+  { key: "baso", label: "BASO", sub: "Bantuan Sembako", icon: "shopping_bag", color: "#F59E0B", bg: "rgba(245,158,11,0.15)", ready: false },
+  { key: "pedas", label: "PEDAS", sub: "Peduli Disabilitas", icon: "accessible", color: "#A855F7", bg: "rgba(168,85,247,0.15)", ready: false },
+  { key: "sapa", label: "SAPA", sub: "Sahabat Peduli Anak", icon: "diversity_1", color: "#EC4899", bg: "rgba(236,72,153,0.15)", ready: false },
+];
+let activeProgram = "gopay";
+
+function renderProgramSelectorHtml_() {
+  const cards = YASSA_PROGRAMS.map(function (p) {
+    const isActive = p.key === activeProgram;
+    return (
+      '<div class="program-select-card' + (isActive ? " active" : "") + '" data-program="' + p.key + '" ' +
+      'style="--prog-color:' + p.color + '; --prog-bg:' + p.bg + ';" onclick="selectProgramTab(\'' + p.key + '\')">' +
+        '<div class="program-select-icon"><span class="material-symbols-outlined" style="font-variation-settings:\'FILL\' 1;">' + p.icon + '</span></div>' +
+        '<div class="program-select-label">' + p.label + '</div>' +
+        '<div class="program-select-sub">' + p.sub + '</div>' +
+      '</div>'
+    );
+  }).join("");
+  return (
+    '<div style="margin-bottom: 16px;">' +
+      '<h3 style="font-size: 13px; font-weight: 700; margin: 0 0 2px; letter-spacing: 0.3px;">PILIH PROGRAM YASSA</h3>' +
+      '<div style="font-size: 10.5px; color: var(--text-secondary); margin-bottom: 10px;">Pilih salah satu program untuk melihat data dan progres</div>' +
+      '<div class="program-select-scroll" id="programSelectScroll">' + cards + '</div>' +
+    '</div>'
+  );
+}
+
+// Placeholder panel buat program yang datanya belum tersedia ("segera hadir").
+function renderProgramComingSoonHtml_(p) {
+  return (
+    '<div style="background: var(--glass-strong); border-radius: 20px; padding: 30px 20px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid ' + p.color + '; text-align:center;">' +
+      '<div style="width: 48px; height: 48px; border-radius: 14px; background: ' + p.bg + '; color: ' + p.color + '; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">' +
+        '<span class="material-symbols-outlined" style="font-size: 24px; font-variation-settings:\'FILL\' 1;">' + p.icon + '</span>' +
+      '</div>' +
+      '<h3 style="font-size: 14.5px; font-weight: 700; margin: 0 0 4px;">Program ' + p.label + '</h3>' +
+      '<div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">' + p.sub + '</div>' +
+      '<div style="display:inline-flex; align-items:center; gap:5px; font-size: 11px; font-weight:700; color: ' + p.color + '; background: ' + p.bg + '; padding: 5px 12px; border-radius: 99px;">' +
+        '<span class="material-symbols-outlined" style="font-size:13px;">schedule</span> Data segera hadir' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+// Ganti program yang aktif di selector "PILIH PROGRAM YASSA" -- tinggal
+// toggle tampil/sembunyi panel yang udah dirender (gak perlu render ulang
+// seluruh tab Beranda), jadi ringan & data GO-PAY yang udah kemuat gak
+// perlu fetch ulang tiap ganti-ganti tab program.
+function selectProgramTab(key) {
+  if (activeProgram === key) return;
+  activeProgram = key;
+  document.querySelectorAll(".program-select-card").forEach(function (el) {
+    el.classList.toggle("active", el.getAttribute("data-program") === key);
+  });
+  document.querySelectorAll(".program-panel").forEach(function (el) {
+    el.style.display = el.id === "programPanel-" + key ? "" : "none";
+  });
+  const cardEl = document.querySelector('.program-select-card[data-program="' + key + '"]');
+  if (cardEl && cardEl.scrollIntoView) {
+    cardEl.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }
+}
+
 function callGAS(action, args) {
   return fetch(GAS_AUTH_URL, {
     method: "POST",
@@ -3925,6 +4043,14 @@ function renderContent() {
 
   if (active === "beranda") {
     let html = `
+      ${renderProgramSelectorHtml_()}
+
+      <!-- Panel Program GO-PAY (satu-satunya yang punya data LIVE sekarang) --
+           Ringkasan Angka (Anak, Wilayah, Pengurus) + Data Anak Yatim, semua
+           konten yang SEBELUMNYA tampil langsung di Beranda, sekarang
+           dibungkus jadi panel program supaya bisa disembunyikan pas
+           user pindah ke program lain lewat selector di atas. -->
+      <div class="program-panel" id="programPanel-gopay">
       <!-- Ringkasan Angka (Anak, Wilayah, Pengurus) -->
       <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
         <div style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid #60A5FA; cursor: pointer;" onclick="setActive('pm')">
@@ -3976,6 +4102,17 @@ function renderContent() {
           </div>
         </div>
       </div>
+      </div>
+      <!-- /Panel Program GO-PAY -->
+
+      <!-- Panel placeholder buat program lain (BADIK, BATAN, BASO, PEDAS,
+           SAPA) -- disembunyikan default, tinggal disambung ke sumber data
+           masing-masing pas sudah tersedia (lihat YASSA_PROGRAMS di atas). -->
+      ${YASSA_PROGRAMS.filter(function (p) { return !p.ready; })
+        .map(function (p) {
+          return '<div class="program-panel" id="programPanel-' + p.key + '" style="display:none;">' + renderProgramComingSoonHtml_(p) + '</div>';
+        })
+        .join("")}
 
       <!-- Aksi Cepat Menu Bawah -->
       <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Aksi Cepat Donasi</h3>
