@@ -1723,16 +1723,18 @@
   <div class="summary-card" id="summaryCard">
     <div class="summary-top">
       <div class="summary-icon"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">volunteer_activism</span></div>
-      <div class="summary-label">Total Santunan Diperlukan PROGRAM GOPAY</div>
+      <div class="summary-label" id="summaryLabelSantunan">Total Santunan Diperlukan PROGRAM GOPAY</div>
     </div>
     <div class="summary-value" id="summaryTotalSantunanDiperlukan">...</div>
 
     <!-- Sub-row 1: Kekurangan Santunan (Total Santunan Diperlukan dikurangi
-         Total Donasi yang udah terkumpul bulan ini) -->
-    <div class="summary-sub-row">
+         Total Donasi yang udah terkumpul bulan ini) -- KHUSUS GOPAY, ikut
+         disembunyikan otomatis kalau activeProgram = SAPA (belum ada
+         sumber "Total Donasi" buat SAPA, lihat renderSummaryCardBeranda_). -->
+    <div class="summary-sub-row" id="summarySubRowKekurangan">
       <div class="summary-sub-icon" id="summaryKekuranganIconWrap"><span class="material-symbols-outlined" id="summaryKekuranganIcon" style="font-variation-settings:'FILL' 1;">money_off</span></div>
       <div class="summary-sub-text">
-        <div class="summary-sub-label">Kekurangan Santunan Program GOPAY<span class="summary-kekurangan-badge" id="summaryKekuranganBadge" style="display:none;"><span class="material-symbols-outlined" style="font-size:9px;">priority_high</span>Perlu Perhatian</span></div>
+        <div class="summary-sub-label"><span id="summaryLabelKekurangan">Kekurangan Santunan Program GOPAY</span><span class="summary-kekurangan-badge" id="summaryKekuranganBadge" style="display:none;"><span class="material-symbols-outlined" style="font-size:9px;">priority_high</span>Perlu Perhatian</span></div>
         <div class="summary-sub-value" id="summaryKekuranganDonasi">...</div>
       </div>
     </div>
@@ -1740,11 +1742,12 @@
     <!-- Sub-row 2: Total Donasi -- sekarang sumbernya cuma Realisasi
          Lapangan (Keuangan_Bulanan). Kitabisa.com & Donasi Online/Midtrans
          gak lagi ditrack terpisah -- nominalnya digabung manual ke
-         Realisasi Lapangan langsung oleh Korwil/Bendahara. -->
-    <div class="summary-sub-row">
+         Realisasi Lapangan langsung oleh Korwil/Bendahara. KHUSUS GOPAY,
+         sama kayak sub-row Kekurangan di atas. -->
+    <div class="summary-sub-row" id="summarySubRowDonasi">
       <div class="summary-sub-icon" style="background: rgba(var(--bento-primary-rgb),0.18); color: var(--bento-primary);"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">account_balance_wallet</span></div>
       <div class="summary-sub-text">
-        <div class="summary-sub-label">Total Donasi Program GOPAY</div>
+        <div class="summary-sub-label" id="summaryLabelDonasi">Total Donasi Program GOPAY</div>
         <div class="summary-sub-value" id="summaryTotalDonasi" style="color: var(--bento-primary);">...</div>
       </div>
     </div>
@@ -2551,6 +2554,14 @@ function selectProgramTab(key) {
   document.querySelectorAll(".program-panel").forEach(function (el) {
     el.style.display = el.id === "programPanel-" + key ? "" : "none";
   });
+  // Kartu ringkasan "Total Santunan Diperlukan" di atas ikut berubah sesuai
+  // program yang baru dipilih -- cuma GOPAY & SAPA yang punya data live
+  // buat kartu ini, program lain (BADIK dkk) belum disambung, jadi kartu
+  // dibiarkan seperti kondisi terakhir kalau yang dipilih bukan salah
+  // satu dari dua itu.
+  if (key === "gopay" || key === "sapa") {
+    renderSummaryCardBeranda_();
+  }
   const cardEl = document.querySelector('.program-select-card[data-program="' + key + '"]');
   if (cardEl && cardEl.scrollIntoView) {
     cardEl.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
@@ -3090,12 +3101,94 @@ let berandaStatsCache = (function() {
   } catch(e) {}
   return {
     totalAnak: null,
-    donasi: null, // { totalSantunanDiperlukan, kekuranganSantunan, santunanDitemukan, totalDonasi, lapangan, kitabisa, midtrans }
+    donasi: null, // { totalSantunanDiperlukan, kekuranganSantunan, santunanDitemukan, totalDonasi, lapangan, kitabisa, midtrans } -- PROGRAM GOPAY
+    santunanSapa: null, // { totalSantunanDiperlukan, jumlahAnak } -- PROGRAM SAPA (lihat getTotalSantunanSapa di Code.gs)
     dashboard: null,
     verifikasi: null,
     aktivitas: null, // array log aktivitas terbaru (Donasi/Absensi/AWG/PM)
   };
 })();
+
+// ============================================================
+// Kartu ringkasan "Total Santunan Diperlukan" di Beranda -- SEKARANG ikut
+// program yang lagi aktif di selector "PILIH PROGRAM YASSA" (dipanggil
+// dari selectProgramTab() tiap pindah tab, & dari loadBerandaStats() tiap
+// ada data baru/dari cache). Data KEDUA program (GOPAY & SAPA) tetap
+// ditarik BARENGAN lewat getBerandaBundle -- pindah GOPAY<->SAPA gak
+// perlu fetch ulang, instan dari cache di memori (berandaStatsCache).
+//
+// SAPA beda dari GOPAY: belum ada sumber data "Total Donasi"/realisasi,
+// jadi sub-row "Kekurangan Santunan" & "Total Donasi" SENGAJA disembunyikan
+// khusus SAPA (dikonfirmasi Herudin) -- cuma nilai utama "Total Santunan
+// Diperlukan PROGRAM SAPA" yang tampil.
+// ============================================================
+function renderSummaryCardBeranda_() {
+  const elLabel = document.getElementById("summaryLabelSantunan");
+  const elValue = document.getElementById("summaryTotalSantunanDiperlukan");
+  const elSubKekurangan = document.getElementById("summarySubRowKekurangan");
+  const elSubDonasi = document.getElementById("summarySubRowDonasi");
+
+  if (activeProgram === "sapa") {
+    if (elLabel) elLabel.textContent = "Total Santunan Diperlukan PROGRAM SAPA";
+    if (elSubKekurangan) elSubKekurangan.style.display = "none";
+    if (elSubDonasi) elSubDonasi.style.display = "none";
+    const d = berandaStatsCache.santunanSapa;
+    if (elValue) elValue.textContent = d ? formatRupiahHub(d.totalSantunanDiperlukan) : "...";
+    return;
+  }
+
+  // Default / activeProgram === "gopay"
+  if (elLabel) elLabel.textContent = "Total Santunan Diperlukan PROGRAM GOPAY";
+  if (elSubKekurangan) elSubKekurangan.style.display = "";
+  if (elSubDonasi) elSubDonasi.style.display = "";
+
+  const elLabelKekurangan = document.getElementById("summaryLabelKekurangan");
+  const elLabelDonasi = document.getElementById("summaryLabelDonasi");
+  if (elLabelKekurangan) elLabelKekurangan.textContent = "Kekurangan Santunan Program GOPAY";
+  if (elLabelDonasi) elLabelDonasi.textContent = "Total Donasi Program GOPAY";
+
+  const elKekurangan = document.getElementById("summaryKekuranganDonasi");
+  const elKekuranganIconWrap = document.getElementById("summaryKekuranganIconWrap");
+  const elKekuranganIcon = document.getElementById("summaryKekuranganIcon");
+  const elKekuranganBadge = document.getElementById("summaryKekuranganBadge");
+  const elTotalDonasi = document.getElementById("summaryTotalDonasi");
+
+  const d = berandaStatsCache.donasi;
+  if (!d) {
+    if (elValue) elValue.textContent = "...";
+    return;
+  }
+
+  if (elValue) {
+    elValue.textContent = d.santunanDitemukan
+      ? formatRupiahHub(d.totalSantunanDiperlukan)
+      : "Belum diisi Bendahara";
+  }
+
+  if (elKekurangan && elKekuranganIconWrap && elKekuranganIcon) {
+    elKekurangan.classList.remove("value-kekurangan-urgent", "value-kekurangan-tercapai");
+    elKekuranganIconWrap.classList.remove("icon-kekurangan-urgent", "icon-kekurangan-tercapai");
+    if (elKekuranganBadge) elKekuranganBadge.style.display = "none";
+
+    if (!d.santunanDitemukan) {
+      elKekurangan.textContent = "Belum diisi Bendahara";
+      elKekuranganIcon.textContent = "money_off";
+    } else if (d.kekuranganSantunan > 0) {
+      elKekurangan.textContent = formatRupiahHub(d.kekuranganSantunan);
+      elKekurangan.classList.add("value-kekurangan-urgent");
+      elKekuranganIconWrap.classList.add("icon-kekurangan-urgent");
+      elKekuranganIcon.textContent = "priority_high";
+      if (elKekuranganBadge) elKekuranganBadge.style.display = "inline-flex";
+    } else {
+      elKekurangan.textContent = "Tercapai! \ud83c\udf89";
+      elKekurangan.classList.add("value-kekurangan-tercapai");
+      elKekuranganIconWrap.classList.add("icon-kekurangan-tercapai");
+      elKekuranganIcon.textContent = "check_circle";
+    }
+  }
+
+  if (elTotalDonasi) elTotalDonasi.textContent = formatRupiahHub(d.totalDonasi);
+}
 
 // Fungsi bantuan (Helper) untuk menyimpan ke memori HP
 function saveBerandaCacheHub() {
@@ -3145,49 +3238,9 @@ function loadBerandaStats() {
   //   - Kekurangan Santunan -> Total Santunan Diperlukan (nasional)
   //     dikurangi Total Donasi (kalau masih kurang; kalau udah
   //     tercapai/lebih, ditampilkan "Tercapai").
-  const elTotalSantunanDiperlukan = document.getElementById("summaryTotalSantunanDiperlukan");
-  const elTotalDonasi = document.getElementById("summaryTotalDonasi");
-  const elKekurangan = document.getElementById("summaryKekuranganDonasi");
-  const elKekuranganIconWrap = document.getElementById("summaryKekuranganIconWrap");
-  const elKekuranganIcon = document.getElementById("summaryKekuranganIcon");
-  const elKekuranganBadge = document.getElementById("summaryKekuranganBadge");
-
-  const terapkanDonasiBeranda = function (d) {
-    if (elTotalSantunanDiperlukan) {
-      elTotalSantunanDiperlukan.textContent = d.santunanDitemukan
-        ? formatRupiahHub(d.totalSantunanDiperlukan)
-        : "Belum diisi Bendahara";
-    }
-
-    // Efek visual "Kekurangan Santunan" -- masih kurang: ikon berdenyut
-    // merah + nominal dibesarin & nyala, plus badge "Perlu Perhatian",
-    // biar keliatan jelas & narik perhatian yang buka app. Udah
-    // tercapai: ganti hijau tenang + ikon centang, gak berdenyut lagi.
-    if (elKekurangan && elKekuranganIconWrap && elKekuranganIcon) {
-      elKekurangan.classList.remove("value-kekurangan-urgent", "value-kekurangan-tercapai");
-      elKekuranganIconWrap.classList.remove("icon-kekurangan-urgent", "icon-kekurangan-tercapai");
-      if (elKekuranganBadge) elKekuranganBadge.style.display = "none";
-
-      if (!d.santunanDitemukan) {
-        elKekurangan.textContent = "Belum diisi Bendahara";
-        elKekuranganIcon.textContent = "money_off";
-      } else if (d.kekuranganSantunan > 0) {
-        elKekurangan.textContent = formatRupiahHub(d.kekuranganSantunan);
-        elKekurangan.classList.add("value-kekurangan-urgent");
-        elKekuranganIconWrap.classList.add("icon-kekurangan-urgent");
-        elKekuranganIcon.textContent = "priority_high";
-        if (elKekuranganBadge) elKekuranganBadge.style.display = "inline-flex";
-      } else {
-        elKekurangan.textContent = "Tercapai! \ud83c\udf89";
-        elKekurangan.classList.add("value-kekurangan-tercapai");
-        elKekuranganIconWrap.classList.add("icon-kekurangan-tercapai");
-        elKekuranganIcon.textContent = "check_circle";
-      }
-    }
-
-    if (elTotalDonasi) elTotalDonasi.textContent = formatRupiahHub(d.totalDonasi);
-  };
-  if (berandaStatsCache.donasi) terapkanDonasiBeranda(berandaStatsCache.donasi);
+  // Render kartu ringkasan dari cache (GOPAY atau SAPA, tergantung
+  // activeProgram) -- lihat renderSummaryCardBeranda_() di atas.
+  renderSummaryCardBeranda_();
 
   // Total Wilayah & Total Pengurus (dari sheet Akun Hub sendiri)
   const terapkanDashboardBeranda = function (data) {
@@ -3270,13 +3323,30 @@ function loadBerandaStats() {
           santunanDitemukan: santunan.ditemukan,
           totalDonasi: totalDonasi,
         };
-        terapkanDonasiBeranda(berandaStatsCache.donasi);
-      } else if (!berandaStatsCache.donasi) {
+        renderSummaryCardBeranda_();
+      } else if (!berandaStatsCache.donasi && activeProgram === "gopay") {
         // Kalau udah ada cache, biarin angka lama tetap tampil daripada
-        // direset ke "-" cuma gara-gara 1x gangguan jaringan.
-        if (elTotalSantunanDiperlukan) elTotalSantunanDiperlukan.textContent = "-";
-        if (elTotalDonasi) elTotalDonasi.textContent = "-";
-        if (elKekurangan) elKekurangan.textContent = "-";
+        // direset ke "-" cuma gara-gara 1x gangguan jaringan. Guard
+        // activeProgram biar gak nimpa kartu kalau yang lagi ditampilin
+        // SAPA (elemennya dipakai bareng, tapi datanya beda program).
+        const elTSD = document.getElementById("summaryTotalSantunanDiperlukan");
+        const elTD = document.getElementById("summaryTotalDonasi");
+        const elKek = document.getElementById("summaryKekuranganDonasi");
+        if (elTSD) elTSD.textContent = "-";
+        if (elTD) elTD.textContent = "-";
+        if (elKek) elKek.textContent = "-";
+      }
+
+      // 1b) Total Santunan Diperlukan PROGRAM SAPA -> kartu ringkasan
+      // Beranda (dipakai kalau activeProgram = "sapa"). Sumbernya BEDA
+      // dari GOPAY -- lihat getTotalSantunanSapa() di Code.gs (sheet
+      // "Anak" di spreadsheet terpisah, kolom R=Program & S=Santunan).
+      if (bundle.santunanSapa) {
+        berandaStatsCache.santunanSapa = bundle.santunanSapa;
+        renderSummaryCardBeranda_();
+      } else if (!berandaStatsCache.santunanSapa && activeProgram === "sapa") {
+        const elTSD = document.getElementById("summaryTotalSantunanDiperlukan");
+        if (elTSD) elTSD.textContent = "-";
       }
 
       // 2) Dashboard Stats -> kartu Total Wilayah & Total Pengurus
@@ -3317,10 +3387,18 @@ function loadBerandaStats() {
     .catch(function () {
       // Seluruh bundle gagal (mis. sesi putus/jaringan mati total). Kalau
       // belum ada cache sama sekali buat bagian itu, baru tampilin "-".
-      if (!berandaStatsCache.donasi) {
-        if (elTotalSantunanDiperlukan) elTotalSantunanDiperlukan.textContent = "-";
-        if (elTotalDonasi) elTotalDonasi.textContent = "-";
-        if (elKekurangan) elKekurangan.textContent = "-";
+      // Guard activeProgram biar gak salah nimpa kartu yang lagi tampil.
+      if (!berandaStatsCache.donasi && activeProgram === "gopay") {
+        const elTSD = document.getElementById("summaryTotalSantunanDiperlukan");
+        const elTD = document.getElementById("summaryTotalDonasi");
+        const elKek = document.getElementById("summaryKekuranganDonasi");
+        if (elTSD) elTSD.textContent = "-";
+        if (elTD) elTD.textContent = "-";
+        if (elKek) elKek.textContent = "-";
+      }
+      if (!berandaStatsCache.santunanSapa && activeProgram === "sapa") {
+        const elTSD2 = document.getElementById("summaryTotalSantunanDiperlukan");
+        if (elTSD2) elTSD2.textContent = "-";
       }
       if (!berandaStatsCache.dashboard) {
         const elW = document.getElementById("statTotalWilayah");
