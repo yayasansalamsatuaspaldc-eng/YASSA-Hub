@@ -316,6 +316,15 @@
   .header-logo-svg { width: 90%; height: 90%; display: block; }
   .header-avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
+  /* ============================================================
+     ✨ IMMERSIVE: kartu ringkasan Beranda dibuat "hidup" -- ring cahaya
+     yang muter pelan di tepi kartu + tilt 3D ngikutin sentuhan/kursor
+     (lihat initSummaryCardTilt() di <script> bawah buat logic JS-nya).
+     Semua efek dimatikan otomatis kalau user aktifin "Reduced Motion"
+     di HP-nya (lihat blok @media prefers-reduced-motion di bawah),
+     dan tilt-nya dibikin SUBTIL (maks ~6deg) supaya angka tetap kebaca
+     jelas -- bukan buat pamer, tapi buat kesan premium/"disentuh".
+     ============================================================ */
   .summary-card {
     margin: -30px 20px 0;
     background: linear-gradient(135deg, #1A3B35 0%, #0F2220 100%);
@@ -330,6 +339,13 @@
     border: 1px solid rgba(34, 197, 94, 0.2);
     display: flex;
     flex-direction: column;
+    transform: perspective(700px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) scale(var(--tilt-scale, 1));
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.45s ease;
+    will-change: transform;
+  }
+  .summary-card.tilting {
+    transition: transform 0.06s linear;
+    box-shadow: var(--shadow-deep), 0 0 0 1px rgba(var(--bento-primary-rgb),0.35), 0 18px 40px rgba(0,0,0,0.4);
   }
   .summary-card::before {
     content: "";
@@ -340,6 +356,43 @@
     border-radius: 50%;
     filter: blur(24px);
     pointer-events: none;
+  }
+  /* Ring cahaya conic-gradient yang muter terus di belakang kartu, cuma
+     nongol tipis di tepi (lubang gelap solid di tengah bikin efeknya kayak
+     "aura" nempel di border, bukan nutupin seluruh kartu). */
+  .summary-card::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    z-index: -1;
+    border-radius: 20px;
+    padding: 2px;
+    background: conic-gradient(from 0deg, rgba(34,197,94,0) 0%, rgba(34,211,238,0.9) 12%, rgba(34,197,94,0) 26%, rgba(34,197,94,0) 62%, rgba(168,85,247,0.75) 76%, rgba(34,197,94,0) 90%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: summaryAuraSpin 7s linear infinite;
+    pointer-events: none;
+    opacity: 0.85;
+  }
+  @keyframes summaryAuraSpin { to { transform: rotate(360deg); } }
+  /* Kilau (sheen) tipis yang nyapu dari kiri-atas ke kanan-bawah tiap
+     beberapa detik -- ngasih kesan permukaan "kaca premium" kena cahaya. */
+  .summary-card .summary-sheen {
+    position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.10) 45%, rgba(255,255,255,0.16) 50%, rgba(255,255,255,0.10) 55%, transparent 70%);
+    background-size: 220% 220%;
+    background-position: 130% 130%;
+    animation: summarySheenSweep 5.5s ease-in-out infinite;
+    animation-delay: 1.2s;
+  }
+  @keyframes summarySheenSweep {
+    0%, 55% { background-position: 130% 130%; }
+    85%, 100% { background-position: -30% -30%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .summary-card { transform: none !important; transition: none !important; }
+    .summary-card::after, .summary-card .summary-sheen { animation: none !important; opacity: 0.35; }
   }
   .summary-top { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; position: relative; z-index: 1; }
   .summary-icon {
@@ -388,9 +441,23 @@
     text-align: center;
     gap: 8px;
     cursor: pointer;
-    transition: border-color 0.15s, background 0.15s, transform 0.15s;
+    opacity: 0;
+    transform: scale(var(--cf-scale, 1));
+    /* 🎠 --cf-scale/--cf-opacity dikontrol JS (initProgramSelectorCoverflow)
+       ngikutin posisi scroll -- lihat komentar di JS-nya. */
+    animation: programCardMasuk 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    transition: transform 0.15s ease-out, opacity 0.15s ease-out, border-color 0.15s, background 0.15s;
   }
-  .program-select-card:active { transform: scale(0.96); }
+  .program-select-card:nth-child(1) { animation-delay: 0.03s; }
+  .program-select-card:nth-child(2) { animation-delay: 0.08s; }
+  .program-select-card:nth-child(3) { animation-delay: 0.13s; }
+  .program-select-card:nth-child(4) { animation-delay: 0.18s; }
+  .program-select-card:nth-child(5) { animation-delay: 0.23s; }
+  .program-select-card:nth-child(6) { animation-delay: 0.28s; }
+  @keyframes programCardMasuk {
+    from { opacity: 0; transform: translateY(8px) scale(calc(var(--cf-scale, 1) * 0.9)); }
+    to   { opacity: var(--cf-opacity, 1); transform: scale(var(--cf-scale, 1)); }
+  }
   .program-select-card.active {
     border-color: var(--prog-color, var(--bento-primary));
     background: var(--prog-bg, rgba(var(--bento-primary-rgb),0.12));
@@ -401,6 +468,26 @@
     background: var(--prog-bg, rgba(148,163,184,0.15));
     color: var(--prog-color, var(--text-secondary));
     display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  /* Cincin radar yang muter-mekar pelan di belakang ikon kartu program
+     yang lagi AKTIF -- kartu lain (belum dipilih) diam saja, biar mata
+     user otomatis kefokus ke program yang lagi dilihat datanya. */
+  .program-select-card.active .program-select-icon::after {
+    content: "";
+    position: absolute; inset: -4px;
+    border-radius: 50%;
+    border: 1.5px solid var(--prog-color, var(--bento-primary));
+    animation: programIconRadar 1.8s ease-out infinite;
+    pointer-events: none;
+  }
+  @keyframes programIconRadar {
+    0%   { transform: scale(0.85); opacity: 0.9; }
+    100% { transform: scale(1.55); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .program-select-card { opacity: var(--cf-opacity, 1); animation: none !important; transform: none !important; }
+    .program-select-card.active .program-select-icon::after { animation: none !important; display: none; }
   }
   .program-select-icon .material-symbols-outlined { font-size: 20px; }
   .program-select-label { font-size: 11.5px; font-weight: 800; color: var(--text-primary); letter-spacing: 0.2px; }
@@ -1014,12 +1101,333 @@
   @keyframes kvPulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
   .kv-loading { display: inline-block; animation: kvPulse 1.1s ease-in-out infinite; }
   #keuanganLoadingIcon.spin { animation: appSplashSpin 0.8s linear infinite; }
-  .kv-banner-loading { background: rgba(34,211,238,0.08); border: 1px solid rgba(34,211,238,0.25); }
+  .kv-banner-loading { background: rgba(34,211,238,0.08); border: 1px solid rgba(34,211,238,0.25); position: relative; overflow: hidden; }
   .kv-banner-loading #keuanganLoadingIcon { color: var(--neon-cyan); }
   .kv-banner-loading #keuanganLoadingBannerText { color: var(--text-secondary); }
-  .kv-banner-error { background: rgba(239,68,68,0.10); border: 1px solid rgba(239,68,68,0.3); }
+  .kv-banner-error { background: rgba(239,68,68,0.10); border: 1px solid rgba(239,68,68,0.3); position: relative; overflow: hidden; }
   .kv-banner-error #keuanganLoadingIcon { color: #F87171; }
   .kv-banner-error #keuanganLoadingBannerText { color: #FCA5A5; }
+
+  /* ============================================================
+     ✨ IMMERSIVE: banner status "lagi ambil data" / "gagal" di atas
+     tab Keuangan, + tombol Coba Lagi.
+     - Banner LOADING: kilau cyan nyapu terus-terusan (nunjukin app
+       masih "kerja", bukan macet) + slide-in halus pas pertama muncul.
+     - Banner ERROR: geleng-geleng kecil (shake) pas pertama muncul --
+       cara visual bilang "ini penting, tolong dilihat" tanpa perlu
+       nambah teks/warna baru.
+     - Tombol "Coba Lagi": ring pulsar pelan biar mata user ke-tarik ke
+       situ pas emang lagi error (bukan tombol yang "diem" di pojok).
+     Class kv-banner-enter/kv-banner-shake ditambahin dari JS
+     (loadKeuanganStats()) tiap banner pindah dari status sebelumnya.
+     ============================================================ */
+  @keyframes kvBannerSlideIn {
+    from { transform: translateY(-6px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+  .kv-banner-enter { animation: kvBannerSlideIn 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+  @keyframes kvBannerErrorEnter {
+    0%   { transform: translate(0, -6px); opacity: 0; }
+    25%  { transform: translate(-4px, 0); opacity: 1; }
+    45%  { transform: translate(4px, 0); }
+    65%  { transform: translate(-3px, 0); }
+    85%  { transform: translate(3px, 0); }
+    100% { transform: translate(0, 0); opacity: 1; }
+  }
+  .kv-banner-shake { animation: kvBannerErrorEnter 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+  .kv-banner-loading::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(115deg, transparent 35%, rgba(34,211,238,0.18) 50%, transparent 65%);
+    background-size: 220% 220%;
+    background-position: 150% 150%;
+    animation: kvLoadingSheen 2.4s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes kvLoadingSheen {
+    0%, 40% { background-position: 150% 150%; }
+    90%, 100% { background-position: -50% -50%; }
+  }
+  #keuanganRetryBtn {
+    position: relative;
+    animation: kvRetryPulse 2s ease-in-out infinite;
+  }
+  @keyframes kvRetryPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.28); }
+    50% { box-shadow: 0 0 0 6px rgba(255,255,255,0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .kv-banner-enter, .kv-banner-shake { animation: none !important; }
+    .kv-banner-loading::after { animation: none !important; }
+    #keuanganRetryBtn { animation: none !important; }
+  }
+
+  /* ============================================================
+     ✨ IMMERSIVE: "Rincian per Wilayah" (dropdown collapsible di Kartu 1
+     & Kartu 2 Keuangan, khusus Super Admin/user akses banyak wilayah).
+     Dulu buka/tutupnya langsung nyentak (display:none <-> block), sekarang
+     pakai animasi tinggi (accordion) + tiap baris wilayah "masuk"
+     satu-satu (stagger) pas listnya dibuka -- lihat logic-nya di
+     toggleRincianWilayahKeuangan().
+     ============================================================ */
+  .kv-rincian-list {
+    max-height: 0;
+    overflow: hidden;
+    margin-top: 0;
+    transition: max-height 0.35s cubic-bezier(0.22, 1, 0.36, 1), margin-top 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .kv-rincian-list.kv-rincian-open { margin-top: 4px; }
+  .kv-rincian-list > div { opacity: 0; }
+  .kv-rincian-row-in {
+    animation: kvRincianRowIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  @keyframes kvRincianRowIn {
+    from { opacity: 0; transform: translateX(-6px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .kv-rincian-list { transition: none !important; }
+    .kv-rincian-list > div { opacity: 1 !important; }
+    .kv-rincian-row-in { animation: none !important; }
+  }
+
+  /* ============================================================
+     ✨ IMMERSIVE: kartu "Data Anak Yatim Gopay" di Beranda (yang kalau
+     diklik buka detail lengkap). Diberi 3 sentuhan:
+     1) Ikon ungu di header berdenyut pelan (radar kecil, warna disamain
+        ke ungu kartu ini -- bukan hijau default -- biar identitasnya
+        konsisten).
+     2) Panah ">" di kanan geser dikit pas kartu ditekan -- affordance
+        halus "kartu ini bisa diklik, dan ini arahnya".
+     3) 4 kotak mini (KK/Yatim/Yatim Piatu/Disabilitas) muncul stagger
+        pas kartu dirender, angkanya "hitung naik" (lihat
+        loadDataAnakYatimPreviewBeranda() yang manggil animateCountValue_).
+     ============================================================ */
+  .anak-yatim-icon-wrap {
+    animation: anakYatimIconPulse 2.6s ease-in-out infinite;
+  }
+  @keyframes anakYatimIconPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(168,85,247,0.35); }
+    50% { box-shadow: 0 0 0 7px rgba(168,85,247,0); }
+  }
+  .anak-yatim-chevron {
+    display: inline-block;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .gtap-pressed .anak-yatim-chevron { transform: translateX(4px); }
+  .anak-yatim-mini-stat {
+    opacity: 0;
+    transform: translateY(6px);
+    animation: statMiniMasuk 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  .anak-yatim-mini-stat:nth-child(1) { animation-delay: 0.05s; }
+  .anak-yatim-mini-stat:nth-child(2) { animation-delay: 0.11s; }
+  .anak-yatim-mini-stat:nth-child(3) { animation-delay: 0.17s; }
+  .anak-yatim-mini-stat:nth-child(4) { animation-delay: 0.23s; }
+  @media (prefers-reduced-motion: reduce) {
+    .anak-yatim-icon-wrap { animation: none !important; }
+    .anak-yatim-chevron { transition: none !important; }
+    .anak-yatim-mini-stat { opacity: 1; animation: none !important; transform: none !important; }
+  }
+
+  /* Kartu "Data Anak Asuh SAPA" -- pola sama persis kayak kartu Anak
+     Yatim Gopay di atas, cuma warnanya pink senada aksen kartu ini. */
+  .anak-asuh-icon-wrap {
+    animation: anakAsuhIconPulse 2.6s ease-in-out infinite;
+  }
+  @keyframes anakAsuhIconPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(236,72,153,0.35); }
+    50% { box-shadow: 0 0 0 7px rgba(236,72,153,0); }
+  }
+  .anak-asuh-chevron {
+    display: inline-block;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .gtap-pressed .anak-asuh-chevron { transform: translateX(4px); }
+  .anak-asuh-mini-stat {
+    opacity: 0;
+    transform: translateY(6px);
+    animation: statMiniMasuk 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  .anak-asuh-mini-stat:nth-child(1) { animation-delay: 0.05s; }
+  .anak-asuh-mini-stat:nth-child(2) { animation-delay: 0.11s; }
+  .anak-asuh-mini-stat:nth-child(3) { animation-delay: 0.17s; }
+  .anak-asuh-mini-stat:nth-child(4) { animation-delay: 0.23s; }
+  @media (prefers-reduced-motion: reduce) {
+    .anak-asuh-icon-wrap { animation: none !important; }
+    .anak-asuh-chevron { transition: none !important; }
+    .anak-asuh-mini-stat { opacity: 1; animation: none !important; transform: none !important; }
+  }
+
+  /* ============================================================
+     ✨ IMMERSIVE: list "Agenda Mendatang" di Beranda -- 3 kegiatan
+     terdekat. Tiap baris muncul stagger pas dimuat, ada chevron kecil
+     buat affordance klik, dan badge tanggal kegiatan PALING DEKAT
+     (baris pertama) dikasih cincin cahaya berdenyut -- nunjukin "ini
+     yang paling deket" tanpa perlu teks tambahan.
+     ============================================================ */
+  .agenda-item-in {
+    opacity: 0;
+    animation: agendaItemMasuk 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  @keyframes agendaItemMasuk {
+    from { opacity: 0; transform: translateX(-8px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .agenda-chevron {
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .gtap-pressed .agenda-chevron { transform: translateX(3px); }
+  .agenda-date-badge-soon {
+    position: relative;
+  }
+  .agenda-date-badge-soon::after {
+    content: "";
+    position: absolute; inset: -3px;
+    border-radius: 11px;
+    border: 1.5px solid var(--agenda-glow, var(--bento-primary));
+    animation: agendaBadgeRadar 1.8s ease-out infinite;
+    pointer-events: none;
+  }
+  @keyframes agendaBadgeRadar {
+    0%   { transform: scale(0.9); opacity: 0.8; }
+    100% { transform: scale(1.35); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .agenda-item-in { opacity: 1; animation: none !important; transform: none !important; }
+    .agenda-chevron { transition: none !important; }
+    .agenda-date-badge-soon::after { animation: none !important; display: none; }
+  }
+
+  /* ============================================================
+     ✨ IMMERSIVE: list "Aktivitas Terbaru" di Beranda -- pola sama kayak
+     Agenda Mendatang (stagger masuk), plus ikon aktivitas yang PALING
+     BARU (paling atas) dikasih cincin cahaya berdenyut, warnanya ngikut
+     warna app asalnya (Kotak&Donasi/Absensi/AWG/PM) lewat --aktivitas-glow.
+     ============================================================ */
+  .aktivitas-item-in {
+    opacity: 0;
+    animation: agendaItemMasuk 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  .aktivitas-icon-newest {
+    position: relative;
+  }
+  .aktivitas-icon-newest::after {
+    content: "";
+    position: absolute; inset: -3px;
+    border-radius: 50%;
+    border: 1.5px solid var(--aktivitas-glow, var(--bento-primary));
+    animation: agendaBadgeRadar 1.8s ease-out infinite;
+    pointer-events: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .aktivitas-item-in { opacity: 1; animation: none !important; transform: none !important; }
+    .aktivitas-icon-newest::after { animation: none !important; display: none; }
+  }
+
+  /* ============================================================
+     ✨ IMMERSIVE: Tab Profil -- header hijau avatar + 2 progress bar
+     "Dedikasi" (Kehadiran & Pencapaian Donasi).
+     - Lingkaran dekorasi di background header "napas" pelan (mengembang-
+       mengecil), bikin kartu hijau statis kerasa "hidup".
+     - Ring avatar berdenyut lembut -- nudge halus kalau foto profil bisa
+       diklik (buka QR).
+     - Progress bar Dedikasi numpang gaya "garis jalan" yang sama kayak
+       progress bar Realisasi Lapangan di Keuangan, biar bahasa visualnya
+       konsisten se-app.
+     ============================================================ */
+  .profil-hero-orb {
+    animation: profilOrbNapas 6s ease-in-out infinite;
+  }
+  .profil-hero-orb-2 { animation-delay: 1.5s; animation-duration: 7s; }
+  @keyframes profilOrbNapas {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.15); opacity: 0.7; }
+  }
+  .profil-avatar-ring {
+    animation: profilAvatarPulse 2.8s ease-in-out infinite;
+  }
+  @keyframes profilAvatarPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.35); }
+    50% { box-shadow: 0 0 0 8px rgba(255,255,255,0); }
+  }
+  .profil-dedikasi-bar {
+    position: relative;
+    overflow: visible !important;
+  }
+  .profil-dedikasi-bar::before {
+    content: "";
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    overflow: hidden;
+    background-image: linear-gradient(115deg, rgba(255,255,255,0.28) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.28) 75%, transparent 75%, transparent);
+    background-size: 18px 18px;
+    animation: keuanganStripeJalan 0.9s linear infinite;
+    pointer-events: none;
+  }
+  .profil-dedikasi-bar::after {
+    content: "";
+    position: absolute; right: -2px; top: 50%;
+    width: 8px; height: 8px;
+    transform: translateY(-50%);
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 6px 2px rgba(255,255,255,0.85);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .profil-hero-orb { animation: none !important; }
+    .profil-avatar-ring { animation: none !important; }
+    .profil-dedikasi-bar::before { animation: none !important; }
+  }
+
+  /* ============================================================
+     ✨ IMMERSIVE: kartu "Jabatan/Wilayah" + tombol CTA "Formulir Data
+     Baru GOPAY" di tab Profil.
+     - 2 baris Jabatan/Wilayah masuk stagger pas tab dibuka.
+     - Tombol CTA oranye (cuma muncul buat SUPERADMIN/ADMIN/KORWIL)
+       dikasih kilau sapuan + ikon "goyang" pelan buat narik perhatian ke
+       aksi penting ini, plus panah geser & ikon "loncat" pas ditekan.
+     ============================================================ */
+  .profil-info-row {
+    opacity: 0;
+    transform: translateX(-6px);
+    animation: profilRowMasuk 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  .profil-info-row:nth-child(1) { animation-delay: 0.05s; }
+  .profil-info-row:nth-child(2) { animation-delay: 0.13s; }
+  @keyframes profilRowMasuk {
+    from { opacity: 0; transform: translateX(-6px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .profil-formulir-cta {
+    position: relative;
+    overflow: hidden;
+  }
+  .profil-formulir-cta::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.16) 50%, transparent 65%);
+    background-size: 220% 220%;
+    background-position: 150% 150%;
+    animation: kvLoadingSheen 3.2s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .profil-formulir-icon-wrap {
+    animation: keuanganHeroIconPulse 2.4s ease-in-out infinite;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .gtap-pressed .profil-formulir-icon-wrap { transform: scale(1.1) rotate(-6deg); }
+  .profil-formulir-chevron {
+    display: inline-block;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .gtap-pressed .profil-formulir-chevron { transform: translateX(4px); }
+  @media (prefers-reduced-motion: reduce) {
+    .profil-info-row { opacity: 1; animation: none !important; transform: none !important; }
+    .profil-formulir-cta::after { animation: none !important; }
+    .profil-formulir-icon-wrap { animation: none !important; }
+    .profil-formulir-chevron { transition: none !important; }
+  }
   .app-splash-status {
     font-size: 12.5px; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.2px;
     padding: 6px 16px; border-radius: 999px;
@@ -1445,6 +1853,257 @@
   }
 
   /* ============================================================
+     ✨ IMMERSIVE: baris "Aksi Cepat Donasi" -- 3 sentuhan hidup:
+     1) Tiap ikon "muncul" satu-satu (stagger) pas Beranda pertama kali
+        dirender (bukan langsung nongol semua bareng).
+     2) Kilau tipis nyapu tiap ikon gradient secara bergiliran (delay
+        beda2 per ikon) biar berasa "hidup" tanpa norak/bareng semua.
+     3) Ikon QR Code dikasih identitas visual (gradient teal/cyan, sama
+        kayak 4 ikon lain) + animasi garis scan yang naik-turun -- efek
+        "signature" khusus ikon ini karena emang fungsinya scan QR.
+     Tap-feedback (mengecil+miring dikit pas ditekan) numpang di sistem
+     ripple global yang sudah ada (initGlobalRippleEffect -> class
+     .gtap-pressed otomatis nempel ke elemen [onclick] pembungkusnya).
+     ============================================================ */
+  .aksi-cepat-item {
+    opacity: 0;
+    animation: aksiCepatMasuk 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  .aksi-cepat-item:nth-child(1) { animation-delay: 0.05s; }
+  .aksi-cepat-item:nth-child(2) { animation-delay: 0.13s; }
+  .aksi-cepat-item:nth-child(3) { animation-delay: 0.21s; }
+  .aksi-cepat-item:nth-child(4) { animation-delay: 0.29s; }
+  .aksi-cepat-item:nth-child(5) { animation-delay: 0.37s; }
+  @keyframes aksiCepatMasuk {
+    from { opacity: 0; transform: translateY(10px) scale(0.85); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .aksi-kitabisa-icon, .aksi-cepat-icon, .aksi-qr-icon {
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+  }
+  /* Nempel ke class yang udah dipasang otomatis oleh sistem ripple global
+     pas elemen pembungkus [onclick] ditekan -- ikon "menciut & miring"
+     dikit lalu balik lenting begitu jari dilepas. */
+  .gtap-pressed .aksi-kitabisa-icon,
+  .gtap-pressed .aksi-cepat-icon,
+  .gtap-pressed .aksi-qr-icon {
+    transform: scale(0.86) rotate(-6deg);
+  }
+  .aksi-kitabisa-icon::after, .aksi-cepat-icon::after, .aksi-qr-icon::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.55) 50%, transparent 65%);
+    background-size: 250% 250%;
+    background-position: 150% 150%;
+    animation: aksiCepatSheen 4.5s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .aksi-kitabisa-icon::after { animation-delay: 0.4s; }
+  .aksi-kotak-icon::after { animation-delay: 1.4s; }
+  .aksi-donasi-icon::after { animation-delay: 2.4s; }
+  .aksi-online-icon::after { animation-delay: 3.4s; }
+  .aksi-qr-icon::after { animation-delay: 0.9s; }
+  @keyframes aksiCepatSheen {
+    0%, 45% { background-position: 150% 150%; }
+    75%, 100% { background-position: -50% -50%; }
+  }
+
+  /* Ikon QR Code -- dikasih identitas gradient teal/cyan (dulu polos
+     kaca doang) + garis "scan" yang jalan naik-turun terus-terusan,
+     ngingetin visual scanner QR sungguhan. */
+  .aksi-qr-icon {
+    width: 54px; height: 54px; border-radius: 15px;
+    background: linear-gradient(135deg, #67E8F9 0%, #22D3EE 55%, #0EA5E9 100%);
+    border: none;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  }
+  .aksi-qr-icon .material-symbols-outlined { font-size: 24px; font-variation-settings: 'FILL' 1; position: relative; z-index: 1; }
+  .aksi-qr-scanline {
+    position: absolute; left: 8%; right: 8%; height: 2px;
+    background: rgba(255,255,255,0.9);
+    box-shadow: 0 0 6px 1px rgba(255,255,255,0.8);
+    border-radius: 2px;
+    animation: aksiQrScan 2.4s ease-in-out infinite;
+    z-index: 1;
+  }
+  @keyframes aksiQrScan {
+    0%, 100% { top: 18%; opacity: 0.9; }
+    50% { top: 78%; opacity: 0.9; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .aksi-cepat-item { opacity: 1; animation: none !important; transform: none !important; }
+    .aksi-kitabisa-icon::after, .aksi-cepat-icon::after, .aksi-qr-icon::after,
+    .aksi-qr-scanline, .aksi-kitabisa-icon, .aksi-online-icon {
+      animation: none !important;
+    }
+  }
+
+  /* ============================================================
+     ✨ IMMERSIVE: 3 kartu "Ringkasan Angka" (Anak / Wilayah / Pengurus)
+     di paling atas panel GO-PAY. Pola sama kayak Aksi Cepat & Program
+     Selector -- entrance stagger + kilau bergantian + tap "terangkat".
+     Angka di dalamnya sendiri sekarang "hitung naik" tiap data baru
+     masuk (lihat animateCountValue_() dipanggil dari loadBerandaStats()).
+     ============================================================ */
+  .stat-mini-card {
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: statMiniMasuk 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+  }
+  .stat-mini-card:nth-child(1) { animation-delay: 0.04s; }
+  .stat-mini-card:nth-child(2) { animation-delay: 0.11s; }
+  .stat-mini-card:nth-child(3) { animation-delay: 0.18s; }
+  @keyframes statMiniMasuk {
+    from { opacity: 0; transform: translateY(10px) scale(0.92); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .stat-mini-card::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.10) 50%, transparent 65%);
+    background-size: 250% 250%;
+    background-position: 150% 150%;
+    animation: statMiniSheen 5s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .stat-mini-card:nth-child(1)::after { animation-delay: 0.6s; }
+  .stat-mini-card:nth-child(2)::after { animation-delay: 2.1s; }
+  .stat-mini-card:nth-child(3)::after { animation-delay: 3.6s; }
+  @keyframes statMiniSheen {
+    0%, 45% { background-position: 150% 150%; }
+    75%, 100% { background-position: -50% -50%; }
+  }
+  /* Kartu yang bisa diklik (Anak -> tab PM, Pengurus -> daftar pengurus)
+     "terangkat" dikit pas ditekan (numpang class .gtap-pressed dari
+     sistem ripple global) -- kartu Wilayah gak punya onclick jadi
+     otomatis gak kena efek ini (memang bukan tombol). Sengaja PAKAI
+     box-shadow doang di level kartu (bukan transform) supaya gak
+     bentrok sama animasi "masuk" (statMiniMasuk) yang juga ngontrol
+     transform di elemen yang sama -- animasi CSS selalu menang lawan
+     rule transform biasa, jadi transform-nya numpang di ikon saja. */
+  .gtap-pressed.stat-mini-card {
+    box-shadow: 0 10px 22px rgba(0,0,0,0.28);
+  }
+  .gtap-pressed .stat-mini-icon {
+    transform: scale(1.15) rotate(-8deg);
+  }
+  .stat-mini-icon {
+    display: inline-block;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .stat-mini-card { opacity: 1; animation: none !important; transform: none !important; }
+    .stat-mini-card::after { animation: none !important; }
+  }
+
+  /* ============================================================
+     ✨ IMMERSIVE: Kartu 1 tab Keuangan ("Jumlah Anak & Santunan") --
+     ini angka paling penting di tab Keuangan, jadi dikasih perlakuan
+     "kartu hidup" senada summary-card di Beranda (ring cahaya muter +
+     kilau kaca), tapi versi lebih tenang (ring-nya lebih redup/pelan)
+     supaya gak menyaingi kartu ringkasan Beranda yang jadi fokus utama.
+     Nomor besar & sub-angkanya juga ikut "hitung naik" tiap data
+     ke-refresh (lihat terapkanKeuanganStats() yang manggil
+     animateCountValue_ / animateRupiahValue_ sekarang).
+     ============================================================ */
+  .keuangan-hero-card {
+    position: relative;
+    overflow: hidden;
+  }
+  .keuangan-hero-card::after {
+    content: "";
+    position: absolute; inset: -1px;
+    z-index: 0;
+    border-radius: 22px;
+    padding: 1.5px;
+    background: conic-gradient(from 90deg, rgba(34,197,94,0) 0%, rgba(34,197,94,0.55) 10%, rgba(34,197,94,0) 24%, rgba(34,197,94,0) 100%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: summaryAuraSpin 10s linear infinite;
+    pointer-events: none;
+    opacity: 0.7;
+  }
+  .keuangan-hero-card > * { position: relative; z-index: 1; }
+  .keuangan-hero-icon-wrap {
+    animation: keuanganHeroIconPulse 2.6s ease-in-out infinite;
+  }
+  @keyframes keuanganHeroIconPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(var(--bento-primary-rgb),0.35); }
+    50% { box-shadow: 0 0 0 7px rgba(var(--bento-primary-rgb),0); }
+  }
+  .keuangan-mini-stat {
+    opacity: 0;
+    transform: translateY(8px);
+    animation: statMiniMasuk 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  .keuangan-mini-stat:nth-child(1) { animation-delay: 0.1s; }
+  .keuangan-mini-stat:nth-child(2) { animation-delay: 0.18s; }
+  @media (prefers-reduced-motion: reduce) {
+    .keuangan-hero-card::after { animation: none !important; opacity: 0.3; }
+    .keuangan-hero-icon-wrap { animation: none !important; }
+    .keuangan-mini-stat { opacity: 1; animation: none !important; transform: none !important; }
+  }
+
+  /* ============================================================
+     ✨ IMMERSIVE: progress bar "Realisasi Lapangan" (Kartu 2 Keuangan) --
+     dikasih 2 sentuhan supaya kerasa "aktif ke-update", bukan cuma
+     kotak statis yang lebarnya berubah:
+     1) Garis-garis diagonal yang jalan terus di dalam bar (khas progress
+        bar "sedang berjalan"), warna dasarnya tetap ngikut logic lama
+        (merah/kuning/hijau via elBar.style.background di JS -- gak diubah).
+     2) Titik cahaya kecil nempel di ujung depan bar, kayak "kepala" energi.
+     Banner status di bawahnya (kekurangan/tercapai) juga dikasih animasi
+     "pop" kecil tiap kontennya berubah (lihat class kv-banner-pop yang
+     ditoggle dari terapkanKeuanganStats()).
+     ============================================================ */
+  .keuangan-progress-fill {
+    position: relative;
+    overflow: visible !important;
+  }
+  .keuangan-progress-fill::before {
+    content: "";
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    overflow: hidden;
+    background-image: linear-gradient(115deg, rgba(255,255,255,0.28) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.28) 75%, transparent 75%, transparent);
+    background-size: 20px 20px;
+    animation: keuanganStripeJalan 0.9s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes keuanganStripeJalan { from { background-position: 0 0; } to { background-position: 20px 0; } }
+  .keuangan-progress-fill::after {
+    content: "";
+    position: absolute; right: -2px; top: 50%;
+    width: 9px; height: 9px;
+    transform: translateY(-50%);
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 7px 2px rgba(255,255,255,0.85);
+  }
+  .kv-banner-pop {
+    animation: keuanganBannerPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes keuanganBannerPop {
+    0% { transform: scale(0.92); opacity: 0.5; }
+    60% { transform: scale(1.02); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .keuangan-progress-fill::before { animation: none !important; }
+    .kv-banner-pop { animation: none !important; }
+  }
+
+  /* ============================================================
      📲 POPUP AJAKAN INSTALL APLIKASI (PWA "Add to Home Screen")
      Muncul otomatis begitu splash selesai & browser bilang app ini
      "installable" (event beforeinstallprompt), ATAU di iOS Safari
@@ -1728,6 +2387,7 @@
 
   <!-- Kartu Mengambang -->
   <div class="summary-card" id="summaryCard">
+    <div class="summary-sheen" aria-hidden="true"></div>
     <div class="summary-top">
       <div class="summary-icon"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">volunteer_activism</span></div>
       <div class="summary-label" id="summaryLabelSantunan">Total Santunan Diperlukan PROGRAM GOPAY</div>
@@ -3148,7 +3808,10 @@ function renderSummaryCardBeranda_() {
     if (elSubKekurangan) elSubKekurangan.style.display = "none";
     if (elSubDonasi) elSubDonasi.style.display = "none";
     const d = berandaStatsCache.santunanSapa;
-    if (elValue) elValue.textContent = d ? formatRupiahHub(d.totalSantunanDiperlukan) : "...";
+    if (elValue) {
+      if (d) animateRupiahValue_(elValue, d.totalSantunanDiperlukan);
+      else elValue.textContent = "...";
+    }
     return;
   }
 
@@ -3175,9 +3838,8 @@ function renderSummaryCardBeranda_() {
   }
 
   if (elValue) {
-    elValue.textContent = d.santunanDitemukan
-      ? formatRupiahHub(d.totalSantunanDiperlukan)
-      : "Belum diisi Bendahara";
+    if (d.santunanDitemukan) animateRupiahValue_(elValue, d.totalSantunanDiperlukan);
+    else { elValue.removeAttribute("data-raw-value"); elValue.textContent = "Belum diisi Bendahara"; }
   }
 
   if (elKekurangan && elKekuranganIconWrap && elKekuranganIcon) {
@@ -3186,15 +3848,17 @@ function renderSummaryCardBeranda_() {
     if (elKekuranganBadge) elKekuranganBadge.style.display = "none";
 
     if (!d.santunanDitemukan) {
+      elKekurangan.removeAttribute("data-raw-value");
       elKekurangan.textContent = "Belum diisi Bendahara";
       elKekuranganIcon.textContent = "money_off";
     } else if (d.kekuranganSantunan > 0) {
-      elKekurangan.textContent = formatRupiahHub(d.kekuranganSantunan);
+      animateRupiahValue_(elKekurangan, d.kekuranganSantunan);
       elKekurangan.classList.add("value-kekurangan-urgent");
       elKekuranganIconWrap.classList.add("icon-kekurangan-urgent");
       elKekuranganIcon.textContent = "priority_high";
       if (elKekuranganBadge) elKekuranganBadge.style.display = "inline-flex";
     } else {
+      elKekurangan.removeAttribute("data-raw-value");
       elKekurangan.textContent = "Tercapai! \ud83c\udf89";
       elKekurangan.classList.add("value-kekurangan-tercapai");
       elKekuranganIconWrap.classList.add("icon-kekurangan-tercapai");
@@ -3202,7 +3866,7 @@ function renderSummaryCardBeranda_() {
     }
   }
 
-  if (elTotalDonasi) elTotalDonasi.textContent = formatRupiahHub(d.totalDonasi);
+  if (elTotalDonasi) animateRupiahValue_(elTotalDonasi, d.totalDonasi);
 }
 
 // Fungsi bantuan (Helper) untuk menyimpan ke memori HP
@@ -3212,11 +3876,53 @@ function saveBerandaCacheHub() {
   } catch(e) {}
 }
 
+// ============================================================
+// 🔢 Versi "hitung naik" untuk angka BIASA (bukan Rupiah) -- dipakai
+// buat kartu Ringkasan Angka (Anak/Wilayah/Pengurus) di Beranda. Logic-nya
+// sama persis kayak animateRupiahValue_ di atas, cuma tanpa format "Rp".
+// ============================================================
+function animateCountValue_(el, targetValue, suffix) {
+  suffix = suffix || "";
+  if (!el) return;
+  const target = Math.round(Number(targetValue));
+  if (isNaN(target)) { el.textContent = targetValue; el.removeAttribute("data-raw-value"); return; }
+
+  const prevRaw = el.getAttribute("data-raw-value");
+  const isFirstFill = prevRaw === null;
+  el.setAttribute("data-raw-value", String(target));
+
+  if (isFirstFill || (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)) {
+    el.textContent = target + suffix;
+    return;
+  }
+
+  const start = Number(prevRaw) || 0;
+  if (start === target) { el.textContent = target + suffix; return; }
+
+  const duration = 650;
+  const t0 = performance.now();
+  if (el._countRAF) cancelAnimationFrame(el._countRAF);
+
+  function tick(now) {
+    const p = Math.min(1, (now - t0) / duration);
+    const eased = 1 - Math.pow(1 - p, 3);
+    const current = Math.round(start + (target - start) * eased);
+    el.textContent = current + suffix;
+    if (p < 1) {
+      el._countRAF = requestAnimationFrame(tick);
+    } else {
+      el.textContent = target + suffix;
+      el._countRAF = null;
+    }
+  }
+  el._countRAF = requestAnimationFrame(tick);
+}
+
 function loadBerandaStats() {
   // Total Anak (dari YASSA Mobile) -- server BEDA sama Hub, jadi TETAP
   // request terpisah, gak bisa ikut digabung ke getBerandaBundle().
   const elA = document.getElementById("statTotalAnak");
-  if (elA && berandaStatsCache.totalAnak !== null) elA.textContent = berandaStatsCache.totalAnak;
+  if (elA && berandaStatsCache.totalAnak !== null) animateCountValue_(elA, berandaStatsCache.totalAnak);
   fetch(GAS_MOBILE_URL, {
     method: "POST",
     headers: { "Content-Type": "text/plain" },
@@ -3229,7 +3935,7 @@ function loadBerandaStats() {
       berandaStatsCache.totalAnak = totalAnak;
       saveBerandaCacheHub(); // <-- SIMPAN KE OFFLINE CACHE
       const elA2 = document.getElementById("statTotalAnak");
-      if (elA2) elA2.textContent = totalAnak;
+      if (elA2) animateCountValue_(elA2, totalAnak);
     })
     .catch(function () {
       // Kalau udah ada cache, biarin angka lama tetap tampil daripada
@@ -3261,8 +3967,8 @@ function loadBerandaStats() {
   const terapkanDashboardBeranda = function (data) {
     const elW = document.getElementById("statTotalWilayah");
     const elP = document.getElementById("statTotalPengurus");
-    if (elW) elW.textContent = data.totalWilayah;
-    if (elP) elP.textContent = data.totalPengurus;
+    if (elW) animateCountValue_(elW, data.totalWilayah);
+    if (elP) animateCountValue_(elP, data.totalPengurus);
 
     // Aktivitas Hari Ini -> Pengurus belum login lama
     window._daftarPengurusBelumLoginLama = data.daftarPengurusBelumLoginLama || [];
@@ -3485,9 +4191,12 @@ function renderAktivitasTerbaru(data, gagal) {
       ? item.detail + (item.oleh ? " · oleh " + item.oleh : "")
       : (item.oleh ? "oleh " + item.oleh : "");
     const divider = idx < list.length - 1 ? '<div style="height: 1px; background: var(--glass-border);"></div>' : "";
+    // Ikon aktivitas PALING BARU (idx 0) dikasih cincin cahaya berdenyut --
+    // nunjukin "ini yang baru aja kejadian" tanpa perlu label "TERBARU".
+    const iconClass = idx === 0 ? "aktivitas-icon aktivitas-icon-newest" : "aktivitas-icon";
     return `
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--glass); color: ${meta.color}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><span class="material-symbols-outlined" style="font-size: 16px;">${meta.icon}</span></div>
+      <div class="aktivitas-item-in" style="display: flex; align-items: center; gap: 12px; animation-delay:${(idx * 0.07).toFixed(2)}s;">
+        <div class="${iconClass}" style="width: 32px; height: 32px; border-radius: 50%; background: var(--glass); color: ${meta.color}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; --aktivitas-glow: ${meta.color};"><span class="material-symbols-outlined" style="font-size: 16px;">${meta.icon}</span></div>
         <div style="flex: 1; min-width: 0;"><div style="font-size: 12.5px; font-weight: 600;">${item.aksi}</div>${sub ? `<div style="font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${sub}</div>` : ""}</div>
         <span style="font-size: 11px; color: var(--text-muted); flex-shrink: 0;">${formatWaktuAktivitas(item.timestamp)}</span>
       </div>
@@ -3648,12 +4357,58 @@ function saveKeuanganCacheHub() {
 // "Rate Santunan" & Kartu 2 "Realisasi Lapangan") -- default ketutup biar
 // kartu gak kepanjangan buat Super Admin/Admin yang akses semua wilayah,
 // tinggal klik header-nya buat expand/collapse.
+// ✨ IMMERSIVE: dulu ini cuma display:none <-> display:block (nyentak
+// langsung), sekarang dianimasiin pelan pakai max-height (accordion khas
+// app modern), dan tiap baris di dalamnya "masuk" satu-satu (stagger)
+// pas listnya dibuka -- lihat class kv-rincian-row-in yang ditempel ke
+// setiap child div-nya.
 function toggleRincianWilayahKeuangan(listId, chevronId) {
   const list = document.getElementById(listId);
   const chevron = document.getElementById(chevronId);
   if (!list) return;
-  const sedangTerbuka = list.style.display === "block";
-  list.style.display = sedangTerbuka ? "none" : "block";
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const sedangTerbuka = list.classList.contains("kv-rincian-open");
+
+  if (sedangTerbuka) {
+    // TUTUP: turun dari tinggi sekarang ke 0 (butuh nilai px eksplisit
+    // dulu -- transition gak bisa jalan dari "none"/"auto" langsung).
+    list.style.maxHeight = list.scrollHeight + "px";
+    void list.offsetHeight; // paksa reflow biar browser "nyadar" nilai di atas dulu
+    list.classList.remove("kv-rincian-open");
+    requestAnimationFrame(function () {
+      list.style.maxHeight = "0px";
+    });
+  } else {
+    // BUKA: ukur tinggi asli kontennya dulu (scrollHeight), animasiin
+    // max-height ke situ, lalu lepas jadi "none" setelah selesai biar
+    // tetap aman kalau kontennya berubah tinggi belakangan (mis. rotasi
+    // layar HP).
+    list.classList.add("kv-rincian-open");
+    list.style.maxHeight = "0px";
+    void list.offsetHeight;
+    const targetHeight = list.scrollHeight;
+    requestAnimationFrame(function () {
+      list.style.maxHeight = targetHeight + "px";
+    });
+    list.addEventListener("transitionend", function onDone(e) {
+      if (e.propertyName !== "max-height") return;
+      list.removeEventListener("transitionend", onDone);
+      if (list.classList.contains("kv-rincian-open")) list.style.maxHeight = "none";
+    });
+
+    // Stagger tiap baris rincian di dalam list -- baris ke-1 duluan,
+    // baris ke-2 nyusul dikit, dst (maks delay di-cap biar list panjang
+    // -- mis. Super Admin akses 16 wilayah -- gak butuh nunggu lama).
+    if (!reduceMotion) {
+      const rows = list.children;
+      for (let i = 0; i < rows.length; i++) {
+        rows[i].style.animationDelay = Math.min(i * 0.04, 0.4) + "s";
+        rows[i].classList.remove("kv-rincian-row-in");
+        void rows[i].offsetWidth;
+        rows[i].classList.add("kv-rincian-row-in");
+      }
+    }
+  }
   if (chevron) chevron.style.transform = sedangTerbuka ? "rotate(0deg)" : "rotate(180deg)";
 }
 
@@ -3709,9 +4464,9 @@ function terapkanKeuanganStats(hasil) {
 
       // --- Kartu 1: Jumlah Anak & Total Santunan (PER WILAYAH -- rate & jumlah
       //     anak sekarang bisa beda tiap wilayah, lihat santunan.rincianWilayah) ---
-      if (elYatim) elYatim.textContent = Number(santunan.jumlahAnakYatim || 0);
-      if (elPiatu) elPiatu.textContent = Number(santunan.jumlahYatimPiatu || 0);
-      if (elDsb) elDsb.textContent = Number(santunan.jumlahDisabilitas || 0);
+      if (elYatim) animateCountValue_(elYatim, santunan.jumlahAnakYatim || 0);
+      if (elPiatu) animateCountValue_(elPiatu, santunan.jumlahYatimPiatu || 0);
+      if (elDsb) animateCountValue_(elDsb, santunan.jumlahDisabilitas || 0);
 
       const rincianWilayahSantunan = santunan.rincianWilayah || [];
       const wilayahBelumDiisiRate = santunan.wilayahBelumDiisiRate || [];
@@ -3728,7 +4483,7 @@ function terapkanKeuanganStats(hasil) {
         if (elSantunanWrap) elSantunanWrap.style.display = "none";
       } else {
         if (elSantunanWrap) elSantunanWrap.style.display = "block";
-        if (elTotalSantunan) elTotalSantunan.textContent = formatRupiahHub(santunan.totalPenyaluran || 0);
+        if (elTotalSantunan) animateRupiahValue_(elTotalSantunan, santunan.totalPenyaluran || 0);
 
         if (wilayahBelumDiisiRate.length > 0) {
           // Baris wilayahnya udah ada, tapi sebagian rate-nya masih kosong --
@@ -3828,9 +4583,9 @@ function terapkanKeuanganStats(hasil) {
       const rateSudahDiisi = manual.rateSudahDiisi !== false;
       const belumAdaRate = !rateSudahDiisi;
 
-      if (elKebutuhan) elKebutuhan.textContent = formatRupiahHub(kebutuhan);
-      if (elRealisasi) elRealisasi.textContent = formatRupiahHub(realisasi);
-      if (elPersen) elPersen.textContent = Math.max(0, persen) + "%";
+      if (elKebutuhan) animateRupiahValue_(elKebutuhan, kebutuhan);
+      if (elRealisasi) animateRupiahValue_(elRealisasi, realisasi);
+      if (elPersen) animateCountValue_(elPersen, Math.max(0, persen), "%");
       if (elBar) {
         const w = Math.min(100, Math.max(0, persen));
         elBar.style.width = w + "%";
@@ -3877,6 +4632,17 @@ function terapkanKeuanganStats(hasil) {
         elStatusBanner.style.borderColor = belumAdaRate
           ? "rgba(251, 191, 36, 0.3)"
           : (kurang ? "rgba(239, 68, 68, 0.3)" : "rgba(34, 197, 94, 0.3)");
+        // "Pop" kecil tiap statusnya berubah (kurang <-> tercapai <-> belum
+        // ada rate) -- data-status dipakai buat bandingin sebelum/sesudah
+        // biar animasinya CUMA muncul pas beneran ganti status, bukan tiap
+        // refresh biarpun statusnya sama persis kayak sebelumnya.
+        const statusBaru = belumAdaRate ? "belum-rate" : (kurang ? "kurang" : "tercapai");
+        if (elStatusBanner.getAttribute("data-status") !== statusBaru) {
+          elStatusBanner.setAttribute("data-status", statusBaru);
+          elStatusBanner.classList.remove("kv-banner-pop");
+          void elStatusBanner.offsetWidth; // reflow paksa biar animasi bisa retrigger
+          elStatusBanner.classList.add("kv-banner-pop");
+        }
       }
 
       // --- Breakdown kekurangan per wilayah (cuma tampil kalau user akses
@@ -3973,7 +4739,7 @@ function loadKeuanganStats() {
     } else {
       // Data belum pernah kebuka sesi ini -- kasih tau user jelas2 lagi
       // ambil data, biar gak dikira app-nya macet atau datanya kosong.
-      elBanner.className = "kv-banner-loading";
+      elBanner.className = "kv-banner-loading kv-banner-enter";
       elBanner.style.display = "flex";
       if (elBannerIcon) { elBannerIcon.textContent = "progress_activity"; elBannerIcon.classList.add("spin"); }
       if (elBannerText) elBannerText.textContent = kalimatAcak(KALIMAT_LOADING_KEUANGAN);
@@ -4019,7 +4785,7 @@ function loadKeuanganStats() {
       }
       tampilkanKeuanganGagal();
       if (elBanner) {
-        elBanner.className = "kv-banner-error";
+        elBanner.className = "kv-banner-error kv-banner-shake";
         elBanner.style.display = "flex";
         if (elBannerIcon) { elBannerIcon.textContent = "error"; elBannerIcon.classList.remove("spin"); }
         if (elBannerText) elBannerText.textContent = "Gagal mengambil data keuangan" + (err && err.message ? ": " + err.message : ". Cek koneksi lalu coba lagi.");
@@ -4050,7 +4816,7 @@ function loadProfilePerforma() {
 
       // --- Kehadiran Absen ---
       const persenHadir = Math.max(0, Number(kehadiran.persenKehadiran || 0));
-      if (elKehadiranPersen) elKehadiranPersen.textContent = persenHadir + "%";
+      if (elKehadiranPersen) animateCountValue_(elKehadiranPersen, persenHadir, "%");
       if (elKehadiranBar) elKehadiranBar.style.width = persenHadir + "%";
       if (elKehadiranKet) {
         elKehadiranKet.textContent = Number(kehadiran.totalKegiatan || 0) > 0
@@ -4061,11 +4827,11 @@ function loadProfilePerforma() {
       // --- Pencapaian Donasi ---
       const persenDonasi = Math.max(0, Number(donasi.persenTercapai || 0));
       if (!donasi.ditemukan) {
-        if (elDonasiPersen) elDonasiPersen.textContent = "-";
+        if (elDonasiPersen) { elDonasiPersen.removeAttribute("data-raw-value"); elDonasiPersen.textContent = "-"; }
         if (elDonasiBar) elDonasiBar.style.width = "0%";
         if (elDonasiKet) elDonasiKet.textContent = "Belum ada data yang diisi Bendahara tahun ini";
       } else {
-        if (elDonasiPersen) elDonasiPersen.textContent = persenDonasi + "%";
+        if (elDonasiPersen) animateCountValue_(elDonasiPersen, persenDonasi, "%");
         if (elDonasiBar) elDonasiBar.style.width = persenDonasi + "%";
         if (elDonasiKet) {
           elDonasiKet.textContent = formatRupiahHub(donasi.realisasiDonasi || 0) + " / " + formatRupiahHub(donasi.kebutuhanDonasi || 0) + " (Jan\u2013bulan ini)";
@@ -4159,16 +4925,16 @@ function renderContent() {
       <div class="program-panel" id="programPanel-gopay">
       <!-- Ringkasan Angka (Anak, Wilayah, Pengurus) -->
       <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
-        <div style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid #60A5FA; cursor: pointer;" onclick="setActive('pm')">
-          <span class="material-symbols-outlined" style="color: #60A5FA;">group</span>
+        <div class="stat-mini-card" style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid #60A5FA; cursor: pointer;" onclick="setActive('pm')">
+          <span class="material-symbols-outlined stat-mini-icon" style="color: #60A5FA;">group</span>
           <div><div style="font-size: 20px; font-weight: 700;" id="statTotalAnak">…</div><div style="font-size: 11px; color: var(--text-secondary);">Anak</div><div style="font-size: 8.5px; color: var(--text-muted); margin-top: 1px; line-height: 1.2;">(Gopay &amp; Anak Asuh)</div></div>
         </div>
-        <div style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid #C084FC;">
-          <span class="material-symbols-outlined" style="color: #C084FC;">location_on</span>
+        <div class="stat-mini-card" style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid #C084FC;">
+          <span class="material-symbols-outlined stat-mini-icon" style="color: #C084FC;">location_on</span>
           <div><div style="font-size: 20px; font-weight: 700;" id="statTotalWilayah">…</div><div style="font-size: 11px; color: var(--text-secondary);">Wilayah</div></div>
         </div>
-        <div style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid var(--bento-primary); cursor: pointer;" onclick="handleUserMenuClick('pengurus')">
-          <span class="material-symbols-outlined" style="color: var(--bento-primary);">admin_panel_settings</span>
+        <div class="stat-mini-card" style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid var(--bento-primary); cursor: pointer;" onclick="handleUserMenuClick('pengurus')">
+          <span class="material-symbols-outlined stat-mini-icon" style="color: var(--bento-primary);">admin_panel_settings</span>
           <div><div style="font-size: 20px; font-weight: 700;" id="statTotalPengurus">…</div><div style="font-size: 11px; color: var(--text-secondary);">Pengurus &amp; Tim Kerja</div></div>
         </div>
       </div>
@@ -4178,31 +4944,31 @@ function renderContent() {
            wilayah, khusus Program Gopay (Anak Asuh tidak termasuk).
            Preview 4 angka di sini, rincian lengkap per wilayah muncul pas
            diklik (lihat openDataAnakYatim() / renderDataAnakYatim()). -->
-      <div onclick="openDataAnakYatim()" style="background: var(--glass-strong); border-radius: 20px; padding: 18px 18px 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid #A855F7; cursor: pointer;">
+      <div onclick="openDataAnakYatim()" class="anak-yatim-preview-card" style="background: var(--glass-strong); border-radius: 20px; padding: 18px 18px 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid #A855F7; cursor: pointer;">
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
-          <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(168,85,247,0.15); color: #C084FC; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <div class="anak-yatim-icon-wrap" style="width: 40px; height: 40px; border-radius: 12px; background: rgba(168,85,247,0.15); color: #C084FC; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
             <span class="material-symbols-outlined" style="font-size: 21px; font-variation-settings: 'FILL' 1;">diversity_3</span>
           </div>
           <div style="flex: 1; min-width: 0;">
             <h3 style="font-size: 14px; font-weight: 700; margin: 0;">Data Anak Yatim Gopay</h3>
             <div style="font-size: 10.5px; color: var(--text-secondary); margin-top: 1px;">Semua Wilayah</div>
           </div>
-          <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted); flex-shrink: 0;">chevron_right</span>
+          <span class="material-symbols-outlined anak-yatim-chevron" style="font-size: 20px; color: var(--text-muted); flex-shrink: 0;">chevron_right</span>
         </div>
         <div style="display:flex; gap:8px;">
-          <div style="flex:1; background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+          <div class="anak-yatim-mini-stat" style="flex:1; background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
             <div class="pale-blue-text" style="font-size:15px; font-weight:800; color:#93C5FD;" id="berandaAnakYatimKK"><span class="kv-loading">...</span></div>
             <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">KK</div>
           </div>
-          <div style="flex:1; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+          <div class="anak-yatim-mini-stat" style="flex:1; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
             <div class="pale-green-text" style="font-size:15px; font-weight:800; color:#86EFAC;" id="berandaAnakYatimYatim"><span class="kv-loading">...</span></div>
             <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Yatim</div>
           </div>
-          <div style="flex:1; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+          <div class="anak-yatim-mini-stat" style="flex:1; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
             <div class="pale-purple-text" style="font-size:15px; font-weight:800; color:#D8B4FE;" id="berandaAnakYatimPiatu"><span class="kv-loading">...</span></div>
             <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Yatim Piatu</div>
           </div>
-          <div style="flex:1; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+          <div class="anak-yatim-mini-stat" style="flex:1; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
             <div class="pale-amber-text" style="font-size:15px; font-weight:800; color:#FDE68A;" id="berandaAnakYatimDisabilitas"><span class="kv-loading">...</span></div>
             <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Disabilitas</div>
           </div>
@@ -4216,31 +4982,31 @@ function renderContent() {
            persis pola panel GO-PAY di atas. Disembunyikan default karena
            GO-PAY yang aktif duluan (lihat activeProgram). -->
       <div class="program-panel" id="programPanel-sapa" style="display:none;">
-        <div onclick="openDataAnakAsuh()" style="background: var(--glass-strong); border-radius: 20px; padding: 18px 18px 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid #EC4899; cursor: pointer;">
+        <div onclick="openDataAnakAsuh()" class="anak-asuh-preview-card" style="background: var(--glass-strong); border-radius: 20px; padding: 18px 18px 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid #EC4899; cursor: pointer;">
           <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
-            <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(236,72,153,0.15); color: #F9A8D4; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <div class="anak-asuh-icon-wrap" style="width: 40px; height: 40px; border-radius: 12px; background: rgba(236,72,153,0.15); color: #F9A8D4; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
               <span class="material-symbols-outlined" style="font-size: 21px; font-variation-settings: 'FILL' 1;">diversity_1</span>
             </div>
             <div style="flex: 1; min-width: 0;">
               <h3 style="font-size: 14px; font-weight: 700; margin: 0;">Data Anak Asuh SAPA</h3>
               <div style="font-size: 10.5px; color: var(--text-secondary); margin-top: 1px;">Semua Wilayah</div>
             </div>
-            <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted); flex-shrink: 0;">chevron_right</span>
+            <span class="material-symbols-outlined anak-asuh-chevron" style="font-size: 20px; color: var(--text-muted); flex-shrink: 0;">chevron_right</span>
           </div>
           <div style="display:flex; gap:8px;">
-            <div style="flex:1; background: rgba(236,72,153,0.08); border: 1px solid rgba(236,72,153,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+            <div class="anak-asuh-mini-stat" style="flex:1; background: rgba(236,72,153,0.08); border: 1px solid rgba(236,72,153,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
               <div style="font-size:15px; font-weight:800; color:#F9A8D4;" id="berandaAnakAsuhKK"><span class="kv-loading">...</span></div>
               <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">KK</div>
             </div>
-            <div style="flex:1; background: rgba(219,39,119,0.08); border: 1px solid rgba(219,39,119,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+            <div class="anak-asuh-mini-stat" style="flex:1; background: rgba(219,39,119,0.08); border: 1px solid rgba(219,39,119,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
               <div style="font-size:15px; font-weight:800; color:#F472B6;" id="berandaAnakAsuhAnak"><span class="kv-loading">...</span></div>
               <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Anak Asuh</div>
             </div>
-            <div style="flex:1; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+            <div class="anak-asuh-mini-stat" style="flex:1; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
               <div class="pale-purple-text" style="font-size:15px; font-weight:800; color:#D8B4FE;" id="berandaAnakAsuhPiatu"><span class="kv-loading">...</span></div>
               <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Yatim Piatu</div>
             </div>
-            <div style="flex:1; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+            <div class="anak-asuh-mini-stat" style="flex:1; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
               <div class="pale-amber-text" style="font-size:15px; font-weight:800; color:#FDE68A;" id="berandaAnakAsuhDisabilitas"><span class="kv-loading">...</span></div>
               <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Disabilitas</div>
             </div>
@@ -4261,25 +5027,25 @@ function renderContent() {
 
       <!-- Aksi Cepat Menu Bawah -->
       <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Aksi Cepat Donasi</h3>
-      <div style="display: flex; justify-content: space-between; margin-bottom: 24px;">
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="window.open('https://kitabisa.com/campaign/gojekbantuyatim', '_blank')">
+      <div class="aksi-cepat-row" style="display: flex; justify-content: space-between; margin-bottom: 24px;">
+        <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="window.open('https://kitabisa.com/campaign/gojekbantuyatim', '_blank')">
           <div class="aksi-kitabisa-icon"><span class="material-symbols-outlined">volunteer_activism</span></div>
           <span class="aksi-kitabisa-label">Donasi<br>Kitabisa.com</span>
         </div>
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="openAppUrl('https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/?embed=1&tab=input-kotak')">
+        <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="openAppUrl('https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/?embed=1&tab=input-kotak')">
           <div class="aksi-cepat-icon aksi-kotak-icon"><span class="material-symbols-outlined">savings</span></div>
           <span style="font-size: 10.5px; color: var(--text-secondary);">Kotak Gopay</span>
         </div>
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="openAppUrl('https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/?embed=1&tab=input-donasi')">
+        <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="openAppUrl('https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/?embed=1&tab=input-donasi')">
           <div class="aksi-cepat-icon aksi-donasi-icon"><span class="material-symbols-outlined">add_box</span></div>
           <span style="font-size: 10.5px; color: var(--text-secondary);">Donasi</span>
         </div>
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="toggleMidtransForm()">
+        <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="toggleMidtransForm()">
           <div class="aksi-cepat-icon aksi-online-icon"><span class="material-symbols-outlined">credit_card</span></div>
           <span class="aksi-online-label">Donasi<br>Online</span>
         </div>
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="showQrCodeDonasiCepat()">
-          <div style="width: 50px; height: 50px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: var(--neon-cyan);"><span class="material-symbols-outlined">qr_code_scanner</span></div>
+        <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="showQrCodeDonasiCepat()">
+          <div class="aksi-qr-icon"><span class="material-symbols-outlined">qr_code_scanner</span><span class="aksi-qr-scanline" aria-hidden="true"></span></div>
           <span style="font-size: 10.5px; color: var(--text-secondary);">QR Code</span>
         </div>
       </div>
@@ -4334,6 +5100,7 @@ function renderContent() {
     loadDataAnakYatimPreviewBeranda();
     loadDataAnakAsuhPreviewBeranda();
     loadAgendaMendatangBeranda();
+    initProgramSelectorCoverflow();
     return;
   }
 
@@ -4475,10 +5242,10 @@ function renderContent() {
 
       <!-- 1. Jumlah Anak Yatim + Total Santunan (per wilayah -- jumlah anak dari
            YASSA Mobile, rate dari Bendahara, dihitung otomatis di Hub) -->
-      <div id="keuanganTourTarget" style="background: var(--glass-strong); border-radius: 20px; padding: 22px 20px; margin-bottom: 16px; border: 1px solid var(--glass-border); border-left: 4px solid var(--bento-primary);">
+      <div id="keuanganTourTarget" class="keuangan-hero-card" style="background: var(--glass-strong); border-radius: 20px; padding: 22px 20px; margin-bottom: 16px; border: 1px solid var(--glass-border); border-left: 4px solid var(--bento-primary);">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
           <div style="font-size: 12px; color: var(--text-secondary);">1. Jumlah Anak &amp; Santunan ${badgeWilayah}<br><span style="font-size: 10px; color: var(--bento-primary);">(Program Gopay)</span></div>
-          <div style="width: 44px; height: 44px; border-radius: 14px; background: rgba(var(--bento-primary-rgb),0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <div style="width: 44px; height: 44px; border-radius: 14px; background: rgba(var(--bento-primary-rgb),0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;" class="keuangan-hero-icon-wrap">
             <span class="material-symbols-outlined" style="font-size: 22px; font-variation-settings: 'FILL' 1;">groups</span>
           </div>
         </div>
@@ -4486,14 +5253,14 @@ function renderContent() {
         <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 18px;">Anak &middot; Wilayah ${escapeHtmlHub(wilayahText)} &middot; Bulan Ini</div>
 
         <div style="display: flex; gap: 10px; margin-bottom: 18px;">
-          <div style="flex: 1; background: rgba(168, 85, 247, 0.10); border: 1px solid rgba(168, 85, 247, 0.25); border-left: 3px solid #A855F7; border-radius: 14px; padding: 12px;">
+          <div class="keuangan-mini-stat" style="flex: 1; background: rgba(168, 85, 247, 0.10); border: 1px solid rgba(168, 85, 247, 0.25); border-left: 3px solid #A855F7; border-radius: 14px; padding: 12px;">
             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
               <span class="material-symbols-outlined" style="font-size: 15px; color: #C084FC;">diversity_1</span>
               <span class="pale-purple-text" style="font-size: 10.5px; color: #D8B4FE;">Yatim Piatu</span>
             </div>
             <div class="pale-purple-text" style="font-size: 20px; font-weight: 700; color: #E9D5FF;" id="keuanganYatimPiatu"><span class="kv-loading">...</span></div>
           </div>
-          <div style="flex: 1; background: rgba(245, 158, 11, 0.10); border: 1px solid rgba(245, 158, 11, 0.25); border-left: 3px solid #FBBF24; border-radius: 14px; padding: 12px;">
+          <div class="keuangan-mini-stat" style="flex: 1; background: rgba(245, 158, 11, 0.10); border: 1px solid rgba(245, 158, 11, 0.25); border-left: 3px solid #FBBF24; border-radius: 14px; padding: 12px;">
             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
               <span class="material-symbols-outlined" style="font-size: 15px; color: #FBBF24;">accessible</span>
               <span class="pale-amber-text" style="font-size: 10.5px; color: #FDE68A;">Disabilitas</span>
@@ -4522,7 +5289,7 @@ function renderContent() {
                 <span style="font-size: 11px; color: var(--text-muted);" id="keuanganRincianWilayahSantunanLabel">Rincian per Wilayah</span>
                 <span class="material-symbols-outlined" id="keuanganRincianWilayahSantunanChevron" style="font-size: 18px; color: var(--text-muted); transition: transform 0.2s;">expand_more</span>
               </button>
-              <div id="keuanganRincianWilayahSantunanList" style="display: none; margin-top: 4px;"></div>
+              <div id="keuanganRincianWilayahSantunanList" class="kv-rincian-list" style="display: block;"></div>
             </div>
           </div>
         </div>
@@ -4554,7 +5321,7 @@ function renderContent() {
             </div>
           </div>
           <div style="width: 100%; background: rgba(0,0,0,0.35); border-radius: 99px; height: 10px; margin-bottom: 8px; overflow: hidden; border: 1px solid var(--glass-border);">
-            <div id="keuanganProgressBar" style="background: var(--bento-primary); height: 10px; border-radius: 99px; width: 0%; transition: width 0.5s ease, background 0.5s ease;"></div>
+            <div id="keuanganProgressBar" class="keuangan-progress-fill" style="background: var(--bento-primary); height: 10px; border-radius: 99px; width: 0%; transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1), background 0.5s ease;"></div>
           </div>
         </div>
 
@@ -4576,7 +5343,7 @@ function renderContent() {
             <span style="font-size: 11px; color: var(--text-muted);" id="keuanganRincianWilayahLabel">Rincian per Wilayah</span>
             <span class="material-symbols-outlined" id="keuanganRincianWilayahChevron" style="font-size: 18px; color: var(--text-muted); transition: transform 0.2s;">expand_more</span>
           </button>
-          <div id="keuanganRincianWilayahList" style="display: none; margin-top: 4px;"></div>
+          <div id="keuanganRincianWilayahList" class="kv-rincian-list" style="display: block;"></div>
         </div>
       </div>
 
@@ -4599,12 +5366,12 @@ function renderContent() {
       : (currentUser.wilayahAkses || "-");
 
     let html = `
-      <div style="background: linear-gradient(160deg, #16A34A 0%, #15803D 60%, #0F5132 100%); border-radius: 24px; padding: 30px 20px 22px; margin: 16px 0 16px; text-align: center; position: relative; overflow: hidden; box-shadow: 0 12px 28px rgba(21,128,61,0.3);">
-        <div style="position: absolute; top: -36px; right: -26px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.08); pointer-events: none;"></div>
-        <div style="position: absolute; bottom: -46px; left: -18px; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.06); pointer-events: none;"></div>
+      <div class="profil-hero-card" style="background: linear-gradient(160deg, #16A34A 0%, #15803D 60%, #0F5132 100%); border-radius: 24px; padding: 30px 20px 22px; margin: 16px 0 16px; text-align: center; position: relative; overflow: hidden; box-shadow: 0 12px 28px rgba(21,128,61,0.3);">
+        <div class="profil-hero-orb profil-hero-orb-1" style="position: absolute; top: -36px; right: -26px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.08); pointer-events: none;"></div>
+        <div class="profil-hero-orb profil-hero-orb-2" style="position: absolute; bottom: -46px; left: -18px; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.06); pointer-events: none;"></div>
 
         <div style="position: relative;">
-          <div style="width: 92px; height: 92px; border-radius: 50%; margin: 0 auto; padding: 3px; background: rgba(255,255,255,0.25); position: relative;">
+          <div class="profil-avatar-ring" style="width: 92px; height: 92px; border-radius: 50%; margin: 0 auto; padding: 3px; background: rgba(255,255,255,0.25); position: relative;">
             <div style="width: 100%; height: 100%; border-radius: 50%; overflow: hidden; border: 3px solid rgba(255,255,255,0.9); background: rgba(255,255,255,0.1);">
               <img id="profilTabAvatarImg" src="${fotoProfil}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="showProfileQR()">
             </div>
@@ -4628,8 +5395,8 @@ function renderContent() {
         </div>
       </div>
 
-      <div style="background: var(--glass-strong); border-radius: 20px; margin-bottom: 24px; display: flex; flex-direction: column; border: 1px solid var(--glass-border); border-left: 4px solid #3B82F6; overflow: hidden;">
-        <div style="display: flex; align-items: center; gap: 12px; padding: 15px 16px; border-bottom: 1px solid var(--glass-border);">
+      <div class="profil-info-card" style="background: var(--glass-strong); border-radius: 20px; margin-bottom: 24px; display: flex; flex-direction: column; border: 1px solid var(--glass-border); border-left: 4px solid #3B82F6; overflow: hidden;">
+        <div class="profil-info-row" style="display: flex; align-items: center; gap: 12px; padding: 15px 16px; border-bottom: 1px solid var(--glass-border);">
           <div style="width: 38px; height: 38px; border-radius: 12px; background: rgba(34,197,94,0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
             <span class="material-symbols-outlined" style="font-size: 19px;">badge</span>
           </div>
@@ -4638,7 +5405,7 @@ function renderContent() {
             <div style="font-size: 14px; font-weight: 500;">${escapeHtmlHub(currentUser.jabatan || roleLabel(currentUser.role))}</div>
           </div>
         </div>
-        <div style="display: flex; align-items: center; gap: 12px; padding: 15px 16px;">
+        <div class="profil-info-row" style="display: flex; align-items: center; gap: 12px; padding: 15px 16px;">
           <div style="width: 38px; height: 38px; border-radius: 12px; background: rgba(34,197,94,0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
             <span class="material-symbols-outlined" style="font-size: 19px;">public</span>
           </div>
@@ -4654,15 +5421,15 @@ function renderContent() {
            Anak buat pengajuan santunan baru) -- CUMA tampil buat
            SUPERADMIN/ADMIN/KORWIL, role lain gak lihat kartu ini sama
            sekali. Sengaja diletakkan di atas Dedikasi. -->
-      <button onclick="openFormulirDataBaru()" style="width: 100%; background: linear-gradient(135deg, rgba(249,115,22,0.16), rgba(234,88,12,0.10)); border: 1px solid rgba(249,115,22,0.3); border-radius: 18px; padding: 16px 18px; margin-bottom: 24px; display: flex; align-items: center; gap: 14px; cursor: pointer; text-align: left;">
-        <div style="width: 44px; height: 44px; border-radius: 14px; background: rgba(249,115,22,0.18); color: #F97316; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+      <button onclick="openFormulirDataBaru()" class="profil-formulir-cta" style="width: 100%; background: linear-gradient(135deg, rgba(249,115,22,0.16), rgba(234,88,12,0.10)); border: 1px solid rgba(249,115,22,0.3); border-radius: 18px; padding: 16px 18px; margin-bottom: 24px; display: flex; align-items: center; gap: 14px; cursor: pointer; text-align: left;">
+        <div class="profil-formulir-icon-wrap" style="width: 44px; height: 44px; border-radius: 14px; background: rgba(249,115,22,0.18); color: #F97316; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
           <span class="material-symbols-outlined" style="font-size: 22px;">note_add</span>
         </div>
         <div style="flex: 1;">
           <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Formulir Data Baru GOPAY</div>
           <div style="font-size: 11px; color: var(--text-secondary);">Input data pengajuan santunan Alm/Keluarga/Anak</div>
         </div>
-        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
+        <span class="material-symbols-outlined profil-formulir-chevron" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
       </button>
       ` : ``}
 
@@ -4680,7 +5447,7 @@ function renderContent() {
           </div>
           <div style="font-size: 10px; color: var(--text-muted); margin: -4px 0 10px 40px;">Persentase kehadiran kamu di kegiatan/pertemuan tahun ini</div>
           <div style="height: 8px; border-radius: 6px; background: var(--glass-border-strong); overflow: hidden;">
-            <div id="profilPerformaKehadiranBar" style="height: 100%; width: 0%; border-radius: 6px; background: linear-gradient(90deg, #0891B2, #22D3EE); transition: width .5s ease;"></div>
+            <div id="profilPerformaKehadiranBar" class="profil-dedikasi-bar" style="height: 100%; width: 0%; border-radius: 6px; background: linear-gradient(90deg, #0891B2, #22D3EE); transition: width .7s cubic-bezier(0.22, 1, 0.36, 1);"></div>
           </div>
           <div id="profilPerformaKehadiranKeterangan" style="font-size: 10.5px; color: var(--text-muted); margin-top: 6px;">Memuat data kehadiran...</div>
         </div>
@@ -4696,7 +5463,7 @@ function renderContent() {
           </div>
           <div style="font-size: 10px; color: var(--text-muted); margin: -4px 0 10px 40px;">Persentase realisasi donasi dibanding kebutuhan santunan wilayah kamu tahun ini</div>
           <div style="height: 8px; border-radius: 6px; background: var(--glass-border-strong); overflow: hidden;">
-            <div id="profilPerformaDonasiBar" style="height: 100%; width: 0%; border-radius: 6px; background: linear-gradient(90deg, #15803D, #4ADE80); transition: width .5s ease;"></div>
+            <div id="profilPerformaDonasiBar" class="profil-dedikasi-bar" style="height: 100%; width: 0%; border-radius: 6px; background: linear-gradient(90deg, #15803D, #4ADE80); transition: width .7s cubic-bezier(0.22, 1, 0.36, 1);"></div>
           </div>
           <div id="profilPerformaDonasiKeterangan" style="font-size: 10.5px; color: var(--text-muted); margin-top: 6px;">Memuat data donasi...</div>
         </div>
@@ -5373,10 +6140,10 @@ function loadDataAnakYatimPreviewBeranda() {
   const elDsb = document.getElementById("berandaAnakYatimDisabilitas");
 
   function terapkan(data) {
-    if (elKK) elKK.textContent = Number(data.totalKK || 0);
-    if (elYatim) elYatim.textContent = Number(data.totalYatim || 0);
-    if (elPiatu) elPiatu.textContent = Number(data.totalYatimPiatu || 0);
-    if (elDsb) elDsb.textContent = Number(data.totalDisabilitas || 0);
+    if (elKK) animateCountValue_(elKK, Number(data.totalKK || 0));
+    if (elYatim) animateCountValue_(elYatim, Number(data.totalYatim || 0));
+    if (elPiatu) animateCountValue_(elPiatu, Number(data.totalYatimPiatu || 0));
+    if (elDsb) animateCountValue_(elDsb, Number(data.totalDisabilitas || 0));
   }
 
   if (dataAnakYatimCache) terapkan(dataAnakYatimCache);
@@ -5506,10 +6273,10 @@ function loadDataAnakAsuhPreviewBeranda() {
   const elDsb = document.getElementById("berandaAnakAsuhDisabilitas");
 
   function terapkan(data) {
-    if (elKK) elKK.textContent = Number(data.totalKK || 0);
-    if (elAnak) elAnak.textContent = Number(data.totalAnakAsuh || 0);
-    if (elPiatu) elPiatu.textContent = Number(data.totalYatimPiatu || 0);
-    if (elDsb) elDsb.textContent = Number(data.totalDisabilitas || 0);
+    if (elKK) animateCountValue_(elKK, Number(data.totalKK || 0));
+    if (elAnak) animateCountValue_(elAnak, Number(data.totalAnakAsuh || 0));
+    if (elPiatu) animateCountValue_(elPiatu, Number(data.totalYatimPiatu || 0));
+    if (elDsb) animateCountValue_(elDsb, Number(data.totalDisabilitas || 0));
   }
 
   if (dataAnakAsuhCache) terapkan(dataAnakAsuhCache);
@@ -5992,14 +6759,18 @@ function loadAgendaMendatangBeranda() {
         return;
       }
       document.getElementById("kalenderBellBadge").style.display = "block";
-      el.innerHTML = data.map(function (k) {
+      el.innerHTML = data.map(function (k, idx) {
         const meta = KEGIATAN_JENIS_META[k.jenis] || { warna: "#94A3B8", bg: "rgba(255,255,255,0.08)" };
         const tgl = k.tanggal ? new Date(k.tanggal) : null;
         const tglNum = tgl ? tgl.getDate() : "-";
         const tglBulan = tgl ? BULAN_LABEL[tgl.getMonth()].substring(0, 3).toUpperCase() : "";
+        // Badge tanggal kegiatan PALING DEKAT (idx 0) dikasih cincin
+        // berdenyut -- nunjukin "ini yang paling deket, siap-siap" tanpa
+        // perlu nambah teks/label baru.
+        const badgeClass = idx === 0 ? "agenda-date-badge agenda-date-badge-soon" : "agenda-date-badge";
         return `
-          <div class="gtap" onclick="openKalenderKegiatan()" style="display:flex; gap:9px; align-items:center; cursor:pointer;">
-            <div style="width:32px; height:32px; border-radius:9px; background:${meta.bg}; display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0;">
+          <div class="gtap agenda-item-in" onclick="openKalenderKegiatan()" style="display:flex; gap:9px; align-items:center; cursor:pointer; animation-delay:${(idx * 0.08).toFixed(2)}s;">
+            <div class="${badgeClass}" style="width:32px; height:32px; border-radius:9px; background:${meta.bg}; display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0; --agenda-glow: ${meta.warna};">
               <span style="color:${meta.warna}; font-size:11px; font-weight:700; line-height:1;">${tglNum}</span>
               <span style="color:${meta.warna}; font-size:7px; line-height:1;">${tglBulan}</span>
             </div>
@@ -6007,6 +6778,7 @@ function loadAgendaMendatangBeranda() {
               <div style="color:var(--text-primary); font-size:11.5px; font-weight:600;">${escapeHtmlHub(k.judul)}</div>
               <div style="color:var(--text-secondary); font-size:10px; margin-top:1px;">${escapeHtmlHub(k.jam || "-")} &middot; ${escapeHtmlHub(k.lokasi || "-")}</div>
             </div>
+            <span class="material-symbols-outlined agenda-chevron" style="font-size:16px; color:var(--text-muted); flex-shrink:0;">chevron_right</span>
           </div>`;
       }).join("");
     })
@@ -8541,6 +9313,154 @@ function cleanupCacheAndUpdate() {
 }
 
 // ============================================================
+// 🎠 EFEK "COVERFLOW" buat carousel horizontal "PILIH PROGRAM YASSA" --
+// kartu yang lagi di TENGAH layar kelihatan penuh (skala 1, terang),
+// makin ke tepi kiri/kanan makin mengecil & meredup dikit, mirip
+// carousel foto di HP. Ngasih kesan "kedalaman" pas discroll, padahal
+// cuma nge-scroll flex row biasa (gak perlu library carousel).
+// Dipanggil ulang tiap Beranda dirender (elemen di-render ulang lewat
+// innerHTML tiap pindah tab, jadi listener lama otomatis kebuang --
+// gak perlu dibersihin manual). Diitung pas scroll pakai requestAnimationFrame
+// biar gak berat pas di-scroll cepet di HP low-end.
+// ============================================================
+function initProgramSelectorCoverflow() {
+  const scroller = document.getElementById("programSelectScroll");
+  if (!scroller) return;
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  let ticking = false;
+
+  function update() {
+    ticking = false;
+    const scRect = scroller.getBoundingClientRect();
+    const centerX = scRect.left + scRect.width / 2;
+    const cards = scroller.querySelectorAll(".program-select-card");
+    cards.forEach(function (card) {
+      const r = card.getBoundingClientRect();
+      const cardCenter = r.left + r.width / 2;
+      const dist = Math.abs(cardCenter - centerX);
+      const norm = Math.min(1, dist / (scRect.width / 2 + r.width / 2 || 1));
+      const scale = 1 - norm * 0.14;   // tengah = 1.0, tepi = ~0.86
+      const opacity = 1 - norm * 0.45; // tengah = 1.0, tepi = ~0.55
+      card.style.setProperty("--cf-scale", scale.toFixed(3));
+      card.style.setProperty("--cf-opacity", opacity.toFixed(3));
+    });
+  }
+
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(update);
+  }
+
+  scroller.addEventListener("scroll", onScroll, { passive: true });
+  // Hitung posisi awal juga (kartu aktif biasanya udah di-scroll ke
+  // tengah lewat scrollIntoView di selectProgramTab()).
+  requestAnimationFrame(update);
+}
+
+// ============================================================
+// ✨ TILT 3D KARTU RINGKASAN BERANDA -- kartu miring dikit ngikutin posisi
+// jari (touch drag) / kursor (mouse move), lalu balik lurus lembut pas
+// dilepas. Efeknya dikontrol lewat CSS var --tilt-x/--tilt-y/--tilt-scale
+// yang dibaca oleh .summary-card di <style> atas. Sengaja dibikin SUBTIL
+// (maks 6 derajat) -- ini kartu berisi angka penting, bukan galeri foto,
+// jadi efeknya cuma buat kesan "premium/hidup", bukan bikin pusing.
+// Otomatis nonaktif kalau user set Reduced Motion di HP-nya.
+// ============================================================
+function initSummaryCardTilt() {
+  const card = document.getElementById("summaryCard");
+  if (!card) return;
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const MAX_TILT = 6; // derajat, sengaja kecil
+
+  function applyTilt(clientX, clientY) {
+    const rect = card.getBoundingClientRect();
+    const px = (clientX - rect.left) / rect.width;  // 0..1
+    const py = (clientY - rect.top) / rect.height;  // 0..1
+    const tiltY = (px - 0.5) * 2 * MAX_TILT;   // kiri/kanan
+    const tiltX = (0.5 - py) * 2 * MAX_TILT;   // atas/bawah
+    card.style.setProperty("--tilt-x", tiltX.toFixed(2) + "deg");
+    card.style.setProperty("--tilt-y", tiltY.toFixed(2) + "deg");
+    card.style.setProperty("--tilt-scale", "1.015");
+    card.classList.add("tilting");
+  }
+
+  function resetTilt() {
+    card.style.setProperty("--tilt-x", "0deg");
+    card.style.setProperty("--tilt-y", "0deg");
+    card.style.setProperty("--tilt-scale", "1");
+    card.classList.remove("tilting");
+  }
+
+  // Mouse (desktop/laptop -- lihat mode "melebar" di CSS)
+  card.addEventListener("pointermove", function (e) {
+    if (e.pointerType === "mouse") applyTilt(e.clientX, e.clientY);
+  });
+  card.addEventListener("pointerleave", function (e) {
+    if (e.pointerType === "mouse") resetTilt();
+  });
+
+  // Sentuhan (HP) -- pakai touch, bukan pointer, biar gak bentrok sama
+  // scroll halaman (passive:true, gak manggil preventDefault sama sekali).
+  card.addEventListener("touchstart", function (e) {
+    if (e.touches[0]) applyTilt(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+  card.addEventListener("touchmove", function (e) {
+    if (e.touches[0]) applyTilt(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+  card.addEventListener("touchend", resetTilt);
+  card.addEventListener("touchcancel", resetTilt);
+}
+
+// ============================================================
+// 🔢 ANIMASI "HITUNG NAIK" buat nominal Rupiah di kartu ringkasan Beranda
+// -- daripada angka langsung "nyelonong" muncul pas data kebuka/kena
+// refresh, angkanya jalan naik dari 0 (atau dari nilai lama) ke nilai
+// baru dalam ~700ms pakai easing halus. Kalau elemen belum pernah diisi
+// (masih placeholder "...") langsung tampilin nilai final tanpa animasi
+// supaya user gak nunggu pas pertama buka app.
+// Dipanggil dari renderSummaryCardBeranda_() sebagai pengganti
+// elValue.textContent = formatRupiahHub(...) langsung.
+// ============================================================
+function animateRupiahValue_(el, targetNumber) {
+  if (!el) return;
+  const target = Math.round(Number(targetNumber) || 0);
+  const prevRaw = el.getAttribute("data-raw-value");
+  const isFirstFill = prevRaw === null;
+  el.setAttribute("data-raw-value", String(target));
+
+  if (isFirstFill || (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)) {
+    el.textContent = formatRupiahHub(target);
+    return;
+  }
+
+  const start = Number(prevRaw) || 0;
+  if (start === target) { el.textContent = formatRupiahHub(target); return; }
+
+  const duration = 700;
+  const t0 = performance.now();
+  // Batalin animasi sebelumnya kalau elemen ini lagi dianimasiin lagi
+  // (mis. data ke-refresh cepet 2x berturut-turut).
+  if (el._rupiahRAF) cancelAnimationFrame(el._rupiahRAF);
+
+  function tick(now) {
+    const p = Math.min(1, (now - t0) / duration);
+    const eased = 1 - Math.pow(1 - p, 3); // ease-out cubic
+    const current = Math.round(start + (target - start) * eased);
+    el.textContent = formatRupiahHub(current);
+    if (p < 1) {
+      el._rupiahRAF = requestAnimationFrame(tick);
+    } else {
+      el.textContent = formatRupiahHub(target);
+      el._rupiahRAF = null;
+    }
+  }
+  el._rupiahRAF = requestAnimationFrame(tick);
+}
+
+// ============================================================
 // 🌊 EFEK SENTUH GLOBAL (ripple) -- otomatis berlaku ke SEMUA tombol &
 // elemen berklik di seluruh Hub (bottom nav, kartu App, menu akun, tombol
 // donasi, dll), TANPA perlu nambahin manual ke tiap elemen satu-satu.
@@ -8587,6 +9507,7 @@ function initGlobalRippleEffect() {
   });
 }
 initGlobalRippleEffect();
+initSummaryCardTilt();
 
 // ============================================================
 // ⬅️ TOMBOL BACK FISIK/GESTURE HP -- JANGAN LANGSUNG KELUAR APLIKASI.
