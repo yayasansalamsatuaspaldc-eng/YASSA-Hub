@@ -2945,6 +2945,11 @@ const APP_BUILD_DATE = "2026-08-02";
 // KONFIGURASI AUTH — GANTI 2 nilai di bawah setelah Code.gs di-deploy
 // =================================================================================
 const GAS_AUTH_URL = "https://script.google.com/macros/s/AKfycbw0I5I6JiDSPJWiwYSsyY52lTcFFu1aSPsa0cPtQjhXGqXQjnf603kIQudX6o0lieaKNw/exec";
+// 🚀 URL project "YASSA SSO Broker" (KECIL & TERPISAH dari GOPAY) -- khusus
+// dipakai buat minta tiket SSO pas buka YASSA Mobile, supaya gak kena cold
+// start file GOPAY yang gede (lihat bukaMobileDenganSso_ di bawah). GANTI
+// dengan URL /exec hasil deploy project broker (lihat code_gs_sso_broker.gs).
+const GAS_SSO_URL = "https://script.google.com/macros/s/AKfycbz85pXQuO6VIfgF5zOuLAqg-biaGrd3xf5WwBA9JTuhvWy9eGBZTCuvazCeCpdjYrnBbw/exec";
 // URL Web App YASSA Mobile -- dipakai buat ambil statistik publik (Total
 // Anak) lewat action 'getPublicStats', TANPA perlu login/token, karena
 // yang diambil cuma 1 angka agregat, bukan data pribadi apapun.
@@ -3313,6 +3318,10 @@ function callGASWithRetry_(action, args, opts) {
   const timeoutMs = (opts && opts.timeoutMs) || 8000;
   const delayMs = (opts && opts.delayMs) || 1200;
   const onRetry = (opts && opts.onRetry) || function () {};
+  // 🚀 targetUrl: dulu SELALU GAS_AUTH_URL (file GOPAY yang gede). Sekarang
+  // bisa diarahkan ke URL lain (mis. GAS_SSO_URL / broker) lewat opts.targetUrl,
+  // supaya generateSsoToken bisa dipanggil ke broker yang jauh lebih ringan.
+  const targetUrl = (opts && opts.targetUrl) || GAS_AUTH_URL;
 
   function sekaliCoba(attempt) {
     const controller = new AbortController();
@@ -3333,7 +3342,7 @@ function callGASWithRetry_(action, args, opts) {
       }, timeoutMs);
     });
 
-    const fetchPromise = fetch(GAS_AUTH_URL, {
+    const fetchPromise = fetch(targetUrl, {
       method: "POST",
       headers: { "Content-Type": "text/plain" },
       body: JSON.stringify({ action: action, args: args || [] }),
@@ -8960,7 +8969,14 @@ function bukaMobileDenganSso_(baseTabUrl) {
     ssoLoadingEl.classList.add("show");
   }
 
+  // 🚀 FIX (cold start file GOPAY yang gede bikin SSO timeout/gagal
+  // menyambung walau sinyal device bagus, lihat riwayat percakapan):
+  // generateSsoToken SEKARANG diminta ke GAS_SSO_URL (project broker kecil
+  // & terpisah), BUKAN lagi ke GAS_AUTH_URL (file GOPAY ~3.800 baris).
+  // Session-nya sendiri sudah "dititipkan" ke broker sejak user login
+  // (lihat registerSessionKeBroker_ di code_gs_yassa_gopay).
   callGASWithRetry_("generateSsoToken", [authToken], {
+    targetUrl: GAS_SSO_URL,
     maxAttempts: 3,
     timeoutMs: 8000,
     delayMs: 1200,
