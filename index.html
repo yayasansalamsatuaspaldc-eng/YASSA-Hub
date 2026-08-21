@@ -3348,7 +3348,18 @@ function callGASWithRetry_(action, args, opts) {
         }
       })
       .then(function (res) {
-        if (res.success === false) throw new Error(res.message || "Terjadi kesalahan.");
+        if (res.success === false) {
+          // 🩹 FIX (bug: error logis server disamakan dengan error jaringan):
+          // Ini BUKAN masalah koneksi/sinyal -- server berhasil dijangkau dan
+          // menjawab dengan tegas "gagal" (mis. "Sesi tidak valid, silakan
+          // login ulang"). Mengulang request yang sama 3x tidak akan mengubah
+          // jawaban ini sama sekali, jadi ditandai isLogicalError supaya retry
+          // loop di bawah tahu untuk langsung berhenti, bukan buang waktu
+          // mencoba ulang percuma.
+          const err = new Error(res.message || "Terjadi kesalahan.");
+          err.isLogicalError = true;
+          throw err;
+        }
         return res._dibungkus ? res.data : res;
       })
       .finally(function () { clearTimeout(timer); });
@@ -3361,6 +3372,15 @@ function callGASWithRetry_(action, args, opts) {
       sekaliCoba(attempt)
         .then(resolve)
         .catch(function (err) {
+          // 🩹 FIX: error logis dari server (success:false) tidak pernah
+          // di-retry -- diulang 100x pun hasilnya akan identik, karena
+          // bukan gangguan jaringan. Langsung reject supaya pesan ASLI dari
+          // server (err.message) yang sampai ke pemanggil, bukan tertutup
+          // oleh 2 percobaan ulang yang sia-sia.
+          if (err && err.isLogicalError) {
+            reject(err);
+            return;
+          }
           if (attempt >= maxAttempts) {
             reject(err);
             return;
@@ -8964,20 +8984,35 @@ function bukaMobileDenganSso_(baseTabUrl) {
         tampilkanPilihanSsoGagal_(baseTabUrl);
       }
     })
-    .catch(function () {
-      // Semua percobaan gagal (jaringan bener-bener bermasalah).
-      tampilkanPilihanSsoGagal_(baseTabUrl);
+    .catch(function (err) {
+      // Semua percobaan gagal. BISA jaringan (timeout/fetch putus), BISA
+      // JUGA error logis dari server (mis. sesi tidak valid) yang langsung
+      // reject tanpa retry (lihat callGASWithRetry_). 🩹 FIX: teruskan
+      // objek error ke tampilkanPilihanSsoGagal_ supaya pesan yang
+      // ditampilkan sesuai penyebab ASLI-nya, bukan selalu dituduhkan ke
+      // "sinyal/jaringan lemah" walau server sebenarnya sudah menjawab
+      // dengan jelas.
+      tampilkanPilihanSsoGagal_(baseTabUrl, err);
     });
 }
 
-function tampilkanPilihanSsoGagal_(baseTabUrl) {
+function tampilkanPilihanSsoGagal_(baseTabUrl, err) {
   const ssoLoadingTextEl = document.getElementById("overlaySsoLoadingText");
   const ssoSpinnerEl = document.getElementById("overlaySsoSpinner");
   const ssoChoiceEl = document.getElementById("overlaySsoChoice");
   const ssoRetryBtn = document.getElementById("overlaySsoRetryBtn");
   const ssoManualBtn = document.getElementById("overlaySsoManualBtn");
 
-  if (ssoLoadingTextEl) ssoLoadingTextEl.textContent = "Gagal menyambung, sepertinya sinyal/jaringan sedang lemah.";
+  // 🩹 FIX: kalau ini error logis dari server (err.isLogicalError, sudah
+  // pasti BUKAN soal sinyal/jaringan), tampilkan pesan ASLI dari server
+  // (err.message) supaya user tahu penyebab sebenarnya -- mis. "Sesi tidak
+  // valid, silakan login ulang" -- bukan pesan generik yang menyesatkan
+  // dan bikin user berulang kali pencet "Coba Lagi" padahal hasilnya
+  // pasti sama terus.
+  const pesan = (err && err.isLogicalError && err.message)
+    ? err.message
+    : "Gagal menyambung, sepertinya sinyal/jaringan sedang lemah.";
+  if (ssoLoadingTextEl) ssoLoadingTextEl.textContent = pesan;
   if (ssoSpinnerEl) ssoSpinnerEl.style.display = "none";
   if (ssoChoiceEl) ssoChoiceEl.classList.add("show");
 
