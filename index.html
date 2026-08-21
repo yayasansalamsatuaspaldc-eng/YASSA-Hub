@@ -796,6 +796,20 @@
   }
   #overlaySsoLoadingText { color: var(--text-muted); font-size: 12.5px; font-weight: 600; }
   @keyframes overlaySsoSpin { to { transform: rotate(360deg); } }
+  /* 🆕 Pilihan yang muncul kalau SEMUA percobaan minta tiket SSO gagal
+     (jaringan benar-benar bermasalah) -- dulu di titik ini Hub langsung
+     diam-diam buka Mobile TANPA tiket (user dipaksa login manual tanpa
+     penjelasan/pilihan). Sekarang user yang mutusin: coba lagi, atau
+     lanjut login manual sekarang juga. */
+  .overlay-sso-choice { display: none; flex-direction: column; gap: 10px; width: 100%; max-width: 280px; margin-top: 4px; }
+  .overlay-sso-choice.show { display: flex; }
+  .overlay-sso-choice button {
+    border: none; border-radius: 12px; padding: 11px 16px; font-size: 12.5px; font-weight: 700;
+    cursor: pointer; transition: transform 0.15s ease;
+  }
+  .overlay-sso-choice button:active { transform: scale(0.97); }
+  #overlaySsoRetryBtn { background: #34D399; color: #0B0F19; }
+  #overlaySsoManualBtn { background: transparent; color: var(--text-muted); border: 1px solid var(--glass-border-strong, rgba(255,255,255,0.15)); }
   /* 🚧 Strip peringatan "masih tahap pengembangan" -- muncul MENEMPEL DI
      ATAS iframe (bukan cuma di card pemilihan app), jadi keliatan terus
      selama user beneran lagi pakai app-nya & baca datanya. Ditoggle lewat
@@ -2514,8 +2528,15 @@
          ketemu form login (bukan Beranda), tanpa tahu itu masih proses
          nyambung. Disembunyikan lagi begitu iframe.src beneran di-set. -->
     <div class="overlay-sso-loading" id="overlaySsoLoading">
-      <div class="overlay-sso-spinner"></div>
+      <div class="overlay-sso-spinner" id="overlaySsoSpinner"></div>
       <span id="overlaySsoLoadingText">Menghubungkan ke YASSA Mobile...</span>
+      <!-- 🆕 Tampil cuma kalau SEMUA percobaan tiket SSO gagal -- biar user
+           yang mutusin (coba lagi vs lanjut login manual sekarang), bukan
+           Hub yang diam-diam langsung buka Mobile tanpa tiket. -->
+      <div class="overlay-sso-choice" id="overlaySsoChoice">
+        <button type="button" id="overlaySsoRetryBtn">🔄 Coba Lagi</button>
+        <button type="button" id="overlaySsoManualBtn">Lanjut, Login Manual</button>
+      </div>
     </div>
   </div>
 
@@ -8892,6 +8913,88 @@ let overlayLoadedMenuKey = null;
 let overlayLoadedBaseUrl = null;
 const APPS_WITH_POSTMESSAGE_NAV = ["donasi", "pm", "awg", "bukubesar", "mobile", "lentera"]; // tambahin key menu lain di sini kalau app-nya udah didukung juga
 
+// ============================================================
+// 🔗 YASSA Mobile: minta tiket SSO lalu buka iframe dengan tiket itu.
+// Dipisah dari openApp() supaya bisa DIPANGGIL ULANG oleh tombol
+// "🔄 Coba Lagi" di overlaySsoChoice kalau percobaan sebelumnya gagal.
+//
+// 🩹 FIX: dulu kalau SEMUA percobaan (callGASWithRetry_) gagal -- jaringan
+// operator benar-benar bermasalah -- Hub diam-diam langsung buka Mobile
+// TANPA tiket SSO, user dipaksa login manual tanpa penjelasan/pilihan.
+// Sekarang begitu semua percobaan gagal, munculkan 2 pilihan ke user:
+// "Coba Lagi" (ulangi minta tiket dari awal) atau "Lanjut, Login Manual"
+// (baru buka Mobile tanpa tiket kalau memang user yang milih begitu).
+// ============================================================
+function bukaMobileDenganSso_(baseTabUrl) {
+  const ssoLoadingEl = document.getElementById("overlaySsoLoading");
+  const ssoLoadingTextEl = document.getElementById("overlaySsoLoadingText");
+  const ssoSpinnerEl = document.getElementById("overlaySsoSpinner");
+  const ssoChoiceEl = document.getElementById("overlaySsoChoice");
+
+  // Reset ke tampilan "lagi menghubungkan..." (spinner + teks), sembunyikan
+  // pilihan Coba Lagi/Login Manual kalau ini pemanggilan ulang (retry).
+  if (ssoChoiceEl) ssoChoiceEl.classList.remove("show");
+  if (ssoSpinnerEl) ssoSpinnerEl.style.display = "";
+  if (ssoLoadingEl) {
+    if (ssoLoadingTextEl) ssoLoadingTextEl.textContent = "Menghubungkan ke YASSA Mobile...";
+    ssoLoadingEl.classList.add("show");
+  }
+
+  callGASWithRetry_("generateSsoToken", [authToken], {
+    maxAttempts: 3,
+    timeoutMs: 8000,
+    delayMs: 1200,
+    onRetry: function (attempt, maxAttempts) {
+      // Kasih tau user kalau lagi nyoba ulang (bukan cuma diem),
+      // biar jelas ini masih proses, bukan macet.
+      if (ssoLoadingTextEl) {
+        ssoLoadingTextEl.textContent =
+          "Jaringan lambat, mencoba lagi (" + attempt + "/" + maxAttempts + ")...";
+      }
+    },
+  })
+    .then(function (res) {
+      const ssoToken = res && res.ssoToken;
+      if (ssoToken) {
+        document.getElementById("overlayFrame").src = baseTabUrl + "&sso=" + encodeURIComponent(ssoToken);
+        if (ssoLoadingEl) ssoLoadingEl.classList.remove("show");
+      } else {
+        // Server sempat kejangkau tapi gagal bikin tiket (bukan soal
+        // jaringan) -- sama-sama kasih pilihan, jangan langsung tembus.
+        tampilkanPilihanSsoGagal_(baseTabUrl);
+      }
+    })
+    .catch(function () {
+      // Semua percobaan gagal (jaringan bener-bener bermasalah).
+      tampilkanPilihanSsoGagal_(baseTabUrl);
+    });
+}
+
+function tampilkanPilihanSsoGagal_(baseTabUrl) {
+  const ssoLoadingTextEl = document.getElementById("overlaySsoLoadingText");
+  const ssoSpinnerEl = document.getElementById("overlaySsoSpinner");
+  const ssoChoiceEl = document.getElementById("overlaySsoChoice");
+  const ssoRetryBtn = document.getElementById("overlaySsoRetryBtn");
+  const ssoManualBtn = document.getElementById("overlaySsoManualBtn");
+
+  if (ssoLoadingTextEl) ssoLoadingTextEl.textContent = "Gagal menyambung, sepertinya sinyal/jaringan sedang lemah.";
+  if (ssoSpinnerEl) ssoSpinnerEl.style.display = "none";
+  if (ssoChoiceEl) ssoChoiceEl.classList.add("show");
+
+  if (ssoRetryBtn) {
+    ssoRetryBtn.onclick = function () {
+      bukaMobileDenganSso_(baseTabUrl);
+    };
+  }
+  if (ssoManualBtn) {
+    ssoManualBtn.onclick = function () {
+      const ssoLoadingEl = document.getElementById("overlaySsoLoading");
+      if (ssoLoadingEl) ssoLoadingEl.classList.remove("show");
+      document.getElementById("overlayFrame").src = baseTabUrl;
+    };
+  }
+}
+
 function openApp(index) {
   const menu = MENUS[active];
   const item = menu.items[index];
@@ -8973,45 +9076,7 @@ function openApp(index) {
     document.getElementById("overlayFrame").src = "about:blank";
     document.getElementById("overlay").classList.add("open");
     const baseTabUrl = menu.baseUrl + "?embed=1&tab=" + item.tab;
-
-    // 🩹 FIX: tampilin indikator "menghubungkan..." selama proses minta
-    // tiket SSO (termasuk pas lagi retry di jaringan lambat) -- biar user
-    // gak lihat layar kosong terus tiba-tiba nongol form login tanpa
-    // penjelasan.
-    const ssoLoadingEl = document.getElementById("overlaySsoLoading");
-    const ssoLoadingTextEl = document.getElementById("overlaySsoLoadingText");
-    if (ssoLoadingEl) {
-      ssoLoadingTextEl.textContent = "Menghubungkan ke YASSA Mobile...";
-      ssoLoadingEl.classList.add("show");
-    }
-
-    callGASWithRetry_("generateSsoToken", [authToken], {
-      maxAttempts: 3,
-      timeoutMs: 8000,
-      delayMs: 1200,
-      onRetry: function (attempt, maxAttempts) {
-        // Kasih tau user kalau lagi nyoba ulang (bukan cuma diem),
-        // biar jelas ini masih proses, bukan macet.
-        if (ssoLoadingTextEl) {
-          ssoLoadingTextEl.textContent =
-            "Jaringan lambat, mencoba lagi (" + attempt + "/" + maxAttempts + ")...";
-        }
-      },
-    })
-      .then(function (res) {
-        const ssoToken = res && res.ssoToken;
-        document.getElementById("overlayFrame").src = ssoToken
-          ? baseTabUrl + "&sso=" + encodeURIComponent(ssoToken)
-          : baseTabUrl; // Gagal bikin tiket walau udah diulang -- tetap buka, user login manual
-      })
-      .catch(function () {
-        // Semua percobaan gagal (jaringan bener-bener bermasalah) --
-        // tetap fallback buka Mobile TANPA tiket, user login manual.
-        document.getElementById("overlayFrame").src = baseTabUrl;
-      })
-      .finally(function () {
-        if (ssoLoadingEl) ssoLoadingEl.classList.remove("show");
-      });
+    bukaMobileDenganSso_(baseTabUrl);
     overlayLoadedMenuKey = active;
     overlayLoadedBaseUrl = menu.baseUrl || null;
     return;
@@ -9048,6 +9113,10 @@ function resetOverlayIframe() {
   document.getElementById("overlayFrame").src = "about:blank";
   const ssoLoadingEl = document.getElementById("overlaySsoLoading");
   if (ssoLoadingEl) ssoLoadingEl.classList.remove("show");
+  const ssoChoiceEl = document.getElementById("overlaySsoChoice");
+  if (ssoChoiceEl) ssoChoiceEl.classList.remove("show");
+  const ssoSpinnerEl = document.getElementById("overlaySsoSpinner");
+  if (ssoSpinnerEl) ssoSpinnerEl.style.display = "";
   overlayLoadedMenuKey = null;
   overlayLoadedBaseUrl = null;
 }
