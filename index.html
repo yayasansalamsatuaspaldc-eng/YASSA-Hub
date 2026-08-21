@@ -316,15 +316,6 @@
   .header-logo-svg { width: 90%; height: 90%; display: block; }
   .header-avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-  /* ============================================================
-     ✨ IMMERSIVE: kartu ringkasan Beranda dibuat "hidup" -- ring cahaya
-     yang muter pelan di tepi kartu + tilt 3D ngikutin sentuhan/kursor
-     (lihat initSummaryCardTilt() di <script> bawah buat logic JS-nya).
-     Semua efek dimatikan otomatis kalau user aktifin "Reduced Motion"
-     di HP-nya (lihat blok @media prefers-reduced-motion di bawah),
-     dan tilt-nya dibikin SUBTIL (maks ~6deg) supaya angka tetap kebaca
-     jelas -- bukan buat pamer, tapi buat kesan premium/"disentuh".
-     ============================================================ */
   .summary-card {
     margin: -30px 20px 0;
     background: linear-gradient(135deg, #1A3B35 0%, #0F2220 100%);
@@ -339,13 +330,6 @@
     border: 1px solid rgba(34, 197, 94, 0.2);
     display: flex;
     flex-direction: column;
-    transform: perspective(700px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) scale(var(--tilt-scale, 1));
-    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.45s ease;
-    will-change: transform;
-  }
-  .summary-card.tilting {
-    transition: transform 0.06s linear;
-    box-shadow: var(--shadow-deep), 0 0 0 1px rgba(var(--bento-primary-rgb),0.35), 0 18px 40px rgba(0,0,0,0.4);
   }
   .summary-card::before {
     content: "";
@@ -356,43 +340,6 @@
     border-radius: 50%;
     filter: blur(24px);
     pointer-events: none;
-  }
-  /* Ring cahaya conic-gradient yang muter terus di belakang kartu, cuma
-     nongol tipis di tepi (lubang gelap solid di tengah bikin efeknya kayak
-     "aura" nempel di border, bukan nutupin seluruh kartu). */
-  .summary-card::after {
-    content: "";
-    position: absolute;
-    inset: -2px;
-    z-index: -1;
-    border-radius: 20px;
-    padding: 2px;
-    background: conic-gradient(from 0deg, rgba(34,197,94,0) 0%, rgba(34,211,238,0.9) 12%, rgba(34,197,94,0) 26%, rgba(34,197,94,0) 62%, rgba(168,85,247,0.75) 76%, rgba(34,197,94,0) 90%);
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    animation: summaryAuraSpin 7s linear infinite;
-    pointer-events: none;
-    opacity: 0.85;
-  }
-  @keyframes summaryAuraSpin { to { transform: rotate(360deg); } }
-  /* Kilau (sheen) tipis yang nyapu dari kiri-atas ke kanan-bawah tiap
-     beberapa detik -- ngasih kesan permukaan "kaca premium" kena cahaya. */
-  .summary-card .summary-sheen {
-    position: absolute; inset: 0; z-index: 1; pointer-events: none;
-    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.10) 45%, rgba(255,255,255,0.16) 50%, rgba(255,255,255,0.10) 55%, transparent 70%);
-    background-size: 220% 220%;
-    background-position: 130% 130%;
-    animation: summarySheenSweep 5.5s ease-in-out infinite;
-    animation-delay: 1.2s;
-  }
-  @keyframes summarySheenSweep {
-    0%, 55% { background-position: 130% 130%; }
-    85%, 100% { background-position: -30% -30%; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .summary-card { transform: none !important; transition: none !important; }
-    .summary-card::after, .summary-card .summary-sheen { animation: none !important; opacity: 0.35; }
   }
   .summary-top { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; position: relative; z-index: 1; }
   .summary-icon {
@@ -441,23 +388,9 @@
     text-align: center;
     gap: 8px;
     cursor: pointer;
-    opacity: 0;
-    transform: scale(var(--cf-scale, 1));
-    /* 🎠 --cf-scale/--cf-opacity dikontrol JS (initProgramSelectorCoverflow)
-       ngikutin posisi scroll -- lihat komentar di JS-nya. */
-    animation: programCardMasuk 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    transition: transform 0.15s ease-out, opacity 0.15s ease-out, border-color 0.15s, background 0.15s;
+    transition: border-color 0.15s, background 0.15s, transform 0.15s;
   }
-  .program-select-card:nth-child(1) { animation-delay: 0.03s; }
-  .program-select-card:nth-child(2) { animation-delay: 0.08s; }
-  .program-select-card:nth-child(3) { animation-delay: 0.13s; }
-  .program-select-card:nth-child(4) { animation-delay: 0.18s; }
-  .program-select-card:nth-child(5) { animation-delay: 0.23s; }
-  .program-select-card:nth-child(6) { animation-delay: 0.28s; }
-  @keyframes programCardMasuk {
-    from { opacity: 0; transform: translateY(8px) scale(calc(var(--cf-scale, 1) * 0.9)); }
-    to   { opacity: var(--cf-opacity, 1); transform: scale(var(--cf-scale, 1)); }
-  }
+  .program-select-card:active { transform: scale(0.96); }
   .program-select-card.active {
     border-color: var(--prog-color, var(--bento-primary));
     background: var(--prog-bg, rgba(var(--bento-primary-rgb),0.12));
@@ -468,26 +401,6 @@
     background: var(--prog-bg, rgba(148,163,184,0.15));
     color: var(--prog-color, var(--text-secondary));
     display: flex; align-items: center; justify-content: center;
-    position: relative;
-  }
-  /* Cincin radar yang muter-mekar pelan di belakang ikon kartu program
-     yang lagi AKTIF -- kartu lain (belum dipilih) diam saja, biar mata
-     user otomatis kefokus ke program yang lagi dilihat datanya. */
-  .program-select-card.active .program-select-icon::after {
-    content: "";
-    position: absolute; inset: -4px;
-    border-radius: 50%;
-    border: 1.5px solid var(--prog-color, var(--bento-primary));
-    animation: programIconRadar 1.8s ease-out infinite;
-    pointer-events: none;
-  }
-  @keyframes programIconRadar {
-    0%   { transform: scale(0.85); opacity: 0.9; }
-    100% { transform: scale(1.55); opacity: 0; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .program-select-card { opacity: var(--cf-opacity, 1); animation: none !important; transform: none !important; }
-    .program-select-card.active .program-select-icon::after { animation: none !important; display: none; }
   }
   .program-select-icon .material-symbols-outlined { font-size: 20px; }
   .program-select-label { font-size: 11.5px; font-weight: 800; color: var(--text-primary); letter-spacing: 0.2px; }
@@ -1532,208 +1445,6 @@
   }
 
   /* ============================================================
-     ✨ IMMERSIVE: baris "Aksi Cepat Donasi" -- 3 sentuhan hidup:
-     1) Tiap ikon "muncul" satu-satu (stagger) pas Beranda pertama kali
-        dirender (bukan langsung nongol semua bareng).
-     2) Kilau tipis nyapu tiap ikon gradient secara bergiliran (delay
-        beda2 per ikon) biar berasa "hidup" tanpa norak/bareng semua.
-     3) Ikon QR Code dikasih identitas visual (gradient teal/cyan, sama
-        kayak 4 ikon lain) + animasi garis scan yang naik-turun -- efek
-        "signature" khusus ikon ini karena emang fungsinya scan QR.
-     Tap-feedback (mengecil+miring dikit pas ditekan) numpang di sistem
-     ripple global yang sudah ada (initGlobalRippleEffect -> class
-     .gtap-pressed otomatis nempel ke elemen [onclick] pembungkusnya).
-     ============================================================ */
-  .aksi-cepat-item {
-    opacity: 0;
-    animation: aksiCepatMasuk 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  }
-  .aksi-cepat-item:nth-child(1) { animation-delay: 0.05s; }
-  .aksi-cepat-item:nth-child(2) { animation-delay: 0.13s; }
-  .aksi-cepat-item:nth-child(3) { animation-delay: 0.21s; }
-  .aksi-cepat-item:nth-child(4) { animation-delay: 0.29s; }
-  .aksi-cepat-item:nth-child(5) { animation-delay: 0.37s; }
-  @keyframes aksiCepatMasuk {
-    from { opacity: 0; transform: translateY(10px) scale(0.85); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
-  }
-
-  .aksi-kitabisa-icon, .aksi-cepat-icon, .aksi-qr-icon {
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
-  }
-  /* Nempel ke class yang udah dipasang otomatis oleh sistem ripple global
-     pas elemen pembungkus [onclick] ditekan -- ikon "menciut & miring"
-     dikit lalu balik lenting begitu jari dilepas. */
-  .gtap-pressed .aksi-kitabisa-icon,
-  .gtap-pressed .aksi-cepat-icon,
-  .gtap-pressed .aksi-qr-icon {
-    transform: scale(0.86) rotate(-6deg);
-  }
-  .aksi-kitabisa-icon::after, .aksi-cepat-icon::after, .aksi-qr-icon::after {
-    content: "";
-    position: absolute; inset: 0;
-    background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.55) 50%, transparent 65%);
-    background-size: 250% 250%;
-    background-position: 150% 150%;
-    animation: aksiCepatSheen 4.5s ease-in-out infinite;
-    pointer-events: none;
-  }
-  .aksi-kitabisa-icon::after { animation-delay: 0.4s; }
-  .aksi-kotak-icon::after { animation-delay: 1.4s; }
-  .aksi-donasi-icon::after { animation-delay: 2.4s; }
-  .aksi-online-icon::after { animation-delay: 3.4s; }
-  .aksi-qr-icon::after { animation-delay: 0.9s; }
-  @keyframes aksiCepatSheen {
-    0%, 45% { background-position: 150% 150%; }
-    75%, 100% { background-position: -50% -50%; }
-  }
-
-  /* Ikon QR Code -- dikasih identitas gradient teal/cyan (dulu polos
-     kaca doang) + garis "scan" yang jalan naik-turun terus-terusan,
-     ngingetin visual scanner QR sungguhan. */
-  .aksi-qr-icon {
-    width: 54px; height: 54px; border-radius: 15px;
-    background: linear-gradient(135deg, #67E8F9 0%, #22D3EE 55%, #0EA5E9 100%);
-    border: none;
-    display: flex; align-items: center; justify-content: center;
-    color: #fff;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
-  }
-  .aksi-qr-icon .material-symbols-outlined { font-size: 24px; font-variation-settings: 'FILL' 1; position: relative; z-index: 1; }
-  .aksi-qr-scanline {
-    position: absolute; left: 8%; right: 8%; height: 2px;
-    background: rgba(255,255,255,0.9);
-    box-shadow: 0 0 6px 1px rgba(255,255,255,0.8);
-    border-radius: 2px;
-    animation: aksiQrScan 2.4s ease-in-out infinite;
-    z-index: 1;
-  }
-  @keyframes aksiQrScan {
-    0%, 100% { top: 18%; opacity: 0.9; }
-    50% { top: 78%; opacity: 0.9; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .aksi-cepat-item { opacity: 1; animation: none !important; transform: none !important; }
-    .aksi-kitabisa-icon::after, .aksi-cepat-icon::after, .aksi-qr-icon::after,
-    .aksi-qr-scanline, .aksi-kitabisa-icon, .aksi-online-icon {
-      animation: none !important;
-    }
-  }
-
-  /* ============================================================
-     ✨ IMMERSIVE: 3 kartu "Ringkasan Angka" (Anak / Wilayah / Pengurus)
-     di paling atas panel GO-PAY. Pola sama kayak Aksi Cepat & Program
-     Selector -- entrance stagger + kilau bergantian + tap "terangkat".
-     Angka di dalamnya sendiri sekarang "hitung naik" tiap data baru
-     masuk (lihat animateCountValue_() dipanggil dari loadBerandaStats()).
-     ============================================================ */
-  .stat-mini-card {
-    position: relative;
-    overflow: hidden;
-    opacity: 0;
-    transform: translateY(10px);
-    animation: statMiniMasuk 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
-  }
-  .stat-mini-card:nth-child(1) { animation-delay: 0.04s; }
-  .stat-mini-card:nth-child(2) { animation-delay: 0.11s; }
-  .stat-mini-card:nth-child(3) { animation-delay: 0.18s; }
-  @keyframes statMiniMasuk {
-    from { opacity: 0; transform: translateY(10px) scale(0.92); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
-  }
-  .stat-mini-card::after {
-    content: "";
-    position: absolute; inset: 0;
-    background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.10) 50%, transparent 65%);
-    background-size: 250% 250%;
-    background-position: 150% 150%;
-    animation: statMiniSheen 5s ease-in-out infinite;
-    pointer-events: none;
-  }
-  .stat-mini-card:nth-child(1)::after { animation-delay: 0.6s; }
-  .stat-mini-card:nth-child(2)::after { animation-delay: 2.1s; }
-  .stat-mini-card:nth-child(3)::after { animation-delay: 3.6s; }
-  @keyframes statMiniSheen {
-    0%, 45% { background-position: 150% 150%; }
-    75%, 100% { background-position: -50% -50%; }
-  }
-  /* Kartu yang bisa diklik (Anak -> tab PM, Pengurus -> daftar pengurus)
-     "terangkat" dikit pas ditekan (numpang class .gtap-pressed dari
-     sistem ripple global) -- kartu Wilayah gak punya onclick jadi
-     otomatis gak kena efek ini (memang bukan tombol). Sengaja PAKAI
-     box-shadow doang di level kartu (bukan transform) supaya gak
-     bentrok sama animasi "masuk" (statMiniMasuk) yang juga ngontrol
-     transform di elemen yang sama -- animasi CSS selalu menang lawan
-     rule transform biasa, jadi transform-nya numpang di ikon saja. */
-  .gtap-pressed.stat-mini-card {
-    box-shadow: 0 10px 22px rgba(0,0,0,0.28);
-  }
-  .gtap-pressed .stat-mini-icon {
-    transform: scale(1.15) rotate(-8deg);
-  }
-  .stat-mini-icon {
-    display: inline-block;
-    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .stat-mini-card { opacity: 1; animation: none !important; transform: none !important; }
-    .stat-mini-card::after { animation: none !important; }
-  }
-
-  /* ============================================================
-     ✨ IMMERSIVE: Kartu 1 tab Keuangan ("Jumlah Anak & Santunan") --
-     ini angka paling penting di tab Keuangan, jadi dikasih perlakuan
-     "kartu hidup" senada summary-card di Beranda (ring cahaya muter +
-     kilau kaca), tapi versi lebih tenang (ring-nya lebih redup/pelan)
-     supaya gak menyaingi kartu ringkasan Beranda yang jadi fokus utama.
-     Nomor besar & sub-angkanya juga ikut "hitung naik" tiap data
-     ke-refresh (lihat terapkanKeuanganStats() yang manggil
-     animateCountValue_ / animateRupiahValue_ sekarang).
-     ============================================================ */
-  .keuangan-hero-card {
-    position: relative;
-    overflow: hidden;
-  }
-  .keuangan-hero-card::after {
-    content: "";
-    position: absolute; inset: -1px;
-    z-index: 0;
-    border-radius: 22px;
-    padding: 1.5px;
-    background: conic-gradient(from 90deg, rgba(34,197,94,0) 0%, rgba(34,197,94,0.55) 10%, rgba(34,197,94,0) 24%, rgba(34,197,94,0) 100%);
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    animation: summaryAuraSpin 10s linear infinite;
-    pointer-events: none;
-    opacity: 0.7;
-  }
-  .keuangan-hero-card > * { position: relative; z-index: 1; }
-  .keuangan-hero-icon-wrap {
-    animation: keuanganHeroIconPulse 2.6s ease-in-out infinite;
-  }
-  @keyframes keuanganHeroIconPulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(var(--bento-primary-rgb),0.35); }
-    50% { box-shadow: 0 0 0 7px rgba(var(--bento-primary-rgb),0); }
-  }
-  .keuangan-mini-stat {
-    opacity: 0;
-    transform: translateY(8px);
-    animation: statMiniMasuk 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  }
-  .keuangan-mini-stat:nth-child(1) { animation-delay: 0.1s; }
-  .keuangan-mini-stat:nth-child(2) { animation-delay: 0.18s; }
-  @media (prefers-reduced-motion: reduce) {
-    .keuangan-hero-card::after { animation: none !important; opacity: 0.3; }
-    .keuangan-hero-icon-wrap { animation: none !important; }
-    .keuangan-mini-stat { opacity: 1; animation: none !important; transform: none !important; }
-  }
-
-  /* ============================================================
      📲 POPUP AJAKAN INSTALL APLIKASI (PWA "Add to Home Screen")
      Muncul otomatis begitu splash selesai & browser bilang app ini
      "installable" (event beforeinstallprompt), ATAU di iOS Safari
@@ -2017,7 +1728,6 @@
 
   <!-- Kartu Mengambang -->
   <div class="summary-card" id="summaryCard">
-    <div class="summary-sheen" aria-hidden="true"></div>
     <div class="summary-top">
       <div class="summary-icon"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">volunteer_activism</span></div>
       <div class="summary-label" id="summaryLabelSantunan">Total Santunan Diperlukan PROGRAM GOPAY</div>
@@ -3438,10 +3148,7 @@ function renderSummaryCardBeranda_() {
     if (elSubKekurangan) elSubKekurangan.style.display = "none";
     if (elSubDonasi) elSubDonasi.style.display = "none";
     const d = berandaStatsCache.santunanSapa;
-    if (elValue) {
-      if (d) animateRupiahValue_(elValue, d.totalSantunanDiperlukan);
-      else elValue.textContent = "...";
-    }
+    if (elValue) elValue.textContent = d ? formatRupiahHub(d.totalSantunanDiperlukan) : "...";
     return;
   }
 
@@ -3468,8 +3175,9 @@ function renderSummaryCardBeranda_() {
   }
 
   if (elValue) {
-    if (d.santunanDitemukan) animateRupiahValue_(elValue, d.totalSantunanDiperlukan);
-    else { elValue.removeAttribute("data-raw-value"); elValue.textContent = "Belum diisi Bendahara"; }
+    elValue.textContent = d.santunanDitemukan
+      ? formatRupiahHub(d.totalSantunanDiperlukan)
+      : "Belum diisi Bendahara";
   }
 
   if (elKekurangan && elKekuranganIconWrap && elKekuranganIcon) {
@@ -3478,17 +3186,15 @@ function renderSummaryCardBeranda_() {
     if (elKekuranganBadge) elKekuranganBadge.style.display = "none";
 
     if (!d.santunanDitemukan) {
-      elKekurangan.removeAttribute("data-raw-value");
       elKekurangan.textContent = "Belum diisi Bendahara";
       elKekuranganIcon.textContent = "money_off";
     } else if (d.kekuranganSantunan > 0) {
-      animateRupiahValue_(elKekurangan, d.kekuranganSantunan);
+      elKekurangan.textContent = formatRupiahHub(d.kekuranganSantunan);
       elKekurangan.classList.add("value-kekurangan-urgent");
       elKekuranganIconWrap.classList.add("icon-kekurangan-urgent");
       elKekuranganIcon.textContent = "priority_high";
       if (elKekuranganBadge) elKekuranganBadge.style.display = "inline-flex";
     } else {
-      elKekurangan.removeAttribute("data-raw-value");
       elKekurangan.textContent = "Tercapai! \ud83c\udf89";
       elKekurangan.classList.add("value-kekurangan-tercapai");
       elKekuranganIconWrap.classList.add("icon-kekurangan-tercapai");
@@ -3496,7 +3202,7 @@ function renderSummaryCardBeranda_() {
     }
   }
 
-  if (elTotalDonasi) animateRupiahValue_(elTotalDonasi, d.totalDonasi);
+  if (elTotalDonasi) elTotalDonasi.textContent = formatRupiahHub(d.totalDonasi);
 }
 
 // Fungsi bantuan (Helper) untuk menyimpan ke memori HP
@@ -3506,52 +3212,11 @@ function saveBerandaCacheHub() {
   } catch(e) {}
 }
 
-// ============================================================
-// 🔢 Versi "hitung naik" untuk angka BIASA (bukan Rupiah) -- dipakai
-// buat kartu Ringkasan Angka (Anak/Wilayah/Pengurus) di Beranda. Logic-nya
-// sama persis kayak animateRupiahValue_ di atas, cuma tanpa format "Rp".
-// ============================================================
-function animateCountValue_(el, targetValue) {
-  if (!el) return;
-  const target = Math.round(Number(targetValue));
-  if (isNaN(target)) { el.textContent = targetValue; el.removeAttribute("data-raw-value"); return; }
-
-  const prevRaw = el.getAttribute("data-raw-value");
-  const isFirstFill = prevRaw === null;
-  el.setAttribute("data-raw-value", String(target));
-
-  if (isFirstFill || (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)) {
-    el.textContent = target;
-    return;
-  }
-
-  const start = Number(prevRaw) || 0;
-  if (start === target) { el.textContent = target; return; }
-
-  const duration = 650;
-  const t0 = performance.now();
-  if (el._countRAF) cancelAnimationFrame(el._countRAF);
-
-  function tick(now) {
-    const p = Math.min(1, (now - t0) / duration);
-    const eased = 1 - Math.pow(1 - p, 3);
-    const current = Math.round(start + (target - start) * eased);
-    el.textContent = current;
-    if (p < 1) {
-      el._countRAF = requestAnimationFrame(tick);
-    } else {
-      el.textContent = target;
-      el._countRAF = null;
-    }
-  }
-  el._countRAF = requestAnimationFrame(tick);
-}
-
 function loadBerandaStats() {
   // Total Anak (dari YASSA Mobile) -- server BEDA sama Hub, jadi TETAP
   // request terpisah, gak bisa ikut digabung ke getBerandaBundle().
   const elA = document.getElementById("statTotalAnak");
-  if (elA && berandaStatsCache.totalAnak !== null) animateCountValue_(elA, berandaStatsCache.totalAnak);
+  if (elA && berandaStatsCache.totalAnak !== null) elA.textContent = berandaStatsCache.totalAnak;
   fetch(GAS_MOBILE_URL, {
     method: "POST",
     headers: { "Content-Type": "text/plain" },
@@ -3564,7 +3229,7 @@ function loadBerandaStats() {
       berandaStatsCache.totalAnak = totalAnak;
       saveBerandaCacheHub(); // <-- SIMPAN KE OFFLINE CACHE
       const elA2 = document.getElementById("statTotalAnak");
-      if (elA2) animateCountValue_(elA2, totalAnak);
+      if (elA2) elA2.textContent = totalAnak;
     })
     .catch(function () {
       // Kalau udah ada cache, biarin angka lama tetap tampil daripada
@@ -3596,8 +3261,8 @@ function loadBerandaStats() {
   const terapkanDashboardBeranda = function (data) {
     const elW = document.getElementById("statTotalWilayah");
     const elP = document.getElementById("statTotalPengurus");
-    if (elW) animateCountValue_(elW, data.totalWilayah);
-    if (elP) animateCountValue_(elP, data.totalPengurus);
+    if (elW) elW.textContent = data.totalWilayah;
+    if (elP) elP.textContent = data.totalPengurus;
 
     // Aktivitas Hari Ini -> Pengurus belum login lama
     window._daftarPengurusBelumLoginLama = data.daftarPengurusBelumLoginLama || [];
@@ -4044,9 +3709,9 @@ function terapkanKeuanganStats(hasil) {
 
       // --- Kartu 1: Jumlah Anak & Total Santunan (PER WILAYAH -- rate & jumlah
       //     anak sekarang bisa beda tiap wilayah, lihat santunan.rincianWilayah) ---
-      if (elYatim) animateCountValue_(elYatim, santunan.jumlahAnakYatim || 0);
-      if (elPiatu) animateCountValue_(elPiatu, santunan.jumlahYatimPiatu || 0);
-      if (elDsb) animateCountValue_(elDsb, santunan.jumlahDisabilitas || 0);
+      if (elYatim) elYatim.textContent = Number(santunan.jumlahAnakYatim || 0);
+      if (elPiatu) elPiatu.textContent = Number(santunan.jumlahYatimPiatu || 0);
+      if (elDsb) elDsb.textContent = Number(santunan.jumlahDisabilitas || 0);
 
       const rincianWilayahSantunan = santunan.rincianWilayah || [];
       const wilayahBelumDiisiRate = santunan.wilayahBelumDiisiRate || [];
@@ -4063,7 +3728,7 @@ function terapkanKeuanganStats(hasil) {
         if (elSantunanWrap) elSantunanWrap.style.display = "none";
       } else {
         if (elSantunanWrap) elSantunanWrap.style.display = "block";
-        if (elTotalSantunan) animateRupiahValue_(elTotalSantunan, santunan.totalPenyaluran || 0);
+        if (elTotalSantunan) elTotalSantunan.textContent = formatRupiahHub(santunan.totalPenyaluran || 0);
 
         if (wilayahBelumDiisiRate.length > 0) {
           // Baris wilayahnya udah ada, tapi sebagian rate-nya masih kosong --
@@ -4494,16 +4159,16 @@ function renderContent() {
       <div class="program-panel" id="programPanel-gopay">
       <!-- Ringkasan Angka (Anak, Wilayah, Pengurus) -->
       <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
-        <div class="stat-mini-card" style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid #60A5FA; cursor: pointer;" onclick="setActive('pm')">
-          <span class="material-symbols-outlined stat-mini-icon" style="color: #60A5FA;">group</span>
+        <div style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid #60A5FA; cursor: pointer;" onclick="setActive('pm')">
+          <span class="material-symbols-outlined" style="color: #60A5FA;">group</span>
           <div><div style="font-size: 20px; font-weight: 700;" id="statTotalAnak">…</div><div style="font-size: 11px; color: var(--text-secondary);">Anak</div><div style="font-size: 8.5px; color: var(--text-muted); margin-top: 1px; line-height: 1.2;">(Gopay &amp; Anak Asuh)</div></div>
         </div>
-        <div class="stat-mini-card" style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid #C084FC;">
-          <span class="material-symbols-outlined stat-mini-icon" style="color: #C084FC;">location_on</span>
+        <div style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid #C084FC;">
+          <span class="material-symbols-outlined" style="color: #C084FC;">location_on</span>
           <div><div style="font-size: 20px; font-weight: 700;" id="statTotalWilayah">…</div><div style="font-size: 11px; color: var(--text-secondary);">Wilayah</div></div>
         </div>
-        <div class="stat-mini-card" style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid var(--bento-primary); cursor: pointer;" onclick="handleUserMenuClick('pengurus')">
-          <span class="material-symbols-outlined stat-mini-icon" style="color: var(--bento-primary);">admin_panel_settings</span>
+        <div style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid var(--bento-primary); cursor: pointer;" onclick="handleUserMenuClick('pengurus')">
+          <span class="material-symbols-outlined" style="color: var(--bento-primary);">admin_panel_settings</span>
           <div><div style="font-size: 20px; font-weight: 700;" id="statTotalPengurus">…</div><div style="font-size: 11px; color: var(--text-secondary);">Pengurus &amp; Tim Kerja</div></div>
         </div>
       </div>
@@ -4596,25 +4261,25 @@ function renderContent() {
 
       <!-- Aksi Cepat Menu Bawah -->
       <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Aksi Cepat Donasi</h3>
-      <div class="aksi-cepat-row" style="display: flex; justify-content: space-between; margin-bottom: 24px;">
-        <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="window.open('https://kitabisa.com/campaign/gojekbantuyatim', '_blank')">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 24px;">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="window.open('https://kitabisa.com/campaign/gojekbantuyatim', '_blank')">
           <div class="aksi-kitabisa-icon"><span class="material-symbols-outlined">volunteer_activism</span></div>
           <span class="aksi-kitabisa-label">Donasi<br>Kitabisa.com</span>
         </div>
-        <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="openAppUrl('https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/?embed=1&tab=input-kotak')">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="openAppUrl('https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/?embed=1&tab=input-kotak')">
           <div class="aksi-cepat-icon aksi-kotak-icon"><span class="material-symbols-outlined">savings</span></div>
           <span style="font-size: 10.5px; color: var(--text-secondary);">Kotak Gopay</span>
         </div>
-        <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="openAppUrl('https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/?embed=1&tab=input-donasi')">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="openAppUrl('https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/?embed=1&tab=input-donasi')">
           <div class="aksi-cepat-icon aksi-donasi-icon"><span class="material-symbols-outlined">add_box</span></div>
           <span style="font-size: 10.5px; color: var(--text-secondary);">Donasi</span>
         </div>
-        <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="toggleMidtransForm()">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="toggleMidtransForm()">
           <div class="aksi-cepat-icon aksi-online-icon"><span class="material-symbols-outlined">credit_card</span></div>
           <span class="aksi-online-label">Donasi<br>Online</span>
         </div>
-        <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="showQrCodeDonasiCepat()">
-          <div class="aksi-qr-icon"><span class="material-symbols-outlined">qr_code_scanner</span><span class="aksi-qr-scanline" aria-hidden="true"></span></div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="showQrCodeDonasiCepat()">
+          <div style="width: 50px; height: 50px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: var(--neon-cyan);"><span class="material-symbols-outlined">qr_code_scanner</span></div>
           <span style="font-size: 10.5px; color: var(--text-secondary);">QR Code</span>
         </div>
       </div>
@@ -4669,7 +4334,6 @@ function renderContent() {
     loadDataAnakYatimPreviewBeranda();
     loadDataAnakAsuhPreviewBeranda();
     loadAgendaMendatangBeranda();
-    initProgramSelectorCoverflow();
     return;
   }
 
@@ -4811,10 +4475,10 @@ function renderContent() {
 
       <!-- 1. Jumlah Anak Yatim + Total Santunan (per wilayah -- jumlah anak dari
            YASSA Mobile, rate dari Bendahara, dihitung otomatis di Hub) -->
-      <div id="keuanganTourTarget" class="keuangan-hero-card" style="background: var(--glass-strong); border-radius: 20px; padding: 22px 20px; margin-bottom: 16px; border: 1px solid var(--glass-border); border-left: 4px solid var(--bento-primary);">
+      <div id="keuanganTourTarget" style="background: var(--glass-strong); border-radius: 20px; padding: 22px 20px; margin-bottom: 16px; border: 1px solid var(--glass-border); border-left: 4px solid var(--bento-primary);">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
           <div style="font-size: 12px; color: var(--text-secondary);">1. Jumlah Anak &amp; Santunan ${badgeWilayah}<br><span style="font-size: 10px; color: var(--bento-primary);">(Program Gopay)</span></div>
-          <div style="width: 44px; height: 44px; border-radius: 14px; background: rgba(var(--bento-primary-rgb),0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;" class="keuangan-hero-icon-wrap">
+          <div style="width: 44px; height: 44px; border-radius: 14px; background: rgba(var(--bento-primary-rgb),0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
             <span class="material-symbols-outlined" style="font-size: 22px; font-variation-settings: 'FILL' 1;">groups</span>
           </div>
         </div>
@@ -4822,14 +4486,14 @@ function renderContent() {
         <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 18px;">Anak &middot; Wilayah ${escapeHtmlHub(wilayahText)} &middot; Bulan Ini</div>
 
         <div style="display: flex; gap: 10px; margin-bottom: 18px;">
-          <div class="keuangan-mini-stat" style="flex: 1; background: rgba(168, 85, 247, 0.10); border: 1px solid rgba(168, 85, 247, 0.25); border-left: 3px solid #A855F7; border-radius: 14px; padding: 12px;">
+          <div style="flex: 1; background: rgba(168, 85, 247, 0.10); border: 1px solid rgba(168, 85, 247, 0.25); border-left: 3px solid #A855F7; border-radius: 14px; padding: 12px;">
             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
               <span class="material-symbols-outlined" style="font-size: 15px; color: #C084FC;">diversity_1</span>
               <span class="pale-purple-text" style="font-size: 10.5px; color: #D8B4FE;">Yatim Piatu</span>
             </div>
             <div class="pale-purple-text" style="font-size: 20px; font-weight: 700; color: #E9D5FF;" id="keuanganYatimPiatu"><span class="kv-loading">...</span></div>
           </div>
-          <div class="keuangan-mini-stat" style="flex: 1; background: rgba(245, 158, 11, 0.10); border: 1px solid rgba(245, 158, 11, 0.25); border-left: 3px solid #FBBF24; border-radius: 14px; padding: 12px;">
+          <div style="flex: 1; background: rgba(245, 158, 11, 0.10); border: 1px solid rgba(245, 158, 11, 0.25); border-left: 3px solid #FBBF24; border-radius: 14px; padding: 12px;">
             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
               <span class="material-symbols-outlined" style="font-size: 15px; color: #FBBF24;">accessible</span>
               <span class="pale-amber-text" style="font-size: 10.5px; color: #FDE68A;">Disabilitas</span>
@@ -8877,154 +8541,6 @@ function cleanupCacheAndUpdate() {
 }
 
 // ============================================================
-// 🎠 EFEK "COVERFLOW" buat carousel horizontal "PILIH PROGRAM YASSA" --
-// kartu yang lagi di TENGAH layar kelihatan penuh (skala 1, terang),
-// makin ke tepi kiri/kanan makin mengecil & meredup dikit, mirip
-// carousel foto di HP. Ngasih kesan "kedalaman" pas discroll, padahal
-// cuma nge-scroll flex row biasa (gak perlu library carousel).
-// Dipanggil ulang tiap Beranda dirender (elemen di-render ulang lewat
-// innerHTML tiap pindah tab, jadi listener lama otomatis kebuang --
-// gak perlu dibersihin manual). Diitung pas scroll pakai requestAnimationFrame
-// biar gak berat pas di-scroll cepet di HP low-end.
-// ============================================================
-function initProgramSelectorCoverflow() {
-  const scroller = document.getElementById("programSelectScroll");
-  if (!scroller) return;
-  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-  let ticking = false;
-
-  function update() {
-    ticking = false;
-    const scRect = scroller.getBoundingClientRect();
-    const centerX = scRect.left + scRect.width / 2;
-    const cards = scroller.querySelectorAll(".program-select-card");
-    cards.forEach(function (card) {
-      const r = card.getBoundingClientRect();
-      const cardCenter = r.left + r.width / 2;
-      const dist = Math.abs(cardCenter - centerX);
-      const norm = Math.min(1, dist / (scRect.width / 2 + r.width / 2 || 1));
-      const scale = 1 - norm * 0.14;   // tengah = 1.0, tepi = ~0.86
-      const opacity = 1 - norm * 0.45; // tengah = 1.0, tepi = ~0.55
-      card.style.setProperty("--cf-scale", scale.toFixed(3));
-      card.style.setProperty("--cf-opacity", opacity.toFixed(3));
-    });
-  }
-
-  function onScroll() {
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(update);
-  }
-
-  scroller.addEventListener("scroll", onScroll, { passive: true });
-  // Hitung posisi awal juga (kartu aktif biasanya udah di-scroll ke
-  // tengah lewat scrollIntoView di selectProgramTab()).
-  requestAnimationFrame(update);
-}
-
-// ============================================================
-// ✨ TILT 3D KARTU RINGKASAN BERANDA -- kartu miring dikit ngikutin posisi
-// jari (touch drag) / kursor (mouse move), lalu balik lurus lembut pas
-// dilepas. Efeknya dikontrol lewat CSS var --tilt-x/--tilt-y/--tilt-scale
-// yang dibaca oleh .summary-card di <style> atas. Sengaja dibikin SUBTIL
-// (maks 6 derajat) -- ini kartu berisi angka penting, bukan galeri foto,
-// jadi efeknya cuma buat kesan "premium/hidup", bukan bikin pusing.
-// Otomatis nonaktif kalau user set Reduced Motion di HP-nya.
-// ============================================================
-function initSummaryCardTilt() {
-  const card = document.getElementById("summaryCard");
-  if (!card) return;
-  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-  const MAX_TILT = 6; // derajat, sengaja kecil
-
-  function applyTilt(clientX, clientY) {
-    const rect = card.getBoundingClientRect();
-    const px = (clientX - rect.left) / rect.width;  // 0..1
-    const py = (clientY - rect.top) / rect.height;  // 0..1
-    const tiltY = (px - 0.5) * 2 * MAX_TILT;   // kiri/kanan
-    const tiltX = (0.5 - py) * 2 * MAX_TILT;   // atas/bawah
-    card.style.setProperty("--tilt-x", tiltX.toFixed(2) + "deg");
-    card.style.setProperty("--tilt-y", tiltY.toFixed(2) + "deg");
-    card.style.setProperty("--tilt-scale", "1.015");
-    card.classList.add("tilting");
-  }
-
-  function resetTilt() {
-    card.style.setProperty("--tilt-x", "0deg");
-    card.style.setProperty("--tilt-y", "0deg");
-    card.style.setProperty("--tilt-scale", "1");
-    card.classList.remove("tilting");
-  }
-
-  // Mouse (desktop/laptop -- lihat mode "melebar" di CSS)
-  card.addEventListener("pointermove", function (e) {
-    if (e.pointerType === "mouse") applyTilt(e.clientX, e.clientY);
-  });
-  card.addEventListener("pointerleave", function (e) {
-    if (e.pointerType === "mouse") resetTilt();
-  });
-
-  // Sentuhan (HP) -- pakai touch, bukan pointer, biar gak bentrok sama
-  // scroll halaman (passive:true, gak manggil preventDefault sama sekali).
-  card.addEventListener("touchstart", function (e) {
-    if (e.touches[0]) applyTilt(e.touches[0].clientX, e.touches[0].clientY);
-  }, { passive: true });
-  card.addEventListener("touchmove", function (e) {
-    if (e.touches[0]) applyTilt(e.touches[0].clientX, e.touches[0].clientY);
-  }, { passive: true });
-  card.addEventListener("touchend", resetTilt);
-  card.addEventListener("touchcancel", resetTilt);
-}
-
-// ============================================================
-// 🔢 ANIMASI "HITUNG NAIK" buat nominal Rupiah di kartu ringkasan Beranda
-// -- daripada angka langsung "nyelonong" muncul pas data kebuka/kena
-// refresh, angkanya jalan naik dari 0 (atau dari nilai lama) ke nilai
-// baru dalam ~700ms pakai easing halus. Kalau elemen belum pernah diisi
-// (masih placeholder "...") langsung tampilin nilai final tanpa animasi
-// supaya user gak nunggu pas pertama buka app.
-// Dipanggil dari renderSummaryCardBeranda_() sebagai pengganti
-// elValue.textContent = formatRupiahHub(...) langsung.
-// ============================================================
-function animateRupiahValue_(el, targetNumber) {
-  if (!el) return;
-  const target = Math.round(Number(targetNumber) || 0);
-  const prevRaw = el.getAttribute("data-raw-value");
-  const isFirstFill = prevRaw === null;
-  el.setAttribute("data-raw-value", String(target));
-
-  if (isFirstFill || (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)) {
-    el.textContent = formatRupiahHub(target);
-    return;
-  }
-
-  const start = Number(prevRaw) || 0;
-  if (start === target) { el.textContent = formatRupiahHub(target); return; }
-
-  const duration = 700;
-  const t0 = performance.now();
-  // Batalin animasi sebelumnya kalau elemen ini lagi dianimasiin lagi
-  // (mis. data ke-refresh cepet 2x berturut-turut).
-  if (el._rupiahRAF) cancelAnimationFrame(el._rupiahRAF);
-
-  function tick(now) {
-    const p = Math.min(1, (now - t0) / duration);
-    const eased = 1 - Math.pow(1 - p, 3); // ease-out cubic
-    const current = Math.round(start + (target - start) * eased);
-    el.textContent = formatRupiahHub(current);
-    if (p < 1) {
-      el._rupiahRAF = requestAnimationFrame(tick);
-    } else {
-      el.textContent = formatRupiahHub(target);
-      el._rupiahRAF = null;
-    }
-  }
-  el._rupiahRAF = requestAnimationFrame(tick);
-}
-
-// ============================================================
 // 🌊 EFEK SENTUH GLOBAL (ripple) -- otomatis berlaku ke SEMUA tombol &
 // elemen berklik di seluruh Hub (bottom nav, kartu App, menu akun, tombol
 // donasi, dll), TANPA perlu nambahin manual ke tiap elemen satu-satu.
@@ -9071,7 +8587,6 @@ function initGlobalRippleEffect() {
   });
 }
 initGlobalRippleEffect();
-initSummaryCardTilt();
 
 // ============================================================
 // ⬅️ TOMBOL BACK FISIK/GESTURE HP -- JANGAN LANGSUNG KELUAR APLIKASI.
