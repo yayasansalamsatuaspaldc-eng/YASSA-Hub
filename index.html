@@ -9046,12 +9046,27 @@ function tampilkanPilihanSsoGagal_(baseTabUrl, err) {
   }
 }
 
+// 🩹 FIX: dulu layar "Gagal menyambung / Coba Lagi / Login Manual" (khusus
+// buat gagalnya SSO Mobile) gak pernah disembunyikan lagi begitu user
+// pindah ke app LAIN sesudahnya -- jadi nyangkut nongol terus di atas app
+// lain yang baru dibuka, dan tombol "Coba Lagi"/"Login Manual"-nya masih
+// nempel ke Mobile (baseTabUrl lama), bikin user "kelempar" balik ke layar
+// Mobile walau niatnya buka app lain. WAJIB dipanggil tiap kali openApp()
+// buka app APAPUN (baik app baru maupun app yang masih hidup di background).
+function resetSsoOverlayUi_() {
+  const ssoLoadingEl = document.getElementById("overlaySsoLoading");
+  const ssoChoiceEl = document.getElementById("overlaySsoChoice");
+  if (ssoLoadingEl) ssoLoadingEl.classList.remove("show");
+  if (ssoChoiceEl) ssoChoiceEl.classList.remove("show");
+}
+
 function openApp(index) {
   const menu = MENUS[active];
   const item = menu.items[index];
 
   document.getElementById("overlayTitle").textContent = item.label;
   toggleOverlayDevNotice_(active);
+  resetSsoOverlayUi_();
 
   // 🩹 FIX: dulu YASSA Mobile SELALU masuk jalur reload-total + minta tiket
   // SSO baru di SETIAP klik menu (walau app-nya masih sama & masih hidup di
@@ -9154,6 +9169,7 @@ function openApp(index) {
 // LAIN (lihat openApp) atau pas logout (lihat resetOverlayIframe/doLogout).
 document.getElementById("overlayClose").addEventListener("click", function () {
   document.getElementById("overlay").classList.remove("open");
+  resetSsoOverlayUi_();
 });
 
 // Dipanggil pas logout, biar sesi app anak yang nempel di iframe background
