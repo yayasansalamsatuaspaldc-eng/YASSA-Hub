@@ -376,23 +376,9 @@
     opacity: 0.85;
   }
   @keyframes summaryAuraSpin { to { transform: rotate(360deg); } }
-  /* Kilau (sheen) tipis yang nyapu dari kiri-atas ke kanan-bawah tiap
-     beberapa detik -- ngasih kesan permukaan "kaca premium" kena cahaya. */
-  .summary-card .summary-sheen {
-    position: absolute; inset: 0; z-index: 1; pointer-events: none;
-    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.10) 45%, rgba(255,255,255,0.16) 50%, rgba(255,255,255,0.10) 55%, transparent 70%);
-    background-size: 220% 220%;
-    background-position: 130% 130%;
-    animation: summarySheenSweep 5.5s ease-in-out infinite;
-    animation-delay: 1.2s;
-  }
-  @keyframes summarySheenSweep {
-    0%, 55% { background-position: 130% 130%; }
-    85%, 100% { background-position: -30% -30%; }
-  }
   @media (prefers-reduced-motion: reduce) {
     .summary-card { transform: none !important; transition: none !important; }
-    .summary-card::after, .summary-card .summary-sheen { animation: none !important; opacity: 0.35; }
+    .summary-card::after { animation: none !important; opacity: 0.35; }
   }
   .summary-top { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; position: relative; z-index: 1; }
   .summary-icon {
@@ -2401,7 +2387,6 @@
 
   <!-- Kartu Mengambang -->
   <div class="summary-card" id="summaryCard">
-    <div class="summary-sheen" aria-hidden="true"></div>
     <div class="summary-top">
       <div class="summary-icon"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">volunteer_activism</span></div>
       <div class="summary-label" id="summaryLabelSantunan">Total Santunan Diperlukan PROGRAM GOPAY</div>
