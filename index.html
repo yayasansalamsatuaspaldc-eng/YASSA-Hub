@@ -357,9 +357,9 @@
     filter: blur(24px);
     pointer-events: none;
   }
-  /* Ring cahaya conic-gradient yang muter terus di belakang kartu, cuma
-     nongol tipis di tepi (lubang gelap solid di tengah bikin efeknya kayak
-     "aura" nempel di border, bukan nutupin seluruh kartu). */
+  /* Ring cahaya conic-gradient statis tipis di tepi kartu -- animasi
+     putarnya (summaryAuraSpin) DIHAPUS atas permintaan, ring-nya sendiri
+     dibiarkan (diam, gak muter) biar tepi kartu masih ada aksen warna. */
   .summary-card::after {
     content: "";
     position: absolute;
@@ -371,11 +371,27 @@
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
-    animation: summaryAuraSpin 7s linear infinite;
     pointer-events: none;
     opacity: 0.85;
   }
+  /* Keyframe ini masih dipakai .keuangan-hero-card::after (tab Keuangan) --
+     JANGAN dihapus walau ring cahaya kartu Beranda di atas udah gak
+     animasi lagi (lihat komentar di .summary-card::after). */
   @keyframes summaryAuraSpin { to { transform: rotate(360deg); } }
+  /* Kilau (sheen) tipis yang nyapu dari kiri-atas ke kanan-bawah tiap
+     beberapa detik -- ngasih kesan permukaan "kaca premium" kena cahaya. */
+  .summary-card .summary-sheen {
+    position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.10) 45%, rgba(255,255,255,0.16) 50%, rgba(255,255,255,0.10) 55%, transparent 70%);
+    background-size: 220% 220%;
+    background-position: 130% 130%;
+    animation: summarySheenSweep 5.5s ease-in-out infinite;
+    animation-delay: 1.2s;
+  }
+  @keyframes summarySheenSweep {
+    0%, 55% { background-position: 130% 130%; }
+    85%, 100% { background-position: -30% -30%; }
+  }
   @media (prefers-reduced-motion: reduce) {
     .summary-card { transform: none !important; transition: none !important; }
     .summary-card::after { animation: none !important; opacity: 0.35; }
@@ -2387,6 +2403,7 @@
 
   <!-- Kartu Mengambang -->
   <div class="summary-card" id="summaryCard">
+    <div class="summary-sheen" aria-hidden="true"></div>
     <div class="summary-top">
       <div class="summary-icon"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">volunteer_activism</span></div>
       <div class="summary-label" id="summaryLabelSantunan">Total Santunan Diperlukan PROGRAM GOPAY</div>
@@ -3241,13 +3258,11 @@ function selectProgramTab(key) {
     el.style.display = el.id === "programPanel-" + key ? "" : "none";
   });
   // Kartu ringkasan "Total Santunan Diperlukan" di atas ikut berubah sesuai
-  // program yang baru dipilih -- cuma GOPAY & SAPA yang punya data live
-  // buat kartu ini, program lain (BADIK dkk) belum disambung, jadi kartu
-  // dibiarkan seperti kondisi terakhir kalau yang dipilih bukan salah
-  // satu dari dua itu.
-  if (key === "gopay" || key === "sapa") {
-    renderSummaryCardBeranda_();
-  }
+  // program yang baru dipilih -- GOPAY & SAPA nampilin data live, program
+  // lain (BADIK dkk) yang belum ready ikut nampilin placeholder "Data
+  // segera hadir" (lihat renderSummaryCardBeranda_), BUKAN dibiarkan
+  // nyisain angka program sebelumnya.
+  renderSummaryCardBeranda_();
   const cardEl = document.querySelector('.program-select-card[data-program="' + key + '"]');
   if (cardEl && cardEl.scrollIntoView) {
     cardEl.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
@@ -3837,6 +3852,25 @@ function renderSummaryCardBeranda_() {
   const elValue = document.getElementById("summaryTotalSantunanDiperlukan");
   const elSubKekurangan = document.getElementById("summarySubRowKekurangan");
   const elSubDonasi = document.getElementById("summarySubRowDonasi");
+
+  // 🩹 FIX: dulu kartu ini DIBIARKAN nampilin data program SEBELUMNYA
+  // (mis. masih kelihatan angka SAPA) begitu user pindah ke program yang
+  // belum ready (BASO/PEDAS/BADIK/BATAN) -- padahal panel di bawahnya udah
+  // benar nampilin "Data segera hadir". Sekarang kartu ringkasan ini juga
+  // ikut nampilin placeholder yang sama, konsisten sama panel bawah,
+  // bukan nyisain angka program lain yang menyesatkan.
+  const programAktif = YASSA_PROGRAMS.find(function (p) { return p.key === activeProgram; });
+  if (programAktif && !programAktif.ready) {
+    if (elLabel) elLabel.textContent = "Total Santunan Diperlukan PROGRAM " + programAktif.label;
+    if (elSubKekurangan) elSubKekurangan.style.display = "none";
+    if (elSubDonasi) elSubDonasi.style.display = "none";
+    if (elValue) {
+      elValue.removeAttribute("data-raw-value");
+      elValue.innerHTML = '<span style="display:inline-flex; align-items:center; gap:5px; font-size: 12px; font-weight:700;">' +
+        '<span class="material-symbols-outlined" style="font-size:15px;">schedule</span> Data segera hadir</span>';
+    }
+    return;
+  }
 
   if (activeProgram === "sapa") {
     if (elLabel) elLabel.textContent = "Total Santunan Diperlukan PROGRAM SAPA";
