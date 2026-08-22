@@ -9826,15 +9826,35 @@ bootApp();
       window.navigator.standalone === true; // iOS Safari
   }
 
+  // 🩹 FIX: dulu markDismissed() nyimpen SATU macam penanda doang buat 2
+  // situasi beda -- "user pencet Nanti Saja" (postponed) DAN "app berhasil
+  // di-install" (installed) -- jadi kalau user UNINSTALL app terus buka lagi
+  // link-nya buat install ulang, popup gak nongol lagi sampai 7 hari
+  // (localStorage browser gak ikut kehapus pas uninstall app). Sekarang
+  // disimpan BEDA alasannya: kalau alasannya "installed" tapi app SEKARANG
+  // ternyata gak lagi standalone (artinya kemungkinan besar udah di-uninstall
+  // sejak terakhir kali), cooldown-nya di-reset otomatis -- popup muncul
+  // lagi TANPA perlu user hapus data browser manual. Kalau alasannya
+  // "postponed" (Nanti Saja), cooldown 7 hari tetap dihormati apa adanya
+  // (itu emang perilaku yang diharapkan, gak ada kaitan sama status install).
   function isDismissedRecently() {
     try {
-      var t = localStorage.getItem(STORAGE_KEY);
-      return t && (Date.now() - parseInt(t, 10)) < COOLDOWN_MS;
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      var data = JSON.parse(raw);
+      if (data.reason === "installed" && !isStandalone()) {
+        // App ditandai "sudah install" sebelumnya, tapi sekarang dibuka
+        // BUKAN dalam mode standalone -> app-nya kemungkinan besar udah
+        // di-uninstall dari HP. Reset, jangan hormati cooldown lagi.
+        localStorage.removeItem(STORAGE_KEY);
+        return false;
+      }
+      return (Date.now() - data.t) < COOLDOWN_MS;
     } catch (e) { return false; }
   }
 
-  function markDismissed() {
-    try { localStorage.setItem(STORAGE_KEY, String(Date.now())); } catch (e) {}
+  function markDismissed(reason) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ t: Date.now(), reason: reason || "postponed" })); } catch (e) {}
   }
 
   function isIOS() {
@@ -9862,7 +9882,7 @@ bootApp();
   }
 
   btnLater.addEventListener("click", function () {
-    markDismissed();
+    markDismissed("postponed");
     closePopup();
   });
 
@@ -9891,7 +9911,7 @@ bootApp();
   window.addEventListener("appinstalled", function () {
     if (pwaAppInstalledHandled) return;
     pwaAppInstalledHandled = true;
-    markDismissed();
+    markDismissed("installed");
     closePopup();
     showInstalledSuccessOverlay();
   });
