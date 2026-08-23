@@ -372,7 +372,7 @@
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
-    opacity: 0.85;
+    opacity: 0.5;
   }
   /* Keyframe ini masih dipakai .keuangan-hero-card::after (tab Keuangan) --
      JANGAN dihapus walau ring cahaya kartu Beranda di atas udah gak
@@ -382,10 +382,10 @@
      beberapa detik -- ngasih kesan permukaan "kaca premium" kena cahaya. */
   .summary-card .summary-sheen {
     position: absolute; inset: 0; z-index: 1; pointer-events: none;
-    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.10) 45%, rgba(255,255,255,0.16) 50%, rgba(255,255,255,0.10) 55%, transparent 70%);
+    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.06) 45%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0.06) 55%, transparent 70%);
     background-size: 220% 220%;
     background-position: 130% 130%;
-    animation: summarySheenSweep 5.5s ease-in-out infinite;
+    animation: summarySheenSweep 9s ease-in-out infinite;
     animation-delay: 1.2s;
   }
   @keyframes summarySheenSweep {
@@ -407,6 +407,28 @@
   .summary-icon .material-symbols-outlined { font-size: 14.5px; }
   .summary-label { font-size: 9.5px; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 3px; }
   .summary-value { font-size: 18.5px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; position: relative; z-index: 1; }
+
+  /* Progress bar "Donasi vs Kebutuhan" -- ringkasan visual satu baris
+     supaya gak perlu baca 3 angka terpisah & itung sendiri persentasenya.
+     Cuma tampil buat program yang punya data Total Donasi (GOPAY),
+     disembunyikan/di-hide bareng sub-row lewat renderSummaryCardBeranda_(). */
+  .summary-progress { margin-top: 10px; position: relative; z-index: 1; }
+  .summary-progress-track {
+    height: 5px; border-radius: 99px; overflow: hidden;
+    background: rgba(255,255,255,0.10);
+  }
+  .summary-progress-fill {
+    height: 100%; border-radius: 99px;
+    background: var(--bento-primary);
+    transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .summary-progress-fill.progress-urgent-low { background: #F87171; }
+  .summary-progress-meta {
+    margin-top: 5px; font-size: 9.5px; color: var(--text-secondary); font-weight: 600;
+    display: flex; justify-content: space-between; gap: 8px;
+  }
+  .summary-progress-meta b { color: var(--bento-primary); font-weight: 700; }
+
   .summary-sub-row {
     margin-top: 10px; padding-top: 9px;
     border-top: 1px solid var(--glass-border);
@@ -521,13 +543,13 @@
   }
   .summary-sub-value.value-kekurangan-urgent {
     color: #FCA5A5 !important;
-    font-size: 14.5px !important;
+    font-size: 13px !important;
     font-weight: 800 !important;
     animation: summaryUrgentTextGlow 1.6s ease-in-out infinite;
   }
   @keyframes summaryUrgentTextGlow {
     0%, 100% { text-shadow: 0 0 0 rgba(239, 68, 68, 0); }
-    50% { text-shadow: 0 0 10px rgba(239, 68, 68, 0.55); }
+    50% { text-shadow: 0 0 6px rgba(239, 68, 68, 0.4); }
   }
   .summary-kekurangan-badge {
     display: inline-flex; align-items: center; gap: 3px;
@@ -2410,6 +2432,16 @@
     </div>
     <div class="summary-value" id="summaryTotalSantunanDiperlukan">...</div>
 
+    <!-- Progress bar ringkasan "Donasi vs Kebutuhan" -- lihat CSS .summary-progress
+         & logic isi di renderSummaryCardBeranda_() (<script> bawah). -->
+    <div class="summary-progress" id="summaryProgressWrap" style="display:none;">
+      <div class="summary-progress-track"><div class="summary-progress-fill" id="summaryProgressFill" style="width:0%;"></div></div>
+      <div class="summary-progress-meta">
+        <span>Terkumpul <b id="summaryProgressPct">0%</b></span>
+        <span id="summaryProgressSisa"></span>
+      </div>
+    </div>
+
     <!-- Sub-row 1: Kekurangan Santunan (Total Santunan Diperlukan dikurangi
          Total Donasi yang udah terkumpul bulan ini) -- KHUSUS GOPAY, ikut
          disembunyikan otomatis kalau activeProgram = SAPA (belum ada
@@ -2417,7 +2449,7 @@
     <div class="summary-sub-row" id="summarySubRowKekurangan">
       <div class="summary-sub-icon" id="summaryKekuranganIconWrap"><span class="material-symbols-outlined" id="summaryKekuranganIcon" style="font-variation-settings:'FILL' 1;">money_off</span></div>
       <div class="summary-sub-text">
-        <div class="summary-sub-label"><span id="summaryLabelKekurangan">Kekurangan Santunan Program GOPAY</span><span class="summary-kekurangan-badge" id="summaryKekuranganBadge" style="display:none;"><span class="material-symbols-outlined" style="font-size:9px;">priority_high</span>Perlu Perhatian</span></div>
+        <div class="summary-sub-label"><span id="summaryLabelKekurangan">Kekurangan Santunan</span><span class="summary-kekurangan-badge" id="summaryKekuranganBadge" style="display:none;"><span class="material-symbols-outlined" style="font-size:9px;">priority_high</span>Perlu Perhatian</span></div>
         <div class="summary-sub-value" id="summaryKekuranganDonasi">...</div>
       </div>
     </div>
@@ -2430,7 +2462,7 @@
     <div class="summary-sub-row" id="summarySubRowDonasi">
       <div class="summary-sub-icon" style="background: rgba(var(--bento-primary-rgb),0.18); color: var(--bento-primary);"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">account_balance_wallet</span></div>
       <div class="summary-sub-text">
-        <div class="summary-sub-label" id="summaryLabelDonasi">Total Donasi Program GOPAY</div>
+        <div class="summary-sub-label" id="summaryLabelDonasi">Total Donasi</div>
         <div class="summary-sub-value" id="summaryTotalDonasi" style="color: var(--bento-primary);">...</div>
       </div>
     </div>
@@ -3852,6 +3884,7 @@ function renderSummaryCardBeranda_() {
   const elValue = document.getElementById("summaryTotalSantunanDiperlukan");
   const elSubKekurangan = document.getElementById("summarySubRowKekurangan");
   const elSubDonasi = document.getElementById("summarySubRowDonasi");
+  const elProgressWrap = document.getElementById("summaryProgressWrap");
 
   // 🩹 FIX: dulu kartu ini DIBIARKAN nampilin data program SEBELUMNYA
   // (mis. masih kelihatan angka SAPA) begitu user pindah ke program yang
@@ -3864,6 +3897,7 @@ function renderSummaryCardBeranda_() {
     if (elLabel) elLabel.textContent = "Total Santunan Diperlukan PROGRAM " + programAktif.label;
     if (elSubKekurangan) elSubKekurangan.style.display = "none";
     if (elSubDonasi) elSubDonasi.style.display = "none";
+    if (elProgressWrap) elProgressWrap.style.display = "none";
     if (elValue) {
       elValue.removeAttribute("data-raw-value");
       elValue.innerHTML = '<span style="display:inline-flex; align-items:center; gap:5px; font-size: 12px; font-weight:700;">' +
@@ -3876,6 +3910,7 @@ function renderSummaryCardBeranda_() {
     if (elLabel) elLabel.textContent = "Total Santunan Diperlukan PROGRAM SAPA";
     if (elSubKekurangan) elSubKekurangan.style.display = "none";
     if (elSubDonasi) elSubDonasi.style.display = "none";
+    if (elProgressWrap) elProgressWrap.style.display = "none";
     const d = berandaStatsCache.santunanSapa;
     if (elValue) {
       if (d) animateRupiahValue_(elValue, d.totalSantunanDiperlukan);
@@ -3891,18 +3926,24 @@ function renderSummaryCardBeranda_() {
 
   const elLabelKekurangan = document.getElementById("summaryLabelKekurangan");
   const elLabelDonasi = document.getElementById("summaryLabelDonasi");
-  if (elLabelKekurangan) elLabelKekurangan.textContent = "Kekurangan Santunan Program GOPAY";
-  if (elLabelDonasi) elLabelDonasi.textContent = "Total Donasi Program GOPAY";
+  // 🎨 Label sub-row sengaja gak ngulang "Program GOPAY" lagi -- nama
+  // program udah disebutkan sekali di label utama kartu di atasnya.
+  if (elLabelKekurangan) elLabelKekurangan.textContent = "Kekurangan Santunan";
+  if (elLabelDonasi) elLabelDonasi.textContent = "Total Donasi";
 
   const elKekurangan = document.getElementById("summaryKekuranganDonasi");
   const elKekuranganIconWrap = document.getElementById("summaryKekuranganIconWrap");
   const elKekuranganIcon = document.getElementById("summaryKekuranganIcon");
   const elKekuranganBadge = document.getElementById("summaryKekuranganBadge");
   const elTotalDonasi = document.getElementById("summaryTotalDonasi");
+  const elProgressFill = document.getElementById("summaryProgressFill");
+  const elProgressPct = document.getElementById("summaryProgressPct");
+  const elProgressSisa = document.getElementById("summaryProgressSisa");
 
   const d = berandaStatsCache.donasi;
   if (!d) {
     if (elValue) elValue.textContent = "...";
+    if (elProgressWrap) elProgressWrap.style.display = "none";
     return;
   }
 
@@ -3936,6 +3977,28 @@ function renderSummaryCardBeranda_() {
   }
 
   if (elTotalDonasi) animateRupiahValue_(elTotalDonasi, d.totalDonasi);
+
+  // 📊 Progress bar "Terkumpul X% dari kebutuhan" -- ringkasan visual
+  // satu baris pengganti "baca 3 angka & itung sendiri persentasenya".
+  // Cuma tampil kalau datanya udah ketemu (santunanDitemukan) & kebutuhan > 0.
+  if (elProgressWrap) {
+    if (!d.santunanDitemukan || !d.totalSantunanDiperlukan) {
+      elProgressWrap.style.display = "none";
+    } else {
+      elProgressWrap.style.display = "";
+      const pct = Math.max(0, Math.min(100, Math.round((d.totalDonasi / d.totalSantunanDiperlukan) * 100)));
+      if (elProgressFill) {
+        elProgressFill.style.width = pct + "%";
+        elProgressFill.classList.toggle("progress-urgent-low", pct < 50);
+      }
+      if (elProgressPct) elProgressPct.textContent = pct + "%";
+      if (elProgressSisa) {
+        elProgressSisa.textContent = d.kekuranganSantunan > 0
+          ? "Kurang " + formatRupiahHub(d.kekuranganSantunan)
+          : "Tercapai";
+      }
+    }
+  }
 }
 
 // Fungsi bantuan (Helper) untuk menyimpan ke memori HP
@@ -5102,7 +5165,7 @@ function renderContent() {
           <span class="aksi-kitabisa-label">Donasi<br>Kitabisa.com</span>
         </div>
         <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="openAppUrl('https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/?embed=1&tab=input-kotak')">
-          <div class="aksi-cepat-icon aksi-kotak-icon"><span class="material-symbols-outlined">savings</span></div>
+          <div class="aksi-cepat-icon aksi-kotak-icon"><span class="material-symbols-outlined">inventory_2</span></div>
           <span style="font-size: 10.5px; color: var(--text-secondary);">Kotak Gopay</span>
         </div>
         <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="openAppUrl('https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/?embed=1&tab=input-donasi')">
