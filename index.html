@@ -3546,8 +3546,8 @@ function togglePasswordVisibility(inputId, btn) {
 
 function initAuth() {
   return new Promise(function (resolve) {
-    const savedToken = sessionStorage.getItem("yassa_token");
-    const savedUser = sessionStorage.getItem("yassa_user");
+    const savedToken = localStorage.getItem("yassa_token");
+    const savedUser = localStorage.getItem("yassa_user");
     if (!savedToken || !savedUser) {
       showLoginScreen();
       resolve();
@@ -3559,12 +3559,12 @@ function initAuth() {
     callGASWithRetry_("checkSession", [authToken])
       .then(function (session) {
         currentUser = session;
-        sessionStorage.setItem("yassa_user", JSON.stringify(currentUser));
+        localStorage.setItem("yassa_user", JSON.stringify(currentUser));
         showApp();
       })
       .catch(function () {
-        sessionStorage.removeItem("yassa_token");
-        sessionStorage.removeItem("yassa_user");
+        localStorage.removeItem("yassa_token");
+        localStorage.removeItem("yassa_user");
         showLoginScreen();
       })
       .finally(function () { resolve(); });
@@ -3585,7 +3585,7 @@ function showApp() {
   document.getElementById("greetRole").textContent = "Selamat datang,";
 
   // Jabatan & Wilayah ditampilkan di bawah nama (dipisah titik kalau dua-duanya ada).
-  const jabatanTxt = currentUser.jabatan || roleLabel(currentUser.role);
+  const jabatanTxt = currentUser.jabatan || "";
   const wilayahTxt = String(currentUser.wilayahAkses || "").toUpperCase() === "ALL"
     ? "Semua Wilayah"
     : (currentUser.wilayahAkses || "");
@@ -3740,8 +3740,8 @@ function onLoginSuccess(res) {
     // apa adanya, bukan nyusun ulang field satu-satu kayak di sini.
     aksesMenu: res.aksesMenu || null,
   };
-  sessionStorage.setItem("yassa_token", authToken);
-  sessionStorage.setItem("yassa_user", JSON.stringify(currentUser));
+  localStorage.setItem("yassa_token", authToken);
+  localStorage.setItem("yassa_user", JSON.stringify(currentUser));
   document.getElementById("loginForm").reset();
 
   // Splash "Bismillah" nutupin layar 30 detik selagi showApp()/render()
@@ -3807,8 +3807,8 @@ function submitForceChangePassword(event) {
 
 function doLogout() {
   callGASWithRetry_("logoutSession", [authToken]).catch(function () {});
-  sessionStorage.removeItem("yassa_token");
-  sessionStorage.removeItem("yassa_user");
+  localStorage.removeItem("yassa_token");
+  localStorage.removeItem("yassa_user");
   authToken = null;
   currentUser = null;
   resetOverlayIframe();
@@ -5534,7 +5534,7 @@ function renderContent() {
           </div>
           <div style="flex: 1;">
             <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 2px;">Jabatan</div>
-            <div style="font-size: 14px; font-weight: 500;">${escapeHtmlHub(currentUser.jabatan || roleLabel(currentUser.role))}</div>
+            <div style="font-size: 14px; font-weight: 500;">${escapeHtmlHub(currentUser.jabatan || "-")}</div>
           </div>
         </div>
         <div class="profil-info-row" style="display: flex; align-items: center; gap: 12px; padding: 15px 16px;">
@@ -7968,7 +7968,7 @@ function showProfileQR() {
   try {
     const nama = currentUser.nama || "Pengurus";
     const telp = currentUser.username || ""; 
-    const jabatan = currentUser.jabatan || roleLabel(currentUser.role);
+    const jabatan = currentUser.jabatan || "";
     const wilayah = String(currentUser.wilayahAkses || "").toUpperCase() === "ALL" 
       ? "Semua Wilayah" 
       : (currentUser.wilayahAkses || "-");
@@ -8151,7 +8151,7 @@ function pengurusCardHtml(u) {
   const badgeWilayah = String(u.wilayahAkses || "").trim().toUpperCase() === "ALL"
     ? "SEMUA"
     : String(u.wilayahAkses || "-").split(",")[0].trim();
-  const jabatanTxt = u.jabatan || roleLabel(u.role);
+  const jabatanTxt = u.jabatan || "-";
   // Baris badge %Kehadiran/%Donasi CUMA muncul kalau datanya ada di objek
   // u (artinya yang buka halaman ini SUPERADMIN/ADMIN -- lihat
   // handleUserMenuClick('pengurus')). Role lain gak minta data ini sama
@@ -8984,7 +8984,7 @@ function uploadFoto(input) {
     callGAS("uploadProfilePhoto", [authToken, base64Data, mimeType])
       .then(function(res) {
         currentUser.fotoUrl = res.fotoUrl;
-        sessionStorage.setItem("yassa_user", JSON.stringify(currentUser));
+        localStorage.setItem("yassa_user", JSON.stringify(currentUser));
 
         // Update semua tempat foto profil ditampilkan biar langsung sinkron.
         const avatarImg = document.querySelector("#akunContent .profile-avatar");
