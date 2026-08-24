@@ -2402,9 +2402,9 @@
           </svg>
         </button>
         <div>
-          <div class="header-greet-sub" id="greetRole">Selamat datang,</div>
           <div class="header-greet-name" id="greetName">Pengurus YASSA</div>
-          <div class="header-greet-meta" id="greetMeta"></div>
+          <div class="header-greet-meta" id="greetJabatan"></div>
+          <div class="header-greet-meta" id="greetWilayah"></div>
         </div>
       </div>
       <div style="display:flex; align-items:center; gap:10px;">
@@ -3582,14 +3582,14 @@ function showApp() {
   document.getElementById("loginScreen").style.display = "none";
   document.getElementById("app").style.display = "flex";
   document.getElementById("greetName").textContent = currentUser.nama || currentUser.username || currentUser.email;
-  document.getElementById("greetRole").textContent = "Selamat datang,";
 
-  // Jabatan & Wilayah ditampilkan di bawah nama (dipisah titik kalau dua-duanya ada).
+  // Jabatan & Wilayah ditampilkan masing-masing di baris sendiri di bawah nama.
   const jabatanTxt = currentUser.jabatan || "";
   const wilayahTxt = String(currentUser.wilayahAkses || "").toUpperCase() === "ALL"
     ? "Semua Wilayah"
     : (currentUser.wilayahAkses || "");
-  document.getElementById("greetMeta").textContent = [jabatanTxt, wilayahTxt].filter(Boolean).join(" • ");
+  document.getElementById("greetJabatan").textContent = jabatanTxt;
+  document.getElementById("greetWilayah").textContent = wilayahTxt;
 
   updateHeaderAvatar();
 
