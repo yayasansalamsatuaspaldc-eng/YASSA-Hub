@@ -248,6 +248,37 @@
       flex-direction: column;
       min-width: 0;
     }
+    /* Tab Beranda: selector "PILIH PROGRAM YASSA", panel program aktif
+       (ringkasan Anak/Wilayah/Pengurus + Data Anak Yatim), dan blok "Aksi
+       Cepat Donasi" dipaksa jadi SATU .beranda-top-section full-width
+       (grid-column: 1/-1) -- sebelumnya tiap elemen ini top-level sendiri2
+       jadi ikut kepecah oleh grid auto-fill (bahkan judul "Aksi Cepat
+       Donasi" sempat kepisah dari baris ikonnya sendiri). Kartu "Aktivitas
+       Hari Ini", "Agenda Mendatang", "Aktivitas Terbaru" TETAP dibiarkan
+       sebagai item terpisah supaya boleh sejajar berdampingan di laptop. */
+    .beranda-top-section {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    /* Tab Keuangan: header judul, tombol Laporan Bulanan, dan label "Laporan
+       Keuangan Program GOPAY Wilayah" dipaksa .keuangan-header-section
+       full-width (grid-column: 1/-1) supaya gak ikut kepecah jadi kolom
+       sendiri-sendiri oleh grid auto-fill -- tetap 1 baris utuh di atas,
+       baru 2 kartu (Jumlah Anak & Santunan / Realisasi Lapangan) di
+       bawahnya boleh sejajar berdampingan mengisi kolom yang tersisa. */
+    .keuangan-header-section {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    /* Tab App: header "Semua Aplikasi" dipaksa full-width sama seperti
+       Keuangan. appGridContainer juga dipaksa full-width, tapi kolom
+       tetapnya (repeat(2,1fr)) diganti auto-fill kartu kecil supaya gak
+       jadi 2 kartu raksasa yang renggang di layar lebar. */
+    #appGridContainer {
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+    }
     /* Tambahan width: 100% agar header tidak menyusut (squished) ke tengah layar */
     .header, .summary-card { width: 100%; max-width: 1360px; margin-left: auto; margin-right: auto; }
     .summary-card { margin-top: -30px; }
@@ -5064,6 +5095,7 @@ function renderContent() {
 
   if (active === "beranda") {
     let html = `
+      <div class="beranda-top-section" style="grid-column: 1 / -1;">
       ${renderProgramSelectorHtml_()}
 
       <!-- Panel Program GO-PAY (satu-satunya yang punya data LIVE sekarang) --
@@ -5175,6 +5207,7 @@ function renderContent() {
         .join("")}
 
       <!-- Aksi Cepat Menu Bawah -->
+      <div>
       <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Aksi Cepat Donasi</h3>
       <div class="aksi-cepat-row" style="display: flex; justify-content: space-between; margin-bottom: 24px;">
         <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="window.open('https://kitabisa.com/campaign/gojekbantuyatim', '_blank')">
@@ -5198,6 +5231,9 @@ function renderContent() {
           <span style="font-size: 10.5px; color: var(--text-secondary);">QR Code</span>
         </div>
       </div>
+      </div>
+      </div>
+      <!-- /beranda-top-section -->
 
       <div style="background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid var(--neon-cyan);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
@@ -5281,6 +5317,7 @@ function renderContent() {
     }
 
     let html = `
+      <div class="app-header-section" style="grid-column: 1 / -1;">
       <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px; padding-top:16px;">
         <div style="width:40px; height:40px; border-radius:12px; background:rgba(var(--bento-primary-rgb),0.15); color:var(--bento-primary); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
           <span class="material-symbols-outlined" style="font-size:22px; font-variation-settings:'FILL' 1;">apps</span>
@@ -5291,7 +5328,8 @@ function renderContent() {
         </div>
       </div>
       <div style="height:1px; background:linear-gradient(90deg, var(--glass-border-strong), transparent); margin: 16px 0 24px;"></div>
-      <div id="appGridContainer" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+      </div>
+      <div id="appGridContainer" style="grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
     `;
 
     const APP_CARDS = [
@@ -5342,6 +5380,7 @@ function renderContent() {
     // user login) vs NASIONAL (1 angka gabungan sama ke semua user).
     const badgeWilayah = `<span style="font-size: 9px; font-weight: 700; letter-spacing: 0.3px; padding: 2px 7px; border-radius: 99px; background: rgba(var(--bento-primary-rgb),0.15); color: var(--bento-primary); margin-left: 6px; vertical-align: middle;">PER WILAYAH</span>`;
     let html = `
+      <div class="keuangan-header-section" style="grid-column: 1 / -1;">
       <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px; padding-top:16px;">
         <div style="width:40px; height:40px; border-radius:12px; background:rgba(var(--bento-primary-rgb),0.15); color:var(--bento-primary); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
           <span class="material-symbols-outlined" style="font-size:22px; font-variation-settings:'FILL' 1;">payments</span>
@@ -5387,6 +5426,7 @@ function renderContent() {
         <div style="background: var(--glass-strong); padding: 5px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; color: var(--text-primary); border: 1px solid var(--glass-border);">
           ${escapeHtmlHub(wilayahText)}
         </div>
+      </div>
       </div>
 
       <!-- 1. Jumlah Anak Yatim + Total Santunan (per wilayah -- jumlah anak dari
