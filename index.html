@@ -218,18 +218,25 @@
        Keuangan, dll) otomatis ikut melebar tanpa perlu tulis ulang tiap
        render function satu-satu -- tiap kartu top-level di .content jadi
        "potongan" yang mengalir mengisi kolom yang tersedia. */
+    /* 🩹 FIX: sebelumnya pakai CSS "columns" (multi-column). Masalahnya,
+       columns punya default column-fill:balance -- begitu tinggi konten
+       melebihi tinggi #app, browser bikin KOLOM BARU ke arah SAMPING
+       (bukan menambah tinggi ke bawah), jadi kartu-kartu di ujung malah
+       terpotong horizontal oleh overflow:hidden #app dan gak bisa
+       dijangkau scroll vertikal sama sekali. Ganti ke CSS Grid
+       (auto-fill) yang perilakunya tetap flow mengisi kolom yang
+       tersedia tapi elemen SELALU bertambah ke BAWAH (baris baru),
+       sehingga overflow-y:auto di .content beneran jalan. */
     .content {
-      column-width: 380px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      grid-auto-rows: min-content;
+      align-content: start;
       column-gap: 20px;
+      row-gap: 0;
     }
     .content > * {
-      break-inside: avoid;
-      -webkit-column-break-inside: avoid;
-    }
-    /* Tambahan agar judul (h2/h3) tidak terpisah dari konten di bawahnya saat masuk kolom baru */
-    .content h2, .content h3, .content .section-title {
-      break-after: avoid;
-      -webkit-column-break-after: avoid;
+      min-width: 0;
     }
     /* Tambahan width: 100% agar header tidak menyusut (squished) ke tengah layar */
     .header, .summary-card { width: 100%; max-width: 1360px; margin-left: auto; margin-right: auto; }
