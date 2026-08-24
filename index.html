@@ -238,6 +238,16 @@
     .content > * {
       min-width: 0;
     }
+    /* Tab Profil: judul "Dedikasi" dan "Tim & Organisasi" dibungkus jadi satu
+       section (.profil-dedikasi-section / .profil-tim-section) supaya
+       masing-masing jadi SATU grid-item utuh (judul + kartunya nempel),
+       bukan kepisah jadi kolom sendiri-sendiri oleh grid auto-fill di atas. */
+    .profil-dedikasi-section,
+    .profil-tim-section {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
     /* Tambahan width: 100% agar header tidak menyusut (squished) ke tengah layar */
     .header, .summary-card { width: 100%; max-width: 1360px; margin-left: auto; margin-right: auto; }
     .summary-card { margin-top: -30px; }
@@ -5572,6 +5582,7 @@ function renderContent() {
       </button>
       ` : ``}
 
+      <div class="profil-dedikasi-section">
       <h3 style="font-weight: 600; font-size: 14px; margin-bottom: 12px; padding: 0 4px;">Dedikasi</h3>
       <div id="profilDedikasiTourTarget" style="background: var(--glass-strong); border-radius: 20px; padding: 18px; margin-bottom: 24px; border: 1px solid var(--glass-border); border-left: 4px solid #F97316; display: flex; flex-direction: column; gap: 20px;">
         <div>
@@ -5607,7 +5618,9 @@ function renderContent() {
           <div id="profilPerformaDonasiKeterangan" style="font-size: 10.5px; color: var(--text-muted); margin-top: 6px;">Memuat data donasi...</div>
         </div>
       </div>
+      </div>
 
+      <div class="profil-tim-section">
       <h3 style="font-weight: 600; font-size: 14px; margin-bottom: 12px; padding: 0 4px;">Tim & Organisasi</h3>
       <div style="background: var(--glass-strong); border-radius: 20px; display: flex; flex-direction: column; border: 1px solid var(--glass-border); border-left: 4px solid #A855F7; overflow: hidden; margin-bottom: 20px;">
         <div style="display: flex; align-items: center; gap: 12px; padding: 15px 16px; cursor: pointer;" onclick="handleUserMenuClick('pengurus')">
@@ -5632,6 +5645,7 @@ function renderContent() {
             <div style="font-size: 10px; color: var(--text-secondary);">Kembali ke halaman login</div>
           </div>
         </div>
+      </div>
       </div>
     `;
     el.innerHTML = html;
