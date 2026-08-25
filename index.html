@@ -3016,6 +3016,44 @@
     </div>
   </div>
 
+  <!-- Form Upload Laporan Bulanan (Khusus Admin/Superadmin) -->
+  <div class="user-form-overlay" id="uploadLaporanOverlay" onclick="if(event.target===this) closeUploadLaporanModal()" style="align-items: flex-end;">
+    <div class="user-form-sheet" style="padding-bottom: 40px; border-radius: 24px 24px 0 0;">
+      <div style="width: 48px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 4px; margin: 0 auto 16px;"></div>
+      <h3 style="text-align: center; font-size: 16px; font-weight: 700; margin-bottom: 4px;" id="uploadLaporanTitle">Upload Laporan</h3>
+      <p style="text-align: center; font-size: 11.5px; color: var(--text-secondary); margin: 0 0 16px;">Pilih file PDF (Maks 5MB) atau copy paste Link Drive</p>
+
+      <form id="uploadLaporanForm" onsubmit="submitUploadLaporan(event)">
+        <input type="hidden" id="ulBulan">
+        <input type="hidden" id="ulTahun">
+        
+        <div style="display:flex; gap: 10px; margin-bottom: 16px;">
+          <label style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; font-size: 12.5px; cursor:pointer;">
+            <input type="radio" name="ulMetode" value="file" checked onchange="toggleUploadMetode()"> Upload File PDF
+          </label>
+          <label style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; font-size: 12.5px; cursor:pointer;">
+            <input type="radio" name="ulMetode" value="link" onchange="toggleUploadMetode()"> Paste Link
+          </label>
+        </div>
+
+        <div id="ulContainerFile" style="margin-bottom: 16px;">
+          <label style="font-size: 11.5px; color: var(--text-secondary); margin-bottom: 4px; display: block;">Pilih File PDF</label>
+          <input type="file" id="ulFile" accept="application/pdf" style="width: 100%; background: var(--glass-strong); border: 1px solid var(--glass-border); border-radius: 10px; padding: 12px; color: var(--text-primary); font-size: 13.5px; box-sizing: border-box;">
+        </div>
+
+        <div id="ulContainerLink" style="margin-bottom: 16px; display: none;">
+          <label style="font-size: 11.5px; color: var(--text-secondary); margin-bottom: 4px; display: block;">Paste Link (Drive / Web)</label>
+          <input type="url" id="ulLink" placeholder="https://drive.google.com/..." style="width: 100%; background: var(--glass-strong); border: 1px solid var(--glass-border); border-radius: 10px; padding: 12px; color: var(--text-primary); font-size: 13.5px; box-sizing: border-box;">
+        </div>
+
+        <div id="uploadLaporanError" style="display: none; color: #F87171; font-size: 12px; margin-bottom: 12px; text-align: center;"></div>
+
+        <button type="submit" id="ulSubmitBtn" style="width: 100%; padding: 14px; background: var(--bento-primary); border-radius: 12px; font-size: 14px; font-weight: 700; color: #052e16; border: none; cursor: pointer; margin-bottom: 10px;">Simpan Laporan</button>
+        <button type="button" style="width: 100%; padding: 14px; background: var(--glass); border-radius: 12px; font-size: 14px; font-weight: 600; color: var(--text-primary); border: 1px solid var(--glass-border); cursor: pointer;" onclick="closeUploadLaporanModal()">Batal</button>
+      </form>
+    </div>
+  </div>
+
 
 </div>
 
@@ -6055,6 +6093,7 @@ let laporanBulananDetailCache = {}; // key "bulan-tahun" -> hasil getLaporanBula
 let laporanBulananBulanTerbuka = null; // bulan yang accordion-nya lagi kebuka, null kalau semua tertutup
 let laporanBulananBisaUnduh = false; // diisi dari flag "bisaUnduh" balikan server (SUPERADMIN/ADMIN aja) -- dipakai buat nampilin/nyembunyiin tombol "Unduh"
 let laporanBulananBisaLihat = false; // diisi dari flag "bisaLihat" balikan server (SUPERADMIN/ADMIN aja) -- PDF laporan ada nomor rekening, jadi "Lihat" (preview) DIKUNCI juga buat role lain, bukan cuma "Unduh"
+let laporanBulananBisaUpload = false; // Flag untuk mendeteksi apakah role adalah Superadmin/Admin agar bisa upload laporan baru
 
 // Buka viewer PDF laporan bulanan (iframe, TANPA download paksa) + siapin
 // tombol "Unduh" di header viewer buat yang emang mau simpan filenya.
@@ -6112,14 +6151,10 @@ function renderLaporanBulananList(data) {
   const el = document.getElementById("laporanBulananContent");
   laporanBulananDetailCache = {}; // ganti tahun -> cache lama gak relevan lagi
   const tahun = data.tahun;
-  // "Lihat PDF" (preview) DAN "Unduh" dua-duanya cuma buat SUPERADMIN/ADMIN
-  // -- PDF laporan ada nomor rekening, jadi role lain gak boleh buka
-  // sama sekali (bukan cuma dikunci di tombol Unduh doang). Server juga
-  // udah gak ngirim linkPreviewPdf/linkUnduhPdf kalau bukan admin (lihat
-  // getLaporanBulananList di server), jadi ini murni buat nentuin
-  // tampilan UI-nya aja.
+  // UPDATE: Lihat dan Unduh bisa diakses oleh KORWIL, PENGURUS, ADMIN, SUPERADMIN
   laporanBulananBisaLihat = !!data.bisaLihat;
   laporanBulananBisaUnduh = !!data.bisaUnduh;
+  laporanBulananBisaUpload = !!data.bisaUpload; // Khusus ADMIN & SUPERADMIN
 
   let html = `
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 18px;">
@@ -6161,17 +6196,34 @@ function renderLaporanBulananList(data) {
           <a href="${escapeHtmlHub(b.linkUnduhPdf)}" target="_blank" rel="noopener" style="flex:1; display:flex; align-items:center; justify-content:center; gap: 6px; font-size: 11px; font-weight: 700; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-primary); text-decoration:none;">
             <span class="material-symbols-outlined" style="font-size: 15px;">download</span> Unduh
           </a>` : ''}
+          ${laporanBulananBisaUpload ? `
+          <button type="button" onclick="event.stopPropagation(); openUploadLaporanModal(${b.bulan}, ${tahun}, '${b.namaBulan}')" style="flex:1; display:flex; align-items:center; justify-content:center; gap: 6px; font-size: 11px; font-weight: 700; padding: 8px 10px; border-radius: 10px; background: rgba(59,130,246,0.14); border: 1px solid rgba(59,130,246,0.3); color: #93C5FD; cursor:pointer;">
+            <span class="material-symbols-outlined" style="font-size: 15px;">upload_file</span> Ganti
+          </button>` : ''}
         </div>` : `
-        <div title="Laporan ada, tapi cuma Superadmin/Admin yang boleh buka (isinya ada nomor rekening)." style="margin: 0 16px 14px; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.04); border: 1px dashed var(--glass-border);">
-          <div style="display:flex; align-items:center; gap: 5px; margin-bottom: 4px;">
-            <span class="material-symbols-outlined" style="font-size: 12px; color: var(--text-muted); flex-shrink:0;">cloud</span>
-            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.3px; color: var(--text-muted); text-transform: uppercase;">Tersimpan di Cloud</span>
+        <div title="Laporan ada, tapi cuma yang berwenang yang boleh buka." style="margin: 0 16px 14px; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.04); border: 1px dashed var(--glass-border);">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div>
+              <div style="display:flex; align-items:center; gap: 5px; margin-bottom: 4px;">
+                <span class="material-symbols-outlined" style="font-size: 12px; color: var(--text-muted); flex-shrink:0;">cloud</span>
+                <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.3px; color: var(--text-muted); text-transform: uppercase;">Tersimpan di Cloud</span>
+              </div>
+              <div style="display:flex; align-items:center; gap: 7px;">
+                <span class="material-symbols-outlined" style="font-size: 15px; color: var(--text-muted); flex-shrink:0;">lock</span>
+                <span style="font-size: 10px; color: var(--text-muted); font-family: monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; user-select:none;">${escapeHtmlHub(b.linkUnduhPdfSensor || 'laporan••••••••••.pdf')}</span>
+              </div>
+            </div>
+            ${laporanBulananBisaUpload ? `
+            <button type="button" onclick="event.stopPropagation(); openUploadLaporanModal(${b.bulan}, ${tahun}, '${b.namaBulan}')" style="display:flex; align-items:center; justify-content:center; gap: 4px; font-size: 10px; font-weight: 700; padding: 6px 10px; border-radius: 8px; background: rgba(59,130,246,0.14); border: 1px solid rgba(59,130,246,0.3); color: #93C5FD; cursor:pointer;">
+              Ganti
+            </button>` : ''}
           </div>
-          <div style="display:flex; align-items:center; gap: 7px;">
-            <span class="material-symbols-outlined" style="font-size: 15px; color: var(--text-muted); flex-shrink:0;">lock</span>
-            <span style="font-size: 10px; color: var(--text-muted); font-family: monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; user-select:none;">${escapeHtmlHub(b.linkUnduhPdfSensor || 'laporan••••••••••.pdf')}</span>
-          </div>
-        </div>`) : ''}
+        </div>`) : (laporanBulananBisaUpload ? `
+        <div style="display:flex; padding: 0 16px 14px;">
+          <button type="button" onclick="event.stopPropagation(); openUploadLaporanModal(${b.bulan}, ${tahun}, '${b.namaBulan}')" style="width: 100%; display:flex; align-items:center; justify-content:center; gap: 6px; font-size: 11px; font-weight: 700; padding: 8px 10px; border-radius: 10px; background: rgba(59,130,246,0.14); border: 1px solid rgba(59,130,246,0.3); color: #93C5FD; cursor:pointer;">
+            <span class="material-symbols-outlined" style="font-size: 15px;">upload_file</span> Upload Laporan PDF
+          </button>
+        </div>` : '')}
         <div id="laporanDetail-${b.bulan}-${b.tahun}" style="display:none; padding: 0 16px 16px;"></div>
       </div>`;
   });
@@ -6293,6 +6345,127 @@ function renderLaporanBulananDetail(wrap, d) {
   wrap.innerHTML = html;
 }
 
+// ============================================================
+// FUNGSI JAVASCRIPT UNTUK MODAL UPLOAD LAPORAN
+// ============================================================
+function openUploadLaporanModal(bulan, tahun, namaBulan) {
+  document.getElementById('uploadLaporanTitle').textContent = "Upload Laporan " + namaBulan + " " + tahun;
+  document.getElementById('ulBulan').value = bulan;
+  document.getElementById('ulTahun').value = tahun;
+  document.getElementById('ulFile').value = '';
+  document.getElementById('ulLink').value = '';
+  document.getElementById('uploadLaporanError').style.display = 'none';
+  document.getElementById('uploadLaporanOverlay').classList.add('open');
+}
+
+function closeUploadLaporanModal() {
+  document.getElementById('uploadLaporanOverlay').classList.remove('open');
+}
+
+function toggleUploadMetode() {
+  const metodeRadio = document.querySelector('input[name="ulMetode"]:checked');
+  if (!metodeRadio) return;
+  const metode = metodeRadio.value;
+  
+  if (metode === 'file') {
+    document.getElementById('ulContainerFile').style.display = 'block';
+    document.getElementById('ulContainerLink').style.display = 'none';
+  } else {
+    document.getElementById('ulContainerFile').style.display = 'none';
+    document.getElementById('ulContainerLink').style.display = 'block';
+  }
+}
+
+function submitUploadLaporan(event) {
+  event.preventDefault();
+  const errEl = document.getElementById('uploadLaporanError');
+  errEl.style.display = 'none';
+  
+  const bulan = document.getElementById('ulBulan').value;
+  const tahun = document.getElementById('ulTahun').value;
+  const metode = document.querySelector('input[name="ulMetode"]:checked').value;
+  const btn = document.getElementById('ulSubmitBtn');
+
+  let payload = {
+    bulan: bulan,
+    tahun: tahun,
+    isFile: metode === 'file'
+  };
+
+  if (metode === 'file') {
+    const fileInput = document.getElementById('ulFile');
+    if (!fileInput.files || !fileInput.files.length) {
+      errEl.textContent = "Silakan pilih file PDF terlebih dahulu.";
+      errEl.style.display = 'block';
+      return;
+    }
+    const file = fileInput.files[0];
+    if (file.size > 5 * 1024 * 1024) { // Max 5MB
+      errEl.textContent = "Ukuran file maksimal 5MB.";
+      errEl.style.display = 'block';
+      return;
+    }
+    
+    btn.disabled = true;
+    btn.textContent = "Membaca file...";
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const rawBase64 = e.target.result.split(',')[1];
+        payload.base64Data = rawBase64;
+        payload.mimeType = file.type;
+        kirimUploadLaporanToServer(payload, btn, errEl);
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = "Simpan Laporan";
+        errEl.textContent = "Gagal memproses file.";
+        errEl.style.display = 'block';
+      }
+    };
+    reader.onerror = function() {
+      btn.disabled = false;
+      btn.textContent = "Simpan Laporan";
+      errEl.textContent = "Gagal membaca file.";
+      errEl.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+
+  } else {
+    const linkInput = document.getElementById('ulLink').value.trim();
+    if (!linkInput) {
+      errEl.textContent = "Silakan paste link terlebih dahulu.";
+      errEl.style.display = 'block';
+      return;
+    }
+    payload.linkUrl = linkInput;
+    kirimUploadLaporanToServer(payload, btn, errEl);
+  }
+}
+
+function kirimUploadLaporanToServer(payload, btn, errEl) {
+  btn.disabled = true;
+  btn.textContent = "Menyimpan ke Drive...";
+  
+  // Timeout 30 detik agar unggah file tak terpotong terlalu cepat
+  callGASWithRetry_("simpanLaporanBulananPdf", [authToken, payload], { timeoutMs: 30000 })
+    .then(function(res) {
+      closeUploadLaporanModal();
+      showModal("Sukses", res.message || "Laporan berhasil disimpan.");
+      // Refresh list laporan secara otomatis
+      if (laporanBulananTahunAktif) {
+        loadLaporanBulananList(laporanBulananTahunAktif);
+      }
+    })
+    .catch(function(err) {
+      errEl.textContent = err.message || "Terjadi kesalahan saat menyimpan laporan.";
+      errEl.style.display = 'block';
+    })
+    .finally(function() {
+      btn.disabled = false;
+      btn.textContent = "Simpan Laporan";
+    });
+}
 // ============================================================
 // 👶 DATA ANAK YATIM (Program Gopay) -- halaman penuh yang dibuka dari
 // tombol di tab Keuangan. Tabel ringkasan SEMUA wilayah (KK, Yatim, Yatim
