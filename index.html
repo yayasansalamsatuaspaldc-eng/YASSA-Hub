@@ -3142,7 +3142,7 @@ function aksesMenuListUntuk(appKey) {
 // peringatan kuning nempel di atas iframe-nya selama app itu dibuka
 // (bukan cuma di card pemilihan app). Tinggal tambah/hapus key di sini
 // kalau status app lain berubah, gak perlu ubah logika lain.
-const OVERLAY_DEV_NOTICE_APPS = ["bukubesar"];
+const OVERLAY_DEV_NOTICE_APPS = ["bukubesar", "donasi"];
 
 function toggleOverlayDevNotice_(appKey) {
   const el = document.getElementById("overlayDevNotice");
@@ -5334,7 +5334,7 @@ function renderContent() {
 
     const APP_CARDS = [
       { key: "mobile", grad: "linear-gradient(135deg, #34D399 0%, #059669 100%)", glow: "rgba(16,185,129,0.35)", icon: "smartphone", title: "YASSA Mobile", desc: "Data Base<br>YASSA" },
-      { key: "donasi", grad: "linear-gradient(135deg, #4ADE80 0%, #15803D 100%)", glow: "rgba(34,197,94,0.35)", icon: "box", title: "Kotak & Donasi", desc: "Kelola kotak<br>dan donasi" },
+      { key: "donasi", grad: "linear-gradient(135deg, #4ADE80 0%, #15803D 100%)", glow: "rgba(34,197,94,0.35)", icon: "box", title: "Kotak & Donasi", desc: "Kelola kotak<br>dan donasi", notice: "Masih Tahap Pengembangan, Data mungkin tidak Akurat" },
       { key: "absensi", grad: "linear-gradient(135deg, #60A5FA 0%, #1D4ED8 100%)", glow: "rgba(59,130,246,0.35)", icon: "assignment", title: "Kehadiran", desc: "Catat kehadiran<br>kegiatan" },
       { key: "awg", grad: "linear-gradient(135deg, #E879F9 0%, #7E22CE 100%)", glow: "rgba(168,85,247,0.35)", icon: "favorite", title: "AWG", desc: "Ahli Waris<br>Akun" },
       { key: "pm", grad: "linear-gradient(135deg, #FCD34D 0%, #D97706 100%)", glow: "rgba(251,191,36,0.35)", icon: "group", title: "Penerima Manfaat", desc: "Data penerima<br>manfaat" },
