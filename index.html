@@ -3016,6 +3016,38 @@
     </div>
   </div>
 
+  <!-- Form Upload Laporan Wilayah -->
+  <div class="user-form-overlay" id="uploadLaporanWilayahOverlay" onclick="if(event.target===this) closeUploadLaporanWilayah()" style="align-items: flex-end;">
+    <div class="user-form-sheet" style="padding-bottom: 40px; border-radius: 24px 24px 0 0;">
+      <div style="width: 48px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 4px; margin: 0 auto 16px;"></div>
+      <div class="user-form-title">Upload Laporan Wilayah</div>
+      <form id="uploadLaporanWilayahForm" onsubmit="submitUploadLaporanWilayah(event)">
+        <input type="hidden" id="ulwRow">
+        <input type="hidden" id="ulwBulan">
+        <input type="hidden" id="ulwTahun">
+        
+        <div class="user-form-field">
+          <label class="user-form-label">Opsi 1: Paste Link PDF / Drive</label>
+          <input type="url" id="ulwLink" class="user-form-input" placeholder="https://drive.google.com/...">
+        </div>
+        
+        <div style="text-align:center; font-size:12px; color:var(--text-muted); margin: 10px 0;">ATAU</div>
+        
+        <div class="user-form-field">
+          <label class="user-form-label">Opsi 2: Upload File PDF / Foto</label>
+          <input type="file" id="ulwFile" class="user-form-input" accept=".pdf,image/*">
+          <div class="user-form-hint">Akan otomatis disimpan ke folder YASSA di Google Drive.</div>
+        </div>
+        
+        <div id="ulwError" style="color:#F87171; font-size:12px; margin-bottom:10px; display:none;"></div>
+        
+        <div class="user-form-actions">
+          <button type="button" class="btn-form-cancel" onclick="closeUploadLaporanWilayah()">Batal</button>
+          <button type="submit" class="btn-form-save" id="ulwSubmitBtn">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
 </div>
 
@@ -6247,8 +6279,6 @@ function renderLaporanBulananDetail(wrap, d) {
   // -- Pengeluaran --
   html += `<div style="font-size: 11px; font-weight: 700; color: #F87171; margin: 16px 0 8px;">PENGELUARAN SANTUNAN &middot; ${formatRupiahHub(d.pengeluaran.total)}</div>`;
   if (d.pengeluaran.rincianWilayah.length) {
-    // Ringkasan kategori TOTAL semua wilayah (Yatim = total, Yatim Piatu &
-    // Disabilitas = subset dari situ, sama kayak kartu "Jumlah Anak & Santunan").
     html += `
       <div style="display:flex; gap:8px; margin-bottom: 10px;">
         <div style="flex:1; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); border-radius: 10px; padding: 8px 10px; text-align:center;">
@@ -6275,8 +6305,50 @@ function renderLaporanBulananDetail(wrap, d) {
           <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">
             ${r.jumlahAnakYatim} yatim (${r.jumlahYatimPiatu} yatim piatu, ${r.jumlahDisabilitas} disabilitas) &middot; cair ${escapeHtmlHub(r.tanggalPencairan || '-')}${r.telat ? ' (di luar bulan periode)' : ''}
             ${r.catatan ? ' &middot; ' + escapeHtmlHub(r.catatan) : ''}
-          </div>
-        </div>`;
+          </div>`;
+          
+      // Tambahkan tombol lihat PDF dan upload di tiap wilayah
+      const link = buatLinkPreviewDanUnduh_(r.linkPdf);
+      if (link.ada) {
+        if (d.bisaLihat) {
+          html += `
+          <div style="display:flex; gap: 8px; margin-top: 6px;">
+            <button type="button" onclick="event.stopPropagation(); openLaporanPdfViewer('${encodeURIComponent(link.preview)}', '${encodeURIComponent(link.unduh)}', '${encodeURIComponent('Laporan ' + r.wilayah)}')" style="flex:1; display:flex; align-items:center; justify-content:center; gap: 6px; font-size: 10px; font-weight: 700; padding: 6px 8px; border-radius: 8px; background: rgba(34,197,94,0.14); border: 1px solid rgba(34,197,94,0.3); color: #86EFAC; cursor:pointer;">
+              <span class="material-symbols-outlined" style="font-size: 14px;">visibility</span> Lihat PDF
+            </button>
+            <a href="${escapeHtmlHub(link.unduh)}" target="_blank" rel="noopener" style="flex:1; display:flex; align-items:center; justify-content:center; gap: 6px; font-size: 10px; font-weight: 700; padding: 6px 8px; border-radius: 8px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-primary); text-decoration:none;">
+              <span class="material-symbols-outlined" style="font-size: 14px;">download</span> Unduh
+            </a>`;
+          
+          if (d.bisaUpload) {
+            html += `
+            <button type="button" onclick="openUploadLaporanWilayah(${r.row}, '${escapeHtmlHub(r.wilayah)}', ${d.bulan}, ${d.tahun})" style="display:flex; align-items:center; justify-content:center; width:28px; border-radius:8px; background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); color: #93C5FD; cursor:pointer;" title="Edit Link/File">
+              <span class="material-symbols-outlined" style="font-size: 14px;">edit</span>
+            </button>`;
+          }
+          
+          html += `</div>`;
+        } else {
+          html += `
+          <div title="Laporan ada, tapi cuma Superadmin/Admin/Pengurus/Korwil yang boleh buka." style="margin-top: 6px; padding: 6px 8px; border-radius: 8px; background: rgba(255,255,255,0.04); border: 1px dashed var(--glass-border);">
+            <div style="display:flex; align-items:center; gap: 5px;">
+              <span class="material-symbols-outlined" style="font-size: 12px; color: var(--text-muted); flex-shrink:0;">lock</span>
+              <span style="font-size: 9px; color: var(--text-muted); font-family: monospace;">Tersimpan di Cloud</span>
+            </div>
+          </div>`;
+        }
+      } else {
+        if (d.bisaUpload) {
+          html += `
+          <div style="margin-top: 6px;">
+            <button type="button" onclick="openUploadLaporanWilayah(${r.row}, '${escapeHtmlHub(r.wilayah)}', ${d.bulan}, ${d.tahun})" style="display:flex; align-items:center; gap: 6px; font-size: 10px; font-weight: 700; padding: 6px 10px; border-radius: 8px; background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); color: #93C5FD; cursor:pointer;">
+              <span class="material-symbols-outlined" style="font-size: 14px;">upload_file</span> Upload / Link PDF Laporan
+            </button>
+          </div>`;
+        }
+      }
+      
+      html += `</div>`;
     });
   } else {
     html += `<div style="font-size: 11px; color: var(--text-muted); padding: 6px 0;">Belum ada pencairan santunan tercatat buat periode ini.</div>`;
@@ -6291,6 +6363,73 @@ function renderLaporanBulananDetail(wrap, d) {
   </div>`;
 
   wrap.innerHTML = html;
+}
+
+function openUploadLaporanWilayah(row, wilayah, bulan, tahun) {
+  document.getElementById("ulwRow").value = row;
+  document.getElementById("ulwBulan").value = bulan;
+  document.getElementById("ulwTahun").value = tahun;
+  document.getElementById("ulwLink").value = "";
+  document.getElementById("ulwFile").value = "";
+  document.getElementById("ulwError").style.display = "none";
+  document.getElementById("uploadLaporanWilayahOverlay").classList.add("open");
+}
+
+function closeUploadLaporanWilayah() {
+  document.getElementById("uploadLaporanWilayahOverlay").classList.remove("open");
+}
+
+function submitUploadLaporanWilayah(event) {
+  event.preventDefault();
+  const row = document.getElementById("ulwRow").value;
+  const bulan = document.getElementById("ulwBulan").value;
+  const tahun = document.getElementById("ulwTahun").value;
+  const link = document.getElementById("ulwLink").value;
+  const fileInput = document.getElementById("ulwFile");
+  const btn = document.getElementById("ulwSubmitBtn");
+  const errEl = document.getElementById("ulwError");
+  errEl.style.display = "none";
+  
+  if (!link && (!fileInput.files || fileInput.files.length === 0)) {
+    errEl.textContent = "Isi link atau pilih file untuk diupload.";
+    errEl.style.display = "block";
+    return;
+  }
+  
+  btn.disabled = true;
+  btn.textContent = "Mengupload...";
+  
+  function send(base64, mime, name) {
+    callGASWithRetry_("uploadLaporanWilayah", [authToken, Number(row), base64, mime, name, link])
+      .then(function() {
+        closeUploadLaporanWilayah();
+        showModal("Sukses", "Laporan berhasil diupload/disimpan.");
+        laporanBulananDetailCache[bulan + "-" + tahun] = null; // invalidasi cache
+        toggleLaporanBulananDetail(bulan, tahun); // tutup
+        toggleLaporanBulananDetail(bulan, tahun); // buka ulang dengan data terbaru
+      })
+      .catch(function(e) {
+        errEl.textContent = e.message;
+        errEl.style.display = "block";
+      })
+      .finally(function() {
+        btn.disabled = false;
+        btn.textContent = "Simpan";
+      });
+  }
+  
+  if (fileInput.files && fileInput.files.length > 0) {
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const result = e.target.result;
+      const base64 = result.split(",")[1];
+      send(base64, file.type, file.name);
+    };
+    reader.readAsDataURL(file);
+  } else {
+    send(null, null, null);
+  }
 }
 
 // ============================================================
