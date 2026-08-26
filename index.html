@@ -5416,6 +5416,301 @@ function renderContent() {
     return;
   }
 
+  function renderContent() {
+  const el = document.getElementById("content");
+  const summary = document.getElementById("summaryCard");
+  
+  el.classList.remove("animate-fade-up");
+  void el.offsetWidth;
+  el.classList.add("animate-fade-up");
+
+  summary.style.display = active === "beranda" ? "flex" : "none";
+  document.getElementById("appHeader").classList.toggle("header-compact", active !== "beranda");
+  // Tab Profil punya kartu profil sendiri (foto, nama, no. HP) di bagian atas,
+  // jadi header sapaan umum ("Selamat datang, ...") tidak perlu ditampilkan lagi di tab ini.
+  document.getElementById("appHeader").style.display = active === "profil" ? "none" : "";
+
+  if (active === "beranda") {
+    let html = `
+      <div class="beranda-top-section" style="grid-column: 1 / -1;">
+      ${renderProgramSelectorHtml_()}
+
+      <!-- Panel Program GO-PAY (satu-satunya yang punya data LIVE sekarang) --
+           Ringkasan Angka (Anak, Wilayah, Pengurus) + Data Anak Yatim, semua
+           konten yang SEBELUMNYA tampil langsung di Beranda, sekarang
+           dibungkus jadi panel program supaya bisa disembunyikan pas
+           user pindah ke program lain lewat selector di atas. -->
+      <div class="program-panel" id="programPanel-gopay">
+      <!-- Ringkasan Angka (Anak, Wilayah, Pengurus) -->
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+        <div class="stat-mini-card" style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid #60A5FA; cursor: pointer;" onclick="setActive('pm')">
+          <span class="material-symbols-outlined stat-mini-icon" style="color: #60A5FA;">group</span>
+          <div><div style="font-size: 20px; font-weight: 700;" id="statTotalAnak">…</div><div style="font-size: 11px; color: var(--text-secondary);">Anak</div><div style="font-size: 8.5px; color: var(--text-muted); margin-top: 1px; line-height: 1.2;">(Gopay &amp; Anak Asuh)</div></div>
+        </div>
+        <div class="stat-mini-card" style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid #C084FC;">
+          <span class="material-symbols-outlined stat-mini-icon" style="color: #C084FC;">location_on</span>
+          <div><div style="font-size: 20px; font-weight: 700;" id="statTotalWilayah">…</div><div style="font-size: 11px; color: var(--text-secondary);">Wilayah</div></div>
+        </div>
+        <div class="stat-mini-card" style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid var(--bento-primary); cursor: pointer;" onclick="handleUserMenuClick('pengurus')">
+          <span class="material-symbols-outlined stat-mini-icon" style="color: var(--bento-primary);">admin_panel_settings</span>
+          <div><div style="font-size: 20px; font-weight: 700;" id="statTotalPengurus">…</div><div style="font-size: 11px; color: var(--text-secondary);">Pengurus &amp; Tim Kerja</div></div>
+        </div>
+      </div>
+
+      <!-- Data Anak Yatim (Program Gopay) -- kartu klik-buat-detail, narik
+           LIVE dari YASSA Mobile (action getDataAnakYatim), NASIONAL/semua
+           wilayah, khusus Program Gopay (Anak Asuh tidak termasuk).
+           Preview 4 angka di sini, rincian lengkap per wilayah muncul pas
+           diklik (lihat openDataAnakYatim() / renderDataAnakYatim()). -->
+      <div onclick="openDataAnakYatim()" class="anak-yatim-preview-card" style="background: var(--glass-strong); border-radius: 20px; padding: 18px 18px 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid #A855F7; cursor: pointer;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
+          <div class="anak-yatim-icon-wrap" style="width: 40px; height: 40px; border-radius: 12px; background: rgba(168,85,247,0.15); color: #C084FC; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <span class="material-symbols-outlined" style="font-size: 21px; font-variation-settings: 'FILL' 1;">diversity_3</span>
+          </div>
+          <div style="flex: 1; min-width: 0;">
+            <h3 style="font-size: 14px; font-weight: 700; margin: 0;">Data Anak Yatim Gopay</h3>
+            <div style="font-size: 10.5px; color: var(--text-secondary); margin-top: 1px;">Semua Wilayah</div>
+          </div>
+          <span class="material-symbols-outlined anak-yatim-chevron" style="font-size: 20px; color: var(--text-muted); flex-shrink: 0;">chevron_right</span>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <div class="anak-yatim-mini-stat" style="flex:1; background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+            <div class="pale-blue-text" style="font-size:15px; font-weight:800; color:#93C5FD;" id="berandaAnakYatimKK"><span class="kv-loading">...</span></div>
+            <div style="font-size:9px; font-weight:700; color: var(--text-muted); margin-top:2px;">KK</div>
+          </div>
+          <div class="anak-yatim-mini-stat" style="flex:1; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+            <div class="pale-green-text" style="font-size:15px; font-weight:800; color:#86EFAC;" id="berandaAnakYatimYatim"><span class="kv-loading">...</span></div>
+            <div style="font-size:9px; font-weight:700; color: var(--text-muted); margin-top:2px;">Yatim</div>
+          </div>
+          <div class="anak-yatim-mini-stat" style="flex:1; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+            <div class="pale-purple-text" style="font-size:15px; font-weight:800; color:#D8B4FE;" id="berandaAnakYatimPiatu"><span class="kv-loading">...</span></div>
+            <div style="font-size:9px; font-weight:700; color: var(--text-muted); margin-top:2px;">Yatim Piatu</div>
+          </div>
+          <div class="anak-yatim-mini-stat" style="flex:1; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+            <div class="pale-amber-text" style="font-size:15px; font-weight:800; color:#FDE68A;" id="berandaAnakYatimDisabilitas"><span class="kv-loading">...</span></div>
+            <div style="font-size:9px; font-weight:700; color: var(--text-muted); margin-top:2px;">Disabilitas</div>
+          </div>
+        </div>
+      </div>
+      </div>
+      <!-- /Panel Program GO-PAY -->
+
+      <!-- Panel Program SAPA (Sahabat Peduli Anak / Anak Asuh) -- data LIVE
+           dari YASSA Mobile lewat action "getDataAnakAsuh" (Hub), mirror
+           persis pola panel GO-PAY di atas. Disembunyikan default karena
+           GO-PAY yang aktif duluan (lihat activeProgram). -->
+      <div class="program-panel" id="programPanel-sapa" style="display:none;">
+        <div onclick="openDataAnakAsuh()" class="anak-asuh-preview-card" style="background: var(--glass-strong); border-radius: 20px; padding: 18px 18px 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid #EC4899; cursor: pointer;">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
+            <div class="anak-asuh-icon-wrap" style="width: 40px; height: 40px; border-radius: 12px; background: rgba(236,72,153,0.15); color: #F9A8D4; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <span class="material-symbols-outlined" style="font-size: 21px; font-variation-settings: 'FILL' 1;">diversity_1</span>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <h3 style="font-size: 14px; font-weight: 700; margin: 0;">Data Anak Asuh SAPA</h3>
+              <div style="font-size: 10.5px; color: var(--text-secondary); margin-top: 1px;">Semua Wilayah</div>
+            </div>
+            <span class="material-symbols-outlined anak-asuh-chevron" style="font-size: 20px; color: var(--text-muted); flex-shrink: 0;">chevron_right</span>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <div class="anak-asuh-mini-stat" style="flex:1; background: rgba(236,72,153,0.08); border: 1px solid rgba(236,72,153,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+              <div style="font-size:15px; font-weight:800; color:#F9A8D4;" id="berandaAnakAsuhKK"><span class="kv-loading">...</span></div>
+              <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">KK</div>
+            </div>
+            <div class="anak-asuh-mini-stat" style="flex:1; background: rgba(219,39,119,0.08); border: 1px solid rgba(219,39,119,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+              <div style="font-size:15px; font-weight:800; color:#F472B6;" id="berandaAnakAsuhAnak"><span class="kv-loading">...</span></div>
+              <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Anak Asuh</div>
+            </div>
+            <div class="anak-asuh-mini-stat" style="flex:1; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+              <div class="pale-purple-text" style="font-size:15px; font-weight:800; color:#D8B4FE;" id="berandaAnakAsuhPiatu"><span class="kv-loading">...</span></div>
+              <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Yatim Piatu</div>
+            </div>
+            <div class="anak-asuh-mini-stat" style="flex:1; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+              <div class="pale-amber-text" style="font-size:15px; font-weight:800; color:#FDE68A;" id="berandaAnakAsuhDisabilitas"><span class="kv-loading">...</span></div>
+              <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Disabilitas</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- /Panel Program SAPA -->
+
+      <!-- Panel placeholder buat program lain yang belum ada datanya
+           (BADIK, BATAN, BASO, PEDAS) -- disembunyikan default, tinggal
+           disambung ke sumber data masing-masing pas sudah tersedia
+           (lihat YASSA_PROGRAMS di atas). -->
+      ${YASSA_PROGRAMS.filter(function (p) { return !p.ready; })
+        .map(function (p) {
+          return '<div class="program-panel" id="programPanel-' + p.key + '" style="display:none;">' + renderProgramComingSoonHtml_(p) + '</div>';
+        })
+        .join("")}
+
+      <!-- Aksi Cepat Menu Bawah -->
+      <div>
+      <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Aksi Cepat Donasi</h3>
+      <div class="aksi-cepat-row" style="display: flex; justify-content: space-between; margin-bottom: 24px;">
+        <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="window.open('https://kitabisa.com/campaign/gojekbantuyatim', '_blank')">
+          <div class="aksi-kitabisa-icon"><span class="material-symbols-outlined">volunteer_activism</span></div>
+          <span class="aksi-kitabisa-label">Donasi<br>Kitabisa.com</span>
+        </div>
+        <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="openAppUrl('https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/?embed=1&tab=input-kotak')">
+          <div class="aksi-cepat-icon aksi-kotak-icon"><span class="material-symbols-outlined">inventory_2</span></div>
+          <span style="font-size: 10.5px; color: var(--text-secondary);">Kotak Gopay</span>
+        </div>
+        <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="openAppUrl('https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/?embed=1&tab=input-donasi')">
+          <div class="aksi-cepat-icon aksi-donasi-icon"><span class="material-symbols-outlined">add_box</span></div>
+          <span style="font-size: 10.5px; color: var(--text-secondary);">Donasi</span>
+        </div>
+        <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="toggleMidtransForm()">
+          <div class="aksi-cepat-icon aksi-online-icon"><span class="material-symbols-outlined">credit_card</span></div>
+          <span class="aksi-online-label">Donasi<br>Online</span>
+        </div>
+        <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="showQrCodeDonasiCepat()">
+          <div class="aksi-qr-icon"><span class="material-symbols-outlined">qr_code_scanner</span><span class="aksi-qr-scanline" aria-hidden="true"></span></div>
+          <span style="font-size: 10.5px; color: var(--text-secondary);">QR Code</span>
+        </div>
+      </div>
+      </div>
+      </div>
+      <!-- /beranda-top-section -->
+
+      <div style="background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid var(--neon-cyan);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <h3 style="font-size: 14px; font-weight: 600; margin: 0;">Aktivitas Hari Ini</h3>
+          <a href="#" style="font-size: 11.5px; color: var(--neon-blue); text-decoration: none;" onclick="showModal('Info', 'Fitur Log Aktivitas sedang dikembangkan.'); return false;">Lihat Semua</a>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div id="aktLoginHariIniWrap" style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(34, 197, 94, 0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800;">check</span></div>
+            <span id="aktLoginHariIniText" style="font-size: 12.5px;">Memuat data login…</span>
+          </div>
+          <div id="aktPengurusLamaWrap" style="display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="showDaftarPengurusBelumLoginLama()">
+            <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(251, 191, 36, 0.15); color: #FBBF24; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800;">warning</span></div>
+            <span id="aktPengurusLamaText" style="font-size: 12.5px;">Memuat data pengurus…</span>
+          </div>
+          <div id="aktDonasiVerifikasiWrap" style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(59, 130, 246, 0.15); color: #60A5FA; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800;">lock</span></div>
+            <span id="aktDonasiVerifikasiText" style="font-size: 12.5px;">Memuat data donasi…</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agenda Mendatang (Kalender Kegiatan) -->
+      <div style="background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid #22C55E;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <h3 style="font-size: 14px; font-weight: 600; margin: 0;">Agenda Mendatang</h3>
+          <a href="#" style="font-size: 11.5px; color: var(--neon-blue); text-decoration: none;" onclick="openKalenderKegiatan(); return false;">Lihat Semua</a>
+        </div>
+        <div id="agendaMendatangList" style="display: flex; flex-direction: column; gap: 10px;">
+          <div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 12px 0;">Memuat agenda…</div>
+        </div>
+      </div>
+
+      <!-- Aktivitas Terbaru -->
+      <div style="background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid #F97316;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <h3 style="font-size: 14px; font-weight: 600; margin: 0;">Aktivitas Terbaru</h3>
+          <a href="#" style="font-size: 11.5px; color: var(--neon-blue); text-decoration: none;" onclick="showModal('Info', 'Fitur Riwayat sedang dikembangkan.'); return false;">Lihat Semua</a>
+        </div>
+        <div id="aktivitasTerbaruList" style="display: flex; flex-direction: column; gap: 14px;">
+          <div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 12px 0;">Memuat aktivitas…</div>
+        </div>
+      </div>
+      
+    `;
+    html += `<div class="app-version-footer">YASSA GOPAY v${APP_VERSION}</div>`;
+    el.innerHTML = html;
+    loadBerandaStats();
+    loadDataAnakYatimPreviewBeranda();
+    loadDataAnakAsuhPreviewBeranda();
+    loadAgendaMendatangBeranda();
+    initProgramSelectorCoverflow();
+    return;
+  }
+
+  if (active === "app") {
+    // 🔔 GATE: notifikasi WAJIB diaktifkan dulu sebelum grid 6 app muncul.
+    // Sebelumnya tombol "Aktifkan Notifikasi" cuma nongol di dalam menu
+    // YASSA Mobile (gampang kelewat). Sekarang jadi syarat masuk tab App.
+    const notifStatus = localStorage.getItem("yassa_mobile_notif_status");
+    if (notifStatus !== "granted" && notifStatus !== "skipped") {
+      el.innerHTML = `
+        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:60px 24px; gap:16px;">
+          <div style="width:72px; height:72px; border-radius:50%; background:rgba(var(--bento-primary-rgb),0.15); color:var(--bento-primary); display:flex; align-items:center; justify-content:center;">
+            <span class="material-symbols-outlined" style="font-size:36px;">notifications_active</span>
+          </div>
+          <div>
+            <h2 style="font-weight:700; font-size:17px; margin:0 0 6px;">Aktifkan Notifikasi Dulu</h2>
+            <div style="font-size:13px; color:var(--text-secondary); max-width:280px; line-height:1.5;">
+              Sebelum masuk ke aplikasi, aktifkan notifikasi biar kamu langsung tahu kalau ada donasi masuk atau kehadiran baru di wilayahmu.
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:8px; width:100%;">
+            ${renderMobileNotifButton()}
+          </div>
+          <button onclick="localStorage.setItem('yassa_mobile_notif_status','skipped'); active='beranda'; render();" style="margin-top:4px; background:transparent; border:none; color:var(--text-muted); font-size:12px; text-decoration:underline; cursor:pointer;">
+            Lewati dulu, nanti saja
+          </button>
+        </div>`;
+      return;
+    }
+
+    let html = `
+      <div class="app-header-section" style="grid-column: 1 / -1;">
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px; padding-top:16px;">
+        <div style="width:40px; height:40px; border-radius:12px; background:rgba(var(--bento-primary-rgb),0.15); color:var(--bento-primary); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <span class="material-symbols-outlined" style="font-size:22px; font-variation-settings:'FILL' 1;">apps</span>
+        </div>
+        <div>
+          <h2 style="font-weight:700; font-size:18px; margin:0; letter-spacing:-0.2px;">Semua Aplikasi</h2>
+          <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Pilih aplikasi yang ingin dibuka</div>
+        </div>
+      </div>
+      <div style="height:1px; background:linear-gradient(90deg, var(--glass-border-strong), transparent); margin: 16px 0 24px;"></div>
+      </div>
+      <div id="appGridContainer" style="grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+    `;
+
+    const APP_CARDS = [
+      { key: "mobile", grad: "linear-gradient(135deg, #34D399 0%, #059669 100%)", glow: "rgba(16,185,129,0.35)", icon: "smartphone", title: "YASSA Mobile", desc: "Data Base<br>YASSA" },
+      { key: "donasi", grad: "linear-gradient(135deg, #4ADE80 0%, #15803D 100%)", glow: "rgba(34,197,94,0.35)", icon: "box", title: "Kotak & Donasi", desc: "Kelola kotak<br>dan donasi", notice: "Masih Tahap Pengembangan, Data mungkin tidak Akurat" },
+      { key: "absensi", grad: "linear-gradient(135deg, #60A5FA 0%, #1D4ED8 100%)", glow: "rgba(59,130,246,0.35)", icon: "assignment", title: "Kehadiran", desc: "Catat kehadiran<br>kegiatan" },
+      { key: "awg", grad: "linear-gradient(135deg, #E879F9 0%, #7E22CE 100%)", glow: "rgba(168,85,247,0.35)", icon: "favorite", title: "AWG", desc: "Ahli Waris<br>Akun" },
+      { key: "pm", grad: "linear-gradient(135deg, #FCD34D 0%, #D97706 100%)", glow: "rgba(251,191,36,0.35)", icon: "group", title: "Penerima Manfaat", desc: "Data penerima<br>manfaat" },
+      // 🚧 notice: dipakai buat nampilin badge peringatan "masih tahap
+      // pengembangan" di card grid App. Field ini sengaja dibikin generik
+      // (bukan cuma khusus bukubesar) supaya gampang dipasang/dicopot di
+      // app lain juga nanti kalau statusnya berubah -- tinggal
+      // tambah/hapus baris "notice" di object card-nya, gak perlu ubah
+      // logika render di bawah.
+      { key: "bukubesar", grad: "linear-gradient(135deg, #67E8F9 0%, #0E7490 100%)", glow: "rgba(34,211,238,0.35)", icon: "menu_book", title: "Cloud Buku", desc: "Pembukuan Digital<br>Yayasan", notice: "Masih Tahap Pengembangan, Data mungkin tidak Akurat" },
+      { key: "lentera", grad: "linear-gradient(135deg, #FBBF24 0%, #D97706 100%)", glow: "rgba(251,191,36,0.35)", icon: "lightbulb", title: "Lentera Yassa", desc: "Aplikasi<br>Lentera Yassa" },
+    ];
+
+    APP_CARDS.filter(function (c) { return isAppVisible(c.key); }).forEach(function (c) {
+      html += `
+        <button onclick="setActive('${c.key}')" style="position: relative; background: var(--glass-strong); padding: 20px 16px 22px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; gap: 14px; border: 1px solid var(--glass-border); cursor: pointer;">
+          ${c.notice ? `
+          <div style="position: absolute; top: 10px; right: 10px; display: flex; align-items: center; gap: 3px; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.4); color: #F59E0B; font-size: 9px; font-weight: 700; padding: 3px 7px; border-radius: 999px; line-height: 1;" title="${c.notice}">
+            <span class="material-symbols-outlined" style="font-size: 11px;">construction</span>
+            Uji Coba
+          </div>` : ``}
+          <div style="position: relative; width: 64px; height: 64px; border-radius: 20px; background: ${c.grad}; box-shadow: 0 10px 22px ${c.glow}, inset 0 1px 0 rgba(255,255,255,0.35); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+            <div style="position: absolute; top: -18px; left: -14px; width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.22); filter: blur(2px);"></div>
+            <span class="material-symbols-outlined" style="position: relative; font-size: 30px; color: #fff; font-variation-settings: 'FILL' 1; text-shadow: 0 1px 3px rgba(0,0,0,0.25);">${c.icon}</span>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">${c.title}</div>
+            <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.2;">${c.desc}</div>
+            ${c.notice ? `<div style="font-size: 9px; color: #F59E0B; line-height: 1.3; margin-top: 6px; font-weight: 600;">${c.notice}</div>` : ``}
+          </div>
+        </button>
+      `;
+    });
+
+    html += `</div>`;
+    el.innerHTML = html;
+    return;
+  }
+
   if (active === "keuangan") {
     const wilayahText = currentUser.wilayahAkses === "ALL" ? "Semua Wilayah" : (currentUser.wilayahAkses || "-");
     const badgeWilayah = `<span style="font-size: 9px; font-weight: 700; letter-spacing: 0.3px; padding: 2px 7px; border-radius: 99px; background: rgba(var(--bento-primary-rgb),0.15); color: var(--bento-primary); margin-left: 6px; vertical-align: middle;">PER WILAYAH</span>`;
@@ -5581,8 +5876,196 @@ function renderContent() {
     return;
   }
 
- if (active === "profil") {
-...
+  if (active === "profil") {
+    const fotoProfil = currentUser.fotoUrl ? currentUser.fotoUrl : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
+    const wilayahTxt = String(currentUser.wilayahAkses || "").toUpperCase() === "ALL"
+      ? "Semua Wilayah"
+      : (currentUser.wilayahAkses || "-");
+
+    let html = `
+      <div class="profil-hero-card" style="background: linear-gradient(160deg, #16A34A 0%, #15803D 60%, #0F5132 100%); border-radius: 24px; padding: 30px 20px 22px; margin: 16px 0 16px; text-align: center; position: relative; overflow: hidden; box-shadow: 0 12px 28px rgba(21,128,61,0.3);">
+        <div class="profil-hero-orb profil-hero-orb-1" style="position: absolute; top: -36px; right: -26px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.08); pointer-events: none;"></div>
+        <div class="profil-hero-orb profil-hero-orb-2" style="position: absolute; bottom: -46px; left: -18px; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.06); pointer-events: none;"></div>
+
+        <div style="position: relative;">
+          <div class="profil-avatar-ring" style="width: 92px; height: 92px; border-radius: 50%; margin: 0 auto; padding: 3px; background: rgba(255,255,255,0.25); position: relative;">
+            <div style="width: 100%; height: 100%; border-radius: 50%; overflow: hidden; border: 3px solid rgba(255,255,255,0.9); background: rgba(255,255,255,0.1);">
+              <img id="profilTabAvatarImg" src="${fotoProfil}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="showProfileQR()">
+            </div>
+            <label for="inputFotoProfileTab" id="labelUploadFotoTab" style="position: absolute; bottom: -2px; right: -2px; width: 26px; height: 26px; border-radius: 50%; background: var(--grad-primary); display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #15803D; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">
+              ${iconSvg("edit", "#fff", 13)}
+            </label>
+            <input type="file" id="inputFotoProfileTab" accept="image/*" style="display: none;" onchange="uploadFoto(this)">
+          </div>
+          <h1 style="font-size: 18px; font-weight: 700; margin: 14px 0 2px; color: #fff;">${escapeHtmlHub(currentUser.nama)}</h1>
+          <div style="font-size: 12px; color: rgba(255,255,255,0.75); margin-bottom: 18px;">${escapeHtmlHub(currentUser.username || "-")}</div>
+          <div style="display: flex; gap: 10px; justify-content: center;">
+            <button onclick="showProfileQR()" style="display: flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 99px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35); color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(6px);">
+              <span class="material-symbols-outlined" style="font-size: 15px;">qr_code_2</span>
+              QR Saya
+            </button>
+            <button onclick="openChangePasswordPanel()" style="display: flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 99px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35); color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(6px);">
+              <span class="material-symbols-outlined" style="font-size: 15px;">lock</span>
+              Password
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="profil-info-card" style="background: var(--glass-strong); border-radius: 20px; margin-bottom: 24px; display: flex; flex-direction: column; border: 1px solid var(--glass-border); border-left: 4px solid #3B82F6; overflow: hidden;">
+        <div class="profil-info-row" style="display: flex; align-items: center; gap: 12px; padding: 15px 16px; border-bottom: 1px solid var(--glass-border);">
+          <div style="width: 38px; height: 38px; border-radius: 12px; background: rgba(34,197,94,0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <span class="material-symbols-outlined" style="font-size: 19px;">badge</span>
+          </div>
+          <div style="flex: 1;">
+            <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 2px;">Jabatan</div>
+            <div style="font-size: 14px; font-weight: 500;">${escapeHtmlHub(currentUser.jabatan || "-")}</div>
+          </div>
+        </div>
+        <div class="profil-info-row" style="display: flex; align-items: center; gap: 12px; padding: 15px 16px;">
+          <div style="width: 38px; height: 38px; border-radius: 12px; background: rgba(34,197,94,0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <span class="material-symbols-outlined" style="font-size: 19px;">public</span>
+          </div>
+          <div style="flex: 1;">
+            <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 2px;">Wilayah</div>
+            <div style="font-size: 14px; font-weight: 500;">${escapeHtmlHub(wilayahTxt)}</div>
+          </div>
+        </div>
+      </div>
+
+      ${(["SUPERADMIN", "ADMIN", "KORWIL"].indexOf(currentUser.role) !== -1) ? `
+      <!-- Pintu masuk ke Formulir Data Baru GOPAY (input data Alm/Keluarga/
+           Anak buat pengajuan santunan baru) -- CUMA tampil buat
+           SUPERADMIN/ADMIN/KORWIL, role lain gak lihat kartu ini sama
+           sekali. Sengaja diletakkan di atas Dedikasi. -->
+      <button onclick="openFormulirDataBaru()" class="profil-formulir-cta" style="width: 100%; background: linear-gradient(135deg, rgba(249,115,22,0.16), rgba(234,88,12,0.10)); border: 1px solid rgba(249,115,22,0.3); border-radius: 18px; padding: 16px 18px; margin-bottom: 24px; display: flex; align-items: center; gap: 14px; cursor: pointer; text-align: left;">
+        <div class="profil-formulir-icon-wrap" style="width: 44px; height: 44px; border-radius: 14px; background: rgba(249,115,22,0.18); color: #F97316; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <span class="material-symbols-outlined" style="font-size: 22px;">note_add</span>
+        </div>
+        <div style="flex: 1;">
+          <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Formulir Data Baru GOPAY</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">Input data pengajuan santunan Alm/Keluarga/Anak</div>
+        </div>
+        <span class="material-symbols-outlined profil-formulir-chevron" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
+      </button>
+      ` : ``}
+
+      <div class="profil-dedikasi-section">
+      <h3 style="font-weight: 600; font-size: 14px; margin-bottom: 12px; padding: 0 4px;">Dedikasi</h3>
+      <div id="profilDedikasiTourTarget" style="background: var(--glass-strong); border-radius: 20px; padding: 18px; margin-bottom: 24px; border: 1px solid var(--glass-border); border-left: 4px solid #F97316; display: flex; flex-direction: column; gap: 20px;">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="width: 30px; height: 30px; border-radius: 10px; background: rgba(34,211,238,0.15); color: var(--neon-cyan); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <span class="material-symbols-outlined" style="font-size: 16px;">event_available</span>
+              </div>
+              <span style="font-size: 12.5px; font-weight: 600;">Kehadiran</span>
+            </div>
+            <span id="profilPerformaKehadiranPersen" style="font-size: 13px; font-weight: 700; color: var(--neon-cyan);">...</span>
+          </div>
+          <div style="font-size: 10px; color: var(--text-muted); margin: -4px 0 10px 40px;">Persentase kehadiran kamu di kegiatan/pertemuan tahun ini</div>
+          <div style="height: 8px; border-radius: 6px; background: var(--glass-border-strong); overflow: hidden;">
+            <div id="profilPerformaKehadiranBar" class="profil-dedikasi-bar" style="height: 100%; width: 0%; border-radius: 6px; background: linear-gradient(90deg, #0891B2, #22D3EE); transition: width .7s cubic-bezier(0.22, 1, 0.36, 1);"></div>
+          </div>
+          <div id="profilPerformaKehadiranKeterangan" style="font-size: 10.5px; color: var(--text-muted); margin-top: 6px;">Memuat data kehadiran...</div>
+        </div>
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="width: 30px; height: 30px; border-radius: 10px; background: rgba(34,197,94,0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <span class="material-symbols-outlined" style="font-size: 16px;">volunteer_activism</span>
+              </div>
+              <span style="font-size: 12.5px; font-weight: 600;">Pencapaian Donasi</span>
+            </div>
+            <span id="profilPerformaDonasiPersen" style="font-size: 13px; font-weight: 700; color: var(--bento-primary);">...</span>
+          </div>
+          <div style="font-size: 10px; color: var(--text-muted); margin: -4px 0 10px 40px;">Persentase realisasi donasi dibanding kebutuhan santunan wilayah kamu tahun ini</div>
+          <div style="height: 8px; border-radius: 6px; background: var(--glass-border-strong); overflow: hidden;">
+            <div id="profilPerformaDonasiBar" class="profil-dedikasi-bar" style="height: 100%; width: 0%; border-radius: 6px; background: linear-gradient(90deg, #15803D, #4ADE80); transition: width .7s cubic-bezier(0.22, 1, 0.36, 1);"></div>
+          </div>
+          <div id="profilPerformaDonasiKeterangan" style="font-size: 10.5px; color: var(--text-muted); margin-top: 6px;">Memuat data donasi...</div>
+        </div>
+      </div>
+      </div>
+
+      <div class="profil-tim-section">
+      <h3 style="font-weight: 600; font-size: 14px; margin-bottom: 12px; padding: 0 4px;">Tim & Organisasi</h3>
+      <div style="background: var(--glass-strong); border-radius: 20px; display: flex; flex-direction: column; border: 1px solid var(--glass-border); border-left: 4px solid #A855F7; overflow: hidden; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 15px 16px; cursor: pointer;" onclick="handleUserMenuClick('pengurus')">
+          <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(34, 197, 94, 0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <span class="material-symbols-outlined">account_tree</span>
+          </div>
+          <div style="flex: 1;">
+            <div style="font-size: 14px; font-weight: 600;">Struktur Pengurus</div>
+            <div style="font-size: 10px; color: var(--text-secondary);">Lihat daftar tim kerja</div>
+          </div>
+          <span class="material-symbols-outlined" style="color: var(--text-muted);">chevron_right</span>
+        </div>
+      </div>
+
+      <div style="background: var(--glass-strong); border-radius: 20px; display: flex; flex-direction: column; border: 1px solid var(--glass-border); border-left: 4px solid #EF4444; overflow: hidden;">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 15px 16px; cursor: pointer;" onclick="handleUserMenuClick('logout')">
+          <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(239, 68, 68, 0.15); color: #EF4444; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <span class="material-symbols-outlined">logout</span>
+          </div>
+          <div style="flex: 1;">
+            <div style="font-size: 14px; font-weight: 600; color: #FCA5A5;">Keluar Akun</div>
+            <div style="font-size: 10px; color: var(--text-secondary);">Kembali ke halaman login</div>
+          </div>
+        </div>
+      </div>
+      </div>
+    `;
+    el.innerHTML = html;
+    loadProfilePerforma();
+    return;
+  }
+
+  if (active === "pengaturan") {
+    renderPengaturanPanel(el);
+    return;
+  }
+
+  const menu = MENUS[active];
+  let html = `
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px; padding-top:16px;">
+      <button onclick="setActive('app')" aria-label="Kembali" style="width:36px; height:36px; border-radius:50%; background: var(--glass-strong); border:1px solid var(--glass-border-strong); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; color:var(--text-primary); padding:0;">
+        <span class="material-symbols-outlined" style="font-size:20px;">arrow_back</span>
+      </button>
+      <div class="section-title" style="margin-bottom:0;">${menu.title}</div>
+    </div>`;
+
+  // 🚧 Strip peringatan "masih tahap pengembangan" -- sama persis kayak
+  // yang nempel di atas iframe (lihat toggleOverlayDevNotice_), dipasang
+  // di sini juga karena screen submenu ini (Dashboard/Lainnya) muncul
+  // SEBELUM iframe-nya sendiri kebuka, jadi user perlu liat peringatannya
+  // dari titik ini juga -- bukan cuma pas udah masuk ke Dashboard.
+  // Sengaja pakai array OVERLAY_DEV_NOTICE_APPS yang sama (bukan bikin
+  // daftar baru) supaya kalau statusnya diubah, cukup edit 1 tempat.
+  if (OVERLAY_DEV_NOTICE_APPS.indexOf(active) !== -1) {
+    html += `
+    <div style="display:flex; align-items:center; gap:8px; background:rgba(245,158,11,0.14); border:1px solid rgba(245,158,11,0.35); color:#F59E0B; font-size:11.5px; font-weight:700; padding:10px 14px; border-radius:14px; margin-bottom:16px;">
+      <span class="material-symbols-outlined" style="font-size:16px; flex-shrink:0;">construction</span>
+      <span>Masih Tahap Pengembangan — Data mungkin tidak Akurat</span>
+    </div>`;
+  }
+
+  html += `<div class="menu-panel"><div class="menu-grid">`;
+
+  menu.items.forEach((item, i) => {
+    if (!isMenuItemVisible(active, i)) return; // "tidak" di sheet Setting_Akses_Menu -> sembunyikan tombol ini
+    const c = ICON_COLORS[item.color] || ICON_COLORS.teal;
+    html += `<button class="menu-item" style="border-color:${c.fg}40; box-shadow:0 6px 16px ${c.fg}1F;" onclick="openApp(${i})">
+      <div class="menu-icon" style="background:${c.bg}">${iconSvg(item.icon, c.fg, 26)}</div>
+      <span class="menu-label">${item.label}</span>
+      ${item.desc ? `<span class="menu-desc">${item.desc}</span>` : ""}
+    </button>`;
+  });
+  
+  html += `<button class="menu-item" onclick="showModal('Lainnya', 'Fitur selengkapnya sedang dikembangkan.')">
+    <div class="menu-icon" style="background:rgba(255,255,255,0.06)">${iconSvg("more", "#94A3B8", 26)}</div>
+    <span class="menu-label">Lainnya</span>
+  </button>`;
   html += `</div></div>`;
 
   // 🔔 YASSA Mobile: tombol "Aktifkan Notifikasi" tetap ditampilkan di bawah
