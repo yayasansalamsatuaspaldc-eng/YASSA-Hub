@@ -5436,24 +5436,10 @@ function renderContent() {
         <button id="keuanganRetryBtn" onclick="loadKeuanganStats()" style="display: none; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 99px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: var(--text-primary); cursor: pointer; flex-shrink: 0;">Coba Lagi</button>
       </div>
 
-      <!-- Pintu masuk ke Laporan Bulanan (pendapatan vs pengeluaran santunan,
-           per bulan, klik buat lihat rincian) -- nasional/gabungan semua
-           wilayah, biar Pengurus/Korwil/Tim Kerja/Relawan semua lihat angka
-           yang sama pas ditanya-tanya donatur. -->
-      <button onclick="openLaporanBulanan()" style="width: 100%; background: linear-gradient(135deg, rgba(34,197,94,0.16), rgba(16,185,129,0.10)); border: 1px solid rgba(34,197,94,0.3); border-radius: 18px; padding: 16px 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 14px; cursor: pointer; text-align: left;">
-        <div style="width: 44px; height: 44px; border-radius: 14px; background: rgba(34,197,94,0.18); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-          <span class="material-symbols-outlined" style="font-size: 22px;">monitoring</span>
-        </div>
-        <div style="flex: 1;">
-          <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Laporan Bulanan Program Gopay</div>
-          <div style="font-size: 11px; color: var(--text-secondary);">Pendapatan &amp; pengeluaran santunan per bulan</div>
-        </div>
-        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
-      </button>
-
       <!-- Section label buat kartu-kartu di bawah ini yang SEMUA sifatnya
            per-wilayah (ikut wilayahAkses user login) -- beda dari Laporan
-           Bulanan di atas yang nasional/gabungan semua wilayah. -->
+           Bulanan di bawah (setelah Kartu 2) yang nasional/gabungan semua
+           wilayah. -->
       <div style="display:flex; align-items:center; justify-content:space-between; margin: 0 2px 14px;">
         <div style="font-size: 12.5px; font-weight: 700; color: var(--text-primary); display:flex; align-items:center; gap: 6px;">
           <span class="material-symbols-outlined" style="font-size: 16px; color: var(--bento-primary);">location_on</span>
@@ -5571,6 +5557,22 @@ function renderContent() {
           <div id="keuanganRincianWilayahList" class="kv-rincian-list" style="display: block;"></div>
         </div>
       </div>
+
+      <!-- Pintu masuk ke Laporan Bulanan (pendapatan vs pengeluaran santunan,
+           per bulan, klik buat lihat rincian) -- nasional/gabungan semua
+           wilayah, biar Pengurus/Korwil/Tim Kerja/Relawan semua lihat angka
+           yang sama pas ditanya-tanya donatur. Ditaruh di BAWAH Kartu 2
+           (Realisasi Lapangan) sesuai permintaan Heru. -->
+      <button onclick="openLaporanBulanan()" style="width: 100%; background: linear-gradient(135deg, rgba(34,197,94,0.16), rgba(16,185,129,0.10)); border: 1px solid rgba(34,197,94,0.3); border-radius: 18px; padding: 16px 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; text-align: left;">
+        <div style="width: 44px; height: 44px; border-radius: 14px; background: rgba(34,197,94,0.18); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <span class="material-symbols-outlined" style="font-size: 22px;">monitoring</span>
+        </div>
+        <div style="flex: 1;">
+          <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Laporan Bulanan Program Gopay</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">Pendapatan &amp; pengeluaran santunan per bulan</div>
+        </div>
+        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
+      </button>
 
       <!-- 3. Donasi Kitabisa.com & 4. Donasi Online/Midtrans DIHAPUS dari
            sini (2026) -- gak ditrack sebagai total terpisah lagi, sekarang
