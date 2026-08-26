@@ -3431,7 +3431,13 @@ function callGAS(action, args) {
 // ============================================================
 function callGASWithRetry_(action, args, opts) {
   const maxAttempts = (opts && opts.maxAttempts) || 3;
-  const timeoutMs = (opts && opts.timeoutMs) || 8000;
+  // 🩹 FIX: eksekusi doPost di server kadang makan waktu ~8 detik (belum
+  // termasuk latensi jaringan naik-turunnya) -- timeout lama (8000ms) jadi
+  // KEPOTONG PERSIS di batasnya, bikin app ngira "koneksi lambat" & retry
+  // terus-terusan padahal server-nya sebenernya lagi ngerjain, cuma agak
+  // lambat. Dinaikkan ke 15 detik biar request yang genuinely masih jalan
+  // (bukan macet) dikasih waktu selesai dulu sebelum dianggap gagal.
+  const timeoutMs = (opts && opts.timeoutMs) || 15000;
   const delayMs = (opts && opts.delayMs) || 1200;
   const onRetry = (opts && opts.onRetry) || function () {};
   // 🚀 targetUrl: dulu SELALU GAS_AUTH_URL (file GOPAY yang gede). Sekarang
