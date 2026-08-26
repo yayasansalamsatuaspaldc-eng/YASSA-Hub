@@ -2706,7 +2706,7 @@
       <div id="lwuPanelFile" style="display:none;">
         <label for="lwuInputFile" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding: 22px 10px; border-radius:10px; border: 1px dashed var(--glass-border); cursor:pointer; margin-bottom: 14px;">
           <span class="material-symbols-outlined" style="font-size:22px; color:var(--text-muted);">upload_file</span>
-          <span id="lwuFileNamaTerpilih" style="font-size:11px; color:var(--text-secondary); text-align:center;">Ketuk buat pilih file PDF (maks 10MB)</span>
+          <span id="lwuFileNamaTerpilih" style="font-size:11px; color:var(--text-secondary); text-align:center;">Ketuk buat pilih file PDF (maks 20MB)</span>
         </label>
         <input type="file" id="lwuInputFile" accept="application/pdf" style="display:none;" onchange="lwuFilePicked(this)">
       </div>
@@ -6396,7 +6396,7 @@ function bukaLaporanWilayahUpload(bulan, tahun, wilayahEncoded) {
   lwuFileTerpilih = null;
   document.getElementById("lwuInputLink").value = "";
   document.getElementById("lwuInputFile").value = "";
-  document.getElementById("lwuFileNamaTerpilih").textContent = "Ketuk buat pilih file PDF (maks 10MB)";
+  document.getElementById("lwuFileNamaTerpilih").textContent = "Ketuk buat pilih file PDF (maks 20MB)";
   document.getElementById("laporanWilayahUploadTitle").textContent = "Laporan " + lwuWilayah;
   lwuGantiTab("link");
   document.getElementById("laporanWilayahUploadOverlay").classList.add("open");
@@ -6427,8 +6427,8 @@ function lwuFilePicked(input) {
     lwuFileTerpilih = null;
     return;
   }
-  if (file.size > 10 * 1024 * 1024) {
-    showModal("Gagal", "Ukuran file maksimal 10MB.");
+  if (file.size > 20 * 1024 * 1024) {
+    showModal("Gagal", "Ukuran file maksimal 20MB.");
     input.value = "";
     lwuFileTerpilih = null;
     return;
@@ -6458,7 +6458,11 @@ function lwuSimpan() {
     const reader = new FileReader();
     reader.onload = function (e) {
       const base64Data = e.target.result.split(",")[1];
-      callGASWithRetry_("uploadLaporanWilayahFile", [authToken, lwuBulan, lwuTahun, lwuWilayah, base64Data, lwuFileTerpilih.type, lwuFileTerpilih.name], { timeoutMs: 30000 })
+      // File 20MB -> base64-nya bisa ~27MB, plus server lagi agak lambat
+      // (lihat diagnosa performa sebelumnya) -- timeout dinaikkan ke 90
+      // detik khusus buat upload file (bukan 15 detik default) biar file
+      // besar gak keburu dianggap gagal padahal masih proses upload.
+      callGASWithRetry_("uploadLaporanWilayahFile", [authToken, lwuBulan, lwuTahun, lwuWilayah, base64Data, lwuFileTerpilih.type, lwuFileTerpilih.name], { timeoutMs: 90000, maxAttempts: 1 })
         .then(function (res) { lwuSelesai(res); })
         .catch(function (err) {
           btn.disabled = false;
