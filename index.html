@@ -4738,13 +4738,20 @@ function toggleRincianWilayahKeuangan(listId, chevronId) {
 function tampilkanKeuanganGagal() {
   ["keuanganJumlahYatim", "keuanganYatimPiatu", "keuanganDisabilitas", "keuanganTotalSantunan",
     "keuanganKebutuhanNominal", "keuanganRealisasiNominal", "keuanganPersenTercapai",
-    "keuanganSelisihNominal", "keuanganSelisihLabel"]
+    "keuanganSelisihNominal", "keuanganSelisihLabel",
+    // Elemen hero banner "Ringkasan Bulan Ini" ikut di-reset juga biar gak
+    // nyangkut di kv-loading (...) pas fetch beneran gagal total.
+    "keuanganHeroTersalurkan", "keuanganHeroPersenText", "keuanganHeroAnak", "keuanganHeroWilayah"]
     .forEach(function (id) {
       const el = document.getElementById(id);
       if (el) el.textContent = "-";
     });
   const elCatatan = document.getElementById("keuanganCatatanBendahara");
   if (elCatatan) elCatatan.textContent = "Gagal memuat data.";
+  const elHeroTarget = document.getElementById("keuanganHeroTarget");
+  if (elHeroTarget) elHeroTarget.textContent = "Gagal memuat data.";
+  const elHeroRing = document.getElementById("keuanganHeroRing");
+  if (elHeroRing) elHeroRing.style.strokeDashoffset = "188.5";
 }
 
 // Nerapin 1 paket hasil (dari cache ATAU dari fetch baru) ke semua elemen
@@ -4778,6 +4785,17 @@ function terapkanKeuanganStats(hasil) {
   const elRincianWilayahList = document.getElementById("keuanganRincianWilayahList");
   const elRincianWilayahLabel = document.getElementById("keuanganRincianWilayahLabel");
 
+  // --- Elemen "Ringkasan Bulan Ini" (hero banner) -- angkanya cuma MIRROR
+  //     dari data yang sama dipakai Kartu 1 & 2 di bawah, ditampilkan ulang
+  //     dengan penyajian ring progres biar kebaca sekali lirik. ---
+  const elHeroTersalurkan = document.getElementById("keuanganHeroTersalurkan");
+  const elHeroTarget = document.getElementById("keuanganHeroTarget");
+  const elHeroRing = document.getElementById("keuanganHeroRing");
+  const elHeroPersenText = document.getElementById("keuanganHeroPersenText");
+  const elHeroAnak = document.getElementById("keuanganHeroAnak");
+  const elHeroWilayah = document.getElementById("keuanganHeroWilayah");
+  const KFIN_RING_CIRCUMFERENCE = 188.5; // 2 * PI * r(30), radius SVG ring di hero banner
+
   {
       const santunan = hasil[0];
       const manual = hasil[1];
@@ -4790,9 +4808,13 @@ function terapkanKeuanganStats(hasil) {
       if (elYatim) animateCountValue_(elYatim, santunan.jumlahAnakYatim || 0);
       if (elPiatu) animateCountValue_(elPiatu, santunan.jumlahYatimPiatu || 0);
       if (elDsb) animateCountValue_(elDsb, santunan.jumlahDisabilitas || 0);
+      if (elHeroAnak) animateCountValue_(elHeroAnak, santunan.jumlahAnakYatim || 0);
 
       const rincianWilayahSantunan = santunan.rincianWilayah || [];
       const wilayahBelumDiisiRate = santunan.wilayahBelumDiisiRate || [];
+      // Wilayah aktif = jumlah wilayah yang punya baris rate santunan bulan ini
+      // (kalau cuma akses 1 wilayah, rincianWilayahSantunan panjangnya 1).
+      if (elHeroWilayah) animateCountValue_(elHeroWilayah, rincianWilayahSantunan.length > 0 ? rincianWilayahSantunan.length : 1);
 
       if (!santunan.ditemukan) {
         // Belum ada baris SAMA SEKALI bulan ini di sheet "Rate_Santunan_Bulanan"
@@ -4888,6 +4910,12 @@ function terapkanKeuanganStats(hasil) {
         if (elProgresWrap) elProgresWrap.style.display = "none";
         if (elStatusBanner) elStatusBanner.style.display = "none";
         if (elRincianWilayahWrap) elRincianWilayahWrap.style.display = "none";
+        // Hero banner juga ikut nunjukin status "belum diisi" -- jangan
+        // biarkan nyangkut di kv-loading (...) selamanya.
+        if (elHeroTersalurkan) elHeroTersalurkan.textContent = "-";
+        if (elHeroTarget) elHeroTarget.textContent = "Data belum diisi Bendahara";
+        if (elHeroPersenText) elHeroPersenText.textContent = "-";
+        if (elHeroRing) elHeroRing.style.strokeDashoffset = KFIN_RING_CIRCUMFERENCE;
         return;
       }
 
@@ -4914,6 +4942,18 @@ function terapkanKeuanganStats(hasil) {
         elBar.style.width = w + "%";
         // Warna progress bar berjenjang: merah (<30%) -> kuning (30-70%) -> hijau (>=70%)
         elBar.style.background = w < 30 ? "#EF4444" : (w < 70 ? "#FBBF24" : "var(--bento-primary)");
+      }
+
+      // --- Ringkasan Bulan Ini (hero banner) -- MIRROR angka realisasi,
+      //     target, & persen yang sama kayak Kartu 2 di atas, cuma
+      //     disajikan ulang lewat ring progres SVG biar cepat kebaca. ---
+      if (elHeroTersalurkan) animateRupiahValue_(elHeroTersalurkan, realisasi);
+      if (elHeroTarget) elHeroTarget.textContent = "dari target " + formatRupiahHub(kebutuhan);
+      if (elHeroPersenText) animateCountValue_(elHeroPersenText, Math.max(0, persen), "%");
+      if (elHeroRing) {
+        const wRing = Math.min(100, Math.max(0, persen));
+        elHeroRing.style.strokeDashoffset = KFIN_RING_CIRCUMFERENCE * (1 - wRing / 100);
+        elHeroRing.style.stroke = wRing < 30 ? "#EF4444" : (wRing < 70 ? "#FBBF24" : "var(--bento-primary)");
       }
 
       const kurang = selisih > 0;
@@ -5534,6 +5574,48 @@ function renderContent() {
         </div>
       </div>
       <div style="height:1px; background:linear-gradient(90deg, var(--glass-border-strong), transparent); margin: 16px 0 22px;"></div>
+
+      <!-- ✨ Ringkasan eksekutif bulan ini -- snapshot cepat sebelum orang scroll
+           ke detail Kartu 1 & 2. Angkanya MIRROR dari data yang sama (realisasi,
+           kebutuhan, persen, jumlah anak, jumlah wilayah aktif) -- gak fetch data
+           baru, cuma ditampilkan dobel dengan penyajian visual (ring progres)
+           di terapkanKeuanganStats(). -->
+      <div class="kfin-card" style="--kfin-accent: var(--bento-primary); --kfin-accent-rgb: var(--bento-primary-rgb); margin-bottom: 18px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+          <span class="material-symbols-outlined" style="font-size:18px; color:var(--bento-primary);">insights</span>
+          <span style="font-size:13px; font-weight:700; color:var(--text-primary);">Ringkasan Bulan Ini</span>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px;">
+          <div style="min-width:0;">
+            <div class="kfin-metric-label">Total Tersalurkan</div>
+            <div class="kfin-number" id="keuanganHeroTersalurkan"><span class="kv-loading">...</span></div>
+            <div class="kfin-metric-sub" id="keuanganHeroTarget"><span class="kv-loading">...</span></div>
+          </div>
+          <div style="position:relative; width:76px; height:76px; flex-shrink:0;">
+            <svg width="76" height="76" viewBox="0 0 76 76">
+              <circle cx="38" cy="38" r="30" fill="none" stroke="var(--glass-border-strong)" stroke-width="8"></circle>
+              <circle id="keuanganHeroRing" cx="38" cy="38" r="30" fill="none" stroke="var(--bento-primary)" stroke-width="8" stroke-linecap="round" stroke-dasharray="188.5" stroke-dashoffset="188.5" transform="rotate(-90 38 38)" style="transition: stroke-dashoffset 0.7s cubic-bezier(0.22,1,0.36,1), stroke 0.5s ease;"></circle>
+            </svg>
+            <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:800; color:var(--text-primary);" id="keuanganHeroPersenText"><span class="kv-loading">...</span></div>
+          </div>
+        </div>
+        <div class="kfin-stat-grid">
+          <div class="kfin-stat-chip" style="--kfin-chip-rgb: var(--bento-primary-rgb); --kfin-chip-color: var(--bento-primary);">
+            <div class="kfin-stat-chip-label">
+              <span class="material-symbols-outlined" style="font-size:15px;">diversity_3</span>
+              Anak Dibantu
+            </div>
+            <div class="kfin-stat-chip-value" id="keuanganHeroAnak"><span class="kv-loading">...</span></div>
+          </div>
+          <div class="kfin-stat-chip" style="--kfin-chip-rgb: 34,211,238; --kfin-chip-color: #22D3EE;">
+            <div class="kfin-stat-chip-label">
+              <span class="material-symbols-outlined" style="font-size:15px;">location_on</span>
+              Wilayah Aktif
+            </div>
+            <div class="kfin-stat-chip-value" id="keuanganHeroWilayah"><span class="kv-loading">...</span></div>
+          </div>
+        </div>
+      </div>
 
       <!-- Banner status ambil data: nunjukin lagi loading / gagal, biar user
            gak ngira datanya emang kosong pas fetch ke 4 sumber lagi lambat. -->
