@@ -5416,467 +5416,183 @@ function renderContent() {
     return;
   }
 
-  function renderContent() {
-  const el = document.getElementById("content");
-  const summary = document.getElementById("summaryCard");
-  
-  el.classList.remove("animate-fade-up");
-  void el.offsetWidth;
-  el.classList.add("animate-fade-up");
-
-  summary.style.display = active === "beranda" ? "flex" : "none";
-  document.getElementById("appHeader").classList.toggle("header-compact", active !== "beranda");
-  // Tab Profil punya kartu profil sendiri (foto, nama, no. HP) di bagian atas,
-  // jadi header sapaan umum ("Selamat datang, ...") tidak perlu ditampilkan lagi di tab ini.
-  document.getElementById("appHeader").style.display = active === "profil" ? "none" : "";
-
-  if (active === "beranda") {
+  if (active === "keuangan") {
+    const wilayahText = currentUser.wilayahAkses === "ALL" ? "Semua Wilayah" : (currentUser.wilayahAkses || "-");
+    // Badge kecil buat bedain angka yang PER WILAYAH (ikut filter wilayahAkses
+    // user login) vs NASIONAL (1 angka gabungan sama ke semua user).
+    const badgeWilayah = `<span style="font-size: 9px; font-weight: 700; letter-spacing: 0.3px; padding: 2px 7px; border-radius: 99px; background: rgba(var(--bento-primary-rgb),0.15); color: var(--bento-primary); margin-left: 6px; vertical-align: middle;">PER WILAYAH</span>`;
     let html = `
-      <div class="beranda-top-section" style="grid-column: 1 / -1;">
-      ${renderProgramSelectorHtml_()}
-
-      <!-- Panel Program GO-PAY (satu-satunya yang punya data LIVE sekarang) --
-           Ringkasan Angka (Anak, Wilayah, Pengurus) + Data Anak Yatim, semua
-           konten yang SEBELUMNYA tampil langsung di Beranda, sekarang
-           dibungkus jadi panel program supaya bisa disembunyikan pas
-           user pindah ke program lain lewat selector di atas. -->
-      <div class="program-panel" id="programPanel-gopay">
-      <!-- Ringkasan Angka (Anak, Wilayah, Pengurus) -->
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
-        <div class="stat-mini-card" style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid #60A5FA; cursor: pointer;" onclick="setActive('pm')">
-          <span class="material-symbols-outlined stat-mini-icon" style="color: #60A5FA;">group</span>
-          <div><div style="font-size: 20px; font-weight: 700;" id="statTotalAnak">…</div><div style="font-size: 11px; color: var(--text-secondary);">Anak</div><div style="font-size: 8.5px; color: var(--text-muted); margin-top: 1px; line-height: 1.2;">(Gopay &amp; Anak Asuh)</div></div>
-        </div>
-        <div class="stat-mini-card" style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid #C084FC;">
-          <span class="material-symbols-outlined stat-mini-icon" style="color: #C084FC;">location_on</span>
-          <div><div style="font-size: 20px; font-weight: 700;" id="statTotalWilayah">…</div><div style="font-size: 11px; color: var(--text-secondary);">Wilayah</div></div>
-        </div>
-        <div class="stat-mini-card" style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid var(--bento-primary); cursor: pointer;" onclick="handleUserMenuClick('pengurus')">
-          <span class="material-symbols-outlined stat-mini-icon" style="color: var(--bento-primary);">admin_panel_settings</span>
-          <div><div style="font-size: 20px; font-weight: 700;" id="statTotalPengurus">…</div><div style="font-size: 11px; color: var(--text-secondary);">Pengurus &amp; Tim Kerja</div></div>
-        </div>
-      </div>
-
-      <!-- Data Anak Yatim (Program Gopay) -- kartu klik-buat-detail, narik
-           LIVE dari YASSA Mobile (action getDataAnakYatim), NASIONAL/semua
-           wilayah, khusus Program Gopay (Anak Asuh tidak termasuk).
-           Preview 4 angka di sini, rincian lengkap per wilayah muncul pas
-           diklik (lihat openDataAnakYatim() / renderDataAnakYatim()). -->
-      <div onclick="openDataAnakYatim()" class="anak-yatim-preview-card" style="background: var(--glass-strong); border-radius: 20px; padding: 18px 18px 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid #A855F7; cursor: pointer;">
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
-          <div class="anak-yatim-icon-wrap" style="width: 40px; height: 40px; border-radius: 12px; background: rgba(168,85,247,0.15); color: #C084FC; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-            <span class="material-symbols-outlined" style="font-size: 21px; font-variation-settings: 'FILL' 1;">diversity_3</span>
-          </div>
-          <div style="flex: 1; min-width: 0;">
-            <h3 style="font-size: 14px; font-weight: 700; margin: 0;">Data Anak Yatim Gopay</h3>
-            <div style="font-size: 10.5px; color: var(--text-secondary); margin-top: 1px;">Semua Wilayah</div>
-          </div>
-          <span class="material-symbols-outlined anak-yatim-chevron" style="font-size: 20px; color: var(--text-muted); flex-shrink: 0;">chevron_right</span>
-        </div>
-        <div style="display:flex; gap:8px;">
-          <div class="anak-yatim-mini-stat" style="flex:1; background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
-            <div class="pale-blue-text" style="font-size:15px; font-weight:800; color:#93C5FD;" id="berandaAnakYatimKK"><span class="kv-loading">...</span></div>
-            <div style="font-size:9px; font-weight:700; color: var(--text-muted); margin-top:2px;">KK</div>
-          </div>
-          <div class="anak-yatim-mini-stat" style="flex:1; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
-            <div class="pale-green-text" style="font-size:15px; font-weight:800; color:#86EFAC;" id="berandaAnakYatimYatim"><span class="kv-loading">...</span></div>
-            <div style="font-size:9px; font-weight:700; color: var(--text-muted); margin-top:2px;">Yatim</div>
-          </div>
-          <div class="anak-yatim-mini-stat" style="flex:1; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
-            <div class="pale-purple-text" style="font-size:15px; font-weight:800; color:#D8B4FE;" id="berandaAnakYatimPiatu"><span class="kv-loading">...</span></div>
-            <div style="font-size:9px; font-weight:700; color: var(--text-muted); margin-top:2px;">Yatim Piatu</div>
-          </div>
-          <div class="anak-yatim-mini-stat" style="flex:1; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
-            <div class="pale-amber-text" style="font-size:15px; font-weight:800; color:#FDE68A;" id="berandaAnakYatimDisabilitas"><span class="kv-loading">...</span></div>
-            <div style="font-size:9px; font-weight:700; color: var(--text-muted); margin-top:2px;">Disabilitas</div>
-          </div>
-        </div>
-      </div>
-      </div>
-      <!-- /Panel Program GO-PAY -->
-
-      <!-- Panel Program SAPA (Sahabat Peduli Anak / Anak Asuh) -- data LIVE
-           dari YASSA Mobile lewat action "getDataAnakAsuh" (Hub), mirror
-           persis pola panel GO-PAY di atas. Disembunyikan default karena
-           GO-PAY yang aktif duluan (lihat activeProgram). -->
-      <div class="program-panel" id="programPanel-sapa" style="display:none;">
-        <div onclick="openDataAnakAsuh()" class="anak-asuh-preview-card" style="background: var(--glass-strong); border-radius: 20px; padding: 18px 18px 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid #EC4899; cursor: pointer;">
-          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
-            <div class="anak-asuh-icon-wrap" style="width: 40px; height: 40px; border-radius: 12px; background: rgba(236,72,153,0.15); color: #F9A8D4; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-              <span class="material-symbols-outlined" style="font-size: 21px; font-variation-settings: 'FILL' 1;">diversity_1</span>
-            </div>
-            <div style="flex: 1; min-width: 0;">
-              <h3 style="font-size: 14px; font-weight: 700; margin: 0;">Data Anak Asuh SAPA</h3>
-              <div style="font-size: 10.5px; color: var(--text-secondary); margin-top: 1px;">Semua Wilayah</div>
-            </div>
-            <span class="material-symbols-outlined anak-asuh-chevron" style="font-size: 20px; color: var(--text-muted); flex-shrink: 0;">chevron_right</span>
-          </div>
-          <div style="display:flex; gap:8px;">
-            <div class="anak-asuh-mini-stat" style="flex:1; background: rgba(236,72,153,0.08); border: 1px solid rgba(236,72,153,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
-              <div style="font-size:15px; font-weight:800; color:#F9A8D4;" id="berandaAnakAsuhKK"><span class="kv-loading">...</span></div>
-              <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">KK</div>
-            </div>
-            <div class="anak-asuh-mini-stat" style="flex:1; background: rgba(219,39,119,0.08); border: 1px solid rgba(219,39,119,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
-              <div style="font-size:15px; font-weight:800; color:#F472B6;" id="berandaAnakAsuhAnak"><span class="kv-loading">...</span></div>
-              <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Anak Asuh</div>
-            </div>
-            <div class="anak-asuh-mini-stat" style="flex:1; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
-              <div class="pale-purple-text" style="font-size:15px; font-weight:800; color:#D8B4FE;" id="berandaAnakAsuhPiatu"><span class="kv-loading">...</span></div>
-              <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Yatim Piatu</div>
-            </div>
-            <div class="anak-asuh-mini-stat" style="flex:1; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
-              <div class="pale-amber-text" style="font-size:15px; font-weight:800; color:#FDE68A;" id="berandaAnakAsuhDisabilitas"><span class="kv-loading">...</span></div>
-              <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Disabilitas</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- /Panel Program SAPA -->
-
-      <!-- Panel placeholder buat program lain yang belum ada datanya
-           (BADIK, BATAN, BASO, PEDAS) -- disembunyikan default, tinggal
-           disambung ke sumber data masing-masing pas sudah tersedia
-           (lihat YASSA_PROGRAMS di atas). -->
-      ${YASSA_PROGRAMS.filter(function (p) { return !p.ready; })
-        .map(function (p) {
-          return '<div class="program-panel" id="programPanel-' + p.key + '" style="display:none;">' + renderProgramComingSoonHtml_(p) + '</div>';
-        })
-        .join("")}
-
-      <!-- Aksi Cepat Menu Bawah -->
-      <div>
-      <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Aksi Cepat Donasi</h3>
-      <div class="aksi-cepat-row" style="display: flex; justify-content: space-between; margin-bottom: 24px;">
-        <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="window.open('https://kitabisa.com/campaign/gojekbantuyatim', '_blank')">
-          <div class="aksi-kitabisa-icon"><span class="material-symbols-outlined">volunteer_activism</span></div>
-          <span class="aksi-kitabisa-label">Donasi<br>Kitabisa.com</span>
-        </div>
-        <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="openAppUrl('https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/?embed=1&tab=input-kotak')">
-          <div class="aksi-cepat-icon aksi-kotak-icon"><span class="material-symbols-outlined">inventory_2</span></div>
-          <span style="font-size: 10.5px; color: var(--text-secondary);">Kotak Gopay</span>
-        </div>
-        <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="openAppUrl('https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/?embed=1&tab=input-donasi')">
-          <div class="aksi-cepat-icon aksi-donasi-icon"><span class="material-symbols-outlined">add_box</span></div>
-          <span style="font-size: 10.5px; color: var(--text-secondary);">Donasi</span>
-        </div>
-        <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="toggleMidtransForm()">
-          <div class="aksi-cepat-icon aksi-online-icon"><span class="material-symbols-outlined">credit_card</span></div>
-          <span class="aksi-online-label">Donasi<br>Online</span>
-        </div>
-        <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="showQrCodeDonasiCepat()">
-          <div class="aksi-qr-icon"><span class="material-symbols-outlined">qr_code_scanner</span><span class="aksi-qr-scanline" aria-hidden="true"></span></div>
-          <span style="font-size: 10.5px; color: var(--text-secondary);">QR Code</span>
-        </div>
-      </div>
-      </div>
-      </div>
-      <!-- /beranda-top-section -->
-
-      <div style="background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid var(--neon-cyan);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-          <h3 style="font-size: 14px; font-weight: 600; margin: 0;">Aktivitas Hari Ini</h3>
-          <a href="#" style="font-size: 11.5px; color: var(--neon-blue); text-decoration: none;" onclick="showModal('Info', 'Fitur Log Aktivitas sedang dikembangkan.'); return false;">Lihat Semua</a>
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-          <div id="aktLoginHariIniWrap" style="display: flex; align-items: center; gap: 12px;">
-            <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(34, 197, 94, 0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800;">check</span></div>
-            <span id="aktLoginHariIniText" style="font-size: 12.5px;">Memuat data login…</span>
-          </div>
-          <div id="aktPengurusLamaWrap" style="display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="showDaftarPengurusBelumLoginLama()">
-            <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(251, 191, 36, 0.15); color: #FBBF24; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800;">warning</span></div>
-            <span id="aktPengurusLamaText" style="font-size: 12.5px;">Memuat data pengurus…</span>
-          </div>
-          <div id="aktDonasiVerifikasiWrap" style="display: flex; align-items: center; gap: 12px;">
-            <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(59, 130, 246, 0.15); color: #60A5FA; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800;">lock</span></div>
-            <span id="aktDonasiVerifikasiText" style="font-size: 12.5px;">Memuat data donasi…</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Agenda Mendatang (Kalender Kegiatan) -->
-      <div style="background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid #22C55E;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-          <h3 style="font-size: 14px; font-weight: 600; margin: 0;">Agenda Mendatang</h3>
-          <a href="#" style="font-size: 11.5px; color: var(--neon-blue); text-decoration: none;" onclick="openKalenderKegiatan(); return false;">Lihat Semua</a>
-        </div>
-        <div id="agendaMendatangList" style="display: flex; flex-direction: column; gap: 10px;">
-          <div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 12px 0;">Memuat agenda…</div>
-        </div>
-      </div>
-
-      <!-- Aktivitas Terbaru -->
-      <div style="background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid #F97316;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-          <h3 style="font-size: 14px; font-weight: 600; margin: 0;">Aktivitas Terbaru</h3>
-          <a href="#" style="font-size: 11.5px; color: var(--neon-blue); text-decoration: none;" onclick="showModal('Info', 'Fitur Riwayat sedang dikembangkan.'); return false;">Lihat Semua</a>
-        </div>
-        <div id="aktivitasTerbaruList" style="display: flex; flex-direction: column; gap: 14px;">
-          <div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 12px 0;">Memuat aktivitas…</div>
-        </div>
-      </div>
-      
-    `;
-    html += `<div class="app-version-footer">YASSA GOPAY v${APP_VERSION}</div>`;
-    el.innerHTML = html;
-    loadBerandaStats();
-    loadDataAnakYatimPreviewBeranda();
-    loadDataAnakAsuhPreviewBeranda();
-    loadAgendaMendatangBeranda();
-    initProgramSelectorCoverflow();
-    return;
-  }
-
-  if (active === "app") {
-    // 🔔 GATE: notifikasi WAJIB diaktifkan dulu sebelum grid 6 app muncul.
-    // Sebelumnya tombol "Aktifkan Notifikasi" cuma nongol di dalam menu
-    // YASSA Mobile (gampang kelewat). Sekarang jadi syarat masuk tab App.
-    const notifStatus = localStorage.getItem("yassa_mobile_notif_status");
-    if (notifStatus !== "granted" && notifStatus !== "skipped") {
-      el.innerHTML = `
-        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:60px 24px; gap:16px;">
-          <div style="width:72px; height:72px; border-radius:50%; background:rgba(var(--bento-primary-rgb),0.15); color:var(--bento-primary); display:flex; align-items:center; justify-content:center;">
-            <span class="material-symbols-outlined" style="font-size:36px;">notifications_active</span>
-          </div>
-          <div>
-            <h2 style="font-weight:700; font-size:17px; margin:0 0 6px;">Aktifkan Notifikasi Dulu</h2>
-            <div style="font-size:13px; color:var(--text-secondary); max-width:280px; line-height:1.5;">
-              Sebelum masuk ke aplikasi, aktifkan notifikasi biar kamu langsung tahu kalau ada donasi masuk atau kehadiran baru di wilayahmu.
-            </div>
-          </div>
-          <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:8px; width:100%;">
-            ${renderMobileNotifButton()}
-          </div>
-          <button onclick="localStorage.setItem('yassa_mobile_notif_status','skipped'); active='beranda'; render();" style="margin-top:4px; background:transparent; border:none; color:var(--text-muted); font-size:12px; text-decoration:underline; cursor:pointer;">
-            Lewati dulu, nanti saja
-          </button>
-        </div>`;
-      return;
-    }
-
-    let html = `
-      <div class="app-header-section" style="grid-column: 1 / -1;">
+      <div class="keuangan-header-section" style="grid-column: 1 / -1;">
       <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px; padding-top:16px;">
         <div style="width:40px; height:40px; border-radius:12px; background:rgba(var(--bento-primary-rgb),0.15); color:var(--bento-primary); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-          <span class="material-symbols-outlined" style="font-size:22px; font-variation-settings:'FILL' 1;">apps</span>
+          <span class="material-symbols-outlined" style="font-size:22px; font-variation-settings:'FILL' 1;">payments</span>
         </div>
-        <div>
-          <h2 style="font-weight:700; font-size:18px; margin:0; letter-spacing:-0.2px;">Semua Aplikasi</h2>
-          <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Pilih aplikasi yang ingin dibuka</div>
+        <div style="flex:1; min-width:0;">
+          <h2 style="font-weight:700; font-size:18px; margin:0; letter-spacing:-0.2px;">Keuangan</h2>
+          <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Donasi &amp; santunan bulan ini</div>
         </div>
       </div>
       <div style="height:1px; background:linear-gradient(90deg, var(--glass-border-strong), transparent); margin: 16px 0 24px;"></div>
-      </div>
-      <div id="appGridContainer" style="grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
-    `;
 
-    const APP_CARDS = [
-      { key: "mobile", grad: "linear-gradient(135deg, #34D399 0%, #059669 100%)", glow: "rgba(16,185,129,0.35)", icon: "smartphone", title: "YASSA Mobile", desc: "Data Base<br>YASSA" },
-      { key: "donasi", grad: "linear-gradient(135deg, #4ADE80 0%, #15803D 100%)", glow: "rgba(34,197,94,0.35)", icon: "box", title: "Kotak & Donasi", desc: "Kelola kotak<br>dan donasi", notice: "Masih Tahap Pengembangan, Data mungkin tidak Akurat" },
-      { key: "absensi", grad: "linear-gradient(135deg, #60A5FA 0%, #1D4ED8 100%)", glow: "rgba(59,130,246,0.35)", icon: "assignment", title: "Kehadiran", desc: "Catat kehadiran<br>kegiatan" },
-      { key: "awg", grad: "linear-gradient(135deg, #E879F9 0%, #7E22CE 100%)", glow: "rgba(168,85,247,0.35)", icon: "favorite", title: "AWG", desc: "Ahli Waris<br>Akun" },
-      { key: "pm", grad: "linear-gradient(135deg, #FCD34D 0%, #D97706 100%)", glow: "rgba(251,191,36,0.35)", icon: "group", title: "Penerima Manfaat", desc: "Data penerima<br>manfaat" },
-      // 🚧 notice: dipakai buat nampilin badge peringatan "masih tahap
-      // pengembangan" di card grid App. Field ini sengaja dibikin generik
-      // (bukan cuma khusus bukubesar) supaya gampang dipasang/dicopot di
-      // app lain juga nanti kalau statusnya berubah -- tinggal
-      // tambah/hapus baris "notice" di object card-nya, gak perlu ubah
-      // logika render di bawah.
-      { key: "bukubesar", grad: "linear-gradient(135deg, #67E8F9 0%, #0E7490 100%)", glow: "rgba(34,211,238,0.35)", icon: "menu_book", title: "Cloud Buku", desc: "Pembukuan Digital<br>Yayasan", notice: "Masih Tahap Pengembangan, Data mungkin tidak Akurat" },
-      { key: "lentera", grad: "linear-gradient(135deg, #FBBF24 0%, #D97706 100%)", glow: "rgba(251,191,36,0.35)", icon: "lightbulb", title: "Lentera Yassa", desc: "Aplikasi<br>Lentera Yassa" },
-    ];
-
-    APP_CARDS.filter(function (c) { return isAppVisible(c.key); }).forEach(function (c) {
-      html += `
-        <button onclick="setActive('${c.key}')" style="position: relative; background: var(--glass-strong); padding: 20px 16px 22px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; gap: 14px; border: 1px solid var(--glass-border); cursor: pointer;">
-          ${c.notice ? `
-          <div style="position: absolute; top: 10px; right: 10px; display: flex; align-items: center; gap: 3px; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.4); color: #F59E0B; font-size: 9px; font-weight: 700; padding: 3px 7px; border-radius: 999px; line-height: 1;" title="${c.notice}">
-            <span class="material-symbols-outlined" style="font-size: 11px;">construction</span>
-            Uji Coba
-          </div>` : ``}
-          <div style="position: relative; width: 64px; height: 64px; border-radius: 20px; background: ${c.grad}; box-shadow: 0 10px 22px ${c.glow}, inset 0 1px 0 rgba(255,255,255,0.35); display: flex; align-items: center; justify-content: center; overflow: hidden;">
-            <div style="position: absolute; top: -18px; left: -14px; width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.22); filter: blur(2px);"></div>
-            <span class="material-symbols-outlined" style="position: relative; font-size: 30px; color: #fff; font-variation-settings: 'FILL' 1; text-shadow: 0 1px 3px rgba(0,0,0,0.25);">${c.icon}</span>
-          </div>
-          <div style="text-align: center;">
-            <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">${c.title}</div>
-            <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.2;">${c.desc}</div>
-            ${c.notice ? `<div style="font-size: 9px; color: #F59E0B; line-height: 1.3; margin-top: 6px; font-weight: 600;">${c.notice}</div>` : ``}
-          </div>
-        </button>
-      `;
-    });
-
-    html += `</div>`;
-    el.innerHTML = html;
-    return;
-  }
-
- if (active === "keuangan") {
-    const wilayahText = currentUser.wilayahAkses === "ALL" ? "Semua Wilayah" : (currentUser.wilayahAkses || "-");
-    const badgeWilayah = `<span style="font-size: 9px; font-weight: 700; letter-spacing: 0.3px; padding: 2px 7px; border-radius: 99px; background: rgba(var(--bento-primary-rgb),0.15); color: var(--bento-primary); margin-left: 6px; vertical-align: middle;">PER WILAYAH</span>`;
-    
-    let html = `
-      <div class="keuangan-header-section" style="grid-column: 1 / -1;">
-        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; padding-top:16px;">
-          <div style="width:48px; height:48px; border-radius:14px; background:linear-gradient(135deg, rgba(34,197,94,0.2), rgba(16,185,129,0.1)); color:var(--bento-primary); display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow: 0 4px 12px rgba(34,197,94,0.1);">
-            <span class="material-symbols-outlined" style="font-size:24px; font-variation-settings:'FILL' 1;">account_balance_wallet</span>
-          </div>
-          <div style="flex:1; min-width:0;">
-            <h2 style="font-weight:800; font-size:20px; margin:0; letter-spacing:-0.3px; color:var(--text-primary);">Keuangan</h2>
-            <div style="font-size:12px; color:var(--text-secondary); margin-top:3px;">Donasi &amp; santunan bulan ini</div>
-          </div>
-          <!-- Memindahkan informasi wilayah ke kanan (right-aligned) -->
-          <div style="background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 12px; font-size: 11px; font-weight: 700; color: var(--text-primary); border: 1px solid var(--glass-border); text-align: right;">
-            <span style="display:block; font-size:8px; color:var(--text-muted); text-transform:uppercase; margin-bottom:2px;">Wilayah</span>
-            ${escapeHtmlHub(wilayahText)}
-          </div>
-        </div>
-        <div style="height:1px; background:var(--glass-border-strong); margin: 0 0 20px;"></div>
-
-        <!-- Banner status ambil data -->
-        <div id="keuanganLoadingBanner" class="kv-banner-loading" style="display: none; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; margin-bottom: 20px;">
-          <span class="material-symbols-outlined spin" id="keuanganLoadingIcon" style="font-size: 18px; flex-shrink: 0;">progress_activity</span>
-          <span style="font-size: 12px; flex: 1;" id="keuanganLoadingBannerText">Menghitung berkah untuk anak-anak yatim kita...</span>
-          <button id="keuanganRetryBtn" onclick="loadKeuanganStats()" style="display: none; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 99px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: var(--text-primary); cursor: pointer; flex-shrink: 0;">Coba Lagi</button>
-        </div>
+      <!-- Banner status ambil data: nunjukin lagi loading / gagal, biar user
+           gak ngira datanya emang kosong pas fetch ke 4 sumber lagi lambat. -->
+      <div id="keuanganLoadingBanner" class="kv-banner-loading" style="display: none; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; margin-bottom: 16px;">
+        <span class="material-symbols-outlined spin" id="keuanganLoadingIcon" style="font-size: 18px; flex-shrink: 0;">progress_activity</span>
+        <span style="font-size: 12px; flex: 1;" id="keuanganLoadingBannerText">Menghitung berkah untuk anak-anak yatim kita...</span>
+        <button id="keuanganRetryBtn" onclick="loadKeuanganStats()" style="display: none; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 99px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: var(--text-primary); cursor: pointer; flex-shrink: 0;">Coba Lagi</button>
       </div>
 
-      <!-- 1. Kebutuhan Santunan -->
-      <div id="keuanganTourTarget" class="keuangan-hero-card" style="background: linear-gradient(145deg, var(--glass-strong) 0%, rgba(26,36,56,0.9) 100%); border-radius: 24px; padding: 24px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-top: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-          <div>
-            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); letter-spacing: 0.3px;">Kebutuhan Santunan ${badgeWilayah}</div>
-            <div style="font-size: 11px; color: var(--bento-primary); margin-top:2px;">Program Gopay</div>
-          </div>
-          <div class="keuangan-hero-icon-wrap" style="width: 40px; height: 40px; border-radius: 12px; background: rgba(34,197,94,0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-            <span class="material-symbols-outlined" style="font-size: 20px;">groups</span>
+      <!-- Section label buat kartu-kartu di bawah ini yang SEMUA sifatnya
+           per-wilayah (ikut wilayahAkses user login) -- beda dari Laporan
+           Bulanan di bawah (setelah Kartu 2) yang nasional/gabungan semua
+           wilayah. -->
+      <div style="display:flex; align-items:center; justify-content:space-between; margin: 0 2px 14px;">
+        <div style="font-size: 12.5px; font-weight: 700; color: var(--text-primary); display:flex; align-items:center; gap: 6px;">
+          <span class="material-symbols-outlined" style="font-size: 16px; color: var(--bento-primary);">location_on</span>
+          Laporan Keuangan Program GOPAY Wilayah
+        </div>
+        <div style="background: var(--glass-strong); padding: 5px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; color: var(--text-primary); border: 1px solid var(--glass-border);">
+          ${escapeHtmlHub(wilayahText)}
+        </div>
+      </div>
+      </div>
+
+      <!-- 1. Jumlah Anak Yatim + Total Santunan (per wilayah -- jumlah anak dari
+           YASSA Mobile, rate dari Bendahara, dihitung otomatis di Hub) -->
+      <div id="keuanganTourTarget" class="keuangan-hero-card" style="background: var(--glass-strong); border-radius: 20px; padding: 22px 20px; margin-bottom: 16px; border: 1px solid var(--glass-border); border-left: 4px solid var(--bento-primary);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+          <div style="font-size: 12px; color: var(--text-secondary);">1. Jumlah Anak &amp; Santunan ${badgeWilayah}<br><span style="font-size: 10px; color: var(--bento-primary);">(Program Gopay)</span></div>
+          <div style="width: 44px; height: 44px; border-radius: 14px; background: rgba(var(--bento-primary-rgb),0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;" class="keuangan-hero-icon-wrap">
+            <span class="material-symbols-outlined" style="font-size: 22px; font-variation-settings: 'FILL' 1;">groups</span>
           </div>
         </div>
+        <div style="font-size: 34px; font-weight: 800; color: var(--text-primary); line-height: 1.1; margin: 4px 0 2px;" id="keuanganJumlahYatim"><span class="kv-loading">...</span></div>
+        <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 18px;">Anak &middot; Wilayah ${escapeHtmlHub(wilayahText)} &middot; Bulan Ini</div>
 
-        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom: 24px;">
-           <div>
-              <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Total Anak Yatim</div>
-              <div style="font-size: 32px; font-weight: 800; color: var(--text-primary); line-height: 1;" id="keuanganJumlahYatim"><span class="kv-loading">...</span></div>
-           </div>
-           <!-- Memindahkan Total Rupiah ke sisi kanan yang jelas terpisah -->
-           <div style="text-align: right;" id="keuanganSantunanWrap">
-              <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Total Rupiah</div>
-              <div style="font-size: 24px; font-weight: 800; color: var(--bento-primary);" id="keuanganTotalSantunan"><span class="kv-loading">...</span></div>
-           </div>
-        </div>
-
-        <!-- Pemisahan dataset (distinct datasets) menggunakan Grid agar dapat disesuaikan otomatis dengan mobile -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px;">
-          <div class="keuangan-mini-stat" style="background: rgba(168, 85, 247, 0.08); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 16px; padding: 14px; text-align: left;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-               <span class="pale-purple-text" style="font-size: 11px; font-weight:600; color: #D8B4FE;">Yatim Piatu</span>
-               <span class="material-symbols-outlined" style="font-size: 16px; color: #C084FC;">diversity_1</span>
+        <div style="display: flex; gap: 10px; margin-bottom: 18px;">
+          <div class="keuangan-mini-stat" style="flex: 1; background: rgba(168, 85, 247, 0.10); border: 1px solid rgba(168, 85, 247, 0.25); border-left: 3px solid #A855F7; border-radius: 14px; padding: 12px;">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+              <span class="material-symbols-outlined" style="font-size: 15px; color: #C084FC;">diversity_1</span>
+              <span class="pale-purple-text" style="font-size: 10.5px; color: #D8B4FE;">Yatim Piatu</span>
             </div>
-            <div class="pale-purple-text" style="font-size: 22px; font-weight: 800; color: #E9D5FF;" id="keuanganYatimPiatu"><span class="kv-loading">...</span></div>
+            <div class="pale-purple-text" style="font-size: 20px; font-weight: 700; color: #E9D5FF;" id="keuanganYatimPiatu"><span class="kv-loading">...</span></div>
           </div>
-          <div class="keuangan-mini-stat" style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 16px; padding: 14px; text-align: left;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-               <span class="pale-amber-text" style="font-size: 11px; font-weight:600; color: #FDE68A;">Disabilitas</span>
-               <span class="material-symbols-outlined" style="font-size: 16px; color: #FBBF24;">accessible</span>
+          <div class="keuangan-mini-stat" style="flex: 1; background: rgba(245, 158, 11, 0.10); border: 1px solid rgba(245, 158, 11, 0.25); border-left: 3px solid #FBBF24; border-radius: 14px; padding: 12px;">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+              <span class="material-symbols-outlined" style="font-size: 15px; color: #FBBF24;">accessible</span>
+              <span class="pale-amber-text" style="font-size: 10.5px; color: #FDE68A;">Disabilitas</span>
             </div>
-            <div class="pale-amber-text" style="font-size: 22px; font-weight: 800; color: #FEF3C7;" id="keuanganDisabilitas"><span class="kv-loading">...</span></div>
+            <div class="pale-amber-text" style="font-size: 20px; font-weight: 700; color: #FEF3C7;" id="keuanganDisabilitas"><span class="kv-loading">...</span></div>
           </div>
         </div>
 
         <div style="border-top: 1px dashed var(--glass-border); padding-top: 16px;">
-          <div id="keuanganSantunanBelumDiisi" style="display: none; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; background: rgba(251, 191, 36, 0.10); border: 1px solid rgba(251, 191, 36, 0.3); margin-bottom: 12px;">
+          <div id="keuanganSantunanBelumDiisi" style="display: none; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; background: rgba(251, 191, 36, 0.10); border: 1px solid rgba(251, 191, 36, 0.3); margin-bottom: 4px;">
             <span class="material-symbols-outlined" style="font-size: 18px; color: #FBBF24;">info</span>
             <span style="font-size: 11px; color: #FDE68A;">Bendahara belum mengisi rate santunan bulan ini.</span>
           </div>
-          
-          <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 4px;" id="keuanganRincianRate"><span class="kv-loading">...</span></div>
+          <div id="keuanganSantunanWrap">
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Total Santunan Program GOPAY bulan ini</div>
+            <div style="font-size: 26px; font-weight: 800; color: var(--text-primary); margin-bottom: 4px;" id="keuanganTotalSantunan"><span class="kv-loading">...</span></div>
+            <div style="font-size: 10px; color: var(--text-secondary);" id="keuanganRincianRate"><span class="kv-loading">...</span></div>
 
-          <!-- Breakdown rate & jumlah anak PER WILAYAH -->
-          <div id="keuanganRincianWilayahSantunanWrap" style="display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.05);">
-            <button type="button" onclick="toggleRincianWilayahKeuangan('keuanganRincianWilayahSantunanList', 'keuanganRincianWilayahSantunanChevron')" style="width: 100%; display: flex; align-items: center; justify-content: space-between; background: transparent; border: none; padding: 0; cursor: pointer; color: inherit; font-family: inherit;">
-              <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary);" id="keuanganRincianWilayahSantunanLabel">Rincian per Wilayah</span>
-              <span class="material-symbols-outlined" id="keuanganRincianWilayahSantunanChevron" style="font-size: 18px; color: var(--text-secondary); transition: transform 0.2s;">expand_more</span>
-            </button>
-            <div id="keuanganRincianWilayahSantunanList" class="kv-rincian-list" style="display: block;"></div>
+            <!-- Breakdown rate & jumlah anak PER WILAYAH -- cuma tampil kalau
+                 user akses lebih dari 1 wilayah (mis. Super Admin/"ALL").
+                 Default KETUTUP (collapsed) biar kartu gak kepanjangan buat
+                 Super Admin yang akses semua 16 wilayah -- tinggal klik buat
+                 buka/tutup rinciannya. -->
+            <div id="keuanganRincianWilayahSantunanWrap" style="display: none; margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--glass-border);">
+              <button type="button" onclick="toggleRincianWilayahKeuangan('keuanganRincianWilayahSantunanList', 'keuanganRincianWilayahSantunanChevron')" style="width: 100%; display: flex; align-items: center; justify-content: space-between; background: transparent; border: none; padding: 0; cursor: pointer; color: inherit; font-family: inherit;">
+                <span style="font-size: 11px; color: var(--text-muted);" id="keuanganRincianWilayahSantunanLabel">Rincian per Wilayah</span>
+                <span class="material-symbols-outlined" id="keuanganRincianWilayahSantunanChevron" style="font-size: 18px; color: var(--text-muted); transition: transform 0.2s;">expand_more</span>
+              </button>
+              <div id="keuanganRincianWilayahSantunanList" class="kv-rincian-list" style="display: block;"></div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- 2. Realisasi Lapangan -->
-      <div style="background: linear-gradient(145deg, var(--glass-strong) 0%, rgba(26,36,56,0.9) 100%); border-radius: 24px; padding: 24px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-top: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-          <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); letter-spacing: 0.3px;">Realisasi Lapangan ${badgeWilayah}</div>
-          <div style="font-size: 10px; color: var(--text-muted); background: rgba(255,255,255,0.05); padding:4px 8px; border-radius:8px;" id="keuanganCatatanBendahara">Info Bendahara</div>
-        </div>
+      <!-- 2. Realisasi Lapangan (kotak donasi & sejenisnya, per wilayah -- diisi
+           manual oleh Korwil/Bendahara di sheet Keuangan_Bulanan) -->
+      <div style="background: var(--glass-strong); border-radius: 20px; padding: 22px 20px; margin-bottom: 16px; border: 1px solid var(--glass-border); border-left: 4px solid #3B82F6;">
+        <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">2. Realisasi Lapangan ${badgeWilayah}</div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;" id="keuanganCatatanBendahara">Ditentukan oleh Bendahara</div>
+        <div style="font-size: 26px; font-weight: 800; margin-bottom: 4px; color: var(--text-primary);" id="keuanganKebutuhanNominal"><span class="kv-loading">...</span></div>
+        <div style="font-size: 10px; color: var(--bento-primary); margin-bottom: 18px;">Total kebutuhan donasi</div>
 
         <div id="keuanganBelumDiisi" style="display: none; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; background: rgba(251, 191, 36, 0.10); border: 1px solid rgba(251, 191, 36, 0.3); margin-bottom: 16px;">
           <span class="material-symbols-outlined" style="font-size: 18px; color: #FBBF24;">info</span>
           <span style="font-size: 11px; color: #FDE68A;">Bendahara belum mengisi data keuangan bulan ini.</span>
         </div>
 
-        <!-- Kolom terpisah untuk Kebutuhan dan Realisasi -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px dashed var(--glass-border);">
-          <div>
-             <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Target Kebutuhan</div>
-             <div style="font-size: 20px; font-weight: 800; color: var(--text-primary);" id="keuanganKebutuhanNominal"><span class="kv-loading">...</span></div>
-          </div>
-          <div style="text-align: right;">
-             <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Terkumpul</div>
-             <div style="font-size: 20px; font-weight: 800; color: #60A5FA;" id="keuanganRealisasiNominal"><span class="kv-loading">...</span></div>
-          </div>
-        </div>
-
         <div id="keuanganProgresWrap">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <div style="font-size: 11px; color: var(--text-muted);">Pencapaian Donasi</div>
-            <div style="font-size: 16px; font-weight: 800; color: var(--text-primary);" id="keuanganPersenTercapai"><span class="kv-loading">...</span></div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px;">
+            <div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Realisasi Donasi Program GOPAY</div>
+              <div style="font-size: 22px; font-weight: 700;" id="keuanganRealisasiNominal"><span class="kv-loading">...</span></div>
+              <div style="font-size: 10px; color: var(--text-secondary);">Dicatat Bendahara</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 16px; font-weight: 700;" id="keuanganPersenTercapai"><span class="kv-loading">...</span></div>
+              <div style="font-size: 10px; color: var(--text-secondary);">Tercapai</div>
+            </div>
           </div>
-          <div style="width: 100%; background: rgba(0,0,0,0.35); border-radius: 99px; height: 12px; margin-bottom: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);">
-            <div id="keuanganProgressBar" class="keuangan-progress-fill" style="background: var(--bento-primary); height: 12px; border-radius: 99px; width: 0%; transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1), background 0.5s ease;"></div>
-          </div>
-        </div>
-
-        <!-- Status Lencana diposisikan rapi ke kanan isi textnya -->
-        <div id="keuanganStatusBanner" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 20px; padding: 14px 16px; border-radius: 16px; background: rgba(239, 68, 68, 0.10); border: 1px solid rgba(239, 68, 68, 0.3);">
-          <div id="keuanganSelisihIconWrap" style="width: 40px; height: 40px; border-radius: 12px; background: rgba(239, 68, 68, 0.15); color: #EF4444; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-            <span class="material-symbols-outlined" style="font-size: 20px;" id="keuanganSelisihIcon">arrow_downward</span>
-          </div>
-          <div style="text-align: right; flex: 1;">
-            <div style="font-size: 18px; font-weight: 800; color: #FCA5A5; line-height: 1;" id="keuanganSelisihNominal"><span class="kv-loading">...</span></div>
-            <div style="font-size: 10.5px; color: rgba(252, 165, 165, 0.85); margin-top: 4px;" id="keuanganSelisihLabel"><span class="kv-loading">...</span></div>
+          <div style="width: 100%; background: rgba(0,0,0,0.35); border-radius: 99px; height: 10px; margin-bottom: 8px; overflow: hidden; border: 1px solid var(--glass-border);">
+            <div id="keuanganProgressBar" class="keuangan-progress-fill" style="background: var(--bento-primary); height: 10px; border-radius: 99px; width: 0%; transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1), background 0.5s ease;"></div>
           </div>
         </div>
 
-        <!-- Breakdown kekurangan PER WILAYAH -->
-        <div id="keuanganRincianWilayahWrap" style="display: none; margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.05);">
+        <div id="keuanganStatusBanner" style="display: flex; align-items: center; gap: 12px; margin-top: 16px; padding: 14px; border-radius: 14px; background: rgba(239, 68, 68, 0.10); border: 1px solid rgba(239, 68, 68, 0.3);">
+          <div id="keuanganSelisihIconWrap" style="width: 36px; height: 36px; border-radius: 10px; background: rgba(239, 68, 68, 0.15); color: #EF4444; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <span class="material-symbols-outlined" style="font-size: 18px;" id="keuanganSelisihIcon">arrow_downward</span>
+          </div>
+          <div>
+            <div style="font-size: 16px; font-weight: 700; color: #FCA5A5;" id="keuanganSelisihNominal"><span class="kv-loading">...</span></div>
+            <div style="font-size: 10.5px; color: rgba(252, 165, 165, 0.85);" id="keuanganSelisihLabel"><span class="kv-loading">...</span></div>
+          </div>
+        </div>
+
+        <!-- Breakdown kekurangan PER WILAYAH -- cuma tampil kalau user akses
+             lebih dari 1 wilayah (mis. Super Admin/"ALL"). Kalau cuma 1
+             wilayah, kartu di atas udah cukup mewakili, gak perlu diulang. -->
+        <div id="keuanganRincianWilayahWrap" style="display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--glass-border);">
           <button type="button" onclick="toggleRincianWilayahKeuangan('keuanganRincianWilayahList', 'keuanganRincianWilayahChevron')" style="width: 100%; display: flex; align-items: center; justify-content: space-between; background: transparent; border: none; padding: 0; cursor: pointer; color: inherit; font-family: inherit;">
-            <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary);" id="keuanganRincianWilayahLabel">Rincian per Wilayah</span>
-            <span class="material-symbols-outlined" id="keuanganRincianWilayahChevron" style="font-size: 18px; color: var(--text-secondary); transition: transform 0.2s;">expand_more</span>
+            <span style="font-size: 11px; color: var(--text-muted);" id="keuanganRincianWilayahLabel">Rincian per Wilayah</span>
+            <span class="material-symbols-outlined" id="keuanganRincianWilayahChevron" style="font-size: 18px; color: var(--text-muted); transition: transform 0.2s;">expand_more</span>
           </button>
           <div id="keuanganRincianWilayahList" class="kv-rincian-list" style="display: block;"></div>
         </div>
       </div>
 
-      <!-- Tombol Laporan Bulanan (Dibuat menyerupai list card UI profesional) -->
-      <button onclick="openLaporanBulanan()" style="width: 100%; background: linear-gradient(145deg, var(--glass-strong) 0%, rgba(26,36,56,0.9) 100%); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 18px; margin-bottom: 24px; display: flex; align-items: center; gap: 16px; cursor: pointer; text-align: left; box-shadow: 0 8px 24px rgba(0,0,0,0.15); transition: transform 0.2s;">
-        <div style="width: 48px; height: 48px; border-radius: 14px; background: rgba(34,197,94,0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: inset 0 2px 4px rgba(255,255,255,0.05);">
-          <span class="material-symbols-outlined" style="font-size: 24px;">monitoring</span>
+      <!-- Pintu masuk ke Laporan Bulanan (pendapatan vs pengeluaran santunan,
+           per bulan, klik buat lihat rincian) -- nasional/gabungan semua
+           wilayah, biar Pengurus/Korwil/Tim Kerja/Relawan semua lihat angka
+           yang sama pas ditanya-tanya donatur. Ditaruh di BAWAH Kartu 2
+           (Realisasi Lapangan) sesuai permintaan Heru. -->
+      <button onclick="openLaporanBulanan()" style="width: 100%; background: linear-gradient(135deg, rgba(34,197,94,0.16), rgba(16,185,129,0.10)); border: 1px solid rgba(34,197,94,0.3); border-radius: 18px; padding: 16px 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; text-align: left;">
+        <div style="width: 44px; height: 44px; border-radius: 14px; background: rgba(34,197,94,0.18); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <span class="material-symbols-outlined" style="font-size: 22px;">monitoring</span>
         </div>
         <div style="flex: 1;">
-          <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">Laporan Bulanan Program Gopay</div>
+          <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Laporan Bulanan Program Gopay</div>
           <div style="font-size: 11px; color: var(--text-secondary);">Pendapatan &amp; pengeluaran santunan per bulan</div>
         </div>
-        <div style="width: 32px; height: 32px; border-radius: 10px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center;">
-          <span class="material-symbols-outlined" style="font-size: 18px; color: var(--text-muted);">chevron_right</span>
-        </div>
+        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
       </button>
+
+      <!-- 3. Donasi Kitabisa.com & 4. Donasi Online/Midtrans DIHAPUS dari
+           sini (2026) -- gak ditrack sebagai total terpisah lagi, sekarang
+           digabung manual ke Realisasi Lapangan (Keuangan_Bulanan) langsung
+           oleh Korwil/Bendahara. Tombol "Buka Campaign Kitabisa" & "Catat
+           Donasi" tetap ada, cuma pindah ke Aksi Cepat Donasi di tab
+           Beranda (gak hilang, cuma gak nampilin total lagi di sini). -->
     `;
     el.innerHTML = html;
     loadKeuanganStats();
     return;
   }
 
-  if (active === "profil") {
+ if (active === "profil") {
     const fotoProfil = currentUser.fotoUrl ? currentUser.fotoUrl : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
     const wilayahTxt = String(currentUser.wilayahAkses || "").toUpperCase() === "ALL"
       ? "Semua Wilayah"
