@@ -2197,6 +2197,107 @@
   }
 
   /* ============================================================
+     🎨 REDESAIN TAMPILAN TAB KEUANGAN -- komponen "kfin-*" (keuangan
+     finance) dibuat supaya kartu-kartu di tab ini punya hirarki visual
+     yang lebih jelas & konsisten (dashboard finansial yang lebih rapi),
+     tanpa mengubah id/struktur yang dipakai JS (terapkanKeuanganStats,
+     loadKeuanganStats, dll) -- cuma restyle pembungkus & tipografinya.
+     Warna aksen tiap kartu diatur lewat CSS var --kfin-accent /
+     --kfin-accent-rgb yang di-set inline per kartu.
+     ============================================================ */
+  .kfin-card {
+    position: relative;
+    background: var(--glass-strong);
+    border: 1px solid var(--glass-border);
+    border-radius: 22px;
+    padding: 22px 20px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .kfin-card::before {
+    content: "";
+    position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    background: var(--kfin-accent, var(--bento-primary));
+    opacity: 0.9;
+  }
+  .kfin-card-head {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 18px;
+  }
+  .kfin-eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 700; color: var(--text-primary);
+  }
+  .kfin-step {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; border-radius: 7px; font-size: 10.5px; font-weight: 800;
+    background: rgba(var(--kfin-accent-rgb, var(--bento-primary-rgb)), 0.18);
+    color: var(--kfin-accent, var(--bento-primary));
+    flex-shrink: 0;
+  }
+  .kfin-icon-wrap {
+    width: 46px; height: 46px; border-radius: 15px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(var(--kfin-accent-rgb, var(--bento-primary-rgb)), 0.15);
+    color: var(--kfin-accent, var(--bento-primary));
+  }
+  .kfin-number {
+    font-size: 32px; font-weight: 800; color: var(--text-primary); line-height: 1.15;
+    letter-spacing: -0.5px; font-variant-numeric: tabular-nums;
+  }
+  .kfin-number-md { font-size: 23px; }
+  .kfin-caption { font-size: 11.5px; color: var(--text-secondary); }
+  .kfin-badge {
+    display: inline-block;
+    font-size: 9px; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 99px; margin-left: 6px; vertical-align: middle;
+    background: rgba(var(--bento-primary-rgb),0.15); color: var(--bento-primary);
+  }
+  .kfin-pill {
+    font-size: 11.5px; font-weight: 700; padding: 6px 12px; border-radius: 99px;
+    background: var(--glass); border: 1px solid var(--glass-border); color: var(--text-primary);
+    white-space: nowrap;
+  }
+  .kfin-divider { border-top: 1px dashed var(--glass-border); }
+  .kfin-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .kfin-stat-chip {
+    border-radius: 16px; padding: 13px 14px 12px; position: relative; overflow: hidden;
+    background: rgba(var(--kfin-chip-rgb), 0.10); border: 1px solid rgba(var(--kfin-chip-rgb), 0.25);
+  }
+  .kfin-stat-chip::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--kfin-chip-color);
+  }
+  .kfin-stat-chip-label {
+    display: flex; align-items: center; gap: 6px; font-size: 10.5px;
+    margin-bottom: 8px; font-weight: 600; color: var(--kfin-chip-color);
+  }
+  .kfin-stat-chip-value { font-size: 21px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .kfin-metric-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin-bottom: 12px; }
+  .kfin-metric-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+  .kfin-metric-value { font-size: 21px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+  .kfin-metric-sub { font-size: 10.5px; color: var(--text-secondary); margin-top: 2px; }
+  .kfin-progress-track {
+    width: 100%; background: rgba(0,0,0,0.35); border-radius: 99px; height: 11px;
+    overflow: hidden; border: 1px solid var(--glass-border); position: relative;
+  }
+  html[data-theme="light"] .kfin-progress-track { background: rgba(15,23,42,0.08); }
+  .kfin-warning-banner {
+    display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px;
+    background: rgba(251,191,36,0.10); border: 1px solid rgba(251,191,36,0.3);
+  }
+  .kfin-status-banner { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 14px; }
+  .kfin-cta {
+    width: 100%; border-radius: 18px; padding: 16px 18px; display: flex; align-items: center; gap: 14px;
+    cursor: pointer; text-align: left; border: 1px solid rgba(34,197,94,0.3);
+    background: linear-gradient(135deg, rgba(34,197,94,0.16), rgba(16,185,129,0.10));
+    transition: transform 0.15s ease;
+  }
+  .kfin-cta.gtap-pressed { transform: scale(0.98); }
+  @media (min-width: 900px) {
+    .kfin-hero-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+  }
+
+  /* ============================================================
      📲 POPUP AJAKAN INSTALL APLIKASI (PWA "Add to Home Screen")
      Muncul otomatis begitu splash selesai & browser bilang app ini
      "installable" (event beforeinstallprompt), ATAU di iOS Safari
@@ -5420,19 +5521,19 @@ function renderContent() {
     const wilayahText = currentUser.wilayahAkses === "ALL" ? "Semua Wilayah" : (currentUser.wilayahAkses || "-");
     // Badge kecil buat bedain angka yang PER WILAYAH (ikut filter wilayahAkses
     // user login) vs NASIONAL (1 angka gabungan sama ke semua user).
-    const badgeWilayah = `<span style="font-size: 9px; font-weight: 700; letter-spacing: 0.3px; padding: 2px 7px; border-radius: 99px; background: rgba(var(--bento-primary-rgb),0.15); color: var(--bento-primary); margin-left: 6px; vertical-align: middle;">PER WILAYAH</span>`;
+    const badgeWilayah = `<span class="kfin-badge">Per Wilayah</span>`;
     let html = `
       <div class="keuangan-header-section" style="grid-column: 1 / -1;">
-      <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px; padding-top:16px;">
-        <div style="width:40px; height:40px; border-radius:12px; background:rgba(var(--bento-primary-rgb),0.15); color:var(--bento-primary); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-          <span class="material-symbols-outlined" style="font-size:22px; font-variation-settings:'FILL' 1;">payments</span>
+      <div style="display:flex; align-items:center; gap:14px; margin-bottom:8px; padding-top:16px;">
+        <div class="kfin-icon-wrap" style="--kfin-accent: var(--bento-primary); --kfin-accent-rgb: var(--bento-primary-rgb);">
+          <span class="material-symbols-outlined" style="font-size:24px; font-variation-settings:'FILL' 1;">payments</span>
         </div>
         <div style="flex:1; min-width:0;">
-          <h2 style="font-weight:700; font-size:18px; margin:0; letter-spacing:-0.2px;">Keuangan</h2>
-          <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Donasi &amp; santunan bulan ini</div>
+          <h2 style="font-weight:800; font-size:19px; margin:0; letter-spacing:-0.3px;">Keuangan</h2>
+          <div style="font-size:12.5px; color:var(--text-secondary); margin-top:2px;">Donasi &amp; santunan Program GOPAY bulan ini</div>
         </div>
       </div>
-      <div style="height:1px; background:linear-gradient(90deg, var(--glass-border-strong), transparent); margin: 16px 0 24px;"></div>
+      <div style="height:1px; background:linear-gradient(90deg, var(--glass-border-strong), transparent); margin: 16px 0 22px;"></div>
 
       <!-- Banner status ambil data: nunjukin lagi loading / gagal, biar user
            gak ngira datanya emang kosong pas fetch ke 4 sumber lagi lambat. -->
@@ -5446,55 +5547,60 @@ function renderContent() {
            per-wilayah (ikut wilayahAkses user login) -- beda dari Laporan
            Bulanan di bawah (setelah Kartu 2) yang nasional/gabungan semua
            wilayah. -->
-      <div style="display:flex; align-items:center; justify-content:space-between; margin: 0 2px 14px;">
-        <div style="font-size: 12.5px; font-weight: 700; color: var(--text-primary); display:flex; align-items:center; gap: 6px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin: 0 2px 14px; flex-wrap: wrap;">
+        <div class="kfin-eyebrow">
           <span class="material-symbols-outlined" style="font-size: 16px; color: var(--bento-primary);">location_on</span>
           Laporan Keuangan Program GOPAY Wilayah
         </div>
-        <div style="background: var(--glass-strong); padding: 5px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; color: var(--text-primary); border: 1px solid var(--glass-border);">
-          ${escapeHtmlHub(wilayahText)}
-        </div>
+        <div class="kfin-pill">${escapeHtmlHub(wilayahText)}</div>
       </div>
       </div>
 
       <!-- 1. Jumlah Anak Yatim + Total Santunan (per wilayah -- jumlah anak dari
            YASSA Mobile, rate dari Bendahara, dihitung otomatis di Hub) -->
-      <div id="keuanganTourTarget" class="keuangan-hero-card" style="background: var(--glass-strong); border-radius: 20px; padding: 22px 20px; margin-bottom: 16px; border: 1px solid var(--glass-border); border-left: 4px solid var(--bento-primary);">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
-          <div style="font-size: 12px; color: var(--text-secondary);">1. Jumlah Anak &amp; Santunan ${badgeWilayah}<br><span style="font-size: 10px; color: var(--bento-primary);">(Program Gopay)</span></div>
-          <div style="width: 44px; height: 44px; border-radius: 14px; background: rgba(var(--bento-primary-rgb),0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;" class="keuangan-hero-icon-wrap">
+      <div id="keuanganTourTarget" class="keuangan-hero-card kfin-card" style="--kfin-accent: var(--bento-primary); --kfin-accent-rgb: var(--bento-primary-rgb);">
+        <div class="kfin-card-head">
+          <div style="display:flex; align-items:flex-start; gap:9px;">
+            <span class="kfin-step">1</span>
+            <div>
+              <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); line-height:1.3;">Jumlah Anak &amp; Santunan ${badgeWilayah}</div>
+              <div style="font-size: 10.5px; color: var(--bento-primary); font-weight: 600; margin-top: 2px;">Program Gopay</div>
+            </div>
+          </div>
+          <div class="kfin-icon-wrap keuangan-hero-icon-wrap" style="width: 44px; height: 44px;">
             <span class="material-symbols-outlined" style="font-size: 22px; font-variation-settings: 'FILL' 1;">groups</span>
           </div>
         </div>
-        <div style="font-size: 34px; font-weight: 800; color: var(--text-primary); line-height: 1.1; margin: 4px 0 2px;" id="keuanganJumlahYatim"><span class="kv-loading">...</span></div>
-        <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 18px;">Anak &middot; Wilayah ${escapeHtmlHub(wilayahText)} &middot; Bulan Ini</div>
 
-        <div style="display: flex; gap: 10px; margin-bottom: 18px;">
-          <div class="keuangan-mini-stat" style="flex: 1; background: rgba(168, 85, 247, 0.10); border: 1px solid rgba(168, 85, 247, 0.25); border-left: 3px solid #A855F7; border-radius: 14px; padding: 12px;">
-            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-              <span class="material-symbols-outlined" style="font-size: 15px; color: #C084FC;">diversity_1</span>
-              <span class="pale-purple-text" style="font-size: 10.5px; color: #D8B4FE;">Yatim Piatu</span>
+        <div class="kfin-number" id="keuanganJumlahYatim"><span class="kv-loading">...</span></div>
+        <div class="kfin-caption" style="margin: 4px 0 18px;">Anak &middot; Wilayah ${escapeHtmlHub(wilayahText)} &middot; Bulan Ini</div>
+
+        <div class="kfin-stat-grid" style="margin-bottom: 18px;">
+          <div class="keuangan-mini-stat kfin-stat-chip" style="--kfin-chip-rgb: 168,85,247; --kfin-chip-color: #C084FC;">
+            <div class="kfin-stat-chip-label">
+              <span class="material-symbols-outlined" style="font-size: 15px;">diversity_1</span>
+              <span class="pale-purple-text" style="color: #D8B4FE;">Yatim Piatu</span>
             </div>
-            <div class="pale-purple-text" style="font-size: 20px; font-weight: 700; color: #E9D5FF;" id="keuanganYatimPiatu"><span class="kv-loading">...</span></div>
+            <div class="kfin-stat-chip-value pale-purple-text" style="color: #E9D5FF;" id="keuanganYatimPiatu"><span class="kv-loading">...</span></div>
           </div>
-          <div class="keuangan-mini-stat" style="flex: 1; background: rgba(245, 158, 11, 0.10); border: 1px solid rgba(245, 158, 11, 0.25); border-left: 3px solid #FBBF24; border-radius: 14px; padding: 12px;">
-            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-              <span class="material-symbols-outlined" style="font-size: 15px; color: #FBBF24;">accessible</span>
-              <span class="pale-amber-text" style="font-size: 10.5px; color: #FDE68A;">Disabilitas</span>
+          <div class="keuangan-mini-stat kfin-stat-chip" style="--kfin-chip-rgb: 245,158,11; --kfin-chip-color: #FBBF24;">
+            <div class="kfin-stat-chip-label">
+              <span class="material-symbols-outlined" style="font-size: 15px;">accessible</span>
+              <span class="pale-amber-text" style="color: #FDE68A;">Disabilitas</span>
             </div>
-            <div class="pale-amber-text" style="font-size: 20px; font-weight: 700; color: #FEF3C7;" id="keuanganDisabilitas"><span class="kv-loading">...</span></div>
+            <div class="kfin-stat-chip-value pale-amber-text" style="color: #FEF3C7;" id="keuanganDisabilitas"><span class="kv-loading">...</span></div>
           </div>
         </div>
 
-        <div style="border-top: 1px dashed var(--glass-border); padding-top: 16px;">
-          <div id="keuanganSantunanBelumDiisi" style="display: none; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; background: rgba(251, 191, 36, 0.10); border: 1px solid rgba(251, 191, 36, 0.3); margin-bottom: 4px;">
+        <div class="kfin-divider" style="padding-top: 16px;">
+          <div id="keuanganSantunanBelumDiisi" class="kfin-warning-banner" style="display: none; margin-top: 16px; margin-bottom: 4px;">
             <span class="material-symbols-outlined" style="font-size: 18px; color: #FBBF24;">info</span>
             <span style="font-size: 11px; color: #FDE68A;">Bendahara belum mengisi rate santunan bulan ini.</span>
           </div>
-          <div id="keuanganSantunanWrap">
-            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Total Santunan Program GOPAY bulan ini</div>
-            <div style="font-size: 26px; font-weight: 800; color: var(--text-primary); margin-bottom: 4px;" id="keuanganTotalSantunan"><span class="kv-loading">...</span></div>
-            <div style="font-size: 10px; color: var(--text-secondary);" id="keuanganRincianRate"><span class="kv-loading">...</span></div>
+          <div id="keuanganSantunanWrap" style="margin-top: 16px;">
+            <div class="kfin-metric-label">Total Santunan Program GOPAY bulan ini</div>
+            <div class="kfin-number kfin-number-md" style="margin-bottom: 4px;" id="keuanganTotalSantunan"><span class="kv-loading">...</span></div>
+            <div class="kfin-metric-sub" id="keuanganRincianRate"><span class="kv-loading">...</span></div>
 
             <!-- Breakdown rate & jumlah anak PER WILAYAH -- cuma tampil kalau
                  user akses lebih dari 1 wilayah (mis. Super Admin/"ALL").
@@ -5503,7 +5609,7 @@ function renderContent() {
                  buka/tutup rinciannya. -->
             <div id="keuanganRincianWilayahSantunanWrap" style="display: none; margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--glass-border);">
               <button type="button" onclick="toggleRincianWilayahKeuangan('keuanganRincianWilayahSantunanList', 'keuanganRincianWilayahSantunanChevron')" style="width: 100%; display: flex; align-items: center; justify-content: space-between; background: transparent; border: none; padding: 0; cursor: pointer; color: inherit; font-family: inherit;">
-                <span style="font-size: 11px; color: var(--text-muted);" id="keuanganRincianWilayahSantunanLabel">Rincian per Wilayah</span>
+                <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;" id="keuanganRincianWilayahSantunanLabel">Rincian per Wilayah</span>
                 <span class="material-symbols-outlined" id="keuanganRincianWilayahSantunanChevron" style="font-size: 18px; color: var(--text-muted); transition: transform 0.2s;">expand_more</span>
               </button>
               <div id="keuanganRincianWilayahSantunanList" class="kv-rincian-list" style="display: block;"></div>
@@ -5514,36 +5620,41 @@ function renderContent() {
 
       <!-- 2. Realisasi Lapangan (kotak donasi & sejenisnya, per wilayah -- diisi
            manual oleh Korwil/Bendahara di sheet Keuangan_Bulanan) -->
-      <div style="background: var(--glass-strong); border-radius: 20px; padding: 22px 20px; margin-bottom: 16px; border: 1px solid var(--glass-border); border-left: 4px solid #3B82F6;">
-        <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">2. Realisasi Lapangan ${badgeWilayah}</div>
-        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;" id="keuanganCatatanBendahara">Ditentukan oleh Bendahara</div>
-        <div style="font-size: 26px; font-weight: 800; margin-bottom: 4px; color: var(--text-primary);" id="keuanganKebutuhanNominal"><span class="kv-loading">...</span></div>
-        <div style="font-size: 10px; color: var(--bento-primary); margin-bottom: 18px;">Total kebutuhan donasi</div>
+      <div class="kfin-card" style="--kfin-accent: #3B82F6; --kfin-accent-rgb: 59,130,246;">
+        <div class="kfin-card-head" style="margin-bottom: 14px;">
+          <div style="display: flex; align-items: center; gap: 9px;">
+            <span class="kfin-step">2</span>
+            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Realisasi Lapangan ${badgeWilayah}</div>
+          </div>
+        </div>
+        <div class="kfin-metric-sub" style="margin-bottom: 8px;" id="keuanganCatatanBendahara">Ditentukan oleh Bendahara</div>
+        <div class="kfin-number" style="margin-bottom: 4px;" id="keuanganKebutuhanNominal"><span class="kv-loading">...</span></div>
+        <div style="font-size: 10.5px; color: var(--bento-primary); font-weight: 600; margin-bottom: 18px;">Total kebutuhan donasi</div>
 
-        <div id="keuanganBelumDiisi" style="display: none; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; background: rgba(251, 191, 36, 0.10); border: 1px solid rgba(251, 191, 36, 0.3); margin-bottom: 16px;">
+        <div id="keuanganBelumDiisi" class="kfin-warning-banner" style="display: none; margin-bottom: 16px;">
           <span class="material-symbols-outlined" style="font-size: 18px; color: #FBBF24;">info</span>
           <span style="font-size: 11px; color: #FDE68A;">Bendahara belum mengisi data keuangan bulan ini.</span>
         </div>
 
         <div id="keuanganProgresWrap">
-          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px;">
+          <div class="kfin-metric-row">
             <div>
-              <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Realisasi Donasi Program GOPAY</div>
-              <div style="font-size: 22px; font-weight: 700;" id="keuanganRealisasiNominal"><span class="kv-loading">...</span></div>
-              <div style="font-size: 10px; color: var(--text-secondary);">Dicatat Bendahara</div>
+              <div class="kfin-metric-label">Realisasi Donasi Program GOPAY</div>
+              <div class="kfin-metric-value" id="keuanganRealisasiNominal"><span class="kv-loading">...</span></div>
+              <div class="kfin-metric-sub">Dicatat Bendahara</div>
             </div>
             <div style="text-align: right;">
-              <div style="font-size: 16px; font-weight: 700;" id="keuanganPersenTercapai"><span class="kv-loading">...</span></div>
-              <div style="font-size: 10px; color: var(--text-secondary);">Tercapai</div>
+              <div style="font-size: 18px; font-weight: 800; color: var(--text-primary);" id="keuanganPersenTercapai"><span class="kv-loading">...</span></div>
+              <div class="kfin-metric-sub">Tercapai</div>
             </div>
           </div>
-          <div style="width: 100%; background: rgba(0,0,0,0.35); border-radius: 99px; height: 10px; margin-bottom: 8px; overflow: hidden; border: 1px solid var(--glass-border);">
-            <div id="keuanganProgressBar" class="keuangan-progress-fill" style="background: var(--bento-primary); height: 10px; border-radius: 99px; width: 0%; transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1), background 0.5s ease;"></div>
+          <div class="kfin-progress-track" style="margin-bottom: 8px;">
+            <div id="keuanganProgressBar" class="keuangan-progress-fill" style="background: var(--bento-primary); height: 100%; border-radius: 99px; width: 0%; transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1), background 0.5s ease;"></div>
           </div>
         </div>
 
-        <div id="keuanganStatusBanner" style="display: flex; align-items: center; gap: 12px; margin-top: 16px; padding: 14px; border-radius: 14px; background: rgba(239, 68, 68, 0.10); border: 1px solid rgba(239, 68, 68, 0.3);">
-          <div id="keuanganSelisihIconWrap" style="width: 36px; height: 36px; border-radius: 10px; background: rgba(239, 68, 68, 0.15); color: #EF4444; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <div id="keuanganStatusBanner" class="kfin-status-banner" style="margin-top: 16px; background: rgba(239, 68, 68, 0.10); border: 1px solid rgba(239, 68, 68, 0.3);">
+          <div id="keuanganSelisihIconWrap" style="width: 38px; height: 38px; border-radius: 11px; background: rgba(239, 68, 68, 0.15); color: #EF4444; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
             <span class="material-symbols-outlined" style="font-size: 18px;" id="keuanganSelisihIcon">arrow_downward</span>
           </div>
           <div>
@@ -5557,7 +5668,7 @@ function renderContent() {
              wilayah, kartu di atas udah cukup mewakili, gak perlu diulang. -->
         <div id="keuanganRincianWilayahWrap" style="display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--glass-border);">
           <button type="button" onclick="toggleRincianWilayahKeuangan('keuanganRincianWilayahList', 'keuanganRincianWilayahChevron')" style="width: 100%; display: flex; align-items: center; justify-content: space-between; background: transparent; border: none; padding: 0; cursor: pointer; color: inherit; font-family: inherit;">
-            <span style="font-size: 11px; color: var(--text-muted);" id="keuanganRincianWilayahLabel">Rincian per Wilayah</span>
+            <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;" id="keuanganRincianWilayahLabel">Rincian per Wilayah</span>
             <span class="material-symbols-outlined" id="keuanganRincianWilayahChevron" style="font-size: 18px; color: var(--text-muted); transition: transform 0.2s;">expand_more</span>
           </button>
           <div id="keuanganRincianWilayahList" class="kv-rincian-list" style="display: block;"></div>
@@ -5569,8 +5680,8 @@ function renderContent() {
            wilayah, biar Pengurus/Korwil/Tim Kerja/Relawan semua lihat angka
            yang sama pas ditanya-tanya donatur. Ditaruh di BAWAH Kartu 2
            (Realisasi Lapangan) sesuai permintaan Heru. -->
-      <button onclick="openLaporanBulanan()" style="width: 100%; background: linear-gradient(135deg, rgba(34,197,94,0.16), rgba(16,185,129,0.10)); border: 1px solid rgba(34,197,94,0.3); border-radius: 18px; padding: 16px 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; text-align: left;">
-        <div style="width: 44px; height: 44px; border-radius: 14px; background: rgba(34,197,94,0.18); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+      <button onclick="openLaporanBulanan()" class="kfin-cta" style="margin-bottom: 16px;">
+        <div class="kfin-icon-wrap" style="--kfin-accent: var(--bento-primary); --kfin-accent-rgb: var(--bento-primary-rgb); width: 44px; height: 44px;">
           <span class="material-symbols-outlined" style="font-size: 22px;">monitoring</span>
         </div>
         <div style="flex: 1;">
