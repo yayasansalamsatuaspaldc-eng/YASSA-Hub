@@ -6437,7 +6437,7 @@ function lwuSimpan() {
     btn.disabled = true;
     btn.textContent = "Menyimpan...";
     callGASWithRetry_("setLaporanWilayahLink", [authToken, lwuBulan, lwuTahun, lwuWilayah, link])
-      .then(function () { lwuSelesai(); })
+      .then(function (res) { lwuSelesai(res); })
       .catch(function (err) {
         btn.disabled = false;
         btn.textContent = "Simpan";
@@ -6451,7 +6451,7 @@ function lwuSimpan() {
     reader.onload = function (e) {
       const base64Data = e.target.result.split(",")[1];
       callGASWithRetry_("uploadLaporanWilayahFile", [authToken, lwuBulan, lwuTahun, lwuWilayah, base64Data, lwuFileTerpilih.type, lwuFileTerpilih.name], { timeoutMs: 30000 })
-        .then(function () { lwuSelesai(); })
+        .then(function (res) { lwuSelesai(res); })
         .catch(function (err) {
           btn.disabled = false;
           btn.textContent = "Simpan";
@@ -6462,7 +6462,7 @@ function lwuSimpan() {
   }
 }
 
-function lwuSelesai() {
+function lwuSelesai(res) {
   const btn = document.getElementById("lwuBtnSimpan");
   btn.disabled = false;
   btn.textContent = "Simpan";
@@ -6479,7 +6479,14 @@ function lwuSelesai() {
         if (laporanBulananBulanTerbuka === key) renderLaporanBulananDetail(wrap, detail);
       });
   }
-  showModal("Sukses", "Laporan wilayah berhasil disimpan.");
+  // "peringatan" cuma keisi kalau upload file berhasil TAPI setSharing()
+  // gagal di server (mis. kebijakan admin Google Workspace) -- tetap
+  // dianggap sukses (linknya tetap kesimpan), cuma dikasih tau ke user.
+  if (res && res.peringatan) {
+    showModal("Tersimpan (dengan catatan)", res.peringatan);
+  } else {
+    showModal("Sukses", "Laporan wilayah berhasil disimpan.");
+  }
 }
 
 // ============================================================
