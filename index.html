@@ -923,6 +923,13 @@
     align-items: center; justify-content: center;
   }
   .custom-modal-overlay.open { display: flex; animation: fadeIn 0.2s forwards; }
+  /* 🩹 FIX: modal info/error (#customModalOverlay) HARUS selalu tampil di
+     ATAS modal lain yang sama-sama pakai class .custom-modal-overlay (mis.
+     modal upload laporan wilayah) -- sebelumnya z-index-nya sama-sama 999,
+     jadi kalau showModal("Gagal", ...) dipanggil SAAT modal lain masih
+     kebuka, pesan errornya ketutup/gak kelihatan sama sekali (user cuma
+     lihat tombol balik ke semula tanpa tahu kenapa gagal). */
+  #customModalOverlay.open { z-index: 1001; }
   .custom-modal {
     background: #1A2438; width: 85%; max-width: 320px; border-radius: 20px;
     padding: 24px; text-align: center; box-shadow: var(--shadow-deep), var(--shadow-glow-blue);
