@@ -4880,9 +4880,14 @@ function terapkanKeuanganStats(hasil) {
       }
 
       // --- Kartu 2: Kebutuhan dan Kekurangan Perwilayah ---
+      // Nama wilayah asli (Bogor, Depok, dst) ikut akun yang login -- SAMA
+      // logic-nya kayak wilayahText di render() tab Keuangan.
+      const kfinWilayahText = currentUser && currentUser.wilayahAkses === "ALL"
+        ? "Semua Wilayah"
+        : ((currentUser && currentUser.wilayahAkses) || "-");
       if (!manual.ditemukan) {
         // Bendahara belum isi baris bulan ini -- jangan tampilkan Rp0 yang menyesatkan.
-        if (elCatatan) elCatatan.textContent = "Kebutuhan Donasi Wilayah (tergantung wilayah Login)";
+        if (elCatatan) elCatatan.textContent = "Kebutuhan Donasi Wilayah " + kfinWilayahText;
         if (elKebutuhan) elKebutuhan.textContent = "Belum diisi";
         if (elBelumDiisi) elBelumDiisi.style.display = "flex";
         if (elProgresWrap) elProgresWrap.style.display = "none";
@@ -4894,7 +4899,7 @@ function terapkanKeuanganStats(hasil) {
       if (elBelumDiisi) elBelumDiisi.style.display = "none";
       if (elProgresWrap) elProgresWrap.style.display = "block";
       if (elStatusBanner) elStatusBanner.style.display = "flex";
-      if (elCatatan) elCatatan.textContent = manual.catatan || "Kebutuhan Donasi Wilayah (tergantung wilayah Login)";
+      if (elCatatan) elCatatan.textContent = manual.catatan || ("Kebutuhan Donasi Wilayah " + kfinWilayahText);
 
       const kebutuhan = Number(manual.kebutuhanDonasi || 0);
       const realisasi = Number(manual.realisasiDonasi || 0);
@@ -5632,10 +5637,10 @@ function renderContent() {
         <div class="kfin-card-head" style="margin-bottom: 14px;">
           <div style="display: flex; align-items: center; gap: 9px;">
             <span class="kfin-step">2</span>
-            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Kebutuhan dan Kekurangan Perwilayah ${badgeWilayah}</div>
+            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Kebutuhan dan Kekurangan ${badgeWilayah}</div>
           </div>
         </div>
-        <div class="kfin-metric-sub" style="margin-bottom: 8px;" id="keuanganCatatanBendahara">Kebutuhan Donasi Wilayah (tergantung wilayah Login)</div>
+        <div class="kfin-metric-sub" style="margin-bottom: 8px;" id="keuanganCatatanBendahara">Kebutuhan Donasi Wilayah ${escapeHtmlHub(wilayahText)}</div>
         <div class="kfin-number" style="margin-bottom: 4px;" id="keuanganKebutuhanNominal"><span class="kv-loading">...</span></div>
         <div style="font-size: 10.5px; color: var(--bento-primary); font-weight: 600; margin-bottom: 18px;">Total kebutuhan donasi</div>
 
@@ -5649,7 +5654,7 @@ function renderContent() {
             <div>
               <div class="kfin-metric-label">Realisasi Donasi Program GOPAY</div>
               <div class="kfin-metric-value" id="keuanganRealisasiNominal"><span class="kv-loading">...</span></div>
-              <div class="kfin-metric-sub">Pencapaian Kotak Gopay dan Donasi Wilayah (tergantung wilayah Login)</div>
+              <div class="kfin-metric-sub">Pencapaian Kotak Gopay dan Donasi Wilayah ${escapeHtmlHub(wilayahText)}</div>
             </div>
             <div style="text-align: right;">
               <div style="font-size: 18px; font-weight: 800; color: var(--text-primary);" id="keuanganPersenTercapai"><span class="kv-loading">...</span></div>
