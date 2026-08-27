@@ -2771,6 +2771,19 @@
     <div class="akun-content" id="laporanBulananContent"></div>
   </div>
 
+  <!-- Halaman Penuh: Laporan Bulanan PROGRAM SAPA -- mirror PERSIS overlay
+       "laporanBulananPage" (Gopay) di atas, cuma target elemen & state-nya
+       beda (lihat openLaporanBulananSapa/loadLaporanBulananListSapa dkk). -->
+  <div class="overlay" id="laporanBulananSapaPage">
+    <div class="overlay-header">
+      <button class="overlay-close" id="laporanBulananSapaClose">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E2E8F0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <span class="overlay-title">Laporan Bulanan Program SAPA</span>
+    </div>
+    <div class="akun-content" id="laporanBulananSapaContent"></div>
+  </div>
+
   <!-- Halaman Penuh: Viewer PDF Laporan Bulanan -- dibuka dari tombol "Lihat
        PDF" di Laporan Bulanan. Nampilin file PDF LANGSUNG di dalam app lewat
        iframe (link Google Drive mode /preview), jadi user bisa scroll/baca
@@ -5704,6 +5717,20 @@ function renderContent() {
         <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
       </button>
 
+      <!-- Pintu masuk ke Laporan Bulanan PROGRAM SAPA -- mirror tombol
+           "Laporan Bulanan Program Gopay" di atas, cuma beda warna aksen
+           (pink, tema SAPA) & manggil openLaporanBulananSapa(). -->
+      <button onclick="openLaporanBulananSapa()" class="kfin-cta" style="margin-bottom: 16px;">
+        <div class="kfin-icon-wrap" style="--kfin-accent: #EC4899; --kfin-accent-rgb: 236,72,153; width: 44px; height: 44px;">
+          <span class="material-symbols-outlined" style="font-size: 22px;">diversity_1</span>
+        </div>
+        <div style="flex: 1;">
+          <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Laporan Bulanan Program SAPA</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">Pendapatan &amp; pengeluaran santunan Anak Asuh per bulan</div>
+        </div>
+        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
+      </button>
+
       <!-- 3. Donasi Kitabisa.com & 4. Donasi Online/Midtrans DIHAPUS dari
            sini (2026) -- gak ditrack sebagai total terpisah lagi, sekarang
            digabung manual ke Realisasi Lapangan (Keuangan_Bulanan) langsung
@@ -6224,6 +6251,14 @@ let laporanBulananBulanTerbuka = null; // bulan yang accordion-nya lagi kebuka, 
 let laporanBulananBisaUnduh = false; // diisi dari flag "bisaUnduh" balikan server (SUPERADMIN/ADMIN aja) -- dipakai buat nampilin/nyembunyiin tombol "Unduh"
 let laporanBulananBisaLihat = false; // diisi dari flag "bisaLihat" balikan server (SUPERADMIN/ADMIN aja) -- PDF laporan ada nomor rekening, jadi "Lihat" (preview) DIKUNCI juga buat role lain, bukan cuma "Unduh"
 
+// -- Versi PROGRAM SAPA (mirror PERSIS 5 variabel di atas, state TERPISAH
+// biar buka Laporan Bulanan Gopay & SAPA gak saling nimpa cache/state). --
+let laporanBulananSapaTahunAktif = new Date().getFullYear();
+let laporanBulananSapaDetailCache = {};
+let laporanBulananSapaBulanTerbuka = null;
+let laporanBulananSapaBisaUnduh = false;
+let laporanBulananSapaBisaLihat = false;
+
 // Buka viewer PDF laporan bulanan (iframe, TANPA download paksa) + siapin
 // tombol "Unduh" di header viewer buat yang emang mau simpan filenya.
 function openLaporanPdfViewer(linkPreviewEncoded, linkUnduhEncoded, judulEncoded) {
@@ -6486,6 +6521,236 @@ function renderLaporanBulananDetail(wrap, d) {
   wrap.innerHTML = html;
 }
 
+// ============================================================
+// 📊 LAPORAN BULANAN — PROGRAM SAPA (mirror PERSIS 5 fungsi Laporan
+// Bulanan Gopay di atas: openLaporanBulanan/loadLaporanBulananList/
+// renderLaporanBulananList/toggleLaporanBulananDetail/renderLaporanBulananDetail.
+// BEDA dari versi Gopay: gak ada baris Kitabisa/Midtrans di Pendapatan
+// (SAPA cuma 1 sumber, Realisasi Lapangan), dan label anak pakai "Anak
+// Asuh" bukan "Yatim" -- ikutin field jumlahAnakAsuh dari server (lihat
+// getLaporanBulananListSapa/getLaporanBulananDetailSapa di Code.gs).
+// ============================================================
+
+function openLaporanBulananSapa() {
+  document.getElementById("laporanBulananSapaPage").classList.add("open");
+  laporanBulananSapaBulanTerbuka = null;
+  loadLaporanBulananListSapa(laporanBulananSapaTahunAktif);
+}
+
+function loadLaporanBulananListSapa(tahun) {
+  laporanBulananSapaTahunAktif = tahun;
+  const el = document.getElementById("laporanBulananSapaContent");
+  el.innerHTML = `
+    <div style="display:flex; align-items:center; justify-content:center; padding: 60px 0; color: var(--text-secondary); font-size: 12.5px; gap: 8px;">
+      <span class="material-symbols-outlined spin" style="font-size: 18px;">progress_activity</span> <span id="laporanBulananSapaLoadingText">Merangkum jejak amanah Anak Asuh...</span>
+    </div>`;
+
+  callGASWithRetry_("getLaporanBulananListSapa", [authToken, tahun], {
+    timeoutMs: 12000,
+    onRetry: function (attempt, maxAttempts) {
+      const teksEl = document.getElementById("laporanBulananSapaLoadingText");
+      if (teksEl) teksEl.textContent = "Koneksi lambat, mencoba lagi... (" + attempt + "/" + maxAttempts + ")";
+    },
+  })
+    .then(function (data) { renderLaporanBulananListSapa(data); })
+    .catch(function (err) {
+      el.innerHTML = `
+        <div style="padding: 40px 20px; text-align: center; color: var(--text-secondary); font-size: 12.5px;">
+          Gagal memuat laporan: ${escapeHtmlHub(String(err && err.message || err))}
+          <br><button onclick="loadLaporanBulananListSapa(${tahun})" style="margin-top: 14px; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 99px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--text-primary); cursor: pointer;">Coba Lagi</button>
+        </div>`;
+    });
+}
+
+function renderLaporanBulananListSapa(data) {
+  const el = document.getElementById("laporanBulananSapaContent");
+  laporanBulananSapaDetailCache = {};
+  const tahun = data.tahun;
+  laporanBulananSapaBisaLihat = !!data.bisaLihat;
+  laporanBulananSapaBisaUnduh = !!data.bisaUnduh;
+
+  let html = `
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 18px;">
+      <button onclick="loadLaporanBulananListSapa(${tahun - 1})" style="width: 36px; height: 36px; border-radius: 12px; background: var(--glass-strong); border: 1px solid var(--glass-border); color: var(--text-primary); display:flex; align-items:center; justify-content:center; cursor:pointer;">
+        <span class="material-symbols-outlined" style="font-size: 18px;">chevron_left</span>
+      </button>
+      <div style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Tahun ${tahun}</div>
+      <button onclick="loadLaporanBulananListSapa(${tahun + 1})" style="width: 36px; height: 36px; border-radius: 12px; background: var(--glass-strong); border: 1px solid var(--glass-border); color: var(--text-primary); display:flex; align-items:center; justify-content:center; cursor:pointer;">
+        <span class="material-symbols-outlined" style="font-size: 18px;">chevron_right</span>
+      </button>
+    </div>
+    <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;">
+      Data gabungan SEMUA wilayah, khusus Program SAPA (Anak Asuh). Pengeluaran dihitung berdasarkan <b>bulan periode santunan</b> (bukan tanggal cair) -- santunan yang telat/dirapel tetap tercatat di bulan seharusnya, dengan tanda ⚠️.
+    </div>`;
+
+  data.bulanList.forEach(function (b) {
+    const adaData = b.adaPendapatan || b.adaPengeluaran;
+    const selisihWarna = b.selisih >= 0 ? "#86EFAC" : "#FCA5A5";
+    html += `
+      <div style="background: var(--glass-strong); border-radius: 16px; margin-bottom: 10px; border: 1px solid var(--glass-border); overflow: hidden;">
+        <button onclick="toggleLaporanBulananDetailSapa(${b.bulan}, ${b.tahun})" style="width: 100%; background: transparent; border: none; color: inherit; font-family: inherit; padding: 14px 16px; display:flex; align-items:center; justify-content:space-between; cursor: pointer; text-align:left; ${adaData ? '' : 'opacity: 0.55;'}">
+          <div>
+            <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">${b.namaBulan} ${b.adaYangTelat ? '⚠️' : ''}</div>
+            <div style="font-size: 10.5px; color: var(--text-secondary); margin-top: 2px;">
+              ${adaData ? `Masuk ${formatRupiahHub(b.totalPendapatan)} &middot; Tersalur ${formatRupiahHub(b.totalPengeluaran)}` : 'Belum ada data'}
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap: 8px;">
+            ${adaData ? `<span style="font-size: 11.5px; font-weight: 700; color: ${selisihWarna};">${b.selisih >= 0 ? '+' : ''}${formatRupiahHub(b.selisih)}</span>` : ''}
+            <span class="material-symbols-outlined laporan-chevron-sapa-${b.bulan}-${b.tahun}" style="font-size: 20px; color: var(--text-muted); transition: transform 0.2s;">expand_more</span>
+          </div>
+        </button>
+        ${b.adaLinkPdf ? (laporanBulananSapaBisaLihat ? `
+        <div style="display:flex; gap: 8px; padding: 0 16px 14px;">
+          <button type="button" onclick="event.stopPropagation(); openLaporanPdfViewer('${encodeURIComponent(b.linkPreviewPdf)}', '${encodeURIComponent(b.linkUnduhPdf)}', '${encodeURIComponent('Laporan SAPA ' + b.namaBulan + ' ' + b.tahun)}')" style="flex:1; display:flex; align-items:center; justify-content:center; gap: 6px; font-size: 11px; font-weight: 700; padding: 8px 10px; border-radius: 10px; background: rgba(34,197,94,0.14); border: 1px solid rgba(34,197,94,0.3); color: #86EFAC; cursor:pointer;">
+            <span class="material-symbols-outlined" style="font-size: 15px;">visibility</span> Lihat PDF
+          </button>
+          ${laporanBulananSapaBisaUnduh ? `
+          <a href="${escapeHtmlHub(b.linkUnduhPdf)}" target="_blank" rel="noopener" style="flex:1; display:flex; align-items:center; justify-content:center; gap: 6px; font-size: 11px; font-weight: 700; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-primary); text-decoration:none;">
+            <span class="material-symbols-outlined" style="font-size: 15px;">download</span> Unduh
+          </a>` : ''}
+        </div>` : `
+        <div title="Laporan ada, tapi cuma Superadmin/Admin yang boleh buka (isinya ada nomor rekening)." style="margin: 0 16px 14px; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.04); border: 1px dashed var(--glass-border);">
+          <div style="display:flex; align-items:center; gap: 5px; margin-bottom: 4px;">
+            <span class="material-symbols-outlined" style="font-size: 12px; color: var(--text-muted); flex-shrink:0;">cloud</span>
+            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.3px; color: var(--text-muted); text-transform: uppercase;">Tersimpan di Cloud</span>
+          </div>
+          <div style="display:flex; align-items:center; gap: 7px;">
+            <span class="material-symbols-outlined" style="font-size: 15px; color: var(--text-muted); flex-shrink:0;">lock</span>
+            <span style="font-size: 10px; color: var(--text-muted); font-family: monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; user-select:none;">${escapeHtmlHub(b.linkUnduhPdfSensor || 'laporan••••••••••.pdf')}</span>
+          </div>
+        </div>`) : ''}
+        <div id="laporanDetailSapa-${b.bulan}-${b.tahun}" style="display:none; padding: 0 16px 16px;"></div>
+      </div>`;
+  });
+
+  el.innerHTML = html;
+}
+
+function toggleLaporanBulananDetailSapa(bulan, tahun) {
+  const key = bulan + "-" + tahun;
+  const wrap = document.getElementById("laporanDetailSapa-" + key);
+  const chevron = document.querySelector(".laporan-chevron-sapa-" + key);
+  if (!wrap) return;
+
+  const sedangTerbuka = wrap.style.display === "block";
+  if (sedangTerbuka) {
+    wrap.style.display = "none";
+    if (chevron) chevron.style.transform = "rotate(0deg)";
+    laporanBulananSapaBulanTerbuka = null;
+    return;
+  }
+
+  wrap.style.display = "block";
+  if (chevron) chevron.style.transform = "rotate(180deg)";
+  laporanBulananSapaBulanTerbuka = key;
+
+  if (laporanBulananSapaDetailCache[key]) {
+    renderLaporanBulananDetailSapa(wrap, laporanBulananSapaDetailCache[key]);
+    return;
+  }
+
+  wrap.innerHTML = `<div style="padding: 16px 0; text-align:center; color: var(--text-secondary); font-size: 11.5px;"><span class="material-symbols-outlined spin" style="font-size: 15px; vertical-align: middle;">progress_activity</span> <span id="laporanDetailSapaLoadingText-${key}">Membuka berkah bulan ini...</span></div>`;
+
+  callGASWithRetry_("getLaporanBulananDetailSapa", [authToken, bulan, tahun], {
+    timeoutMs: 12000,
+    onRetry: function (attempt, maxAttempts) {
+      const teksEl = document.getElementById("laporanDetailSapaLoadingText-" + key);
+      if (teksEl) teksEl.textContent = "Koneksi lambat, mencoba lagi... (" + attempt + "/" + maxAttempts + ")";
+    },
+  })
+    .then(function (detail) {
+      laporanBulananSapaDetailCache[key] = detail;
+      if (laporanBulananSapaBulanTerbuka === key) renderLaporanBulananDetailSapa(wrap, detail);
+    })
+    .catch(function (err) {
+      wrap.innerHTML = `<div style="padding: 12px 0; color: #FCA5A5; font-size: 11px;">Gagal memuat rincian: ${escapeHtmlHub(String(err && err.message || err))}</div>`;
+    });
+}
+
+function renderLaporanBulananDetailSapa(wrap, d) {
+  let html = `<div style="border-top: 1px dashed var(--glass-border); padding-top: 14px; margin-top: 2px;">`;
+
+  // -- Pendapatan -- (SAPA cuma 1 sumber: Realisasi Lapangan, gak ada
+  // baris Kitabisa/Midtrans kayak versi Gopay)
+  html += `<div style="font-size: 11px; font-weight: 700; color: #EC4899; margin-bottom: 8px;">PENDAPATAN &middot; ${formatRupiahHub(d.pendapatan.total)}</div>`;
+
+  if (d.pendapatan.lapangan.rincianWilayah.length) {
+    html += `<div style="font-size: 10.5px; color: var(--text-secondary); margin-bottom: 4px;">Realisasi Lapangan</div>`;
+    d.pendapatan.lapangan.rincianWilayah.forEach(function (r) {
+      const wilayahEnc = encodeURIComponent(r.wilayah);
+      let aksiWilayahHtml = "";
+      if (r.linkPreviewPdfWilayah) {
+        aksiWilayahHtml += `<button type="button" onclick="event.stopPropagation(); openLaporanWilayahPdfViewer('${encodeURIComponent(r.linkPreviewPdfWilayah)}', '${encodeURIComponent(r.linkUnduhPdfWilayah || '')}', '${encodeURIComponent('Laporan SAPA ' + r.wilayah + ' - ' + d.namaBulan + ' ' + d.tahun)}')" style="display:flex; align-items:center; gap:3px; font-size: 9.5px; font-weight: 700; padding: 4px 8px; border-radius: 7px; background: rgba(34,197,94,0.14); border: 1px solid rgba(34,197,94,0.3); color: #86EFAC; cursor:pointer;">
+          <span class="material-symbols-outlined" style="font-size: 11px;">visibility</span> PDF
+        </button>`;
+      }
+      if (d.bisaUploadLaporanWilayah) {
+        aksiWilayahHtml += `<button type="button" onclick="event.stopPropagation(); bukaLaporanWilayahUpload(${d.bulan}, ${d.tahun}, '${wilayahEnc}', 'sapa')" style="display:flex; align-items:center; gap:3px; font-size: 9.5px; font-weight: 700; padding: 4px 8px; border-radius: 7px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-secondary); cursor:pointer;">
+          <span class="material-symbols-outlined" style="font-size: 11px;">${r.adaLinkPdfWilayah ? 'sync' : 'upload_file'}</span> ${r.adaLinkPdfWilayah ? 'Ganti' : 'Upload'}
+        </button>`;
+      }
+      html += `
+        <div style="padding: 5px 0;">
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size: 11.5px; color: var(--text-primary);">
+            <span>${escapeHtmlHub(r.wilayah)}</span>
+            <span style="font-weight:600;">${formatRupiahHub(r.realisasiDonasi)}</span>
+          </div>
+          ${aksiWilayahHtml ? `<div style="display:flex; gap:6px; margin-top:5px;">${aksiWilayahHtml}</div>` : ''}
+        </div>`;
+    });
+  }
+  if (d.pendapatan.total === 0) {
+    html += `<div style="font-size: 11px; color: var(--text-muted); padding: 6px 0;">Belum ada data pendapatan bulan ini.</div>`;
+  }
+
+  // -- Pengeluaran --
+  html += `<div style="font-size: 11px; font-weight: 700; color: #F87171; margin: 16px 0 8px;">PENGELUARAN SANTUNAN &middot; ${formatRupiahHub(d.pengeluaran.total)}</div>`;
+  if (d.pengeluaran.rincianWilayah.length) {
+    html += `
+      <div style="display:flex; gap:8px; margin-bottom: 10px;">
+        <div style="flex:1; background: rgba(236,72,153,0.08); border: 1px solid rgba(236,72,153,0.2); border-radius: 10px; padding: 8px 10px; text-align:center;">
+          <div style="font-size:15px; font-weight:800; color:#F9A8D4;">${d.pengeluaran.jumlahAnakAsuh}</div>
+          <div style="font-size:9px; color: var(--text-muted);">Anak Asuh</div>
+        </div>
+        <div style="flex:1; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: 10px; padding: 8px 10px; text-align:center;">
+          <div class="pale-purple-text" style="font-size:15px; font-weight:800; color:#D8B4FE;">${d.pengeluaran.jumlahYatimPiatu}</div>
+          <div style="font-size:9px; color: var(--text-muted);">Yatim Piatu</div>
+        </div>
+        <div style="flex:1; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 10px; padding: 8px 10px; text-align:center;">
+          <div class="pale-amber-text" style="font-size:15px; font-weight:800; color:#FDE68A;">${d.pengeluaran.jumlahDisabilitas}</div>
+          <div style="font-size:9px; color: var(--text-muted);">Disabilitas</div>
+        </div>
+      </div>
+      <div style="font-size: 9.5px; color: var(--text-muted); margin-bottom: 10px;">*Yatim Piatu &amp; Disabilitas adalah bagian dari total Anak Asuh, bukan tambahan.</div>`;
+    d.pengeluaran.rincianWilayah.forEach(function (r) {
+      html += `
+        <div style="padding: 8px 0; border-bottom: 1px solid var(--glass-border);">
+          <div style="display:flex; justify-content:space-between; font-size: 11.5px; color: var(--text-primary);">
+            <span>${escapeHtmlHub(r.wilayah)} ${r.telat ? '⚠️' : ''}</span>
+            <span style="font-weight:600;">${formatRupiahHub(r.jumlahDisalurkan)}</span>
+          </div>
+          <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">
+            ${r.jumlahAnakAsuh} anak asuh (${r.jumlahYatimPiatu} yatim piatu, ${r.jumlahDisabilitas} disabilitas) &middot; cair ${escapeHtmlHub(r.tanggalPencairan || '-')}${r.telat ? ' (di luar bulan periode)' : ''}
+            ${r.catatan ? ' &middot; ' + escapeHtmlHub(r.catatan) : ''}
+          </div>
+        </div>`;
+    });
+  } else {
+    html += `<div style="font-size: 11px; color: var(--text-muted); padding: 6px 0;">Belum ada pencairan santunan tercatat buat periode ini.</div>`;
+  }
+
+  const selisihWarna = d.selisih >= 0 ? "#86EFAC" : "#FCA5A5";
+  html += `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--glass-border);">
+      <span style="font-size: 11.5px; color: var(--text-secondary);">Selisih (Pendapatan - Pengeluaran)</span>
+      <span style="font-size: 13px; font-weight: 800; color: ${selisihWarna};">${d.selisih >= 0 ? '+' : ''}${formatRupiahHub(d.selisih)}</span>
+    </div>
+  </div>`;
+
+  wrap.innerHTML = html;
+}
+
 // Viewer PDF laporan PER WILAYAH -- reuse overlay iframe yang sama kayak
 // laporan nasional (openLaporanPdfViewer), tapi tombol "Unduh" gak dikunci
 // ke laporanBulananBisaUnduh (yang khusus SUPERADMIN/ADMIN buat laporan
@@ -6512,16 +6777,22 @@ function openLaporanWilayahPdfViewer(linkPreviewEncoded, linkUnduhEncoded, judul
 // 📤 UPLOAD/GANTI LAPORAN PDF PER WILAYAH (modal, khusus SUPERADMIN/ADMIN)
 // ============================================================
 let lwuBulan = null, lwuTahun = null, lwuWilayah = null, lwuTabAktif = "link", lwuFileTerpilih = null;
+// lwuProgram: "gopay" (default) atau "sapa" -- dipakai lwuSimpan/lwuSelesai
+// buat milih action backend & cache/detail mana yang di-refresh (lihat
+// bukaLaporanWilayahUpload di renderLaporanBulananDetailSapa yang manggil
+// dengan argumen ke-4 'sapa').
+let lwuProgram = "gopay";
 
-function bukaLaporanWilayahUpload(bulan, tahun, wilayahEncoded) {
+function bukaLaporanWilayahUpload(bulan, tahun, wilayahEncoded, program) {
   lwuBulan = bulan;
   lwuTahun = tahun;
   lwuWilayah = decodeURIComponent(wilayahEncoded);
+  lwuProgram = program === "sapa" ? "sapa" : "gopay";
   lwuFileTerpilih = null;
   document.getElementById("lwuInputLink").value = "";
   document.getElementById("lwuInputFile").value = "";
   document.getElementById("lwuFileNamaTerpilih").textContent = "Ketuk buat pilih file PDF (maks 20MB)";
-  document.getElementById("laporanWilayahUploadTitle").textContent = "Laporan " + lwuWilayah;
+  document.getElementById("laporanWilayahUploadTitle").textContent = "Laporan " + lwuWilayah + (lwuProgram === "sapa" ? " (SAPA)" : "");
   lwuGantiTab("link");
   document.getElementById("laporanWilayahUploadOverlay").classList.add("open");
 }
@@ -6563,12 +6834,14 @@ function lwuFilePicked(input) {
 
 function lwuSimpan() {
   const btn = document.getElementById("lwuBtnSimpan");
+  const actionLink = lwuProgram === "sapa" ? "setLaporanWilayahLinkSapa" : "setLaporanWilayahLink";
+  const actionFile = lwuProgram === "sapa" ? "uploadLaporanWilayahFileSapa" : "uploadLaporanWilayahFile";
   if (lwuTabAktif === "link") {
     const link = document.getElementById("lwuInputLink").value.trim();
     if (!link) { showModal("Gagal", "Link PDF belum diisi."); return; }
     btn.disabled = true;
     btn.textContent = "Menyimpan...";
-    callGASWithRetry_("setLaporanWilayahLink", [authToken, lwuBulan, lwuTahun, lwuWilayah, link])
+    callGASWithRetry_(actionLink, [authToken, lwuBulan, lwuTahun, lwuWilayah, link])
       .then(function (res) { lwuSelesai(res); })
       .catch(function (err) {
         btn.disabled = false;
@@ -6586,7 +6859,7 @@ function lwuSimpan() {
       // (lihat diagnosa performa sebelumnya) -- timeout dinaikkan ke 90
       // detik khusus buat upload file (bukan 15 detik default) biar file
       // besar gak keburu dianggap gagal padahal masih proses upload.
-      callGASWithRetry_("uploadLaporanWilayahFile", [authToken, lwuBulan, lwuTahun, lwuWilayah, base64Data, lwuFileTerpilih.type, lwuFileTerpilih.name], { timeoutMs: 90000, maxAttempts: 1 })
+      callGASWithRetry_(actionFile, [authToken, lwuBulan, lwuTahun, lwuWilayah, base64Data, lwuFileTerpilih.type, lwuFileTerpilih.name], { timeoutMs: 90000, maxAttempts: 1 })
         .then(function (res) { lwuSelesai(res); })
         .catch(function (err) {
           btn.disabled = false;
@@ -6605,15 +6878,29 @@ function lwuSelesai(res) {
   tutupLaporanWilayahUpload();
   // Invalidate cache bulan ini + reload detail-nya biar tombol Lihat
   // PDF/Ganti langsung update tanpa user harus tutup-buka accordion manual.
+  // Rute ke cache/detail Gopay ATAU Sapa tergantung lwuProgram (diisi pas
+  // bukaLaporanWilayahUpload dipanggil).
   const key = lwuBulan + "-" + lwuTahun;
-  delete laporanBulananDetailCache[key];
-  const wrap = document.getElementById("laporanDetail-" + key);
-  if (wrap && laporanBulananBulanTerbuka === key) {
-    callGASWithRetry_("getLaporanBulananDetail", [authToken, lwuBulan, lwuTahun])
-      .then(function (detail) {
-        laporanBulananDetailCache[key] = detail;
-        if (laporanBulananBulanTerbuka === key) renderLaporanBulananDetail(wrap, detail);
-      });
+  if (lwuProgram === "sapa") {
+    delete laporanBulananSapaDetailCache[key];
+    const wrap = document.getElementById("laporanDetailSapa-" + key);
+    if (wrap && laporanBulananSapaBulanTerbuka === key) {
+      callGASWithRetry_("getLaporanBulananDetailSapa", [authToken, lwuBulan, lwuTahun])
+        .then(function (detail) {
+          laporanBulananSapaDetailCache[key] = detail;
+          if (laporanBulananSapaBulanTerbuka === key) renderLaporanBulananDetailSapa(wrap, detail);
+        });
+    }
+  } else {
+    delete laporanBulananDetailCache[key];
+    const wrap = document.getElementById("laporanDetail-" + key);
+    if (wrap && laporanBulananBulanTerbuka === key) {
+      callGASWithRetry_("getLaporanBulananDetail", [authToken, lwuBulan, lwuTahun])
+        .then(function (detail) {
+          laporanBulananDetailCache[key] = detail;
+          if (laporanBulananBulanTerbuka === key) renderLaporanBulananDetail(wrap, detail);
+        });
+    }
   }
   // "peringatan" cuma keisi kalau upload file berhasil TAPI setSharing()
   // gagal di server (mis. kebijakan admin Google Workspace) -- tetap
@@ -9670,6 +9957,10 @@ document.getElementById("akunPageClose").addEventListener("click", function () {
 
 document.getElementById("laporanBulananClose").addEventListener("click", function () {
   document.getElementById("laporanBulananPage").classList.remove("open");
+});
+
+document.getElementById("laporanBulananSapaClose").addEventListener("click", function () {
+  document.getElementById("laporanBulananSapaPage").classList.remove("open");
 });
 
 document.getElementById("laporanPdfViewerClose").addEventListener("click", function () {
