@@ -10661,7 +10661,25 @@ bootApp();
     pwaAppInstalledHandled = true;
     markDismissed("installed");
     closePopup();
-    showInstalledSuccessOverlay();
+    // 🩹 FIX: event "appinstalled" ditembak Chrome begitu Chrome SELESAI
+    // KIRIM permintaan instalasi ke server "WebAPK minting" milik Google
+    // (proses bikin paket instalasi kecil dari manifest.json + ikon kita),
+    // BUKAN pas ikonnya beneran udah nongol di layar utama / app drawer HP.
+    // Server itu perlu request-response ke internet, jadi kalau koneksi HP
+    // lagi lambat, jeda antara event ini ditembak vs ikon beneran muncul di
+    // sistem bisa lumayan lama (bukan cuma beberapa detik) -- makanya jeda
+    // sebelum overlay muncul disesuaikan otomatis pakai info kecepatan
+    // koneksi (Network Information API, kalau didukung browser-nya), biar
+    // gak kecepetan nampilin "berhasil" pas prosesnya di HP kamu ternyata
+    // masih jalan di background.
+    var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    var isSlowConn = !!(conn && (
+      conn.saveData === true ||
+      ["slow-2g", "2g", "3g"].indexOf(conn.effectiveType) !== -1 ||
+      (typeof conn.downlink === "number" && conn.downlink > 0 && conn.downlink < 1)
+    ));
+    var delayMs = isSlowConn ? 10000 : 4000;
+    setTimeout(function () { showInstalledSuccessOverlay(isSlowConn); }, delayMs);
   });
 
   // 🩹 CATATAN: window.close() lewat script CUMA diizinkan browser kalau tab
@@ -10672,16 +10690,19 @@ bootApp();
   // beneran nutup (bikin bingung), overlay ini kasih instruksi jujur +
   // visual cara nutup tab manual, dan tombolnya cuma buat nutup overlay
   // (mengerti), bukan pura-pura nutup tab.
-  function showInstalledSuccessOverlay() {
+  function showInstalledSuccessOverlay(isSlowConn) {
     var ov = document.createElement("div");
     ov.style.cssText = "position:fixed; inset:0; z-index:99999; background:rgba(15,23,42,0.94); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:32px 24px; gap:16px; color:#fff; cursor:pointer;";
+    var descText = isSlowConn
+      ? "Koneksi internet kamu lagi lambat, jadi mungkin butuh waktu lebih lama (bisa sampai 1 menit) sebelum ikon YASSA GOPAY nongol di layar utama / app drawer HP. Tab browser ini boleh ditutup sambil nunggu."
+      : "Ikon YASSA GOPAY akan muncul di layar utama / app drawer HP kamu dalam beberapa detik. Kalau belum nongol juga, tunggu sebentar lalu cek lagi -- tab browser ini boleh ditutup sambil nunggu.";
     ov.innerHTML = `
       <div style="width:72px; height:72px; border-radius:50%; background:rgba(34,197,94,0.18); display:flex; align-items:center; justify-content:center;">
         <span class="material-symbols-outlined" style="font-size:38px; color:#4ADE80;">check_circle</span>
       </div>
-      <div style="font-weight:700; font-size:18px;">Aplikasi Berhasil Diinstall</div>
+      <div style="font-weight:700; font-size:18px;">Instalasi Diproses</div>
       <div style="font-size:13.5px; color:#CBD5E1; max-width:280px; line-height:1.5;">
-        Tab browser ini boleh ditutup. Selanjutnya buka YASSA GOPAY lewat ikon yang baru muncul di layar utama / app drawer HP kamu.
+        ${descText}
       </div>
       <div style="font-size:11px; color:#64748B; margin-top:2px;">(ketuk di mana saja untuk menutup)</div>
     `;
