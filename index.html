@@ -6033,16 +6033,28 @@ function openMobileAppForNotif() {
   // ditutup" (atau window.close() otomatis). Ini nutup celah supaya tab
   // ini gak bisa dipakai buat "beneran login & buka-buka data" walau
   // niatnya cuma minta izin notifikasi.
-  callGASWithRetry_("generateSsoToken", [authToken])
+  // 🚀 FIX (proses "Aktifkan Notifikasi" kerasa lambat):
+  // (1) window.open() dipanggil LANGSUNG di sini (masih dalam konteks klik
+  //     user), bukan ditunda sampai tiket SSO didapat lewat .then() --
+  //     tabnya jadi langsung kebuka (gak nge-blank nunggu network), dan gak
+  //     berisiko diblokir popup blocker (beberapa browser cuma izinin
+  //     window.open kalau dipanggil sinkron dari user gesture).
+  // (2) generateSsoToken sekarang minta ke GAS_SSO_URL (broker kecil),
+  //     BUKAN GAS_AUTH_URL (file GOPAY ~10.700 baris) -- samain dengan fix
+  //     yang sudah dipakai di jalur buka Mobile biasa (lihat targetUrl:
+  //     GAS_SSO_URL di atas), biar gak kena cold-start file besar.
+  const notifTab = window.open(MENUS.mobile.baseUrl + "?notifOnly=1", "_blank");
+  callGASWithRetry_("generateSsoToken", [authToken], { targetUrl: GAS_SSO_URL })
     .then(function (res) {
       const ssoToken = res && res.ssoToken;
-      const url = ssoToken
-        ? MENUS.mobile.baseUrl + "?sso=" + encodeURIComponent(ssoToken) + "&notifOnly=1"
-        : MENUS.mobile.baseUrl + "?notifOnly=1";
-      window.open(url, "_blank");
+      if (ssoToken && notifTab && !notifTab.closed) {
+        notifTab.location = MENUS.mobile.baseUrl + "?sso=" + encodeURIComponent(ssoToken) + "&notifOnly=1";
+      }
     })
     .catch(function () {
-      window.open(MENUS.mobile.baseUrl + "?notifOnly=1", "_blank");
+      // Tiket SSO gagal didapat -> biarin tab tetap di ?notifOnly=1 tanpa
+      // sso (Mobile bakal minta login manual dulu di tab itu sebelum bisa
+      // minta izin notifikasi -- lebih baik daripada tab nyangkut kosong).
     });
   showModal(
     "Aktifkan Notifikasi",
