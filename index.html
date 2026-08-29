@@ -2831,6 +2831,52 @@
     </div>
   </div>
 
+  <!-- Modal: Catat Penyaluran Santunan (khusus SUPERADMIN/ADMIN) -- dibuka
+       dari tombol "Catat Penyaluran" di detail Laporan Bulanan Program
+       Gopay. Nambah jalur INPUT LEWAT APP, TIDAK menggantikan opsi isi
+       manual langsung di sheet "Log_Penyaluran_Santunan" (dua-duanya tetap
+       bisa dipakai kapan saja). -->
+  <div class="custom-modal-overlay" id="psInputOverlay">
+    <div class="custom-modal" style="max-width:360px; text-align:left;">
+      <div class="custom-modal-title" id="psInputTitle" style="text-align:center; margin-bottom: 16px;">Catat Penyaluran Santunan</div>
+
+      <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Wilayah</label>
+      <select id="psInputWilayah" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin-bottom: 12px; font-family:inherit;">
+        <option value="">Memuat wilayah...</option>
+      </select>
+
+      <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Jumlah Disalurkan (Rp)</label>
+      <input type="number" id="psInputJumlah" placeholder="Contoh: 15000000" min="0" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin-bottom: 12px; font-family:inherit;">
+
+      <div style="display:flex; gap:8px; margin-bottom:12px;">
+        <div style="flex:1;">
+          <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Jml Yatim</label>
+          <input type="number" id="psInputYatim" placeholder="0" min="0" style="width:100%; box-sizing:border-box; padding:10px 8px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; font-family:inherit;">
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Yatim Piatu*</label>
+          <input type="number" id="psInputYatimPiatu" placeholder="0" min="0" style="width:100%; box-sizing:border-box; padding:10px 8px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; font-family:inherit;">
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Disabilitas*</label>
+          <input type="number" id="psInputDisabilitas" placeholder="0" min="0" style="width:100%; box-sizing:border-box; padding:10px 8px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; font-family:inherit;">
+        </div>
+      </div>
+      <div style="font-size:9px; color:var(--text-muted); margin-bottom:14px; margin-top:-6px;">*Yatim Piatu &amp; Disabilitas adalah BAGIAN dari Jml Yatim, bukan tambahan.</div>
+
+      <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Tanggal Pencairan</label>
+      <input type="date" id="psInputTanggal" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin-bottom: 12px; font-family:inherit;">
+
+      <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Catatan (opsional)</label>
+      <input type="text" id="psInputCatatan" placeholder="Contoh: santunan dirapel bulan lalu" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin-bottom: 6px; font-family:inherit;">
+
+      <div class="custom-modal-actions">
+        <button type="button" class="btn-modal btn-cancel" onclick="tutupCatatPenyaluran()">Batal</button>
+        <button type="button" class="btn-modal btn-confirm" id="psInputBtnSimpan" onclick="submitCatatPenyaluran()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Halaman Penuh: Data Anak Yatim (Program Gopay) -- tabel ringkasan
        SEMUA wilayah, narik LIVE dari YASSA Mobile lewat action
        "getDataAnakYatim" tiap dibuka. Reuse class "overlay" yang sama
@@ -6353,6 +6399,49 @@ function renderLaporanBulananList(data) {
   data.bulanList.forEach(function (b) {
     const adaData = b.adaPendapatan || b.adaPengeluaran;
     const selisihWarna = b.selisih >= 0 ? "#86EFAC" : "#FCA5A5";
+
+    // Blok PDF nasional: 3 kemungkinan tampilan --
+    // 1) ada link & bisa lihat (SUPERADMIN/ADMIN) -> tombol Lihat/Unduh + Ganti
+    // 2) ada link & gak bisa lihat -> teks "Tersimpan di Cloud" (disensor)
+    // 3) belum ada link & bisa upload (SUPERADMIN/ADMIN) -> tombol Upload
+    let pdfNasionalHtml = "";
+    if (b.adaLinkPdf) {
+      if (laporanBulananBisaLihat) {
+        pdfNasionalHtml = `
+        <div style="display:flex; gap: 8px; padding: 0 16px 14px;">
+          <button type="button" onclick="event.stopPropagation(); openLaporanPdfViewer('${encodeURIComponent(b.linkPreviewPdf)}', '${encodeURIComponent(b.linkUnduhPdf)}', '${encodeURIComponent('Laporan ' + b.namaBulan + ' ' + b.tahun)}')" style="flex:1; display:flex; align-items:center; justify-content:center; gap: 6px; font-size: 11px; font-weight: 700; padding: 8px 10px; border-radius: 10px; background: rgba(34,197,94,0.14); border: 1px solid rgba(34,197,94,0.3); color: #86EFAC; cursor:pointer;">
+            <span class="material-symbols-outlined" style="font-size: 15px;">visibility</span> Lihat PDF
+          </button>
+          ${laporanBulananBisaUnduh ? `
+          <a href="${escapeHtmlHub(b.linkUnduhPdf)}" target="_blank" rel="noopener" style="flex:1; display:flex; align-items:center; justify-content:center; gap: 6px; font-size: 11px; font-weight: 700; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-primary); text-decoration:none;">
+            <span class="material-symbols-outlined" style="font-size: 15px;">download</span> Unduh
+          </a>` : ''}
+          <button type="button" onclick="event.stopPropagation(); bukaLaporanWilayahUpload(${b.bulan}, ${b.tahun}, '', 'nasional')" style="flex-shrink:0; display:flex; align-items:center; justify-content:center; width:38px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-secondary); cursor:pointer;">
+            <span class="material-symbols-outlined" style="font-size: 16px;">sync</span>
+          </button>
+        </div>`;
+      } else {
+        pdfNasionalHtml = `
+        <div title="Laporan ada, tapi cuma Superadmin/Admin yang boleh buka (isinya ada nomor rekening)." style="margin: 0 16px 14px; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.04); border: 1px dashed var(--glass-border);">
+          <div style="display:flex; align-items:center; gap: 5px; margin-bottom: 4px;">
+            <span class="material-symbols-outlined" style="font-size: 12px; color: var(--text-muted); flex-shrink:0;">cloud</span>
+            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.3px; color: var(--text-muted); text-transform: uppercase;">Tersimpan di Cloud</span>
+          </div>
+          <div style="display:flex; align-items:center; gap: 7px;">
+            <span class="material-symbols-outlined" style="font-size: 15px; color: var(--text-muted); flex-shrink:0;">lock</span>
+            <span style="font-size: 10px; color: var(--text-muted); font-family: monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; user-select:none;">${escapeHtmlHub(b.linkUnduhPdfSensor || 'laporan••••••••••.pdf')}</span>
+          </div>
+        </div>`;
+      }
+    } else if (laporanBulananBisaLihat) {
+      pdfNasionalHtml = `
+        <div style="padding: 0 16px 14px;">
+          <button type="button" onclick="event.stopPropagation(); bukaLaporanWilayahUpload(${b.bulan}, ${b.tahun}, '', 'nasional')" style="width:100%; display:flex; align-items:center; justify-content:center; gap:6px; font-size:11px; font-weight:700; padding:8px 10px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px dashed var(--glass-border); color: var(--text-secondary); cursor:pointer;">
+            <span class="material-symbols-outlined" style="font-size:15px;">upload_file</span> Upload Laporan PDF Bulan Ini
+          </button>
+        </div>`;
+    }
+
     html += `
       <div style="background: var(--glass-strong); border-radius: 16px; margin-bottom: 10px; border: 1px solid var(--glass-border); overflow: hidden;">
         <button onclick="toggleLaporanBulananDetail(${b.bulan}, ${b.tahun})" style="width: 100%; background: transparent; border: none; color: inherit; font-family: inherit; padding: 14px 16px; display:flex; align-items:center; justify-content:space-between; cursor: pointer; text-align:left; ${adaData ? '' : 'opacity: 0.55;'}">
@@ -6367,26 +6456,7 @@ function renderLaporanBulananList(data) {
             <span class="material-symbols-outlined laporan-chevron-${b.bulan}-${b.tahun}" style="font-size: 20px; color: var(--text-muted); transition: transform 0.2s;">expand_more</span>
           </div>
         </button>
-        ${b.adaLinkPdf ? (laporanBulananBisaLihat ? `
-        <div style="display:flex; gap: 8px; padding: 0 16px 14px;">
-          <button type="button" onclick="event.stopPropagation(); openLaporanPdfViewer('${encodeURIComponent(b.linkPreviewPdf)}', '${encodeURIComponent(b.linkUnduhPdf)}', '${encodeURIComponent('Laporan ' + b.namaBulan + ' ' + b.tahun)}')" style="flex:1; display:flex; align-items:center; justify-content:center; gap: 6px; font-size: 11px; font-weight: 700; padding: 8px 10px; border-radius: 10px; background: rgba(34,197,94,0.14); border: 1px solid rgba(34,197,94,0.3); color: #86EFAC; cursor:pointer;">
-            <span class="material-symbols-outlined" style="font-size: 15px;">visibility</span> Lihat PDF
-          </button>
-          ${laporanBulananBisaUnduh ? `
-          <a href="${escapeHtmlHub(b.linkUnduhPdf)}" target="_blank" rel="noopener" style="flex:1; display:flex; align-items:center; justify-content:center; gap: 6px; font-size: 11px; font-weight: 700; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-primary); text-decoration:none;">
-            <span class="material-symbols-outlined" style="font-size: 15px;">download</span> Unduh
-          </a>` : ''}
-        </div>` : `
-        <div title="Laporan ada, tapi cuma Superadmin/Admin yang boleh buka (isinya ada nomor rekening)." style="margin: 0 16px 14px; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.04); border: 1px dashed var(--glass-border);">
-          <div style="display:flex; align-items:center; gap: 5px; margin-bottom: 4px;">
-            <span class="material-symbols-outlined" style="font-size: 12px; color: var(--text-muted); flex-shrink:0;">cloud</span>
-            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.3px; color: var(--text-muted); text-transform: uppercase;">Tersimpan di Cloud</span>
-          </div>
-          <div style="display:flex; align-items:center; gap: 7px;">
-            <span class="material-symbols-outlined" style="font-size: 15px; color: var(--text-muted); flex-shrink:0;">lock</span>
-            <span style="font-size: 10px; color: var(--text-muted); font-family: monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; user-select:none;">${escapeHtmlHub(b.linkUnduhPdfSensor || 'laporan••••••••••.pdf')}</span>
-          </div>
-        </div>`) : ''}
+        ${pdfNasionalHtml}
         <div id="laporanDetail-${b.bulan}-${b.tahun}" style="display:none; padding: 0 16px 16px;"></div>
       </div>`;
   });
@@ -6485,7 +6555,12 @@ function renderLaporanBulananDetail(wrap, d) {
   }
 
   // -- Pengeluaran --
-  html += `<div style="font-size: 11px; font-weight: 700; color: #F87171; margin: 16px 0 8px;">PENGELUARAN SANTUNAN &middot; ${formatRupiahHub(d.pengeluaran.total)}</div>`;
+  html += `<div style="display:flex; align-items:center; justify-content:space-between; margin: 16px 0 8px; gap: 8px;">
+    <span style="font-size: 11px; font-weight: 700; color: #F87171;">PENGELUARAN SANTUNAN &middot; ${formatRupiahHub(d.pengeluaran.total)}</span>
+    ${d.bisaCatatPengeluaran ? `<button type="button" onclick="event.stopPropagation(); bukaCatatPenyaluran(${d.bulan}, ${d.tahun}, '${encodeURIComponent(d.namaBulan)}')" style="display:flex; align-items:center; gap:3px; font-size: 9.5px; font-weight: 700; padding: 4px 8px; border-radius: 7px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-secondary); cursor:pointer; flex-shrink:0; white-space:nowrap;">
+      <span class="material-symbols-outlined" style="font-size: 11px;">add</span> Catat Penyaluran
+    </button>` : ''}
+  </div>`;
   if (d.pengeluaran.rincianWilayah.length) {
     // Ringkasan kategori TOTAL semua wilayah (Yatim = total, Yatim Piatu &
     // Disabilitas = subset dari situ, sama kayak kartu "Jumlah Anak & Santunan").
@@ -6506,16 +6581,23 @@ function renderLaporanBulananDetail(wrap, d) {
       </div>
       <div style="font-size: 9.5px; color: var(--text-muted); margin-bottom: 10px;">*Yatim Piatu &amp; Disabilitas adalah bagian dari total Yatim, bukan tambahan.</div>`;
     d.pengeluaran.rincianWilayah.forEach(function (r) {
+      const tombolHapus = (d.bisaCatatPengeluaran && r.id) ? `
+          <button type="button" onclick="event.stopPropagation(); hapusPenyaluranSantunanConfirm('${encodeURIComponent(r.id)}', ${d.bulan}, ${d.tahun})" style="flex-shrink:0; display:flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:7px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color:#FCA5A5; cursor:pointer;">
+            <span class="material-symbols-outlined" style="font-size: 13px;">delete</span>
+          </button>` : '';
       html += `
-        <div style="padding: 8px 0; border-bottom: 1px solid var(--glass-border);">
-          <div style="display:flex; justify-content:space-between; font-size: 11.5px; color: var(--text-primary);">
-            <span>${escapeHtmlHub(r.wilayah)} ${r.telat ? '⚠️' : ''}</span>
-            <span style="font-weight:600;">${formatRupiahHub(r.jumlahDisalurkan)}</span>
+        <div style="padding: 8px 0; border-bottom: 1px solid var(--glass-border); display:flex; gap:8px; align-items:flex-start;">
+          <div style="flex:1; min-width:0;">
+            <div style="display:flex; justify-content:space-between; font-size: 11.5px; color: var(--text-primary);">
+              <span>${escapeHtmlHub(r.wilayah)} ${r.telat ? '⚠️' : ''}</span>
+              <span style="font-weight:600;">${formatRupiahHub(r.jumlahDisalurkan)}</span>
+            </div>
+            <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">
+              ${r.jumlahAnakYatim} yatim (${r.jumlahYatimPiatu} yatim piatu, ${r.jumlahDisabilitas} disabilitas) &middot; cair ${escapeHtmlHub(r.tanggalPencairan || '-')}${r.telat ? ' (di luar bulan periode)' : ''}
+              ${r.catatan ? ' &middot; ' + escapeHtmlHub(r.catatan) : ''}
+            </div>
           </div>
-          <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">
-            ${r.jumlahAnakYatim} yatim (${r.jumlahYatimPiatu} yatim piatu, ${r.jumlahDisabilitas} disabilitas) &middot; cair ${escapeHtmlHub(r.tanggalPencairan || '-')}${r.telat ? ' (di luar bulan periode)' : ''}
-            ${r.catatan ? ' &middot; ' + escapeHtmlHub(r.catatan) : ''}
-          </div>
+          ${tombolHapus}
         </div>`;
     });
   } else {
@@ -6531,6 +6613,96 @@ function renderLaporanBulananDetail(wrap, d) {
   </div>`;
 
   wrap.innerHTML = html;
+}
+
+// ============================================================
+// ✍️ CATAT PENYALURAN SANTUNAN LEWAT APP (khusus SUPERADMIN/ADMIN, Program
+// Gopay) -- modal buat nambah baris baru ke "Log_Penyaluran_Santunan"
+// TANPA perlu buka Google Sheet. Sheet-nya SENDIRI tetap bisa diisi/diedit
+// manual seperti biasa -- ini cuma jalur kedua, gak menggantikan.
+// ============================================================
+let psBulan = null, psTahun = null;
+
+function bukaCatatPenyaluran(bulan, tahun, namaBulanEncoded) {
+  psBulan = bulan;
+  psTahun = tahun;
+  const namaBulan = namaBulanEncoded ? decodeURIComponent(namaBulanEncoded) : bulan;
+  document.getElementById("psInputTitle").textContent = "Catat Penyaluran - " + namaBulan + " " + tahun;
+  document.getElementById("psInputJumlah").value = "";
+  document.getElementById("psInputYatim").value = "";
+  document.getElementById("psInputYatimPiatu").value = "";
+  document.getElementById("psInputDisabilitas").value = "";
+  document.getElementById("psInputCatatan").value = "";
+  // Default tanggal pencairan: hari ini.
+  document.getElementById("psInputTanggal").value = new Date().toISOString().slice(0, 10);
+
+  const sel = document.getElementById("psInputWilayah");
+  sel.innerHTML = `<option value="">Memuat wilayah...</option>`;
+  loadWilayahListIfNeeded().then(function (list) {
+    sel.innerHTML = (list && list.length)
+      ? list.map(function (w) { return `<option value="${escapeHtmlHub(w)}">${escapeHtmlHub(w)}</option>`; }).join("")
+      : `<option value="">(Belum ada data wilayah)</option>`;
+  });
+
+  document.getElementById("psInputOverlay").classList.add("open");
+}
+
+function tutupCatatPenyaluran() {
+  document.getElementById("psInputOverlay").classList.remove("open");
+}
+
+function psRefreshDetail() {
+  const key = psBulan + "-" + psTahun;
+  delete laporanBulananDetailCache[key];
+  const wrap = document.getElementById("laporanDetail-" + key);
+  if (wrap && laporanBulananBulanTerbuka === key) {
+    callGASWithRetry_("getLaporanBulananDetail", [authToken, psBulan, psTahun])
+      .then(function (detail) {
+        laporanBulananDetailCache[key] = detail;
+        if (laporanBulananBulanTerbuka === key) renderLaporanBulananDetail(wrap, detail);
+      });
+  }
+}
+
+function submitCatatPenyaluran() {
+  const wilayah = document.getElementById("psInputWilayah").value;
+  const jumlah = document.getElementById("psInputJumlah").value;
+  const yatim = document.getElementById("psInputYatim").value || 0;
+  const yatimPiatu = document.getElementById("psInputYatimPiatu").value || 0;
+  const disabilitas = document.getElementById("psInputDisabilitas").value || 0;
+  const tanggal = document.getElementById("psInputTanggal").value;
+  const catatan = document.getElementById("psInputCatatan").value.trim();
+
+  if (!wilayah) { showModal("Gagal", "Pilih wilayah dulu."); return; }
+  if (!jumlah || Number(jumlah) <= 0) { showModal("Gagal", "Jumlah disalurkan harus lebih dari 0."); return; }
+
+  const btn = document.getElementById("psInputBtnSimpan");
+  btn.disabled = true;
+  btn.textContent = "Menyimpan...";
+  callGASWithRetry_("catatPenyaluranSantunan", [authToken, psBulan, psTahun, wilayah, jumlah, yatim, yatimPiatu, disabilitas, tanggal, catatan])
+    .then(function () {
+      btn.disabled = false;
+      btn.textContent = "Simpan";
+      tutupCatatPenyaluran();
+      psRefreshDetail();
+      showModal("Sukses", "Penyaluran santunan berhasil dicatat.");
+    })
+    .catch(function (err) {
+      btn.disabled = false;
+      btn.textContent = "Simpan";
+      showModal("Gagal", err.message);
+    });
+}
+
+function hapusPenyaluranSantunanConfirm(idEncoded, bulan, tahun) {
+  const id = decodeURIComponent(idEncoded);
+  showModal("Hapus Catatan?", "Catatan penyaluran santunan ini akan dihapus permanen dari sheet.", true, function () {
+    psBulan = bulan;
+    psTahun = tahun;
+    callGASWithRetry_("hapusPenyaluranSantunan", [authToken, id])
+      .then(function () { psRefreshDetail(); })
+      .catch(function (err) { showModal("Gagal", err.message); });
+  });
 }
 
 // ============================================================
@@ -6799,12 +6971,14 @@ function bukaLaporanWilayahUpload(bulan, tahun, wilayahEncoded, program) {
   lwuBulan = bulan;
   lwuTahun = tahun;
   lwuWilayah = decodeURIComponent(wilayahEncoded);
-  lwuProgram = program === "sapa" ? "sapa" : "gopay";
+  lwuProgram = program === "sapa" ? "sapa" : (program === "nasional" ? "nasional" : "gopay");
   lwuFileTerpilih = null;
   document.getElementById("lwuInputLink").value = "";
   document.getElementById("lwuInputFile").value = "";
   document.getElementById("lwuFileNamaTerpilih").textContent = "Ketuk buat pilih file PDF (maks 20MB)";
-  document.getElementById("laporanWilayahUploadTitle").textContent = "Laporan " + lwuWilayah + (lwuProgram === "sapa" ? " (SAPA)" : "");
+  document.getElementById("laporanWilayahUploadTitle").textContent = lwuProgram === "nasional"
+    ? "Laporan Bulanan Nasional"
+    : "Laporan " + lwuWilayah + (lwuProgram === "sapa" ? " (SAPA)" : "");
   lwuGantiTab("link");
   document.getElementById("laporanWilayahUploadOverlay").classList.add("open");
 }
@@ -6846,14 +7020,17 @@ function lwuFilePicked(input) {
 
 function lwuSimpan() {
   const btn = document.getElementById("lwuBtnSimpan");
-  const actionLink = lwuProgram === "sapa" ? "setLaporanWilayahLinkSapa" : "setLaporanWilayahLink";
-  const actionFile = lwuProgram === "sapa" ? "uploadLaporanWilayahFileSapa" : "uploadLaporanWilayahFile";
+  const actionLink = lwuProgram === "sapa" ? "setLaporanWilayahLinkSapa" : (lwuProgram === "nasional" ? "setLaporanBulananLinkNasional" : "setLaporanWilayahLink");
+  const actionFile = lwuProgram === "sapa" ? "uploadLaporanWilayahFileSapa" : (lwuProgram === "nasional" ? "uploadLaporanBulananFileNasional" : "uploadLaporanWilayahFile");
+  // Laporan nasional gak punya dimensi wilayah, jadi argumen yang dikirim
+  // ke backend beda (gak ada lwuWilayah di tengah).
+  const argsDasar = lwuProgram === "nasional" ? [authToken, lwuBulan, lwuTahun] : [authToken, lwuBulan, lwuTahun, lwuWilayah];
   if (lwuTabAktif === "link") {
     const link = document.getElementById("lwuInputLink").value.trim();
     if (!link) { showModal("Gagal", "Link PDF belum diisi."); return; }
     btn.disabled = true;
     btn.textContent = "Menyimpan...";
-    callGASWithRetry_(actionLink, [authToken, lwuBulan, lwuTahun, lwuWilayah, link])
+    callGASWithRetry_(actionLink, argsDasar.concat([link]))
       .then(function (res) { lwuSelesai(res); })
       .catch(function (err) {
         btn.disabled = false;
@@ -6871,7 +7048,7 @@ function lwuSimpan() {
       // (lihat diagnosa performa sebelumnya) -- timeout dinaikkan ke 90
       // detik khusus buat upload file (bukan 15 detik default) biar file
       // besar gak keburu dianggap gagal padahal masih proses upload.
-      callGASWithRetry_(actionFile, [authToken, lwuBulan, lwuTahun, lwuWilayah, base64Data, lwuFileTerpilih.type, lwuFileTerpilih.name], { timeoutMs: 90000, maxAttempts: 1 })
+      callGASWithRetry_(actionFile, argsDasar.concat([base64Data, lwuFileTerpilih.type, lwuFileTerpilih.name]), { timeoutMs: 90000, maxAttempts: 1 })
         .then(function (res) { lwuSelesai(res); })
         .catch(function (err) {
           btn.disabled = false;
@@ -6902,6 +7079,16 @@ function lwuSelesai(res) {
           laporanBulananSapaDetailCache[key] = detail;
           if (laporanBulananSapaBulanTerbuka === key) renderLaporanBulananDetailSapa(wrap, detail);
         });
+    }
+  } else if (lwuProgram === "nasional") {
+    // Tombol Lihat PDF/Unduh/Ganti buat laporan nasional ada di baris LIST
+    // (bukan di detail per-wilayah), jadi yang di-reload adalah list tahun
+    // yang lagi aktif -- accordion bulan yang lagi kebuka (kalau ada) ikut
+    // dipertahankan biar gak keliatan "nutup sendiri" ke user.
+    const bulanTerbukaSebelum = laporanBulananBulanTerbuka;
+    loadLaporanBulananList(laporanBulananTahunAktif);
+    if (bulanTerbukaSebelum) {
+      setTimeout(function () { toggleLaporanBulananDetail(lwuBulan, lwuTahun); }, 0);
     }
   } else {
     delete laporanBulananDetailCache[key];
@@ -10442,7 +10629,7 @@ initSummaryCardTilt();
 // form user, sheet input, modal konfirmasi, dst) TANPA perlu ubah kode
 // tiap fungsi open/close satu-satu.
 // ============================================================
-const OVERLAY_OPEN_SELECTOR = '.overlay.open, .user-menu.open, #userFormOverlay.open, #customModalOverlay.open, #inputOverlay.open, #forcePwOverlay.open, #kegiatanFormOverlay.open, #laporanWilayahUploadOverlay.open';
+const OVERLAY_OPEN_SELECTOR = '.overlay.open, .user-menu.open, #userFormOverlay.open, #customModalOverlay.open, #inputOverlay.open, #forcePwOverlay.open, #kegiatanFormOverlay.open, #laporanWilayahUploadOverlay.open, #psInputOverlay.open';
 
 let backExitArmed = false; // true sesaat setelah toast "tekan lagi buat keluar" muncul
 
@@ -10465,6 +10652,7 @@ function closeTopmostOverlay() {
     if (el.id === "userFormOverlay" && typeof closeUserForm === "function") { closeUserForm(); return; }
     if (el.id === "customModalOverlay" && typeof closeModal === "function") { closeModal(); return; }
     if (el.id === "laporanWilayahUploadOverlay") { tutupLaporanWilayahUpload(); return; }
+    if (el.id === "psInputOverlay") { tutupCatatPenyaluran(); return; }
     if (el.id === "inputOverlay") { toggleInputSheet(); return; }
     if (el.id === "kegiatanFormOverlay" && typeof closeKegiatanForm === "function") { closeKegiatanForm(); return; }
     el.classList.remove("open"); // fallback generic
