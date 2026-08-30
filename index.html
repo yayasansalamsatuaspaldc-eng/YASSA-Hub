@@ -6516,31 +6516,12 @@ function renderLaporanBulananDetail(wrap, d) {
   if (d.pendapatan.lapangan.rincianWilayah.length) {
     html += `<div style="font-size: 10.5px; color: var(--text-secondary); margin-bottom: 4px;">Realisasi Lapangan</div>`;
     d.pendapatan.lapangan.rincianWilayah.forEach(function (r) {
-      // Tombol PDF laporan per wilayah ditempel di sini (bukan di
-      // Pengeluaran Santunan) karena baris wilayah di sini SELALU ada tiap
-      // bulan buat semua 16 wilayah -- lihat komentar di getLaporanBulananDetail
-      // server. "Lihat PDF" cuma muncul kalau server ngirim linkPreviewPdfWilayah
-      // (role user ini berhak buat wilayah ini). Tombol Upload/Ganti cuma
-      // buat SUPERADMIN/ADMIN (d.bisaUploadLaporanWilayah).
-      const wilayahEnc = encodeURIComponent(r.wilayah);
-      let aksiWilayahHtml = "";
-      if (r.linkPreviewPdfWilayah) {
-        aksiWilayahHtml += `<button type="button" onclick="event.stopPropagation(); openLaporanWilayahPdfViewer('${encodeURIComponent(r.linkPreviewPdfWilayah)}', '${encodeURIComponent(r.linkUnduhPdfWilayah || '')}', '${encodeURIComponent('Laporan ' + r.wilayah + ' - ' + d.namaBulan + ' ' + d.tahun)}')" style="display:flex; align-items:center; gap:3px; font-size: 9.5px; font-weight: 700; padding: 4px 8px; border-radius: 7px; background: rgba(34,197,94,0.14); border: 1px solid rgba(34,197,94,0.3); color: #86EFAC; cursor:pointer;">
-          <span class="material-symbols-outlined" style="font-size: 11px;">visibility</span> PDF
-        </button>`;
-      }
-      if (d.bisaUploadLaporanWilayah) {
-        aksiWilayahHtml += `<button type="button" onclick="event.stopPropagation(); bukaLaporanWilayahUpload(${d.bulan}, ${d.tahun}, '${wilayahEnc}')" style="display:flex; align-items:center; gap:3px; font-size: 9.5px; font-weight: 700; padding: 4px 8px; border-radius: 7px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-secondary); cursor:pointer;">
-          <span class="material-symbols-outlined" style="font-size: 11px;">${r.adaLinkPdfWilayah ? 'sync' : 'upload_file'}</span> ${r.adaLinkPdfWilayah ? 'Ganti' : 'Upload'}
-        </button>`;
-      }
       html += `
         <div style="padding: 5px 0;">
           <div style="display:flex; justify-content:space-between; align-items:center; font-size: 11.5px; color: var(--text-primary);">
             <span>${escapeHtmlHub(r.wilayah)}</span>
             <span style="font-weight:600;">${formatRupiahHub(r.realisasiDonasi)}</span>
           </div>
-          ${aksiWilayahHtml ? `<div style="display:flex; gap:6px; margin-top:5px;">${aksiWilayahHtml}</div>` : ''}
         </div>`;
     });
   }
@@ -6585,6 +6566,23 @@ function renderLaporanBulananDetail(wrap, d) {
           <button type="button" onclick="event.stopPropagation(); hapusPenyaluranSantunanConfirm('${encodeURIComponent(r.id)}', ${d.bulan}, ${d.tahun})" style="flex-shrink:0; display:flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:7px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color:#FCA5A5; cursor:pointer;">
             <span class="material-symbols-outlined" style="font-size: 13px;">delete</span>
           </button>` : '';
+      // Tombol PDF laporan per wilayah ditempel di sini (Pengeluaran, bukan
+      // Pendapatan) karena PDF-nya isinya "Laporan Pendistribusian Santunan"
+      // -- dokumen pengeluaran. "Lihat PDF" cuma muncul kalau server ngirim
+      // linkPreviewPdfWilayah (role user ini berhak buat wilayah ini).
+      // Tombol Upload/Ganti cuma buat SUPERADMIN/ADMIN (d.bisaUploadLaporanWilayah).
+      const wilayahEnc = encodeURIComponent(r.wilayah);
+      let aksiWilayahHtml = "";
+      if (r.linkPreviewPdfWilayah) {
+        aksiWilayahHtml += `<button type="button" onclick="event.stopPropagation(); openLaporanWilayahPdfViewer('${encodeURIComponent(r.linkPreviewPdfWilayah)}', '${encodeURIComponent(r.linkUnduhPdfWilayah || '')}', '${encodeURIComponent('Laporan ' + r.wilayah + ' - ' + d.namaBulan + ' ' + d.tahun)}')" style="display:flex; align-items:center; gap:3px; font-size: 9.5px; font-weight: 700; padding: 4px 8px; border-radius: 7px; background: rgba(34,197,94,0.14); border: 1px solid rgba(34,197,94,0.3); color: #86EFAC; cursor:pointer;">
+          <span class="material-symbols-outlined" style="font-size: 11px;">visibility</span> PDF
+        </button>`;
+      }
+      if (d.bisaUploadLaporanWilayah) {
+        aksiWilayahHtml += `<button type="button" onclick="event.stopPropagation(); bukaLaporanWilayahUpload(${d.bulan}, ${d.tahun}, '${wilayahEnc}')" style="display:flex; align-items:center; gap:3px; font-size: 9.5px; font-weight: 700; padding: 4px 8px; border-radius: 7px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-secondary); cursor:pointer;">
+          <span class="material-symbols-outlined" style="font-size: 11px;">${r.adaLinkPdfWilayah ? 'sync' : 'upload_file'}</span> ${r.adaLinkPdfWilayah ? 'Ganti' : 'Upload'}
+        </button>`;
+      }
       html += `
         <div style="padding: 8px 0; border-bottom: 1px solid var(--glass-border); display:flex; gap:8px; align-items:flex-start;">
           <div style="flex:1; min-width:0;">
@@ -6596,6 +6594,7 @@ function renderLaporanBulananDetail(wrap, d) {
               ${r.jumlahAnakYatim} yatim (${r.jumlahYatimPiatu} yatim piatu, ${r.jumlahDisabilitas} disabilitas) &middot; cair ${escapeHtmlHub(r.tanggalPencairan || '-')}${r.telat ? ' (di luar bulan periode)' : ''}
               ${r.catatan ? ' &middot; ' + escapeHtmlHub(r.catatan) : ''}
             </div>
+            ${aksiWilayahHtml ? `<div style="display:flex; gap:6px; margin-top:5px;">${aksiWilayahHtml}</div>` : ''}
           </div>
           ${tombolHapus}
         </div>`;
@@ -6862,25 +6861,12 @@ function renderLaporanBulananDetailSapa(wrap, d) {
   if (d.pendapatan.lapangan.rincianWilayah.length) {
     html += `<div style="font-size: 10.5px; color: var(--text-secondary); margin-bottom: 4px;">Realisasi Lapangan</div>`;
     d.pendapatan.lapangan.rincianWilayah.forEach(function (r) {
-      const wilayahEnc = encodeURIComponent(r.wilayah);
-      let aksiWilayahHtml = "";
-      if (r.linkPreviewPdfWilayah) {
-        aksiWilayahHtml += `<button type="button" onclick="event.stopPropagation(); openLaporanWilayahPdfViewer('${encodeURIComponent(r.linkPreviewPdfWilayah)}', '${encodeURIComponent(r.linkUnduhPdfWilayah || '')}', '${encodeURIComponent('Laporan SAPA ' + r.wilayah + ' - ' + d.namaBulan + ' ' + d.tahun)}')" style="display:flex; align-items:center; gap:3px; font-size: 9.5px; font-weight: 700; padding: 4px 8px; border-radius: 7px; background: rgba(34,197,94,0.14); border: 1px solid rgba(34,197,94,0.3); color: #86EFAC; cursor:pointer;">
-          <span class="material-symbols-outlined" style="font-size: 11px;">visibility</span> PDF
-        </button>`;
-      }
-      if (d.bisaUploadLaporanWilayah) {
-        aksiWilayahHtml += `<button type="button" onclick="event.stopPropagation(); bukaLaporanWilayahUpload(${d.bulan}, ${d.tahun}, '${wilayahEnc}', 'sapa')" style="display:flex; align-items:center; gap:3px; font-size: 9.5px; font-weight: 700; padding: 4px 8px; border-radius: 7px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-secondary); cursor:pointer;">
-          <span class="material-symbols-outlined" style="font-size: 11px;">${r.adaLinkPdfWilayah ? 'sync' : 'upload_file'}</span> ${r.adaLinkPdfWilayah ? 'Ganti' : 'Upload'}
-        </button>`;
-      }
       html += `
         <div style="padding: 5px 0;">
           <div style="display:flex; justify-content:space-between; align-items:center; font-size: 11.5px; color: var(--text-primary);">
             <span>${escapeHtmlHub(r.wilayah)}</span>
             <span style="font-weight:600;">${formatRupiahHub(r.realisasiDonasi)}</span>
           </div>
-          ${aksiWilayahHtml ? `<div style="display:flex; gap:6px; margin-top:5px;">${aksiWilayahHtml}</div>` : ''}
         </div>`;
     });
   }
@@ -6908,6 +6894,18 @@ function renderLaporanBulananDetailSapa(wrap, d) {
       </div>
       <div style="font-size: 9.5px; color: var(--text-muted); margin-bottom: 10px;">*Yatim Piatu &amp; Disabilitas adalah bagian dari total Anak Asuh, bukan tambahan.</div>`;
     d.pengeluaran.rincianWilayah.forEach(function (r) {
+      const wilayahEnc = encodeURIComponent(r.wilayah);
+      let aksiWilayahHtml = "";
+      if (r.linkPreviewPdfWilayah) {
+        aksiWilayahHtml += `<button type="button" onclick="event.stopPropagation(); openLaporanWilayahPdfViewer('${encodeURIComponent(r.linkPreviewPdfWilayah)}', '${encodeURIComponent(r.linkUnduhPdfWilayah || '')}', '${encodeURIComponent('Laporan SAPA ' + r.wilayah + ' - ' + d.namaBulan + ' ' + d.tahun)}')" style="display:flex; align-items:center; gap:3px; font-size: 9.5px; font-weight: 700; padding: 4px 8px; border-radius: 7px; background: rgba(34,197,94,0.14); border: 1px solid rgba(34,197,94,0.3); color: #86EFAC; cursor:pointer;">
+          <span class="material-symbols-outlined" style="font-size: 11px;">visibility</span> PDF
+        </button>`;
+      }
+      if (d.bisaUploadLaporanWilayah) {
+        aksiWilayahHtml += `<button type="button" onclick="event.stopPropagation(); bukaLaporanWilayahUpload(${d.bulan}, ${d.tahun}, '${wilayahEnc}', 'sapa')" style="display:flex; align-items:center; gap:3px; font-size: 9.5px; font-weight: 700; padding: 4px 8px; border-radius: 7px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-secondary); cursor:pointer;">
+          <span class="material-symbols-outlined" style="font-size: 11px;">${r.adaLinkPdfWilayah ? 'sync' : 'upload_file'}</span> ${r.adaLinkPdfWilayah ? 'Ganti' : 'Upload'}
+        </button>`;
+      }
       html += `
         <div style="padding: 8px 0; border-bottom: 1px solid var(--glass-border);">
           <div style="display:flex; justify-content:space-between; font-size: 11.5px; color: var(--text-primary);">
@@ -6918,6 +6916,7 @@ function renderLaporanBulananDetailSapa(wrap, d) {
             ${r.jumlahAnakAsuh} anak asuh (${r.jumlahYatimPiatu} yatim piatu, ${r.jumlahDisabilitas} disabilitas) &middot; cair ${escapeHtmlHub(r.tanggalPencairan || '-')}${r.telat ? ' (di luar bulan periode)' : ''}
             ${r.catatan ? ' &middot; ' + escapeHtmlHub(r.catatan) : ''}
           </div>
+          ${aksiWilayahHtml ? `<div style="display:flex; gap:6px; margin-top:5px;">${aksiWilayahHtml}</div>` : ''}
         </div>`;
     });
   } else {
