@@ -2878,11 +2878,14 @@
   </div>
 
   <!-- 🆕 Modal Input Data Santunan Bulanan (Rate_Santunan_Bulanan) -- khusus
-       SUPERADMIN/ADMIN. Jumlah Anak Yatim/Yatim Piatu/Disabilitas ditarik
-       OTOMATIS dari YASSA Mobile (tombol "Tarik Data"), sisanya (Rate,
-       Total Santunan, Bulan Cakupan, Catatan) diisi manual. -->
+       SUPERADMIN/ADMIN. Jumlah Anak Yatim/Yatim Piatu/Disabilitas SEMUA
+       wilayah ditarik OTOMATIS sekaligus dari YASSA Mobile (tombol "Tarik
+       Semua Wilayah"). Rate per wilayah diisi manual -- wilayah yang Rate
+       Pokok-nya dikosongkan otomatis dilewati (gak ikut disimpan). Bulan,
+       Tahun, Jumlah Bulan Cakupan, dan Catatan berlaku sama buat semua
+       wilayah yang disimpan dalam 1x proses ini. -->
   <div class="custom-modal-overlay" id="rsInputOverlay">
-    <div class="custom-modal" style="max-width:380px; text-align:left;">
+    <div class="custom-modal" style="max-width:400px; text-align:left;">
       <div class="custom-modal-title" style="text-align:center; margin-bottom: 16px;">Input Data Santunan Bulanan</div>
 
       <div style="display:flex; gap:8px; margin-bottom:12px;">
@@ -2901,62 +2904,24 @@
         </div>
       </div>
 
-      <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Wilayah</label>
-      <select id="rsInputWilayah" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin-bottom: 12px; font-family:inherit;">
-        <option value="">Memuat wilayah...</option>
-      </select>
-
-      <button type="button" id="rsInputBtnTarik" onclick="rsTarikData()" style="display:flex; align-items:center; justify-content:center; gap:6px; width:100%; padding:10px 12px; border-radius:10px; background: rgba(34,197,94,0.14); border: 1px solid rgba(34,197,94,0.35); color: #86EFAC; font-size:12px; font-weight:700; cursor:pointer; margin-bottom:14px;">
-        <span class="material-symbols-outlined" style="font-size:16px;">sync</span> Tarik Data dari YASSA Mobile
+      <button type="button" id="rsInputBtnTarik" onclick="rsTarikSemuaWilayah()" style="display:flex; align-items:center; justify-content:center; gap:6px; width:100%; padding:10px 12px; border-radius:10px; background: rgba(34,197,94,0.14); border: 1px solid rgba(34,197,94,0.35); color: #86EFAC; font-size:12px; font-weight:700; cursor:pointer; margin-bottom:12px;">
+        <span class="material-symbols-outlined" style="font-size:16px;">sync</span> Tarik Semua Wilayah dari YASSA Mobile
       </button>
 
-      <div style="display:flex; gap:8px; margin-bottom:6px;">
-        <div style="flex:1;">
-          <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Anak Yatim</label>
-          <input type="number" id="rsInputAnak" readonly placeholder="0" style="width:100%; box-sizing:border-box; padding:10px 8px; border-radius:10px; background: rgba(255,255,255,0.03); border:1px solid var(--glass-border); color: var(--text-secondary); font-size:12.5px; font-family:inherit;">
-        </div>
-        <div style="flex:1;">
-          <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Yatim Piatu</label>
-          <input type="number" id="rsInputPiatu" readonly placeholder="0" style="width:100%; box-sizing:border-box; padding:10px 8px; border-radius:10px; background: rgba(255,255,255,0.03); border:1px solid var(--glass-border); color: var(--text-secondary); font-size:12.5px; font-family:inherit;">
-        </div>
-        <div style="flex:1;">
-          <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Disabilitas</label>
-          <input type="number" id="rsInputDsb" readonly placeholder="0" style="width:100%; box-sizing:border-box; padding:10px 8px; border-radius:10px; background: rgba(255,255,255,0.03); border:1px solid var(--glass-border); color: var(--text-secondary); font-size:12.5px; font-family:inherit;">
-        </div>
+      <div id="rsDaftarWilayah" style="max-height:280px; overflow-y:auto; border:1px solid var(--glass-border); border-radius:12px; padding:8px; margin-bottom:10px;">
+        <div style="font-size:11px; color:var(--text-muted); text-align:center; padding:14px 4px;">Tekan "Tarik Semua Wilayah" dulu buat lihat daftarnya.</div>
       </div>
-      <div style="font-size:9px; color:var(--text-muted); margin-bottom:14px; margin-top:-2px;">*Otomatis dari YASSA Mobile (Disabilitas = anak + ortu/istri). Tekan "Tarik Data" dulu.</div>
+      <div style="font-size:9px; color:var(--text-muted); margin-bottom:14px; margin-top:-4px;">*Disabilitas = anak + ortu/istri. Wilayah yang "Rate Pokok" dibiarkan kosong otomatis DILEWATI saat Simpan.</div>
 
-      <div style="display:flex; gap:8px; margin-bottom:12px;">
-        <div style="flex:1;">
-          <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Rate Pokok (Rp)</label>
-          <input type="number" id="rsInputRatePokok" placeholder="100000" min="0" oninput="rsHitungTotalPreview()" style="width:100%; box-sizing:border-box; padding:10px 8px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; font-family:inherit;">
-        </div>
-        <div style="flex:1;">
-          <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Tmbh Yatim Piatu</label>
-          <input type="number" id="rsInputRatePiatu" placeholder="0" min="0" oninput="rsHitungTotalPreview()" style="width:100%; box-sizing:border-box; padding:10px 8px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; font-family:inherit;">
-        </div>
-        <div style="flex:1;">
-          <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Tmbh Disabilitas</label>
-          <input type="number" id="rsInputRateDsb" placeholder="0" min="0" oninput="rsHitungTotalPreview()" style="width:100%; box-sizing:border-box; padding:10px 8px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; font-family:inherit;">
-        </div>
-      </div>
+      <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Jml Bulan Cakupan (berlaku utk semua wilayah di atas)</label>
+      <input type="number" id="rsInputCakupan" placeholder="1" min="1" value="1" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin-bottom: 10px; font-family:inherit;">
 
-      <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Total Santunan (Rp) -- bisa disesuaikan manual buat kasus rapel</label>
-      <input type="number" id="rsInputTotal" placeholder="0" min="0" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin-bottom: 12px; font-family:inherit;">
-
-      <div style="display:flex; gap:8px; margin-bottom:12px;">
-        <div style="flex:1;">
-          <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Jml Bulan Cakupan</label>
-          <input type="number" id="rsInputCakupan" placeholder="1" min="1" value="1" style="width:100%; box-sizing:border-box; padding:10px 8px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; font-family:inherit;">
-        </div>
-      </div>
-
-      <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Catatan (opsional)</label>
+      <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Catatan (opsional, berlaku utk semua wilayah di atas)</label>
       <input type="text" id="rsInputCatatan" placeholder="Contoh: rapel Juli+Agustus, cair 5 Sep" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin-bottom: 6px; font-family:inherit;">
 
       <div class="custom-modal-actions">
         <button type="button" class="btn-modal btn-cancel" onclick="tutupInputRateSantunan()">Batal</button>
-        <button type="button" class="btn-modal btn-confirm" id="rsInputBtnSimpan" onclick="rsSubmit()">Simpan</button>
+        <button type="button" class="btn-modal btn-confirm" id="rsInputBtnSimpan" onclick="rsSubmitSemua()">Simpan Semua</button>
       </div>
     </div>
   </div>
@@ -6821,27 +6786,21 @@ function submitCatatPenyaluran() {
 // dari YASSA Mobile (tombol "Tarik Data", boleh diulang sebelum Simpan).
 // Sheet-nya SENDIRI tetap bisa diisi/diedit manual seperti biasa.
 // ============================================================
+// ============================================================
+// 🆕 INPUT DATA SANTUNAN BULANAN LEWAT APP (khusus SUPERADMIN/ADMIN) --
+// modal buat isi/update BANYAK baris "Rate_Santunan_Bulanan" sekaligus (1
+// baris per wilayah) TANPA perlu buka Google Sheet. Jumlah Anak Yatim/
+// Yatim Piatu/Disabilitas SEMUA wilayah ditarik OTOMATIS dari YASSA Mobile
+// (tombol "Tarik Semua Wilayah", boleh diulang sebelum Simpan). Sheet-nya
+// SENDIRI tetap bisa diisi/diedit manual seperti biasa.
+// ============================================================
 function bukaInputRateSantunan() {
   document.getElementById("rsInputBulan").value = String(new Date().getMonth() + 1);
   document.getElementById("rsInputTahun").value = new Date().getFullYear();
-  document.getElementById("rsInputAnak").value = "";
-  document.getElementById("rsInputPiatu").value = "";
-  document.getElementById("rsInputDsb").value = "";
-  document.getElementById("rsInputRatePokok").value = "";
-  document.getElementById("rsInputRatePiatu").value = "";
-  document.getElementById("rsInputRateDsb").value = "";
-  document.getElementById("rsInputTotal").value = "";
   document.getElementById("rsInputCakupan").value = "1";
   document.getElementById("rsInputCatatan").value = "";
-  document.getElementById("rsInputBtnTarik").innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">sync</span> Tarik Data dari YASSA Mobile';
-
-  const sel = document.getElementById("rsInputWilayah");
-  sel.innerHTML = `<option value="">Memuat wilayah...</option>`;
-  loadWilayahListIfNeeded().then(function (list) {
-    sel.innerHTML = (list && list.length)
-      ? list.map(function (w) { return `<option value="${escapeHtmlHub(w)}">${escapeHtmlHub(w)}</option>`; }).join("")
-      : `<option value="">(Belum ada data wilayah)</option>`;
-  });
+  document.getElementById("rsInputBtnTarik").innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">sync</span> Tarik Semua Wilayah dari YASSA Mobile';
+  document.getElementById("rsDaftarWilayah").innerHTML = '<div style="font-size:11px; color:var(--text-muted); text-align:center; padding:14px 4px;">Tekan "Tarik Semua Wilayah" dulu buat lihat daftarnya.</div>';
 
   document.getElementById("rsInputOverlay").classList.add("open");
 }
@@ -6850,76 +6809,101 @@ function tutupInputRateSantunan() {
   document.getElementById("rsInputOverlay").classList.remove("open");
 }
 
-// Hitung ulang preview "Total Santunan" tiap kali Rate/Jumlah berubah --
-// TETAP bisa ditimpa manual sama Admin (mis. buat kasus rapel), jadi ini
-// cuma bantu ngitung, bukan mengunci field-nya.
-function rsHitungTotalPreview() {
-  const anak = Number(document.getElementById("rsInputAnak").value) || 0;
-  const piatu = Number(document.getElementById("rsInputPiatu").value) || 0;
-  const dsb = Number(document.getElementById("rsInputDsb").value) || 0;
-  const ratePokok = Number(document.getElementById("rsInputRatePokok").value) || 0;
-  const ratePiatu = Number(document.getElementById("rsInputRatePiatu").value) || 0;
-  const rateDsb = Number(document.getElementById("rsInputRateDsb").value) || 0;
+// Hitung ulang preview Total Santunan 1 blok wilayah tertentu (dipanggil
+// pas Admin ngetik salah satu dari 3 Rate di blok itu).
+function rsHitungTotalPreview(elInput) {
+  const blok = elInput.closest(".rs-wilayah-block");
+  if (!blok) return;
+  const anak = Number(blok.dataset.anak) || 0;
+  const piatu = Number(blok.dataset.piatu) || 0;
+  const dsb = Number(blok.dataset.dsb) || 0;
+  const ratePokok = Number(blok.querySelector(".rs-rate-pokok").value) || 0;
+  const ratePiatu = Number(blok.querySelector(".rs-rate-piatu").value) || 0;
+  const rateDsb = Number(blok.querySelector(".rs-rate-dsb").value) || 0;
   const total = (anak * ratePokok) + (piatu * ratePiatu) + (dsb * rateDsb);
-  document.getElementById("rsInputTotal").value = total;
+  blok.querySelector(".rs-total-preview").textContent = formatRupiahHub(total);
+  blok.dataset.total = total;
 }
 
-function rsTarikData() {
-  const wilayah = document.getElementById("rsInputWilayah").value;
-  if (!wilayah) { showModal("Gagal", "Pilih wilayah dulu."); return; }
-
+function rsTarikSemuaWilayah() {
   const btn = document.getElementById("rsInputBtnTarik");
   btn.disabled = true;
-  btn.innerHTML = '<span class="material-symbols-outlined spin" style="font-size:16px;">progress_activity</span> Menarik data...';
+  btn.innerHTML = '<span class="material-symbols-outlined spin" style="font-size:16px;">progress_activity</span> Menarik data semua wilayah...';
 
-  callGASWithRetry_("tarikJumlahAnakUntukRateSantunan", [authToken, wilayah])
-    .then(function (r) {
-      document.getElementById("rsInputAnak").value = r.jumlahAnakYatim || 0;
-      document.getElementById("rsInputPiatu").value = r.jumlahYatimPiatu || 0;
-      document.getElementById("rsInputDsb").value = r.jumlahDisabilitas || 0;
-      rsHitungTotalPreview();
+  callGASWithRetry_("tarikSemuaWilayahUntukRateSantunan", [authToken])
+    .then(function (list) {
+      const wadah = document.getElementById("rsDaftarWilayah");
+      if (!list || !list.length) {
+        wadah.innerHTML = '<div style="font-size:11px; color:var(--text-muted); text-align:center; padding:14px 4px;">Belum ada data wilayah.</div>';
+      } else {
+        wadah.innerHTML = list.map(function (w) {
+          return `
+          <div class="rs-wilayah-block" data-wilayah="${escapeHtmlHub(w.wilayah)}" data-anak="${w.jumlahAnakYatim}" data-piatu="${w.jumlahYatimPiatu}" data-dsb="${w.jumlahDisabilitas}" data-total="0" style="padding:8px 6px; border-bottom:1px solid var(--glass-border);">
+            <div style="font-size:12px; font-weight:700; color:var(--text-primary);">${escapeHtmlHub(w.wilayah)}</div>
+            <div style="font-size:9.5px; color:var(--text-secondary); margin-bottom:6px;">${w.jumlahAnakYatim} anak · ${w.jumlahYatimPiatu} yatim piatu · ${w.jumlahDisabilitas} disabilitas</div>
+            <div style="display:flex; gap:5px; margin-bottom:4px;">
+              <input class="rs-rate-pokok" type="number" placeholder="Rate Pokok" min="0" oninput="rsHitungTotalPreview(this)" style="width:33%; box-sizing:border-box; padding:7px 6px; border-radius:8px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:11.5px; font-family:inherit;">
+              <input class="rs-rate-piatu" type="number" placeholder="Tmbh YP" min="0" oninput="rsHitungTotalPreview(this)" style="width:33%; box-sizing:border-box; padding:7px 6px; border-radius:8px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:11.5px; font-family:inherit;">
+              <input class="rs-rate-dsb" type="number" placeholder="Tmbh Dsb" min="0" oninput="rsHitungTotalPreview(this)" style="width:34%; box-sizing:border-box; padding:7px 6px; border-radius:8px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:11.5px; font-family:inherit;">
+            </div>
+            <div style="font-size:10px; color:var(--text-secondary);">Total: <span class="rs-total-preview" style="color:var(--bento-primary); font-weight:700;">Rp0</span></div>
+          </div>`;
+        }).join("");
+      }
       btn.disabled = false;
-      btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">sync</span> Tarik Ulang';
+      btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">sync</span> Tarik Ulang Semua Wilayah';
     })
     .catch(function (err) {
       btn.disabled = false;
-      btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">sync</span> Tarik Data dari YASSA Mobile';
+      btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">sync</span> Tarik Semua Wilayah dari YASSA Mobile';
       showModal("Gagal", err.message);
     });
 }
 
-function rsSubmit() {
+function rsSubmitSemua() {
   const bulan = document.getElementById("rsInputBulan").value;
   const tahun = document.getElementById("rsInputTahun").value;
-  const wilayah = document.getElementById("rsInputWilayah").value;
-  const anak = document.getElementById("rsInputAnak").value || 0;
-  const piatu = document.getElementById("rsInputPiatu").value || 0;
-  const dsb = document.getElementById("rsInputDsb").value || 0;
-  const ratePokok = document.getElementById("rsInputRatePokok").value || 0;
-  const ratePiatu = document.getElementById("rsInputRatePiatu").value || 0;
-  const rateDsb = document.getElementById("rsInputRateDsb").value || 0;
-  const total = document.getElementById("rsInputTotal").value || 0;
   const cakupan = document.getElementById("rsInputCakupan").value || 1;
   const catatan = document.getElementById("rsInputCatatan").value.trim();
 
-  if (!wilayah) { showModal("Gagal", "Pilih wilayah dulu."); return; }
-  if (!ratePokok || Number(ratePokok) <= 0) { showModal("Gagal", "Rate Santunan Pokok wajib diisi (lebih dari 0)."); return; }
+  const blokList = document.querySelectorAll("#rsDaftarWilayah .rs-wilayah-block");
+  if (!blokList.length) { showModal("Gagal", "Tarik data wilayah dulu sebelum menyimpan."); return; }
+
+  const daftarBaris = [];
+  blokList.forEach(function (blok) {
+    const ratePokok = Number(blok.querySelector(".rs-rate-pokok").value) || 0;
+    if (ratePokok <= 0) return; // wilayah ini gak diisi, lewati (gak ikut disimpan)
+    daftarBaris.push({
+      wilayah: blok.dataset.wilayah,
+      jumlahAnakYatim: Number(blok.dataset.anak) || 0,
+      jumlahYatimPiatu: Number(blok.dataset.piatu) || 0,
+      jumlahDisabilitas: Number(blok.dataset.dsb) || 0,
+      ratePokok: ratePokok,
+      rateTambahanYatimPiatu: Number(blok.querySelector(".rs-rate-piatu").value) || 0,
+      rateTambahanDisabilitas: Number(blok.querySelector(".rs-rate-dsb").value) || 0,
+      totalSantunan: Number(blok.dataset.total) || 0,
+      jumlahBulanCakupan: cakupan,
+      catatan: catatan,
+    });
+  });
+
+  if (!daftarBaris.length) { showModal("Gagal", "Belum ada wilayah yang diisi Rate Pokok-nya."); return; }
 
   const btn = document.getElementById("rsInputBtnSimpan");
   btn.disabled = true;
   btn.textContent = "Menyimpan...";
-  callGASWithRetry_("simpanBarisRateSantunan", [authToken, bulan, tahun, wilayah, anak, piatu, dsb, ratePokok, ratePiatu, rateDsb, total, cakupan, catatan])
-    .then(function () {
+  callGASWithRetry_("simpanBanyakBarisRateSantunan", [authToken, bulan, tahun, daftarBaris])
+    .then(function (r) {
       btn.disabled = false;
-      btn.textContent = "Simpan";
+      btn.textContent = "Simpan Semua";
       tutupInputRateSantunan();
       keuanganStatsCache = null; // paksa refresh Kartu 1, jangan pakai cache lama
       loadKeuanganStats();
-      showModal("Sukses", "Data santunan bulanan berhasil disimpan.");
+      showModal("Sukses", (r.jumlahBaru || 0) + " wilayah baru dicatat, " + (r.jumlahDiupdate || 0) + " wilayah di-update.");
     })
     .catch(function (err) {
       btn.disabled = false;
-      btn.textContent = "Simpan";
+      btn.textContent = "Simpan Semua";
       showModal("Gagal", err.message);
     });
 }
