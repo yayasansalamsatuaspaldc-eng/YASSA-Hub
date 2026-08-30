@@ -4985,13 +4985,21 @@ function terapkanKeuanganStats(hasil) {
                 const warnaKanan = rateBelumDiisi ? "#FDE68A" : "#E2E8F0";
                 const teksKanan = rateBelumDiisi ? "Rate belum diisi" : formatRupiahHub(totalBaris);
                 const subTeks = jumlahAnak + " anak" + (rateBelumDiisi ? "" : " \u00d7 " + formatRupiahHub(r.ratePokok || 0));
+                // 🆕 Catatan per wilayah (kolom "Catatan" di sheet Rate_Santunan_
+                // Bulanan) -- misal buat nandain kasus rapel/tertunda ("Termasuk
+                // Juli yang tertunda..."). Cuma muncul kalau memang diisi.
+                const catatanBaris = String(r.catatan || "").trim();
+                const teksCatatan = catatanBaris
+                  ? '<div style="font-size:9.5px; color:#FDE68A; margin-top:3px; font-style:italic;">\uD83D\uDCDD ' + escapeHtmlHub(catatanBaris) + '</div>'
+                  : "";
                 return (
-                  '<div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05);">' +
+                  '<div style="display:flex; justify-content:space-between; align-items:flex-start; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05);">' +
                     '<div>' +
                       '<div style="font-size:12.5px; font-weight:600; color:var(--text-primary);">' + namaWilayah + '</div>' +
                       '<div style="font-size:10px; color:var(--text-secondary);">' + subTeks + '</div>' +
+                      teksCatatan +
                     '</div>' +
-                    '<div style="font-size:12px; font-weight:700; color:' + warnaKanan + ';">' + teksKanan + '</div>' +
+                    '<div style="font-size:12px; font-weight:700; color:' + warnaKanan + '; white-space:nowrap; margin-left:8px;">' + teksKanan + '</div>' +
                   '</div>'
                 );
               })
