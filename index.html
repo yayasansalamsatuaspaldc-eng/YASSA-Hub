@@ -6464,6 +6464,21 @@ function renderLaporanBulananList(data) {
   el.innerHTML = html;
 }
 
+// Tampil/sembunyikan detail rincian Pendapatan (dalam 1 bulan yang lagi
+// dibuka) -- dipakai bareng oleh Laporan Bulanan GOPAY & SAPA, key-nya
+// "bulan-tahun".
+function toggleLaporanPendapatanDetail(key) {
+  const wrap = document.getElementById("pendapatanDetail-" + key);
+  const chevron = document.querySelector(".pendapatan-chevron-" + key);
+  const label = chevron ? chevron.previousSibling : null;
+  if (!wrap) return;
+
+  const sedangTerbuka = wrap.style.display === "block";
+  wrap.style.display = sedangTerbuka ? "none" : "block";
+  if (chevron) chevron.style.transform = sedangTerbuka ? "rotate(0deg)" : "rotate(180deg)";
+  if (label && label.nodeType === 3) label.textContent = sedangTerbuka ? "Tampilkan " : "Sembunyikan ";
+}
+
 function toggleLaporanBulananDetail(bulan, tahun) {
   const key = bulan + "-" + tahun;
   const wrap = document.getElementById("laporanDetail-" + key);
@@ -6510,8 +6525,16 @@ function toggleLaporanBulananDetail(bulan, tahun) {
 function renderLaporanBulananDetail(wrap, d) {
   let html = `<div style="border-top: 1px dashed var(--glass-border); padding-top: 14px; margin-top: 2px;">`;
 
-  // -- Pendapatan --
-  html += `<div style="font-size: 11px; font-weight: 700; color: var(--bento-primary); margin-bottom: 8px;">PENDAPATAN &middot; ${formatRupiahHub(d.pendapatan.total)}</div>`;
+  // -- Pendapatan (collapsible, default tersembunyi biar gak kepanjangan) --
+  const pendapatanKey = d.bulan + "-" + d.tahun;
+  html += `
+    <button type="button" onclick="event.stopPropagation(); toggleLaporanPendapatanDetail('${pendapatanKey}')" style="width:100%; background:transparent; border:none; padding:0; margin-bottom: 8px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; font-family: inherit;">
+      <span style="font-size: 11px; font-weight: 700; color: var(--bento-primary);">PENDAPATAN &middot; ${formatRupiahHub(d.pendapatan.total)}</span>
+      <span style="display:flex; align-items:center; gap:2px; font-size: 9.5px; font-weight: 700; color: var(--text-secondary);">
+        Tampilkan <span class="material-symbols-outlined pendapatan-chevron-${pendapatanKey}" style="font-size: 15px; transition: transform 0.2s;">expand_more</span>
+      </span>
+    </button>
+    <div id="pendapatanDetail-${pendapatanKey}" style="display:none;">`;
 
   if (d.pendapatan.lapangan.rincianWilayah.length) {
     html += `<div style="font-size: 10.5px; color: var(--text-secondary); margin-bottom: 4px;">Realisasi Lapangan</div>`;
@@ -6534,14 +6557,21 @@ function renderLaporanBulananDetail(wrap, d) {
   if (d.pendapatan.total === 0) {
     html += `<div style="font-size: 11px; color: var(--text-muted); padding: 6px 0;">Belum ada data pendapatan bulan ini.</div>`;
   }
+  html += `</div>`;
 
-  // -- Pengeluaran --
+  // -- Pengeluaran (collapsible, default tersembunyi sama kayak Pendapatan) --
   html += `<div style="display:flex; align-items:center; justify-content:space-between; margin: 16px 0 8px; gap: 8px;">
-    <span style="font-size: 11px; font-weight: 700; color: #F87171;">PENGELUARAN SANTUNAN &middot; ${formatRupiahHub(d.pengeluaran.total)}</span>
+    <button type="button" onclick="event.stopPropagation(); toggleLaporanPendapatanDetail('pengeluaran-${pendapatanKey}')" style="flex:1; min-width:0; background:transparent; border:none; padding:0; display:flex; align-items:center; justify-content:space-between; cursor:pointer; font-family: inherit; gap:6px;">
+      <span style="font-size: 11px; font-weight: 700; color: #F87171;">PENGELUARAN SANTUNAN &middot; ${formatRupiahHub(d.pengeluaran.total)}</span>
+      <span style="display:flex; align-items:center; gap:2px; font-size: 9.5px; font-weight: 700; color: var(--text-secondary); flex-shrink:0;">
+        Tampilkan <span class="material-symbols-outlined pendapatan-chevron-pengeluaran-${pendapatanKey}" style="font-size: 15px; transition: transform 0.2s;">expand_more</span>
+      </span>
+    </button>
     ${d.bisaCatatPengeluaran ? `<button type="button" onclick="event.stopPropagation(); bukaCatatPenyaluran(${d.bulan}, ${d.tahun}, '${encodeURIComponent(d.namaBulan)}')" style="display:flex; align-items:center; gap:3px; font-size: 9.5px; font-weight: 700; padding: 4px 8px; border-radius: 7px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-secondary); cursor:pointer; flex-shrink:0; white-space:nowrap;">
       <span class="material-symbols-outlined" style="font-size: 11px;">add</span> Catat Penyaluran
     </button>` : ''}
-  </div>`;
+  </div>
+  <div id="pendapatanDetail-pengeluaran-${pendapatanKey}" style="display:none;">`;
   if (d.pengeluaran.rincianWilayah.length) {
     // Ringkasan kategori TOTAL semua wilayah (Yatim = total, Yatim Piatu &
     // Disabilitas = subset dari situ, sama kayak kartu "Jumlah Anak & Santunan").
@@ -6602,6 +6632,7 @@ function renderLaporanBulananDetail(wrap, d) {
   } else {
     html += `<div style="font-size: 11px; color: var(--text-muted); padding: 6px 0;">Belum ada pencairan santunan tercatat buat periode ini.</div>`;
   }
+  html += `</div>`;
 
   const selisihWarna = d.selisih >= 0 ? "#86EFAC" : "#FCA5A5";
   html += `
@@ -6855,8 +6886,18 @@ function renderLaporanBulananDetailSapa(wrap, d) {
   let html = `<div style="border-top: 1px dashed var(--glass-border); padding-top: 14px; margin-top: 2px;">`;
 
   // -- Pendapatan -- (SAPA cuma 1 sumber: Realisasi Lapangan, gak ada
-  // baris Kitabisa/Midtrans kayak versi Gopay)
-  html += `<div style="font-size: 11px; font-weight: 700; color: #EC4899; margin-bottom: 8px;">PENDAPATAN &middot; ${formatRupiahHub(d.pendapatan.total)}</div>`;
+  // baris Kitabisa/Midtrans kayak versi Gopay) -- collapsible, default
+  // tersembunyi biar gak kepanjangan. Key dikasih prefix "sapa-" biar gak
+  // bentrok sama id Pendapatan GOPAY kalau kebetulan sama-sama ada di DOM.
+  const pendapatanKey = "sapa-" + d.bulan + "-" + d.tahun;
+  html += `
+    <button type="button" onclick="event.stopPropagation(); toggleLaporanPendapatanDetail('${pendapatanKey}')" style="width:100%; background:transparent; border:none; padding:0; margin-bottom: 8px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; font-family: inherit;">
+      <span style="font-size: 11px; font-weight: 700; color: #EC4899;">PENDAPATAN &middot; ${formatRupiahHub(d.pendapatan.total)}</span>
+      <span style="display:flex; align-items:center; gap:2px; font-size: 9.5px; font-weight: 700; color: var(--text-secondary);">
+        Tampilkan <span class="material-symbols-outlined pendapatan-chevron-${pendapatanKey}" style="font-size: 15px; transition: transform 0.2s;">expand_more</span>
+      </span>
+    </button>
+    <div id="pendapatanDetail-${pendapatanKey}" style="display:none;">`;
 
   if (d.pendapatan.lapangan.rincianWilayah.length) {
     html += `<div style="font-size: 10.5px; color: var(--text-secondary); margin-bottom: 4px;">Realisasi Lapangan</div>`;
@@ -6873,9 +6914,17 @@ function renderLaporanBulananDetailSapa(wrap, d) {
   if (d.pendapatan.total === 0) {
     html += `<div style="font-size: 11px; color: var(--text-muted); padding: 6px 0;">Belum ada data pendapatan bulan ini.</div>`;
   }
+  html += `</div>`;
 
-  // -- Pengeluaran --
-  html += `<div style="font-size: 11px; font-weight: 700; color: #F87171; margin: 16px 0 8px;">PENGELUARAN SANTUNAN &middot; ${formatRupiahHub(d.pengeluaran.total)}</div>`;
+  // -- Pengeluaran (collapsible, default tersembunyi sama kayak Pendapatan) --
+  html += `
+    <button type="button" onclick="event.stopPropagation(); toggleLaporanPendapatanDetail('pengeluaran-${pendapatanKey}')" style="width:100%; background:transparent; border:none; padding:0; margin: 16px 0 8px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; font-family: inherit;">
+      <span style="font-size: 11px; font-weight: 700; color: #F87171;">PENGELUARAN SANTUNAN &middot; ${formatRupiahHub(d.pengeluaran.total)}</span>
+      <span style="display:flex; align-items:center; gap:2px; font-size: 9.5px; font-weight: 700; color: var(--text-secondary);">
+        Tampilkan <span class="material-symbols-outlined pendapatan-chevron-pengeluaran-${pendapatanKey}" style="font-size: 15px; transition: transform 0.2s;">expand_more</span>
+      </span>
+    </button>
+    <div id="pendapatanDetail-pengeluaran-${pendapatanKey}" style="display:none;">`;
   if (d.pengeluaran.rincianWilayah.length) {
     html += `
       <div style="display:flex; gap:8px; margin-bottom: 10px;">
@@ -6922,6 +6971,7 @@ function renderLaporanBulananDetailSapa(wrap, d) {
   } else {
     html += `<div style="font-size: 11px; color: var(--text-muted); padding: 6px 0;">Belum ada pencairan santunan tercatat buat periode ini.</div>`;
   }
+  html += `</div>`;
 
   const selisihWarna = d.selisih >= 0 ? "#86EFAC" : "#FCA5A5";
   html += `
