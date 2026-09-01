@@ -17,6 +17,37 @@
     } catch (e) {}
   })();
 </script>
+<script>
+  // 📏 FIX: bottom-nav ketutupan/hilang di sebagian browser/WebView Android
+  // (mis. Chrome versi lama di HP seperti Oppo A31). Unit "100dvh" belum
+  // didukung browser tersebut, jadi otomatis jatuh balik ke "100vh" -- dan
+  // di banyak browser Android, "100vh" dihitung dari tinggi viewport yang
+  // MENGABAIKAN address bar (seolah address bar sudah collapse), padahal
+  // saat itu address bar masih kelihatan. Akibatnya #app jadi lebih tinggi
+  // dari layar yang benar-benar terlihat, dan .bottom-nav (position:absolute,
+  // bottom:0 relatif ke #app) ikut terdorong ke bawah sampai ketutupan
+  // address bar / tombol navigasi Android.
+  // Solusi klasik: ukur tinggi viewport asli lewat JS (window.innerHeight,
+  // atau visualViewport kalau ada -- lebih akurat karena ikut berubah saat
+  // address bar muncul/collapse), simpan ke custom property --app-vh, lalu
+  // CSS #app pakai calc(var(--app-vh) * 100) sebagai lapisan fallback
+  // TERAKHIR (dibaca browser SETELAH baris 100vh/100dvh, jadi otomatis
+  // menang di browser yang tetap butuh fallback ini, tapi tidak mengubah
+  // apa pun di browser yang sudah benar dukung 100dvh).
+  (function () {
+    function setAppVh() {
+      var vv = window.visualViewport;
+      var h = (vv && vv.height) ? vv.height : window.innerHeight;
+      document.documentElement.style.setProperty("--app-vh", (h * 0.01) + "px");
+    }
+    setAppVh();
+    window.addEventListener("resize", setAppVh);
+    window.addEventListener("orientationchange", setAppVh);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", setAppVh);
+    }
+  })();
+</script>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#121A2F">
 <meta name="mobile-web-app-capable" content="yes">
@@ -176,6 +207,7 @@
     margin: 0 auto;
     height: 100vh;
     height: 100dvh;
+    height: calc(var(--app-vh, 1vh) * 100); /* 🩹 fallback tinggi viewport asli, lihat script di <head> */
     background:
       radial-gradient(circle at 12% -5%, rgba(59,130,246,0.22), transparent 42%),
       radial-gradient(circle at 90% 10%, rgba(168,85,247,0.18), transparent 46%),
@@ -1112,6 +1144,7 @@
   .login-screen {
     width: 100%;
     min-height: 100vh; min-height: 100dvh;
+    min-height: calc(var(--app-vh, 1vh) * 100); /* 🩹 fallback tinggi viewport asli, lihat script di <head> */
     display: flex; align-items: center; justify-content: center;
     background: var(--bg-navy-deep);
   }
