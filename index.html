@@ -5908,53 +5908,47 @@ function renderContent() {
       : (currentUser.wilayahAkses || "-");
 
     let html = `
-      <div class="profil-hero-card" style="background: linear-gradient(160deg, #16A34A 0%, #15803D 60%, #0F5132 100%); border-radius: 24px; padding: 30px 20px 22px; margin: 16px 0 16px; text-align: center; position: relative; overflow: hidden; box-shadow: 0 12px 28px rgba(21,128,61,0.3);">
-        <div class="profil-hero-orb profil-hero-orb-1" style="position: absolute; top: -36px; right: -26px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.08); pointer-events: none;"></div>
-        <div class="profil-hero-orb profil-hero-orb-2" style="position: absolute; bottom: -46px; left: -18px; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.06); pointer-events: none;"></div>
+      <div class="profil-hero-card profil-card-namecard" style="background: linear-gradient(135deg, #16A34A 0%, #15803D 55%, #0F5132 100%); border-radius: 20px; padding: 18px; margin: 16px 0 24px; position: relative; overflow: hidden; box-shadow: 0 12px 28px rgba(21,128,61,0.3); display: flex; align-items: center; gap: 14px;">
+        <div class="profil-hero-orb profil-hero-orb-1" style="position: absolute; top: -40px; right: -30px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.08); pointer-events: none;"></div>
+        <div class="profil-hero-orb profil-hero-orb-2" style="position: absolute; bottom: -44px; left: -22px; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.06); pointer-events: none;"></div>
+        <div class="profil-card-chip" style="position: absolute; top: 14px; left: 14px; width: 20px; height: 15px; border-radius: 4px; background: linear-gradient(135deg, rgba(255,255,255,0.55), rgba(255,255,255,0.2)); opacity: 0.65;"></div>
 
-        <div style="position: relative;">
-          <div class="profil-avatar-ring" style="width: 92px; height: 92px; border-radius: 50%; margin: 0 auto; padding: 3px; background: rgba(255,255,255,0.25); position: relative;">
-            <div style="width: 100%; height: 100%; border-radius: 50%; overflow: hidden; border: 3px solid rgba(255,255,255,0.9); background: rgba(255,255,255,0.1);">
+        <!-- Foto di kiri -->
+        <div style="position: relative; flex-shrink: 0;">
+          <div class="profil-avatar-ring" style="width: 74px; height: 74px; border-radius: 18px; padding: 3px; background: rgba(255,255,255,0.25); position: relative;">
+            <div style="width: 100%; height: 100%; border-radius: 15px; overflow: hidden; border: 2px solid rgba(255,255,255,0.9); background: rgba(255,255,255,0.1);">
               <img id="profilTabAvatarImg" src="${fotoProfil}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="showProfileQR()">
             </div>
-            <label for="inputFotoProfileTab" id="labelUploadFotoTab" style="position: absolute; bottom: -2px; right: -2px; width: 26px; height: 26px; border-radius: 50%; background: var(--grad-primary); display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #15803D; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">
-              ${iconSvg("edit", "#fff", 13)}
+            <label for="inputFotoProfileTab" id="labelUploadFotoTab" style="position: absolute; bottom: -4px; right: -4px; width: 22px; height: 22px; border-radius: 50%; background: var(--grad-primary); display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #15803D; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">
+              ${iconSvg("edit", "#fff", 11)}
             </label>
             <input type="file" id="inputFotoProfileTab" accept="image/*" style="display: none;" onchange="uploadFoto(this)">
           </div>
-          <h1 style="font-size: 18px; font-weight: 700; margin: 14px 0 2px; color: #fff;">${escapeHtmlHub(currentUser.nama)}</h1>
-          <div style="font-size: 12px; color: rgba(255,255,255,0.75); margin-bottom: 18px;">${escapeHtmlHub(currentUser.username || "-")}</div>
-          <div style="display: flex; gap: 10px; justify-content: center;">
-            <button onclick="showProfileQR()" style="display: flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 99px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35); color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(6px);">
-              <span class="material-symbols-outlined" style="font-size: 15px;">qr_code_2</span>
-              QR Saya
-            </button>
-            <button onclick="openChangePasswordPanel()" style="display: flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 99px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35); color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(6px);">
-              <span class="material-symbols-outlined" style="font-size: 15px;">lock</span>
-              Password
-            </button>
-          </div>
         </div>
-      </div>
 
-      <div class="profil-info-card" style="background: var(--glass-strong); border-radius: 20px; margin-bottom: 24px; display: flex; flex-direction: column; border: 1px solid var(--glass-border); border-left: 4px solid #3B82F6; overflow: hidden;">
-        <div class="profil-info-row" style="display: flex; align-items: center; gap: 12px; padding: 15px 16px; border-bottom: 1px solid var(--glass-border);">
-          <div style="width: 38px; height: 38px; border-radius: 12px; background: rgba(34,197,94,0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-            <span class="material-symbols-outlined" style="font-size: 19px;">badge</span>
+        <!-- Data seperti kartu nama di kanan -->
+        <div style="flex: 1; min-width: 0; position: relative; padding-top: 2px;">
+          <h1 style="font-size: 16.5px; font-weight: 700; margin: 0 0 1px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(currentUser.nama)}</h1>
+          <div style="font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.8); margin-bottom: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(currentUser.jabatan || "-")}</div>
+          <div style="height: 1px; background: rgba(255,255,255,0.25); margin-bottom: 8px;"></div>
+          <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: rgba(255,255,255,0.85); margin-bottom: 4px;">
+            <span class="material-symbols-outlined" style="font-size: 13px;">call</span>
+            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(currentUser.username || "-")}</span>
           </div>
-          <div style="flex: 1;">
-            <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 2px;">Jabatan</div>
-            <div style="font-size: 14px; font-weight: 500;">${escapeHtmlHub(currentUser.jabatan || "-")}</div>
+          <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: rgba(255,255,255,0.85);">
+            <span class="material-symbols-outlined" style="font-size: 13px;">public</span>
+            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(wilayahTxt)}</span>
           </div>
         </div>
-        <div class="profil-info-row" style="display: flex; align-items: center; gap: 12px; padding: 15px 16px;">
-          <div style="width: 38px; height: 38px; border-radius: 12px; background: rgba(34,197,94,0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-            <span class="material-symbols-outlined" style="font-size: 19px;">public</span>
-          </div>
-          <div style="flex: 1;">
-            <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 2px;">Wilayah</div>
-            <div style="font-size: 14px; font-weight: 500;">${escapeHtmlHub(wilayahTxt)}</div>
-          </div>
+
+        <!-- Tombol aksi jadi ikon bulat di pojok kanan atas, ala QR kartu nama -->
+        <div style="position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; gap: 6px;">
+          <button onclick="showProfileQR()" title="QR Saya" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(6px);">
+            <span class="material-symbols-outlined" style="font-size: 16px;">qr_code_2</span>
+          </button>
+          <button onclick="openChangePasswordPanel()" title="Password" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(6px);">
+            <span class="material-symbols-outlined" style="font-size: 16px;">lock</span>
+          </button>
         </div>
       </div>
 
