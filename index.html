@@ -66,6 +66,28 @@
       // Heuristik 2: jumlah core CPU sedikit
       if (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) isLowEnd = true;
 
+      // Heuristik 2b: nama GPU asli device (LEBIH akurat daripada jumlah
+      // core -- soalnya chipset kelas bawah kayak Helio P35 di Oppo A31 itu
+      // tetap octa-core, tapi GPU-nya (PowerVR GE8320) jauh lebih lemah
+      // dibanding chipset "gaming" kayak Helio G80 punya Mali-G52).
+      try {
+        var glCanvas = document.createElement("canvas");
+        var gl = glCanvas.getContext("webgl") || glCanvas.getContext("experimental-webgl");
+        if (gl) {
+          var dbgInfo = gl.getExtension("WEBGL_debug_renderer_info");
+          if (dbgInfo) {
+            var renderer = (gl.getParameter(dbgInfo.UNMASKED_RENDERER_WEBGL) || "").toLowerCase();
+            // Daftar nama GPU kelas bawah yang umum di HP entry-level
+            var weakGpuMarkers = ["powervr", "mali-400", "mali-450", "mali-t720",
+              "adreno 3", "adreno 30", "adreno 4", "adreno 50", "adreno 505",
+              "adreno 506", "adreno 610"];
+            for (var i = 0; i < weakGpuMarkers.length; i++) {
+              if (renderer.indexOf(weakGpuMarkers[i]) !== -1) { isLowEnd = true; break; }
+            }
+          }
+        }
+      } catch (e3) {}
+
       // Heuristik 3: versi Chrome/WebView lama (biasanya dibarengi GPU lawas
       // yang gak hardware-accelerate backdrop-filter dengan baik)
       var m = navigator.userAgent.match(/Chrome\/(\d+)/);
@@ -79,6 +101,20 @@
       // berguna buat testing -- localStorage.setItem("yassa_lite_mode","1")
       // atau "0"
       var override = localStorage.getItem("yassa_lite_mode");
+
+      // Override juga bisa lewat query string di URL, misal:
+      //   ...index.html?lite=1  -> paksa nyala (dan disimpan ke localStorage
+      //   ...index.html?lite=0  -> paksa mati    biar nempel terus tiap buka)
+      // Ini paling gampang buat testing langsung dari HP tanpa perlu buka
+      // console developer.
+      try {
+        var qs = new URLSearchParams(window.location.search);
+        if (qs.has("lite")) {
+          override = qs.get("lite");
+          localStorage.setItem("yassa_lite_mode", override);
+        }
+      } catch (e2) {}
+
       if (override === "1") isLowEnd = true;
       if (override === "0") isLowEnd = false;
 
