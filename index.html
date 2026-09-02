@@ -61,7 +61,7 @@
       var isLowEnd = false;
 
       // Heuristik 1: RAM device rendah (Chrome/Android WebView expose ini)
-      if (navigator.deviceMemory && navigator.deviceMemory <= 3) isLowEnd = true;
+      if (navigator.deviceMemory && navigator.deviceMemory <= 4) isLowEnd = true;
 
       // Heuristik 2: jumlah core CPU sedikit
       if (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) isLowEnd = true;
@@ -77,10 +77,16 @@
           var dbgInfo = gl.getExtension("WEBGL_debug_renderer_info");
           if (dbgInfo) {
             var renderer = (gl.getParameter(dbgInfo.UNMASKED_RENDERER_WEBGL) || "").toLowerCase();
-            // Daftar nama GPU kelas bawah yang umum di HP entry-level
-            var weakGpuMarkers = ["powervr", "mali-400", "mali-450", "mali-t720",
-              "adreno 3", "adreno 30", "adreno 4", "adreno 50", "adreno 505",
-              "adreno 506", "adreno 610"];
+            // Daftar nama GPU kelas bawah yang umum di HP entry-level.
+            // SENGAJA gak masukin GPU kelas menengah (mis. Mali-G52,
+            // Adreno 619+) biar HP yang masih layak (kayak Redmi 9) gak
+            // ikut ke-lite-mode-in padahal gak perlu.
+            var weakGpuMarkers = ["powervr", "mali-400", "mali-450", "mali-470",
+              "mali-t720", "mali-t760", "mali-g31", "mali-g51",
+              "adreno 2", "adreno 3", "adreno 30", "adreno 4", "adreno 40",
+              "adreno 50", "adreno 505", "adreno 506", "adreno 508",
+              "adreno 509", "adreno 610", "adreno 612", "adreno 613",
+              "adreno 615", "adreno 618", "videocore", "swiftshader"];
             for (var i = 0; i < weakGpuMarkers.length; i++) {
               if (renderer.indexOf(weakGpuMarkers[i]) !== -1) { isLowEnd = true; break; }
             }
