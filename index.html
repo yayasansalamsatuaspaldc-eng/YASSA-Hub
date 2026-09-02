@@ -2469,34 +2469,62 @@
    tap tombol gak kerasa delay. Class "lite-mode" ditempel ke <html>
    oleh script deteksi di <head> (lihat bagian atas file).
 
-   Kenapa perlu: backdrop-filter (blur kaca) itu berat banget di GPU
-   lemah -- kadang jatuh ke render software yang sangat lambat -- dan
-   puluhan animasi "infinite" (sheen, pulse, radar, dll) bikin GPU
-   sibuk terus-menerus. Kombinasi keduanya bikin main thread/GPU
-   keteteran pas harus merespons sentuhan user. Di HP yang GPU-nya
-   kuat (mis. Redmi 9 / chipset Helio G80 ke atas), class ini TIDAK
-   aktif, jadi tampilan tetap full efek seperti biasa.
+   PENTING (revisi ke-2): versi awal sempat mematikan SEMUA animasi
+   lewat "html.lite-mode * { animation: none !important; }". Ternyata
+   itu ikut mematikan animasi "Masuk"/"fadeUp"/dll yang dipakai buat
+   MEMUNCULKAN konten (kartu Aksi Cepat, Statistik, Rincian Wilayah,
+   dst awalnya opacity:0 lalu animasi bikin opacity:1 & nempel lewat
+   "forwards") -- akibatnya konten itu jadi PERMANEN gak kelihatan
+   (bukan telat, tapi gak pernah muncul). Makanya sekarang cuma
+   animasi DEKORATIF yang infinite (sheen, pulse, radar, orb
+   mengambang, dll -- yang gak ngaruh ke ada/gaknya konten) yang
+   dimatikan satu-satu di bawah, animasi reveal/modal/spinner TIDAK
+   disentuh sama sekali.
 
-   Spinner loading (appSplashSpin, kvPulse) sengaja TETAP jalan di
-   bawah karena murah (cuma transform/opacity, bukan box-shadow) dan
-   penting biar user tau app lagi proses, bukan macet.
+   backdrop-filter (blur kaca) tetap dimatikan blanket -- ini aman,
+   gak ngaruh ke ada/gaknya konten, cuma bikin kartu gak nge-blur
+   background di belakangnya.
    ============================================================ */
 html.lite-mode * {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+}
+/* Animasi dekoratif infinite yang dimatikan di lite-mode -- semuanya
+   pseudo-element/ikon hiasan, TIDAK ada yang mempengaruhi konten
+   utama jadi ada/hilang, jadi aman dimatikan total. */
+html.lite-mode .summary-card .summary-sheen,
+html.lite-mode .program-select-card.active .program-select-icon::after,
+html.lite-mode .summary-sub-icon.icon-kekurangan-urgent,
+html.lite-mode .summary-sub-value.value-kekurangan-urgent,
+html.lite-mode .app-splash::before,
+html.lite-mode .post-login-splash::before,
+html.lite-mode .splash-logo-badge::before,
+html.lite-mode .splash-logo-badge::after,
+html.lite-mode .kv-banner-loading::after,
+html.lite-mode #keuanganRetryBtn,
+html.lite-mode .anak-yatim-icon-wrap,
+html.lite-mode .anak-asuh-icon-wrap,
+html.lite-mode .agenda-date-badge-soon::after,
+html.lite-mode .aktivitas-icon-newest::after,
+html.lite-mode .profil-hero-orb,
+html.lite-mode .profil-avatar-ring,
+html.lite-mode .profil-dedikasi-bar::before,
+html.lite-mode .profil-formulir-cta::after,
+html.lite-mode .profil-formulir-icon-wrap,
+html.lite-mode .decor-blob-1,
+html.lite-mode .decor-blob-2,
+html.lite-mode .decor-iso,
+html.lite-mode .aksi-kitabisa-icon,
+html.lite-mode .aksi-online-icon,
+html.lite-mode .aksi-kitabisa-icon::after,
+html.lite-mode .aksi-cepat-icon::after,
+html.lite-mode .aksi-qr-icon::after,
+html.lite-mode .aksi-qr-scanline,
+html.lite-mode .stat-mini-card::after,
+html.lite-mode .keuangan-hero-icon-wrap,
+html.lite-mode .keuangan-hero-card::after,
+html.lite-mode .keuangan-progress-fill::before {
   animation: none !important;
-}
-/* Spinner loading tetap dinyalakan lagi (murah & penting buat UX) */
-html.lite-mode .app-splash-spinner,
-html.lite-mode #manualRefreshIcon.spin,
-html.lite-mode #keuanganLoadingIcon.spin {
-  animation: appSplashSpin 0.8s linear infinite !important;
-}
-html.lite-mode .overlay-sso-spinner {
-  animation: overlaySsoSpin 0.8s linear infinite !important;
-}
-html.lite-mode .kv-loading {
-  animation: kvPulse 1.1s ease-in-out infinite !important;
 }
 /* gtap-ripple (efek sentuh) dipersingkat drastis, bukan dimatikan
    total, biar user tetap dapat feedback visual pas nge-tap */
