@@ -48,6 +48,44 @@
     }
   })();
 </script>
+<script>
+  // 🪶 DETEKSI DEVICE/BROWSER LEMAH -- nempelin class "lite-mode" ke <html>
+  // SEBELUM CSS di-render, supaya efek berat (backdrop-filter blur & animasi
+  // "infinite") langsung dimatikan tanpa kedipan. Ini yang bikin tap tombol
+  // kerasa delay di HP kayak Oppo A31 (GPU lemah / WebView Chrome versi
+  // lama), sementara di HP yang GPU-nya kuat (mis. Redmi 9) efeknya tetap
+  // full jalan seperti biasa. Lihat blok CSS ".lite-mode" di <style> untuk
+  // detail apa yang dimatikan.
+  (function () {
+    try {
+      var isLowEnd = false;
+
+      // Heuristik 1: RAM device rendah (Chrome/Android WebView expose ini)
+      if (navigator.deviceMemory && navigator.deviceMemory <= 3) isLowEnd = true;
+
+      // Heuristik 2: jumlah core CPU sedikit
+      if (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) isLowEnd = true;
+
+      // Heuristik 3: versi Chrome/WebView lama (biasanya dibarengi GPU lawas
+      // yang gak hardware-accelerate backdrop-filter dengan baik)
+      var m = navigator.userAgent.match(/Chrome\/(\d+)/);
+      if (m && parseInt(m[1], 10) < 100) isLowEnd = true;
+
+      // Heuristik 4: mode hemat data yang diaktifkan user (biasanya nandain
+      // device/koneksi terbatas)
+      if (navigator.connection && navigator.connection.saveData) isLowEnd = true;
+
+      // Override manual: user bisa paksa nyala/mati lewat localStorage,
+      // berguna buat testing -- localStorage.setItem("yassa_lite_mode","1")
+      // atau "0"
+      var override = localStorage.getItem("yassa_lite_mode");
+      if (override === "1") isLowEnd = true;
+      if (override === "0") isLowEnd = false;
+
+      if (isLowEnd) document.documentElement.classList.add("lite-mode");
+    } catch (e) {}
+  })();
+</script>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#121A2F">
 <meta name="mobile-web-app-capable" content="yes">
@@ -2389,6 +2427,44 @@
     background: var(--grad-primary); color: #06210f;
     box-shadow: var(--shadow-glow-blue);
   }
+/* ============================================================
+   🪶 MODE RINGAN (lite-mode) -- otomatis aktif di HP/browser yang
+   GPU-nya lemah (contoh: Oppo A31 dengan chipset Helio P35), supaya
+   tap tombol gak kerasa delay. Class "lite-mode" ditempel ke <html>
+   oleh script deteksi di <head> (lihat bagian atas file).
+
+   Kenapa perlu: backdrop-filter (blur kaca) itu berat banget di GPU
+   lemah -- kadang jatuh ke render software yang sangat lambat -- dan
+   puluhan animasi "infinite" (sheen, pulse, radar, dll) bikin GPU
+   sibuk terus-menerus. Kombinasi keduanya bikin main thread/GPU
+   keteteran pas harus merespons sentuhan user. Di HP yang GPU-nya
+   kuat (mis. Redmi 9 / chipset Helio G80 ke atas), class ini TIDAK
+   aktif, jadi tampilan tetap full efek seperti biasa.
+
+   Spinner loading (appSplashSpin, kvPulse) sengaja TETAP jalan di
+   bawah karena murah (cuma transform/opacity, bukan box-shadow) dan
+   penting biar user tau app lagi proses, bukan macet.
+   ============================================================ */
+html.lite-mode * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  animation: none !important;
+}
+/* Spinner loading tetap dinyalakan lagi (murah & penting buat UX) */
+html.lite-mode .app-splash-spinner,
+html.lite-mode #manualRefreshIcon.spin,
+html.lite-mode #keuanganLoadingIcon.spin {
+  animation: appSplashSpin 0.8s linear infinite !important;
+}
+html.lite-mode .overlay-sso-spinner {
+  animation: overlaySsoSpin 0.8s linear infinite !important;
+}
+html.lite-mode .kv-loading {
+  animation: kvPulse 1.1s ease-in-out infinite !important;
+}
+/* gtap-ripple (efek sentuh) dipersingkat drastis, bukan dimatikan
+   total, biar user tetap dapat feedback visual pas nge-tap */
+html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
 </style>
 </head>
 <body>
