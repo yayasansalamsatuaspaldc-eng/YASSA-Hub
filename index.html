@@ -7332,9 +7332,10 @@ function renderRekapPedas(data) {
     <div style="background: var(--glass-strong); border-radius: 16px; padding: 16px; margin-bottom: 14px; border: 1px solid var(--glass-border); border-left: 4px solid ${WARNA_TEMA_PEDAS_JS};">
       <div style="font-size: 10.5px; color: var(--text-secondary); margin-bottom: 4px;">Total Bantuan Disabilitas ${data.global ? "(Semua Wilayah)" : "(" + escapeHtmlHub(data.wilayah) + ")"}</div>
       <div style="font-size: 20px; font-weight: 800; color: var(--text-primary);">${formatRupiahHub(data.totalNilai)}</div>
+      <div style="font-size: 11px; color: ${WARNA_TEMA_PEDAS_JS}; font-weight: 700; margin-top: 4px;">${data.totalPenerimaBantuan} anak/ortu disabilitas dibantu bulan ini</div>
       <div style="display:flex; gap: 14px; margin-top: 8px; font-size: 10.5px; color: var(--text-muted);">
-        <span>Rutin: ${formatRupiahHub(data.breakdownSifat.Rutin || 0)}</span>
-        <span>Insidental: ${formatRupiahHub(data.breakdownSifat.Insidental || 0)}</span>
+        <span>Rutin: ${formatRupiahHub(data.breakdownSifat.Rutin || 0)} (${data.totalPenerimaRutin} orang)</span>
+        <span>Insidental: ${formatRupiahHub(data.breakdownSifat.Insidental || 0)} (${data.totalPenerimaInsidental} orang)</span>
       </div>
     </div>`;
 
