@@ -7258,24 +7258,25 @@ function tutupRekapPedas() {
   document.getElementById("pedasPage").classList.remove("open");
 }
 
+// Isi dropdown filter wilayah PEDAS. Akses PEDAS SENGAJA TERBUKA buat
+// SEMUA role (backend getRekapPedas/getRekapPedasTahunan gak dibatasi
+// per wilayah lagi) -- jadi opsi "Semua Wilayah (Nasional)" & default
+// ke situ berlaku SAMA buat semua role, TERMASUK PENGURUS/KORWIL, BEDA
+// dari laporan keuangan lain di app yang dibagi per wilayah. Dropdown
+// filter TETAP ada & tetap bisa dipakai siapa aja buat mempersempit ke
+// 1 wilayah tertentu -- ini cuma soal DEFAULT tampilan, bukan
+// menghapus fitur filternya.
 function isiSelectWilayahPedas() {
   const sel = document.getElementById("pedasWilayahSelect");
-  const bolehSemua = currentUser && ["SUPERADMIN", "ADMIN"].indexOf(currentUser.role) !== -1;
   sel.innerHTML = `<option value="">Memuat wilayah...</option>`;
   loadWilayahListIfNeeded().then(function (list) {
-    let html = "";
-    if (bolehSemua) html += `<option value="ALL">Semua Wilayah (Nasional)</option>`;
+    let html = `<option value="ALL">Semua Wilayah (Nasional)</option>`;
     html += (list && list.length)
       ? list.map(function (w) { return `<option value="${escapeHtmlHub(w)}">${escapeHtmlHub(w)}</option>`; }).join("")
       : "";
-    sel.innerHTML = html || `<option value="">(Belum ada data wilayah)</option>`;
+    sel.innerHTML = html;
 
-    if (bolehSemua) {
-      sel.value = "ALL";
-    } else {
-      const wa = String((currentUser && currentUser.wilayahAkses) || "").split(",")[0].trim();
-      if (wa) sel.value = wa;
-    }
+    sel.value = "ALL";
     pedasWilayahAktif = sel.value;
     sel.onchange = function () { pedasWilayahAktif = sel.value; pedasMuatSesuaiMode_(); };
     pedasMuatSesuaiMode_();
