@@ -2963,6 +2963,23 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
     <div class="akun-content" id="laporanBulananSapaContent"></div>
   </div>
 
+  <!-- Halaman Penuh: Rekap Bantuan Disabilitas (PEDAS) -- gabungan
+       santunan disabilitas GOPAY (otomatis) + bantuan insidental manual
+       (sembako/kursi roda/dll). Reuse class "overlay" yang sama, jadi
+       otomatis kena tombol back fisik Android. -->
+  <div class="overlay" id="pedasPage">
+    <div class="overlay-header">
+      <button class="overlay-close" id="pedasClose">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E2E8F0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <span class="overlay-title">Bantuan Disabilitas (PEDAS)</span>
+    </div>
+    <div style="padding: 14px 20px 0;">
+      <select id="pedasWilayahSelect" style="width:100%; box-sizing:border-box; padding:9px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12px; font-family:inherit;"></select>
+    </div>
+    <div class="akun-content" id="pedasContent"></div>
+  </div>
+
   <!-- Halaman Penuh: Viewer PDF Laporan Bulanan -- dibuka dari tombol "Lihat
        PDF" di Laporan Bulanan. Nampilin file PDF LANGSUNG di dalam app lewat
        iframe (link Google Drive mode /preview), jadi user bisa scroll/baca
@@ -3052,6 +3069,45 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
       <div class="custom-modal-actions">
         <button type="button" class="btn-modal btn-cancel" onclick="tutupCatatPenyaluran()">Batal</button>
         <button type="button" class="btn-modal btn-confirm" id="psInputBtnSimpan" onclick="submitCatatPenyaluran()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Tambah Bantuan Disabilitas INSIDENTAL (sembako/kursi
+       roda/dll) -- khusus SUPERADMIN/ADMIN. Santunan RUTIN TIDAK diisi
+       lewat sini (sumbernya tetap Rate_Santunan_Bulanan GOPAY). -->
+  <div class="custom-modal-overlay" id="pedasAddOverlay">
+    <div class="custom-modal" style="max-width:360px; text-align:left;">
+      <div class="custom-modal-title" style="text-align:center; margin-bottom: 16px;">Tambah Bantuan Disabilitas</div>
+
+      <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Tanggal</label>
+      <input type="date" id="pedasAddTanggal" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit;">
+
+      <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Wilayah</label>
+      <select id="pedasAddWilayah" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit;"></select>
+
+      <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Nama Penerima</label>
+      <input type="text" id="pedasAddPenerima" placeholder="Nama anak/keluarga" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit;">
+
+      <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Jenis Bantuan</label>
+      <select id="pedasAddJenis" onchange="pedasToggleJenisLainnya()" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit;">
+        <option value="Sembako">Sembako</option>
+        <option value="Kursi Roda">Kursi Roda</option>
+        <option value="Alat Bantu Dengar">Alat Bantu Dengar</option>
+        <option value="Tongkat/Alat Bantu Jalan">Tongkat/Alat Bantu Jalan</option>
+        <option value="Lainnya">Lainnya...</option>
+      </select>
+      <input type="text" id="pedasAddJenisLainnya" placeholder="Sebutkan jenis bantuan" style="display:none; width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: -6px 0 12px; font-family:inherit;">
+
+      <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Nilai Bantuan (Rp)</label>
+      <input type="number" id="pedasAddNilai" placeholder="Estimasi nilai/harga" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit;">
+
+      <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Keterangan (opsional)</label>
+      <input type="text" id="pedasAddKeterangan" placeholder="Mis. 1 unit, kondisi baru" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 16px; font-family:inherit;">
+
+      <div class="custom-modal-actions">
+        <button type="button" class="btn-modal btn-cancel" onclick="tutupTambahBantuanPedas()">Batal</button>
+        <button type="button" class="btn-modal btn-confirm" id="pedasAddBtnSimpan" onclick="submitTambahBantuanPedas()">Simpan</button>
       </div>
     </div>
   </div>
@@ -6035,6 +6091,20 @@ function renderContent() {
         <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
       </button>
 
+      <!-- Pintu masuk ke Rekap Bantuan Disabilitas (PEDAS) -- gabungan
+           santunan disabilitas GOPAY (otomatis) + bantuan insidental
+           manual, LINTAS PROGRAM (bukan pos dana sendiri). -->
+      <button onclick="openRekapPedas()" class="kfin-cta" style="margin-bottom: 16px;">
+        <div class="kfin-icon-wrap" style="--kfin-accent: #A855F7; --kfin-accent-rgb: 168,85,247; width: 44px; height: 44px;">
+          <span class="material-symbols-outlined" style="font-size: 22px;">accessible</span>
+        </div>
+        <div style="flex: 1;">
+          <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Bantuan Disabilitas (PEDAS)</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">Rekap santunan + bantuan insidental lintas program</div>
+        </div>
+        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
+      </button>
+
       <!-- 3. Donasi Kitabisa.com & 4. Donasi Online/Midtrans DIHAPUS dari
            sini (2026) -- gak ditrack sebagai total terpisah lagi, sekarang
            digabung manual ke Realisasi Lapangan (Keuangan_Bulanan) langsung
@@ -7128,6 +7198,200 @@ function hapusPenyaluranSantunanConfirm(idEncoded, bulan, tahun) {
     psTahun = tahun;
     callGASWithRetry_("hapusPenyaluranSantunan", [authToken, id])
       .then(function () { psRefreshDetail(); })
+      .catch(function (err) { showModal("Gagal", err.message); });
+  });
+}
+
+// ============================================================
+// 🆕 REKAP PEDAS (Bantuan Disabilitas) -- gabungan santunan disabilitas
+// GOPAY (otomatis, read-only) + bantuan insidental manual (sembako/kursi
+// roda/dll). Backend: getRekapPedas / tambahBantuanPedas / hapusBantuanPedas.
+// ============================================================
+const WARNA_TEMA_PEDAS_JS = "#A855F7";
+const NAMA_BULAN_ID_JS_ = ["", "Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+let pedasBulanAktif = null, pedasTahunAktif = null, pedasWilayahAktif = "";
+
+function openRekapPedas() {
+  const now = new Date();
+  pedasBulanAktif = now.getMonth() + 1;
+  pedasTahunAktif = now.getFullYear();
+  document.getElementById("pedasPage").classList.add("open");
+  isiSelectWilayahPedas();
+}
+
+function tutupRekapPedas() {
+  document.getElementById("pedasPage").classList.remove("open");
+}
+
+function isiSelectWilayahPedas() {
+  const sel = document.getElementById("pedasWilayahSelect");
+  const bolehSemua = currentUser && ["SUPERADMIN", "ADMIN"].indexOf(currentUser.role) !== -1;
+  sel.innerHTML = `<option value="">Memuat wilayah...</option>`;
+  loadWilayahListIfNeeded().then(function (list) {
+    let html = "";
+    if (bolehSemua) html += `<option value="ALL">Semua Wilayah (Nasional)</option>`;
+    html += (list && list.length)
+      ? list.map(function (w) { return `<option value="${escapeHtmlHub(w)}">${escapeHtmlHub(w)}</option>`; }).join("")
+      : "";
+    sel.innerHTML = html || `<option value="">(Belum ada data wilayah)</option>`;
+
+    if (bolehSemua) {
+      sel.value = "ALL";
+    } else {
+      const wa = String((currentUser && currentUser.wilayahAkses) || "").split(",")[0].trim();
+      if (wa) sel.value = wa;
+    }
+    pedasWilayahAktif = sel.value;
+    sel.onchange = function () { pedasWilayahAktif = sel.value; loadRekapPedas(); };
+    loadRekapPedas();
+  });
+}
+
+function gantiBulanPedas(delta) {
+  let b = pedasBulanAktif + delta, t = pedasTahunAktif;
+  if (b < 1) { b = 12; t--; } else if (b > 12) { b = 1; t++; }
+  pedasBulanAktif = b; pedasTahunAktif = t;
+  loadRekapPedas();
+}
+
+function loadRekapPedas() {
+  const el = document.getElementById("pedasContent");
+  el.innerHTML = `
+    <div style="display:flex; align-items:center; justify-content:center; padding: 60px 0; color: var(--text-secondary); font-size: 12.5px; gap: 8px;">
+      <span class="material-symbols-outlined spin" style="font-size: 18px;">progress_activity</span> Memuat rekap bantuan disabilitas...
+    </div>`;
+
+  callGASWithRetry_("getRekapPedas", [authToken, pedasBulanAktif, pedasTahunAktif, pedasWilayahAktif])
+    .then(function (data) { renderRekapPedas(data); })
+    .catch(function (err) {
+      el.innerHTML = `
+        <div style="padding: 40px 20px; text-align: center; color: var(--text-secondary); font-size: 12.5px;">
+          Gagal memuat: ${escapeHtmlHub(String(err && err.message || err))}
+          <br><button onclick="loadRekapPedas()" style="margin-top: 14px; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 99px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--text-primary); cursor: pointer;">Coba Lagi</button>
+        </div>`;
+    });
+}
+
+function renderRekapPedas(data) {
+  const el = document.getElementById("pedasContent");
+  const bisaEdit = currentUser && ["SUPERADMIN", "ADMIN"].indexOf(currentUser.role) !== -1;
+  const namaBulan = NAMA_BULAN_ID_JS_[data.bulan];
+
+  let html = `
+    <div style="display:flex; align-items:center; justify-content:space-between; margin: 14px 0;">
+      <button onclick="gantiBulanPedas(-1)" style="width:36px;height:36px;border-radius:12px;background:var(--glass-strong);border:1px solid var(--glass-border);color:var(--text-primary);display:flex;align-items:center;justify-content:center;cursor:pointer;">
+        <span class="material-symbols-outlined" style="font-size:18px;">chevron_left</span>
+      </button>
+      <div style="font-size:15px;font-weight:700;color:var(--text-primary);">${namaBulan} ${data.tahun}</div>
+      <button onclick="gantiBulanPedas(1)" style="width:36px;height:36px;border-radius:12px;background:var(--glass-strong);border:1px solid var(--glass-border);color:var(--text-primary);display:flex;align-items:center;justify-content:center;cursor:pointer;">
+        <span class="material-symbols-outlined" style="font-size:18px;">chevron_right</span>
+      </button>
+    </div>
+
+    <div style="background: var(--glass-strong); border-radius: 16px; padding: 16px; margin-bottom: 14px; border: 1px solid var(--glass-border); border-left: 4px solid ${WARNA_TEMA_PEDAS_JS};">
+      <div style="font-size: 10.5px; color: var(--text-secondary); margin-bottom: 4px;">Total Bantuan Disabilitas ${data.global ? "(Semua Wilayah)" : "(" + escapeHtmlHub(data.wilayah) + ")"}</div>
+      <div style="font-size: 20px; font-weight: 800; color: var(--text-primary);">${formatRupiahHub(data.totalNilai)}</div>
+      <div style="display:flex; gap: 14px; margin-top: 8px; font-size: 10.5px; color: var(--text-muted);">
+        <span>Rutin: ${formatRupiahHub(data.breakdownSifat.Rutin || 0)}</span>
+        <span>Insidental: ${formatRupiahHub(data.breakdownSifat.Insidental || 0)}</span>
+      </div>
+    </div>`;
+
+  if (bisaEdit) {
+    html += `
+    <button onclick="bukaTambahBantuanPedas()" style="width:100%; display:flex; align-items:center; justify-content:center; gap: 8px; padding: 12px; border-radius: 14px; background: ${WARNA_TEMA_PEDAS_JS}; border:none; color:#fff; font-size:12.5px; font-weight:700; cursor:pointer; margin-bottom: 16px; font-family:inherit;">
+      <span class="material-symbols-outlined" style="font-size:18px;">add_circle</span> Tambah Bantuan (Sembako / Alat Bantu / dll)
+    </button>`;
+  }
+
+  if (!data.baris.length) {
+    html += `<div style="padding: 30px 10px; text-align:center; color: var(--text-secondary); font-size: 12px;">Belum ada data bantuan disabilitas bulan ini.</div>`;
+  } else {
+    data.baris.forEach(function (b) {
+      html += `
+      <div style="background: var(--glass-strong); border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; border: 1px solid var(--glass-border); display:flex; align-items:flex-start; justify-content:space-between; gap: 10px;">
+        <div style="flex:1;">
+          <div style="font-size:12.5px; font-weight:700; color: var(--text-primary);">${escapeHtmlHub(b.jenisBantuan)} <span style="font-weight:400; color: var(--text-muted); font-size: 10.5px;">&middot; ${b.sifat}</span></div>
+          <div style="font-size:11px; color: var(--text-secondary); margin-top:2px;">${escapeHtmlHub(b.penerima)}${data.global ? " &middot; " + escapeHtmlHub(b.wilayah) : ""}</div>
+          ${b.keterangan ? `<div style="font-size:10px; color: var(--text-muted); margin-top:2px;">${escapeHtmlHub(b.keterangan)}</div>` : ""}
+          <div style="font-size:9px; color: var(--text-muted); margin-top:4px; text-transform:uppercase; letter-spacing:0.3px;">${b.programAsal === "GOPAY" ? "Otomatis dari GOPAY" : "Manual PEDAS"}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:12.5px; font-weight:700; color: var(--text-primary); white-space:nowrap;">${formatRupiahHub(b.nilai)}</div>
+          ${(bisaEdit && b.editable) ? `<button onclick="hapusBantuanPedasClick('${b.id}')" style="margin-top:6px; background:transparent; border:none; color:#FCA5A5; cursor:pointer; font-size:10.5px; display:flex; align-items:center; gap:3px; font-family:inherit;"><span class="material-symbols-outlined" style="font-size:14px;">delete</span> Hapus</button>` : ""}
+        </div>
+      </div>`;
+    });
+  }
+
+  el.innerHTML = html;
+}
+
+function bukaTambahBantuanPedas() {
+  document.getElementById("pedasAddTanggal").value = new Date().toISOString().slice(0, 10);
+  document.getElementById("pedasAddPenerima").value = "";
+  document.getElementById("pedasAddJenis").value = "Sembako";
+  document.getElementById("pedasAddJenisLainnya").value = "";
+  document.getElementById("pedasAddJenisLainnya").style.display = "none";
+  document.getElementById("pedasAddNilai").value = "";
+  document.getElementById("pedasAddKeterangan").value = "";
+
+  const sel = document.getElementById("pedasAddWilayah");
+  sel.innerHTML = `<option value="">Memuat wilayah...</option>`;
+  loadWilayahListIfNeeded().then(function (list) {
+    sel.innerHTML = (list && list.length)
+      ? list.map(function (w) { return `<option value="${escapeHtmlHub(w)}">${escapeHtmlHub(w)}</option>`; }).join("")
+      : `<option value="">(Belum ada data wilayah)</option>`;
+    if (pedasWilayahAktif && pedasWilayahAktif !== "ALL") sel.value = pedasWilayahAktif;
+  });
+
+  document.getElementById("pedasAddOverlay").classList.add("open");
+}
+
+function tutupTambahBantuanPedas() {
+  document.getElementById("pedasAddOverlay").classList.remove("open");
+}
+
+function pedasToggleJenisLainnya() {
+  const isLainnya = document.getElementById("pedasAddJenis").value === "Lainnya";
+  document.getElementById("pedasAddJenisLainnya").style.display = isLainnya ? "block" : "none";
+}
+
+function submitTambahBantuanPedas() {
+  const tanggal = document.getElementById("pedasAddTanggal").value;
+  const wilayah = document.getElementById("pedasAddWilayah").value;
+  const penerima = document.getElementById("pedasAddPenerima").value.trim();
+  let jenis = document.getElementById("pedasAddJenis").value;
+  if (jenis === "Lainnya") jenis = document.getElementById("pedasAddJenisLainnya").value.trim() || "Lainnya";
+  const nilai = document.getElementById("pedasAddNilai").value;
+  const keterangan = document.getElementById("pedasAddKeterangan").value.trim();
+
+  if (!wilayah) { showModal("Gagal", "Pilih wilayah dulu."); return; }
+  if (!penerima) { showModal("Gagal", "Nama penerima wajib diisi."); return; }
+  if (!nilai || Number(nilai) <= 0) { showModal("Gagal", "Nilai bantuan harus lebih dari 0."); return; }
+
+  const btn = document.getElementById("pedasAddBtnSimpan");
+  btn.disabled = true;
+  btn.textContent = "Menyimpan...";
+  callGASWithRetry_("tambahBantuanPedas", [authToken, tanggal, wilayah, penerima, jenis, nilai, keterangan])
+    .then(function () {
+      btn.disabled = false;
+      btn.textContent = "Simpan";
+      tutupTambahBantuanPedas();
+      loadRekapPedas();
+      showModal("Sukses", "Bantuan berhasil dicatat.");
+    })
+    .catch(function (err) {
+      btn.disabled = false;
+      btn.textContent = "Simpan";
+      showModal("Gagal", err.message);
+    });
+}
+
+function hapusBantuanPedasClick(id) {
+  showModal("Hapus Data?", "Data bantuan ini akan dihapus permanen.", true, function () {
+    callGASWithRetry_("hapusBantuanPedas", [authToken, id])
+      .then(function () { loadRekapPedas(); })
       .catch(function (err) { showModal("Gagal", err.message); });
   });
 }
@@ -10608,6 +10872,10 @@ document.getElementById("laporanBulananSapaClose").addEventListener("click", fun
   document.getElementById("laporanBulananSapaPage").classList.remove("open");
 });
 
+document.getElementById("pedasClose").addEventListener("click", function () {
+  tutupRekapPedas();
+});
+
 document.getElementById("laporanPdfViewerClose").addEventListener("click", function () {
   document.getElementById("laporanPdfViewerPage").classList.remove("open");
   document.getElementById("laporanPdfViewerFrame").src = "about:blank"; // stop loading pas ditutup
@@ -11075,7 +11343,7 @@ initSummaryCardTilt();
 // form user, sheet input, modal konfirmasi, dst) TANPA perlu ubah kode
 // tiap fungsi open/close satu-satu.
 // ============================================================
-const OVERLAY_OPEN_SELECTOR = '.overlay.open, .user-menu.open, #userFormOverlay.open, #customModalOverlay.open, #inputOverlay.open, #forcePwOverlay.open, #kegiatanFormOverlay.open, #laporanWilayahUploadOverlay.open, #psInputOverlay.open, #rsInputOverlay.open';
+const OVERLAY_OPEN_SELECTOR = '.overlay.open, .user-menu.open, #userFormOverlay.open, #customModalOverlay.open, #inputOverlay.open, #forcePwOverlay.open, #kegiatanFormOverlay.open, #laporanWilayahUploadOverlay.open, #psInputOverlay.open, #rsInputOverlay.open, #pedasAddOverlay.open';
 
 let backExitArmed = false; // true sesaat setelah toast "tekan lagi buat keluar" muncul
 
