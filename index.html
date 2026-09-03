@@ -2976,6 +2976,13 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
     </div>
     <div style="padding: 14px 20px 0;">
       <select id="pedasWilayahSelect" style="width:100%; box-sizing:border-box; padding:9px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12px; font-family:inherit;"></select>
+      <!-- Toggle Bulanan/Tahunan -- "Tahunan" buat rekap ringkas 1 tahun
+           penuh (narasi total anak/bantuan tersalur se-tahun), "Bulanan"
+           tetap tampilan default (rincian per baris per bulan). -->
+      <div style="display:flex; gap:6px; margin: 10px 0 2px; background: rgba(255,255,255,0.06); border-radius: 12px; padding: 4px;">
+        <button type="button" id="pedasTabBulanan" onclick="pedasSetTab('bulanan')" style="flex:1; padding: 8px 0; border-radius: 9px; border:none; background: #A855F7; color:#fff; font-size:11.5px; font-weight:700; cursor:pointer; font-family:inherit;">Bulanan</button>
+        <button type="button" id="pedasTabTahunan" onclick="pedasSetTab('tahunan')" style="flex:1; padding: 8px 0; border-radius: 9px; border:none; background: transparent; color: var(--text-secondary); font-size:11.5px; font-weight:700; cursor:pointer; font-family:inherit;">Tahunan</button>
+      </div>
     </div>
     <div class="akun-content" id="pedasContent"></div>
   </div>
@@ -7210,13 +7217,41 @@ function hapusPenyaluranSantunanConfirm(idEncoded, bulan, tahun) {
 const WARNA_TEMA_PEDAS_JS = "#A855F7";
 const NAMA_BULAN_ID_JS_ = ["", "Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 let pedasBulanAktif = null, pedasTahunAktif = null, pedasWilayahAktif = "";
+let pedasModeAktif = "bulanan"; // "bulanan" | "tahunan" -- lihat toggle di pedasPage
+let pedasTahunAktifTahunan = null; // tahun aktif KHUSUS tab Tahunan, terpisah dari pedasTahunAktif (tab Bulanan)
 
 function openRekapPedas() {
   const now = new Date();
   pedasBulanAktif = now.getMonth() + 1;
   pedasTahunAktif = now.getFullYear();
+  pedasTahunAktifTahunan = now.getFullYear();
+  pedasModeAktif = "bulanan";
+  pedasSetTabStyle_();
   document.getElementById("pedasPage").classList.add("open");
   isiSelectWilayahPedas();
+}
+
+// Ganti tab Bulanan <-> Tahunan. Wilayah aktif (pedasWilayahAktif) TETAP
+// dipakai buat kedua tab, jadi pindah tab gak reset pilihan wilayah.
+function pedasSetTab(mode) {
+  if (pedasModeAktif === mode) return;
+  pedasModeAktif = mode;
+  pedasSetTabStyle_();
+  pedasMuatSesuaiMode_();
+}
+
+function pedasSetTabStyle_() {
+  const btnBulanan = document.getElementById("pedasTabBulanan");
+  const btnTahunan = document.getElementById("pedasTabTahunan");
+  const aktif = "background:" + WARNA_TEMA_PEDAS_JS + "; color:#fff;";
+  const nonaktif = "background:transparent; color:var(--text-secondary);";
+  const baseStyle = "flex:1; padding: 8px 0; border-radius: 9px; border:none; font-size:11.5px; font-weight:700; cursor:pointer; font-family:inherit;";
+  btnBulanan.style.cssText = baseStyle + (pedasModeAktif === "bulanan" ? aktif : nonaktif);
+  btnTahunan.style.cssText = baseStyle + (pedasModeAktif === "tahunan" ? aktif : nonaktif);
+}
+
+function pedasMuatSesuaiMode_() {
+  if (pedasModeAktif === "tahunan") loadRekapPedasTahunan(); else loadRekapPedas();
 }
 
 function tutupRekapPedas() {
@@ -7242,8 +7277,8 @@ function isiSelectWilayahPedas() {
       if (wa) sel.value = wa;
     }
     pedasWilayahAktif = sel.value;
-    sel.onchange = function () { pedasWilayahAktif = sel.value; loadRekapPedas(); };
-    loadRekapPedas();
+    sel.onchange = function () { pedasWilayahAktif = sel.value; pedasMuatSesuaiMode_(); };
+    pedasMuatSesuaiMode_();
   });
 }
 
@@ -7252,6 +7287,11 @@ function gantiBulanPedas(delta) {
   if (b < 1) { b = 12; t--; } else if (b > 12) { b = 1; t++; }
   pedasBulanAktif = b; pedasTahunAktif = t;
   loadRekapPedas();
+}
+
+function gantiTahunPedas(delta) {
+  pedasTahunAktifTahunan += delta;
+  loadRekapPedasTahunan();
 }
 
 function loadRekapPedas() {
@@ -7322,6 +7362,116 @@ function renderRekapPedas(data) {
         </div>
       </div>`;
     });
+  }
+
+  el.innerHTML = html;
+}
+
+// Rekap TAHUNAN (1 tahun penuh) -- versi ringkas buat laporan tahunan,
+// beda dari tampilan Bulanan yang nampilin rincian per baris. Backend:
+// getRekapPedasTahunan(). "totalPenerimaBantuan" = TOTAL BANTUAN
+// TERSALUR sepanjang tahun (bulan-orang buat santunan rutin + jumlah
+// baris buat bantuan insidental) -- BUKAN jumlah anak UNIK, karena
+// santunan rutin GOPAY memang belum nyimpen nama per penerima (anak
+// yang sama dapat santunan 12 bulan akan kehitung 12x, ini disengaja).
+function loadRekapPedasTahunan() {
+  const el = document.getElementById("pedasContent");
+  el.innerHTML = `
+    <div style="display:flex; align-items:center; justify-content:center; padding: 60px 0; color: var(--text-secondary); font-size: 12.5px; gap: 8px;">
+      <span class="material-symbols-outlined spin" style="font-size: 18px;">progress_activity</span> Memuat rekap tahunan bantuan disabilitas...
+    </div>`;
+
+  callGASWithRetry_("getRekapPedasTahunan", [authToken, pedasTahunAktifTahunan, pedasWilayahAktif])
+    .then(function (data) { renderRekapPedasTahunan(data); })
+    .catch(function (err) {
+      el.innerHTML = `
+        <div style="padding: 40px 20px; text-align: center; color: var(--text-secondary); font-size: 12.5px;">
+          Gagal memuat: ${escapeHtmlHub(String(err && err.message || err))}
+          <br><button onclick="loadRekapPedasTahunan()" style="margin-top: 14px; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 99px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--text-primary); cursor: pointer;">Coba Lagi</button>
+        </div>`;
+    });
+}
+
+function renderRekapPedasTahunan(data) {
+  const el = document.getElementById("pedasContent");
+  const namaWilayahTeks = data.global ? "se-Yayasan (Semua Wilayah)" : escapeHtmlHub(data.wilayah);
+
+  let html = `
+    <div style="display:flex; align-items:center; justify-content:space-between; margin: 14px 0;">
+      <button onclick="gantiTahunPedas(-1)" style="width:36px;height:36px;border-radius:12px;background:var(--glass-strong);border:1px solid var(--glass-border);color:var(--text-primary);display:flex;align-items:center;justify-content:center;cursor:pointer;">
+        <span class="material-symbols-outlined" style="font-size:18px;">chevron_left</span>
+      </button>
+      <div style="font-size:15px;font-weight:700;color:var(--text-primary);">Tahun ${data.tahun}</div>
+      <button onclick="gantiTahunPedas(1)" style="width:36px;height:36px;border-radius:12px;background:var(--glass-strong);border:1px solid var(--glass-border);color:var(--text-primary);display:flex;align-items:center;justify-content:center;cursor:pointer;">
+        <span class="material-symbols-outlined" style="font-size:18px;">chevron_right</span>
+      </button>
+    </div>
+
+    <!-- Kartu narasi -- siap tempel ke laporan tahunan ("Yayasan ... telah
+         membantu N anak penyandang disabilitas berupa santunan dll"). -->
+    <div style="background: var(--glass-strong); border-radius: 16px; padding: 18px 16px; margin-bottom: 14px; border: 1px solid var(--glass-border); border-left: 4px solid ${WARNA_TEMA_PEDAS_JS};">
+      <div style="font-size: 11.5px; line-height:1.6; color: var(--text-primary);">
+        Sepanjang tahun <b>${data.tahun}</b>, Yayasan telah membantu <b>${data.totalPenerimaBantuan}</b> anak penyandang disabilitas ${namaWilayahTeks !== "se-Yayasan (Semua Wilayah)" ? "di wilayah <b>" + namaWilayahTeks + "</b>" : "<b>se-Yayasan</b>"} berupa santunan dan bantuan lainnya, dengan total nilai <b>${formatRupiahHub(data.totalNilai)}</b>.
+      </div>
+      <div style="font-size: 9.5px; color: var(--text-muted); margin-top:8px;">*Angka ini adalah total bantuan yang tersalur (bisa termasuk anak yang sama dibantu lebih dari 1x sepanjang tahun), bukan jumlah anak unik.</div>
+    </div>
+
+    <div style="display:flex; gap: 10px; margin-bottom: 14px;">
+      <div style="flex:1; background: var(--glass-strong); border-radius: 14px; padding: 12px; border: 1px solid var(--glass-border);">
+        <div style="font-size: 10px; color: var(--text-secondary);">Santunan Rutin (GOPAY)</div>
+        <div style="font-size: 16px; font-weight: 800; color: var(--text-primary); margin-top:2px;">${data.totalPenerimaRutin} bantuan</div>
+        <div style="font-size: 10px; color: var(--text-muted); margin-top:2px;">${formatRupiahHub(data.breakdownSifat.Rutin || 0)}</div>
+      </div>
+      <div style="flex:1; background: var(--glass-strong); border-radius: 14px; padding: 12px; border: 1px solid var(--glass-border);">
+        <div style="font-size: 10px; color: var(--text-secondary);">Insidental (Manual)</div>
+        <div style="font-size: 16px; font-weight: 800; color: var(--text-primary); margin-top:2px;">${data.totalPenerimaInsidental} bantuan</div>
+        <div style="font-size: 10px; color: var(--text-muted); margin-top:2px;">${formatRupiahHub(data.breakdownSifat.Insidental || 0)}</div>
+      </div>
+    </div>`;
+
+  // Breakdown per jenis bantuan
+  const jenisKeys = Object.keys(data.breakdownJenis || {}).sort(function (a, b) { return data.breakdownJenis[b] - data.breakdownJenis[a]; });
+  if (jenisKeys.length) {
+    html += `<div style="font-size:11px; font-weight:700; color: var(--text-secondary); margin: 4px 2px 8px;">Rincian per Jenis Bantuan</div>`;
+    jenisKeys.forEach(function (j) {
+      html += `
+      <div style="display:flex; align-items:center; justify-content:space-between; background: var(--glass-strong); border-radius: 12px; padding: 10px 14px; margin-bottom: 6px; border: 1px solid var(--glass-border);">
+        <span style="font-size:11.5px; color: var(--text-primary);">${escapeHtmlHub(j)}</span>
+        <span style="font-size:11.5px; font-weight:700; color: var(--text-primary);">${formatRupiahHub(data.breakdownJenis[j])}</span>
+      </div>`;
+    });
+  }
+
+  // Breakdown per wilayah (cuma muncul kalau mode "Semua Wilayah")
+  if (data.global && data.breakdownWilayah) {
+    const wilKeys = Object.keys(data.breakdownWilayah).sort(function (a, b) { return data.breakdownWilayah[b] - data.breakdownWilayah[a]; });
+    if (wilKeys.length) {
+      html += `<div style="font-size:11px; font-weight:700; color: var(--text-secondary); margin: 14px 2px 8px;">Rincian per Wilayah</div>`;
+      wilKeys.forEach(function (w) {
+        html += `
+        <div style="display:flex; align-items:center; justify-content:space-between; background: var(--glass-strong); border-radius: 12px; padding: 10px 14px; margin-bottom: 6px; border: 1px solid var(--glass-border);">
+          <span style="font-size:11.5px; color: var(--text-primary);">${escapeHtmlHub(w)}</span>
+          <span style="font-size:11.5px; font-weight:700; color: var(--text-primary);">${formatRupiahHub(data.breakdownWilayah[w])}</span>
+        </div>`;
+      });
+    }
+  }
+
+  // Rincian per bulan (mini-tabel Jan-Des)
+  html += `<div style="font-size:11px; font-weight:700; color: var(--text-secondary); margin: 14px 2px 8px;">Rincian per Bulan</div>`;
+  for (let b = 1; b <= 12; b++) {
+    const bb = data.breakdownBulan[b] || { nilai: 0, penerimaRutin: 0, penerimaInsidental: 0 };
+    const totalBulan = bb.penerimaRutin + bb.penerimaInsidental;
+    if (!totalBulan && !bb.nilai) continue; // lewati bulan yang kosong biar ringkas
+    html += `
+    <div style="display:flex; align-items:center; justify-content:space-between; background: var(--glass-strong); border-radius: 12px; padding: 10px 14px; margin-bottom: 6px; border: 1px solid var(--glass-border);">
+      <span style="font-size:11.5px; color: var(--text-primary);">${NAMA_BULAN_ID_JS_[b]}</span>
+      <span style="font-size:10.5px; color: var(--text-muted);">${totalBulan} bantuan</span>
+      <span style="font-size:11.5px; font-weight:700; color: var(--text-primary);">${formatRupiahHub(bb.nilai)}</span>
+    </div>`;
+  }
+  if (!data.totalPenerimaBantuan) {
+    html += `<div style="padding: 30px 10px; text-align:center; color: var(--text-secondary); font-size: 12px;">Belum ada data bantuan disabilitas tahun ini.</div>`;
   }
 
   el.innerHTML = html;
