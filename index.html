@@ -5949,6 +5949,42 @@ function renderContent() {
     });
 
     html += `</div>`;
+
+    // FORMULIR_DI_TAB_APP: dulu tombol ini ada di tab Profile, sekarang
+    // dipindah ke sini. Sengaja dibuat SATU BLOK TERPISAH di bawah grid
+    // Aplikasi (bukan ikut jadi salah satu kartu di appGridContainer),
+    // dengan gaya visual yang beda sendiri (border putus-putus, badge
+    // "Formulir", tanpa ikon kotak gradasi ala app) -- supaya user
+    // langsung bisa bedain mana "Aplikasi" (dibuka penuh, banyak menu)
+    // dan mana "Formulir" (cuma isi data, bukan aplikasi). Role dibatasi
+    // sama seperti sebelumnya: SUPERADMIN/ADMIN/KORWIL saja.
+    if (["SUPERADMIN", "ADMIN", "KORWIL"].indexOf(currentUser.role) !== -1) {
+      html += `
+        <div style="grid-column: 1 / -1; margin-top: 30px;">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+            <div style="width:34px; height:34px; border-radius:10px; background:rgba(249,115,22,0.15); color:#F97316; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <span class="material-symbols-outlined" style="font-size:18px;">description</span>
+            </div>
+            <div>
+              <h3 style="font-weight:700; font-size:14px; margin:0; letter-spacing:-0.1px;">Formulir</h3>
+              <div style="font-size:11px; color:var(--text-secondary); margin-top:1px;">Isi data pengajuan -- bukan aplikasi penuh</div>
+            </div>
+          </div>
+          <button onclick="openFormulirDataBaru()" class="profil-formulir-cta" style="position:relative; width: 100%; background: linear-gradient(135deg, rgba(249,115,22,0.14), rgba(234,88,12,0.08)); border: 1.5px dashed rgba(249,115,22,0.45); border-radius: 18px; padding: 16px 18px; display: flex; align-items: center; gap: 14px; cursor: pointer; text-align: left;">
+            <span style="position:absolute; top:10px; right:10px; font-size:9px; font-weight:700; letter-spacing:0.3px; color:#F97316; background:rgba(249,115,22,0.14); border:1px solid rgba(249,115,22,0.35); border-radius:999px; padding:3px 8px; line-height:1;">FORMULIR</span>
+            <div class="profil-formulir-icon-wrap" style="width: 44px; height: 44px; border-radius: 14px; background: rgba(249,115,22,0.18); color: #F97316; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <span class="material-symbols-outlined" style="font-size: 22px;">note_add</span>
+            </div>
+            <div style="flex: 1;">
+              <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Formulir Data Baru GOPAY</div>
+              <div style="font-size: 11px; color: var(--text-secondary);">Input data pengajuan santunan Alm/Keluarga/Anak</div>
+            </div>
+            <span class="material-symbols-outlined profil-formulir-chevron" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
+          </button>
+        </div>
+      `;
+    }
+
     el.innerHTML = html;
     return;
   }
@@ -6281,22 +6317,11 @@ function renderContent() {
         </div>
       </div>
 
-      ${(["SUPERADMIN", "ADMIN", "KORWIL"].indexOf(currentUser.role) !== -1) ? `
-      <!-- Pintu masuk ke Formulir Data Baru GOPAY (input data Alm/Keluarga/
-           Anak buat pengajuan santunan baru) -- CUMA tampil buat
-           SUPERADMIN/ADMIN/KORWIL, role lain gak lihat kartu ini sama
-           sekali. Sengaja diletakkan di atas Dedikasi. -->
-      <button onclick="openFormulirDataBaru()" class="profil-formulir-cta" style="width: 100%; background: linear-gradient(135deg, rgba(249,115,22,0.16), rgba(234,88,12,0.10)); border: 1px solid rgba(249,115,22,0.3); border-radius: 18px; padding: 16px 18px; margin-bottom: 24px; display: flex; align-items: center; gap: 14px; cursor: pointer; text-align: left;">
-        <div class="profil-formulir-icon-wrap" style="width: 44px; height: 44px; border-radius: 14px; background: rgba(249,115,22,0.18); color: #F97316; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-          <span class="material-symbols-outlined" style="font-size: 22px;">note_add</span>
-        </div>
-        <div style="flex: 1;">
-          <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Formulir Data Baru GOPAY</div>
-          <div style="font-size: 11px; color: var(--text-secondary);">Input data pengajuan santunan Alm/Keluarga/Anak</div>
-        </div>
-        <span class="material-symbols-outlined profil-formulir-chevron" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
-      </button>
-      ` : ``}
+      <!-- 🔄 PINDAH (04 Sep 2026): tombol "Formulir Data Baru GOPAY" yang
+           dulu nempel di sini sudah DIPINDAH ke tab App (lihat blok
+           "FORMULIR_DI_TAB_APP" di render active==="app"), biar Formulir
+           kelihatan sebagai kategori terpisah dari kartu-kartu Aplikasi,
+           bukan tercampur di tab Profile. Jangan tambahkan lagi di sini. -->
 
       <div class="profil-dedikasi-section">
       <h3 style="font-weight: 600; font-size: 14px; margin-bottom: 12px; padding: 0 4px;">Dedikasi</h3>
