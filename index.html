@@ -5728,9 +5728,10 @@ function renderContent() {
           </div>
           <div class="anak-yatim-mini-stat" style="flex:1; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
             <div class="pale-amber-text" style="font-size:15px; font-weight:800; color:#FDE68A;" id="berandaAnakYatimDisabilitas"><span class="kv-loading">...</span></div>
-            <div style="font-size:9px; font-weight:700; color: var(--text-muted); margin-top:2px;">Disabilitas</div>
+            <div style="font-size:9px; font-weight:700; color: var(--text-muted); margin-top:2px;">Disabilitas*</div>
           </div>
         </div>
+        <div style="font-size:8.5px; color: var(--text-muted); margin-top:8px;">*Disabilitas = Anak + Ortu digabung (bisa dobel kalau 1 KK punya anak &amp; ibu sama-sama disabilitas).</div>
       </div>
       </div>
       <!-- /Panel Program GO-PAY -->
@@ -5766,9 +5767,10 @@ function renderContent() {
             </div>
             <div class="anak-asuh-mini-stat" style="flex:1; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
               <div class="pale-amber-text" style="font-size:15px; font-weight:800; color:#FDE68A;" id="berandaAnakAsuhDisabilitas"><span class="kv-loading">...</span></div>
-              <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Disabilitas</div>
+              <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Disabilitas*</div>
             </div>
           </div>
+          <div style="font-size:8.5px; color: var(--text-muted); margin-top:8px;">*Disabilitas = Anak + Ortu digabung (bisa dobel kalau 1 KK punya anak &amp; ibu sama-sama disabilitas).</div>
         </div>
       </div>
       <!-- /Panel Program SAPA -->
@@ -8512,7 +8514,7 @@ function renderDataAnakYatim(data, dariCache) {
       ${dariCache ? '<span style="color: var(--bento-primary);">Sedang memperbarui...</span>' : ''}
     </div>
 
-    <div style="display:flex; gap:8px; margin-bottom: 18px;">
+    <div style="display:flex; gap:8px; margin-bottom: 8px;">
       <div style="flex:1; background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); border-radius: 12px; padding: 10px 8px; text-align:center;">
         <div class="pale-blue-text" style="font-size:17px; font-weight:800; color:#93C5FD;">${Number(data.totalKK || 0)}</div>
         <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">KK</div>
@@ -8527,9 +8529,10 @@ function renderDataAnakYatim(data, dariCache) {
       </div>
       <div style="flex:1; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; padding: 10px 8px; text-align:center;">
         <div class="pale-amber-text" style="font-size:17px; font-weight:800; color:#FDE68A;">${Number(data.totalDisabilitas || 0)}</div>
-        <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Disabilitas</div>
+        <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Disabilitas*</div>
       </div>
     </div>
+    <div style="font-size: 9.5px; color: var(--text-muted); margin-bottom: 18px;">*Disabilitas = Anak + Ortu digabung (1 KK dgn anak &amp; ibu sama-sama disabilitas dihitung 2x, sesuai aturan santunan).</div>
 
     <div style="font-size: 11px; font-weight: 700; color: var(--text-primary); margin: 0 2px 10px;">Rincian per Wilayah (${rincian.length})</div>`;
 
@@ -8544,7 +8547,7 @@ function renderDataAnakYatim(data, dariCache) {
             <div style="font-size: 11px; color: var(--text-secondary);">KK <b class="pale-blue-text" style="color:#93C5FD;">${Number(r.jumlahKK || 0)}</b></div>
             <div style="font-size: 11px; color: var(--text-secondary);">Yatim <b class="pale-green-text" style="color:#86EFAC;">${Number(r.jumlahYatim || 0)}</b></div>
             <div style="font-size: 11px; color: var(--text-secondary);">Yatim Piatu <b class="pale-purple-text" style="color:#D8B4FE;">${Number(r.jumlahYatimPiatu || 0)}</b></div>
-            <div style="font-size: 11px; color: var(--text-secondary);">Disabilitas <b class="pale-amber-text" style="color:#FDE68A;">${Number(r.jumlahDisabilitas || 0)}</b></div>
+            <div style="font-size: 11px; color: var(--text-secondary);">Disabilitas* <b class="pale-amber-text" style="color:#FDE68A;">${Number(r.jumlahDisabilitas || 0)}</b></div>
           </div>
         </div>`;
     });
@@ -8641,7 +8644,7 @@ function renderDataAnakAsuh(data, dariCache) {
       ${dariCache ? '<span style="color: #EC4899;">Sedang memperbarui...</span>' : ''}
     </div>
 
-    <div style="display:flex; gap:8px; margin-bottom: 18px;">
+    <div style="display:flex; gap:8px; margin-bottom: 8px;">
       <div style="flex:1; background: rgba(236,72,153,0.08); border: 1px solid rgba(236,72,153,0.2); border-radius: 12px; padding: 10px 8px; text-align:center;">
         <div style="font-size:17px; font-weight:800; color:#F9A8D4;">${Number(data.totalKK || 0)}</div>
         <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">KK</div>
@@ -8656,9 +8659,10 @@ function renderDataAnakAsuh(data, dariCache) {
       </div>
       <div style="flex:1; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; padding: 10px 8px; text-align:center;">
         <div class="pale-amber-text" style="font-size:17px; font-weight:800; color:#FDE68A;">${Number(data.totalDisabilitas || 0)}</div>
-        <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Disabilitas</div>
+        <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Disabilitas*</div>
       </div>
     </div>
+    <div style="font-size: 9.5px; color: var(--text-muted); margin-bottom: 18px;">*Disabilitas = Anak + Ortu digabung (1 KK dgn anak &amp; ibu sama-sama disabilitas dihitung 2x, sesuai aturan santunan).</div>
 
     <div style="font-size: 11px; font-weight: 700; color: var(--text-primary); margin: 0 2px 10px;">Rincian per Wilayah (${rincian.length})</div>`;
 
@@ -8673,7 +8677,7 @@ function renderDataAnakAsuh(data, dariCache) {
             <div style="font-size: 11px; color: var(--text-secondary);">KK <b style="color:#F9A8D4;">${Number(r.jumlahKK || 0)}</b></div>
             <div style="font-size: 11px; color: var(--text-secondary);">Anak Asuh <b style="color:#F472B6;">${Number(r.jumlahAnakAsuh || 0)}</b></div>
             <div style="font-size: 11px; color: var(--text-secondary);">Yatim Piatu <b class="pale-purple-text" style="color:#D8B4FE;">${Number(r.jumlahYatimPiatu || 0)}</b></div>
-            <div style="font-size: 11px; color: var(--text-secondary);">Disabilitas <b class="pale-amber-text" style="color:#FDE68A;">${Number(r.jumlahDisabilitas || 0)}</b></div>
+            <div style="font-size: 11px; color: var(--text-secondary);">Disabilitas* <b class="pale-amber-text" style="color:#FDE68A;">${Number(r.jumlahDisabilitas || 0)}</b></div>
           </div>
         </div>`;
     });
