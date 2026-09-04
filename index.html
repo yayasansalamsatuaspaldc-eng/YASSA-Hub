@@ -3119,6 +3119,61 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
     </div>
   </div>
 
+  <!-- 🆕 Halaman Penuh generik untuk "Program Lainnya" (BASO/BADIK/BATAN) --
+       SATU markup dipakai bergantian buat ketiga program (dibedakan lewat
+       state programLainAktif di JS), SENGAJA TERPISAH dari GOPAY/SAPA/
+       PEDAS -- ketiganya belum punya sumber data existing, jadi 100%
+       manual, field-nya sama persis buat ketiganya. -->
+  <div class="overlay" id="programLainPage">
+    <div class="overlay-header">
+      <button class="overlay-close" id="programLainClose">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E2E8F0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <span class="overlay-title" id="programLainTitle">Program Lainnya</span>
+    </div>
+    <div style="padding: 14px 20px 0;">
+      <select id="programLainWilayahSelect" style="width:100%; box-sizing:border-box; padding:9px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12px; font-family:inherit;"></select>
+      <div style="display:flex; gap:6px; margin: 10px 0 2px; background: rgba(255,255,255,0.06); border-radius: 12px; padding: 4px;">
+        <button type="button" id="programLainTabBulanan" onclick="programLainSetTab('bulanan')" style="flex:1; padding: 8px 0; border-radius: 9px; border:none; background: #F59E0B; color:#fff; font-size:11.5px; font-weight:700; cursor:pointer; font-family:inherit;">Bulanan</button>
+        <button type="button" id="programLainTabTahunan" onclick="programLainSetTab('tahunan')" style="flex:1; padding: 8px 0; border-radius: 9px; border:none; background: transparent; color: var(--text-secondary); font-size:11.5px; font-weight:700; cursor:pointer; font-family:inherit;">Tahunan</button>
+      </div>
+    </div>
+    <div class="akun-content" id="programLainContent"></div>
+  </div>
+
+  <!-- Modal: Tambah Bantuan generik "Program Lainnya" (BASO/BADIK/BATAN)
+       -- khusus SUPERADMIN/ADMIN. Field sama persis buat ketiganya, cuma
+       daftar opsi "Jenis Bantuan" yang beda per program (diisi JS). -->
+  <div class="custom-modal-overlay" id="programLainAddOverlay">
+    <div class="custom-modal" style="max-width:360px; text-align:left;">
+      <div class="custom-modal-title" id="programLainAddTitle" style="text-align:center; margin-bottom: 16px;">Tambah Bantuan</div>
+
+      <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Tanggal</label>
+      <input type="date" id="programLainAddTanggal" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit;">
+
+      <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Wilayah</label>
+      <select id="programLainAddWilayah" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit;"></select>
+
+      <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Nama Penerima</label>
+      <input type="text" id="programLainAddPenerima" placeholder="Nama anak/keluarga" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit;">
+
+      <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Jenis Bantuan</label>
+      <select id="programLainAddJenis" onchange="programLainToggleJenisLainnya()" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit;"></select>
+      <input type="text" id="programLainAddJenisLainnya" placeholder="Sebutkan jenis bantuan" style="display:none; width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: -6px 0 12px; font-family:inherit;">
+
+      <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Nilai Bantuan (Rp)</label>
+      <input type="number" id="programLainAddNilai" placeholder="Estimasi nilai/harga" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit;">
+
+      <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Keterangan (opsional)</label>
+      <input type="text" id="programLainAddKeterangan" placeholder="Catatan tambahan" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 16px; font-family:inherit;">
+
+      <div class="custom-modal-actions">
+        <button type="button" class="btn-modal btn-cancel" onclick="tutupTambahBantuanProgramLain()">Batal</button>
+        <button type="button" class="btn-modal btn-confirm" id="programLainAddBtnSimpan" onclick="submitTambahBantuanProgramLain()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 🆕 Modal Input Data Santunan Bulanan (Rate_Santunan_Bulanan) -- khusus
        SUPERADMIN/ADMIN. Jumlah Anak Yatim/Yatim Piatu/Disabilitas SEMUA
        wilayah ditarik OTOMATIS sekaligus dari YASSA Mobile (tombol "Tarik
@@ -6112,6 +6167,49 @@ function renderContent() {
         <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
       </button>
 
+      <!-- 🆕 Section "Program Lainnya" -- SENGAJA dipisah garis + judul dari
+           GOPAY/SAPA/PEDAS di atas (dikonfirmasi user, 2026). BASO/BADIK/
+           BATAN belum punya sumber data existing, 100% manual, field sama
+           persis buat ketiganya -- lihat programLainAktif di JS bawah. -->
+      <div style="display:flex; align-items:center; gap:10px; margin: 22px 0 12px;">
+        <div style="flex:1; height:1px; background: var(--glass-border);"></div>
+        <span style="font-size: 10.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Program Lainnya</span>
+        <div style="flex:1; height:1px; background: var(--glass-border);"></div>
+      </div>
+
+      <button onclick="openProgramLain('baso')" class="kfin-cta" style="margin-bottom: 12px;">
+        <div class="kfin-icon-wrap" style="--kfin-accent: #F59E0B; --kfin-accent-rgb: 245,158,11; width: 44px; height: 44px;">
+          <span class="material-symbols-outlined" style="font-size: 22px;">shopping_bag</span>
+        </div>
+        <div style="flex: 1;">
+          <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Bantuan Sembako (BASO)</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">Rekap bantuan sembako manual</div>
+        </div>
+        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
+      </button>
+
+      <button onclick="openProgramLain('badik')" class="kfin-cta" style="margin-bottom: 12px;">
+        <div class="kfin-icon-wrap" style="--kfin-accent: #3B82F6; --kfin-accent-rgb: 59,130,246; width: 44px; height: 44px;">
+          <span class="material-symbols-outlined" style="font-size: 22px;">school</span>
+        </div>
+        <div style="flex: 1;">
+          <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Bantuan Pendidikan (BADIK)</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">Rekap bantuan pendidikan manual</div>
+        </div>
+        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
+      </button>
+
+      <button onclick="openProgramLain('batan')" class="kfin-cta" style="margin-bottom: 16px;">
+        <div class="kfin-icon-wrap" style="--kfin-accent: #14B8A6; --kfin-accent-rgb: 20,184,166; width: 44px; height: 44px;">
+          <span class="material-symbols-outlined" style="font-size: 22px;">favorite</span>
+        </div>
+        <div style="flex: 1;">
+          <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Bantuan Kesehatan (BATAN)</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">Rekap bantuan kesehatan manual</div>
+        </div>
+        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
+      </button>
+
       <!-- 3. Donasi Kitabisa.com & 4. Donasi Online/Midtrans DIHAPUS dari
            sini (2026) -- gak ditrack sebagai total terpisah lagi, sekarang
            digabung manual ke Realisasi Lapangan (Keuangan_Bulanan) langsung
@@ -7549,6 +7647,336 @@ function hapusBantuanPedasClick(id) {
   showModal("Hapus Data?", "Data bantuan ini akan dihapus permanen.", true, function () {
     callGASWithRetry_("hapusBantuanPedas", [authToken, id])
       .then(function () { loadRekapPedas(); })
+      .catch(function (err) { showModal("Gagal", err.message); });
+  });
+}
+
+// ============================================================
+// 🆕 PROGRAM LAINNYA (BASO/BADIK/BATAN) -- generik, SATU set fungsi
+// dipakai bergantian buat ketiga program (dibedakan lewat state
+// programLainAktif), SENGAJA TERPISAH tampilannya dari GOPAY/SAPA/PEDAS
+// (dikonfirmasi user, 2026). Ketiganya 100% manual (belum ada sumber
+// data otomatis), field-nya sama persis -- backend: getRekapBaso/Badik/
+// Batan, getRekap...Tahunan, tambahBantuan.../hapusBantuan... (lihat
+// backend_pedas_tambahan.gs / Code.gs bagian PROGRAM BASO/BADIK/BATAN).
+// ============================================================
+const PROGRAM_LAIN_META = {
+  baso: { label: "BASO", judul: "Bantuan Sembako (BASO)", warna: "#F59E0B", jenisOpsi: ["Paket Sembako", "Beras", "Minyak Goreng", "Susu/Gizi Tambahan", "Lainnya"] },
+  badik: { label: "BADIK", judul: "Bantuan Pendidikan (BADIK)", warna: "#3B82F6", jenisOpsi: ["SPP/Uang Sekolah", "Perlengkapan Sekolah", "Seragam", "Buku/Alat Tulis", "Biaya Kuliah", "Lainnya"] },
+  batan: { label: "BATAN", judul: "Bantuan Kesehatan (BATAN)", warna: "#14B8A6", jenisOpsi: ["Biaya Berobat", "Obat-obatan", "Rujukan Rumah Sakit", "Alat Kesehatan", "Lainnya"] },
+};
+function capitalizeFirst_(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+let programLainAktif = "baso"; // "baso" | "badik" | "batan"
+let programLainBulanAktif = null, programLainTahunAktif = null, programLainWilayahAktif = "";
+let programLainModeAktif = "bulanan"; // "bulanan" | "tahunan"
+let programLainTahunAktifTahunan = null;
+
+function openProgramLain(key) {
+  programLainAktif = key;
+  const meta = PROGRAM_LAIN_META[key];
+  document.getElementById("programLainTitle").textContent = meta.judul;
+
+  const now = new Date();
+  programLainBulanAktif = now.getMonth() + 1;
+  programLainTahunAktif = now.getFullYear();
+  programLainTahunAktifTahunan = now.getFullYear();
+  programLainModeAktif = "bulanan";
+  programLainSetTabStyle_();
+  document.getElementById("programLainPage").classList.add("open");
+  isiSelectWilayahProgramLain();
+}
+
+function tutupProgramLain() {
+  document.getElementById("programLainPage").classList.remove("open");
+}
+
+function programLainSetTab(mode) {
+  if (programLainModeAktif === mode) return;
+  programLainModeAktif = mode;
+  programLainSetTabStyle_();
+  programLainMuatSesuaiMode_();
+}
+
+function programLainSetTabStyle_() {
+  const warna = PROGRAM_LAIN_META[programLainAktif].warna;
+  const btnBulanan = document.getElementById("programLainTabBulanan");
+  const btnTahunan = document.getElementById("programLainTabTahunan");
+  const aktif = "background:" + warna + "; color:#fff;";
+  const nonaktif = "background:transparent; color:var(--text-secondary);";
+  const baseStyle = "flex:1; padding: 8px 0; border-radius: 9px; border:none; font-size:11.5px; font-weight:700; cursor:pointer; font-family:inherit;";
+  btnBulanan.style.cssText = baseStyle + (programLainModeAktif === "bulanan" ? aktif : nonaktif);
+  btnTahunan.style.cssText = baseStyle + (programLainModeAktif === "tahunan" ? aktif : nonaktif);
+}
+
+function programLainMuatSesuaiMode_() {
+  if (programLainModeAktif === "tahunan") loadRekapProgramLainTahunan(); else loadRekapProgramLain();
+}
+
+function isiSelectWilayahProgramLain() {
+  const sel = document.getElementById("programLainWilayahSelect");
+  sel.innerHTML = `<option value="">Memuat wilayah...</option>`;
+  loadWilayahListIfNeeded().then(function (list) {
+    let html = `<option value="ALL">Semua Wilayah (Nasional)</option>`;
+    html += (list && list.length)
+      ? list.map(function (w) { return `<option value="${escapeHtmlHub(w)}">${escapeHtmlHub(w)}</option>`; }).join("")
+      : "";
+    sel.innerHTML = html;
+
+    sel.value = "ALL";
+    programLainWilayahAktif = sel.value;
+    sel.onchange = function () { programLainWilayahAktif = sel.value; programLainMuatSesuaiMode_(); };
+    programLainMuatSesuaiMode_();
+  });
+}
+
+function gantiBulanProgramLain(delta) {
+  let b = programLainBulanAktif + delta, t = programLainTahunAktif;
+  if (b < 1) { b = 12; t--; } else if (b > 12) { b = 1; t++; }
+  programLainBulanAktif = b; programLainTahunAktif = t;
+  loadRekapProgramLain();
+}
+
+function gantiTahunProgramLain(delta) {
+  programLainTahunAktifTahunan += delta;
+  loadRekapProgramLainTahunan();
+}
+
+function loadRekapProgramLain() {
+  const el = document.getElementById("programLainContent");
+  const meta = PROGRAM_LAIN_META[programLainAktif];
+  el.innerHTML = `
+    <div style="display:flex; align-items:center; justify-content:center; padding: 60px 0; color: var(--text-secondary); font-size: 12.5px; gap: 8px;">
+      <span class="material-symbols-outlined spin" style="font-size: 18px;">progress_activity</span> Memuat rekap ${meta.label}...
+    </div>`;
+
+  const namaFungsi = "getRekap" + capitalizeFirst_(programLainAktif);
+  callGASWithRetry_(namaFungsi, [authToken, programLainBulanAktif, programLainTahunAktif, programLainWilayahAktif])
+    .then(function (data) { renderRekapProgramLain(data); })
+    .catch(function (err) {
+      el.innerHTML = `
+        <div style="padding: 40px 20px; text-align: center; color: var(--text-secondary); font-size: 12.5px;">
+          Gagal memuat: ${escapeHtmlHub(String(err && err.message || err))}
+          <br><button onclick="loadRekapProgramLain()" style="margin-top: 14px; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 99px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--text-primary); cursor: pointer;">Coba Lagi</button>
+        </div>`;
+    });
+}
+
+function renderRekapProgramLain(data) {
+  const el = document.getElementById("programLainContent");
+  const meta = PROGRAM_LAIN_META[programLainAktif];
+  const bisaEdit = currentUser && ["SUPERADMIN", "ADMIN"].indexOf(currentUser.role) !== -1;
+  const namaBulan = NAMA_BULAN_ID_JS_[data.bulan];
+
+  let html = `
+    <div style="display:flex; align-items:center; justify-content:space-between; margin: 14px 0;">
+      <button onclick="gantiBulanProgramLain(-1)" style="width:36px;height:36px;border-radius:12px;background:var(--glass-strong);border:1px solid var(--glass-border);color:var(--text-primary);display:flex;align-items:center;justify-content:center;cursor:pointer;">
+        <span class="material-symbols-outlined" style="font-size:18px;">chevron_left</span>
+      </button>
+      <div style="font-size:15px;font-weight:700;color:var(--text-primary);">${namaBulan} ${data.tahun}</div>
+      <button onclick="gantiBulanProgramLain(1)" style="width:36px;height:36px;border-radius:12px;background:var(--glass-strong);border:1px solid var(--glass-border);color:var(--text-primary);display:flex;align-items:center;justify-content:center;cursor:pointer;">
+        <span class="material-symbols-outlined" style="font-size:18px;">chevron_right</span>
+      </button>
+    </div>
+
+    <div style="background: var(--glass-strong); border-radius: 16px; padding: 16px; margin-bottom: 14px; border: 1px solid var(--glass-border); border-left: 4px solid ${meta.warna}; display:flex; align-items:center; justify-content:space-between; gap: 14px;">
+      <div style="flex:1; min-width:0;">
+        <div style="font-size: 10.5px; color: var(--text-secondary); margin-bottom: 4px;">Total Bantuan ${meta.label} ${data.global ? "(Semua Wilayah)" : "(" + escapeHtmlHub(data.wilayah) + ")"}</div>
+        <div style="font-size: 20px; font-weight: 800; color: var(--text-primary);">${formatRupiahHub(data.totalNilai)}</div>
+      </div>
+      <div style="flex-shrink:0; width:76px; height:76px; border-radius:50%; background:${meta.warna}; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+        <div style="font-size:26px; font-weight:800; color:#fff; line-height:1;">${data.totalPenerimaBantuan}</div>
+        <div style="font-size:7.5px; font-weight:700; color:#fff; text-align:center; line-height:1.2; margin-top:2px;">penerima</div>
+      </div>
+    </div>`;
+
+  if (bisaEdit) {
+    html += `
+    <button onclick="bukaTambahBantuanProgramLain()" style="width:100%; display:flex; align-items:center; justify-content:center; gap: 8px; padding: 12px; border-radius: 14px; background: ${meta.warna}; border:none; color:#fff; font-size:12.5px; font-weight:700; cursor:pointer; margin-bottom: 16px; font-family:inherit;">
+      <span class="material-symbols-outlined" style="font-size:18px;">add_circle</span> Tambah Bantuan ${meta.label}
+    </button>`;
+  }
+
+  if (!data.baris.length) {
+    html += `<div style="padding: 30px 10px; text-align:center; color: var(--text-secondary); font-size: 12px;">Belum ada data bantuan ${meta.label} bulan ini.</div>`;
+  } else {
+    data.baris.forEach(function (b) {
+      html += `
+      <div style="background: var(--glass-strong); border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; border: 1px solid var(--glass-border); display:flex; align-items:flex-start; justify-content:space-between; gap: 10px;">
+        <div style="flex:1;">
+          <div style="font-size:12.5px; font-weight:700; color: var(--text-primary);">${escapeHtmlHub(b.jenisBantuan)}</div>
+          <div style="font-size:11px; color: var(--text-secondary); margin-top:2px;">${escapeHtmlHub(b.penerima)}${data.global ? " &middot; " + escapeHtmlHub(b.wilayah) : ""}</div>
+          ${b.keterangan ? `<div style="font-size:10px; color: var(--text-muted); margin-top:2px;">${escapeHtmlHub(b.keterangan)}</div>` : ""}
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:12.5px; font-weight:700; color: var(--text-primary); white-space:nowrap;">${formatRupiahHub(b.nilai)}</div>
+          ${(bisaEdit && b.editable) ? `<button onclick="hapusBantuanProgramLainClick('${b.id}')" style="margin-top:6px; background:transparent; border:none; color:#FCA5A5; cursor:pointer; font-size:10.5px; display:flex; align-items:center; gap:3px; font-family:inherit;"><span class="material-symbols-outlined" style="font-size:14px;">delete</span> Hapus</button>` : ""}
+        </div>
+      </div>`;
+    });
+  }
+
+  el.innerHTML = html;
+}
+
+function loadRekapProgramLainTahunan() {
+  const el = document.getElementById("programLainContent");
+  const meta = PROGRAM_LAIN_META[programLainAktif];
+  el.innerHTML = `
+    <div style="display:flex; align-items:center; justify-content:center; padding: 60px 0; color: var(--text-secondary); font-size: 12.5px; gap: 8px;">
+      <span class="material-symbols-outlined spin" style="font-size: 18px;">progress_activity</span> Memuat rekap tahunan ${meta.label}...
+    </div>`;
+
+  const namaFungsi = "getRekap" + capitalizeFirst_(programLainAktif) + "Tahunan";
+  callGASWithRetry_(namaFungsi, [authToken, programLainTahunAktifTahunan, programLainWilayahAktif])
+    .then(function (data) { renderRekapProgramLainTahunan(data); })
+    .catch(function (err) {
+      el.innerHTML = `
+        <div style="padding: 40px 20px; text-align: center; color: var(--text-secondary); font-size: 12.5px;">
+          Gagal memuat: ${escapeHtmlHub(String(err && err.message || err))}
+          <br><button onclick="loadRekapProgramLainTahunan()" style="margin-top: 14px; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 99px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--text-primary); cursor: pointer;">Coba Lagi</button>
+        </div>`;
+    });
+}
+
+function renderRekapProgramLainTahunan(data) {
+  const el = document.getElementById("programLainContent");
+  const meta = PROGRAM_LAIN_META[programLainAktif];
+  const namaWilayahTeks = data.global ? "se-Yayasan (Semua Wilayah)" : escapeHtmlHub(data.wilayah);
+
+  let html = `
+    <div style="display:flex; align-items:center; justify-content:space-between; margin: 14px 0;">
+      <button onclick="gantiTahunProgramLain(-1)" style="width:36px;height:36px;border-radius:12px;background:var(--glass-strong);border:1px solid var(--glass-border);color:var(--text-primary);display:flex;align-items:center;justify-content:center;cursor:pointer;">
+        <span class="material-symbols-outlined" style="font-size:18px;">chevron_left</span>
+      </button>
+      <div style="font-size:15px;font-weight:700;color:var(--text-primary);">Tahun ${data.tahun}</div>
+      <button onclick="gantiTahunProgramLain(1)" style="width:36px;height:36px;border-radius:12px;background:var(--glass-strong);border:1px solid var(--glass-border);color:var(--text-primary);display:flex;align-items:center;justify-content:center;cursor:pointer;">
+        <span class="material-symbols-outlined" style="font-size:18px;">chevron_right</span>
+      </button>
+    </div>
+
+    <div style="background: var(--glass-strong); border-radius: 16px; padding: 18px 16px; margin-bottom: 14px; border: 1px solid var(--glass-border); border-left: 4px solid ${meta.warna};">
+      <div style="font-size: 11.5px; line-height:1.6; color: var(--text-primary);">
+        Sepanjang tahun <b>${data.tahun}</b>, Yayasan telah menyalurkan bantuan ${meta.label.toLowerCase()} ke <b>${data.totalPenerimaBantuan}</b> penerima ${namaWilayahTeks !== "se-Yayasan (Semua Wilayah)" ? "di wilayah <b>" + namaWilayahTeks + "</b>" : "<b>se-Yayasan</b>"}, dengan total nilai <b>${formatRupiahHub(data.totalNilai)}</b>.
+      </div>
+    </div>`;
+
+  const jenisKeys = Object.keys(data.breakdownJenis || {}).sort(function (a, b) { return data.breakdownJenis[b] - data.breakdownJenis[a]; });
+  if (jenisKeys.length) {
+    html += `<div style="font-size:11px; font-weight:700; color: var(--text-secondary); margin: 4px 2px 8px;">Rincian per Jenis Bantuan</div>`;
+    jenisKeys.forEach(function (j) {
+      html += `
+      <div style="display:flex; align-items:center; justify-content:space-between; background: var(--glass-strong); border-radius: 12px; padding: 10px 14px; margin-bottom: 6px; border: 1px solid var(--glass-border);">
+        <span style="font-size:11.5px; color: var(--text-primary);">${escapeHtmlHub(j)}</span>
+        <span style="font-size:11.5px; font-weight:700; color: var(--text-primary);">${formatRupiahHub(data.breakdownJenis[j])}</span>
+      </div>`;
+    });
+  }
+
+  if (data.global && data.breakdownWilayah) {
+    const wilKeys = Object.keys(data.breakdownWilayah).sort(function (a, b) { return data.breakdownWilayah[b] - data.breakdownWilayah[a]; });
+    if (wilKeys.length) {
+      html += `<div style="font-size:11px; font-weight:700; color: var(--text-secondary); margin: 14px 2px 8px;">Rincian per Wilayah</div>`;
+      wilKeys.forEach(function (w) {
+        html += `
+        <div style="display:flex; align-items:center; justify-content:space-between; background: var(--glass-strong); border-radius: 12px; padding: 10px 14px; margin-bottom: 6px; border: 1px solid var(--glass-border);">
+          <span style="font-size:11.5px; color: var(--text-primary);">${escapeHtmlHub(w)}</span>
+          <span style="font-size:11.5px; font-weight:700; color: var(--text-primary);">${formatRupiahHub(data.breakdownWilayah[w])}</span>
+        </div>`;
+      });
+    }
+  }
+
+  html += `<div style="font-size:11px; font-weight:700; color: var(--text-secondary); margin: 14px 2px 8px;">Rincian per Bulan</div>`;
+  for (let b = 1; b <= 12; b++) {
+    const bb = data.breakdownBulan[b] || { nilai: 0, penerima: 0 };
+    if (!bb.penerima && !bb.nilai) continue;
+    html += `
+    <div style="display:flex; align-items:center; justify-content:space-between; background: var(--glass-strong); border-radius: 12px; padding: 10px 14px; margin-bottom: 6px; border: 1px solid var(--glass-border);">
+      <span style="font-size:11.5px; color: var(--text-primary);">${NAMA_BULAN_ID_JS_[b]}</span>
+      <span style="font-size:10.5px; color: var(--text-muted);">${bb.penerima} penerima</span>
+      <span style="font-size:11.5px; font-weight:700; color: var(--text-primary);">${formatRupiahHub(bb.nilai)}</span>
+    </div>`;
+  }
+  if (!data.totalPenerimaBantuan) {
+    html += `<div style="padding: 30px 10px; text-align:center; color: var(--text-secondary); font-size: 12px;">Belum ada data bantuan ${meta.label} tahun ini.</div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+function bukaTambahBantuanProgramLain() {
+  const meta = PROGRAM_LAIN_META[programLainAktif];
+  document.getElementById("programLainAddTitle").textContent = "Tambah Bantuan " + meta.label;
+  document.getElementById("programLainAddTanggal").value = new Date().toISOString().slice(0, 10);
+  document.getElementById("programLainAddPenerima").value = "";
+  document.getElementById("programLainAddNilai").value = "";
+  document.getElementById("programLainAddKeterangan").value = "";
+  document.getElementById("programLainAddJenisLainnya").value = "";
+  document.getElementById("programLainAddJenisLainnya").style.display = "none";
+
+  const selJenis = document.getElementById("programLainAddJenis");
+  selJenis.innerHTML = meta.jenisOpsi.map(function (j) {
+    return `<option value="${escapeHtmlHub(j)}"${j === "Lainnya" ? ' data-lainnya="1"' : ""}>${escapeHtmlHub(j)}${j === "Lainnya" ? "..." : ""}</option>`;
+  }).join("");
+
+  const selWilayah = document.getElementById("programLainAddWilayah");
+  selWilayah.innerHTML = `<option value="">Memuat wilayah...</option>`;
+  loadWilayahListIfNeeded().then(function (list) {
+    selWilayah.innerHTML = (list && list.length)
+      ? list.map(function (w) { return `<option value="${escapeHtmlHub(w)}">${escapeHtmlHub(w)}</option>`; }).join("")
+      : `<option value="">(Belum ada data wilayah)</option>`;
+    if (programLainWilayahAktif && programLainWilayahAktif !== "ALL") selWilayah.value = programLainWilayahAktif;
+  });
+
+  document.getElementById("programLainAddOverlay").classList.add("open");
+}
+
+function tutupTambahBantuanProgramLain() {
+  document.getElementById("programLainAddOverlay").classList.remove("open");
+}
+
+function programLainToggleJenisLainnya() {
+  const sel = document.getElementById("programLainAddJenis");
+  const opt = sel.options[sel.selectedIndex];
+  const isLainnya = opt && opt.getAttribute("data-lainnya") === "1";
+  document.getElementById("programLainAddJenisLainnya").style.display = isLainnya ? "block" : "none";
+}
+
+function submitTambahBantuanProgramLain() {
+  const tanggal = document.getElementById("programLainAddTanggal").value;
+  const wilayah = document.getElementById("programLainAddWilayah").value;
+  const penerima = document.getElementById("programLainAddPenerima").value.trim();
+  const selJenis = document.getElementById("programLainAddJenis");
+  const optJenis = selJenis.options[selJenis.selectedIndex];
+  const isLainnya = optJenis && optJenis.getAttribute("data-lainnya") === "1";
+  const jenisBantuan = isLainnya ? document.getElementById("programLainAddJenisLainnya").value.trim() : selJenis.value;
+  const nilai = document.getElementById("programLainAddNilai").value;
+  const keterangan = document.getElementById("programLainAddKeterangan").value.trim();
+
+  if (!wilayah) { showModal("Gagal", "Pilih wilayah dulu."); return; }
+  if (!penerima) { showModal("Gagal", "Nama penerima wajib diisi."); return; }
+  if (!jenisBantuan) { showModal("Gagal", "Jenis bantuan wajib diisi."); return; }
+  if (!nilai || Number(nilai) <= 0) { showModal("Gagal", "Nilai bantuan harus lebih dari 0."); return; }
+
+  const btn = document.getElementById("programLainAddBtnSimpan");
+  btn.disabled = true; btn.textContent = "Menyimpan...";
+
+  const namaFungsi = "tambahBantuan" + capitalizeFirst_(programLainAktif);
+  callGASWithRetry_(namaFungsi, [authToken, tanggal, wilayah, penerima, jenisBantuan, Number(nilai), keterangan])
+    .then(function () {
+      tutupTambahBantuanProgramLain();
+      programLainMuatSesuaiMode_();
+    })
+    .catch(function (err) { showModal("Gagal", err.message); })
+    .finally(function () { btn.disabled = false; btn.textContent = "Simpan"; });
+}
+
+function hapusBantuanProgramLainClick(id) {
+  showModal("Hapus Data?", "Data bantuan ini akan dihapus permanen.", true, function () {
+    const namaFungsi = "hapusBantuan" + capitalizeFirst_(programLainAktif);
+    callGASWithRetry_(namaFungsi, [authToken, id])
+      .then(function () { programLainMuatSesuaiMode_(); })
       .catch(function (err) { showModal("Gagal", err.message); });
   });
 }
@@ -11033,6 +11461,10 @@ document.getElementById("pedasClose").addEventListener("click", function () {
   tutupRekapPedas();
 });
 
+document.getElementById("programLainClose").addEventListener("click", function () {
+  tutupProgramLain();
+});
+
 document.getElementById("laporanPdfViewerClose").addEventListener("click", function () {
   document.getElementById("laporanPdfViewerPage").classList.remove("open");
   document.getElementById("laporanPdfViewerFrame").src = "about:blank"; // stop loading pas ditutup
@@ -11500,7 +11932,7 @@ initSummaryCardTilt();
 // form user, sheet input, modal konfirmasi, dst) TANPA perlu ubah kode
 // tiap fungsi open/close satu-satu.
 // ============================================================
-const OVERLAY_OPEN_SELECTOR = '.overlay.open, .user-menu.open, #userFormOverlay.open, #customModalOverlay.open, #inputOverlay.open, #forcePwOverlay.open, #kegiatanFormOverlay.open, #laporanWilayahUploadOverlay.open, #psInputOverlay.open, #rsInputOverlay.open, #pedasAddOverlay.open';
+const OVERLAY_OPEN_SELECTOR = '.overlay.open, .user-menu.open, #userFormOverlay.open, #customModalOverlay.open, #inputOverlay.open, #forcePwOverlay.open, #kegiatanFormOverlay.open, #laporanWilayahUploadOverlay.open, #psInputOverlay.open, #rsInputOverlay.open, #pedasAddOverlay.open, #programLainAddOverlay.open';
 
 let backExitArmed = false; // true sesaat setelah toast "tekan lagi buat keluar" muncul
 
