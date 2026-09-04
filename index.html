@@ -3907,6 +3907,146 @@ function selectProgramTab(key) {
   }
 }
 
+// ============================================================
+// MONITOR AKSES APLIKASI -- rekam BUKA_APP/LOGIN_SUKSES/LOGIN_GAGAL ke
+// backend (lihat catatAksesApp di Code.gs), dipakai dashboard "Monitor
+// Akses" (Pengaturan, SUPERADMIN doang). SENGAJA fire-and-forget: kalau
+// gagal (jaringan lambat, API pihak ketiga down, dll), diam-diam aja,
+// JANGAN sampai ganggu proses buka app/login utama.
+//
+// AKSES_LOG_CLIENT_KEY harus PERSIS SAMA dengan yang di Code.gs.
+// ============================================================
+const AKSES_LOG_CLIENT_KEY = "yassa-hub-akses-3f7Qz9mN2rL8vXeK";
+
+// Deteksi tipe perangkat (HP/Tablet/Laptop), OS, browser, & tebakan merek
+// dari User-Agent. Untuk iPhone/iPad, Apple SENGAJA gak nyimpen nama model
+// di User-Agent, jadi cuma bisa ditulis "iPhone (Apple)" apa adanya --
+// gak bisa lebih detail dari itu tanpa app native.
+function detectDeviceInfo_() {
+  const ua = navigator.userAgent || "";
+
+  let tipeDevice = "Laptop/Desktop";
+  if (/iPad|Tablet/i.test(ua) || (/Android/i.test(ua) && !/Mobile/i.test(ua))) {
+    tipeDevice = "Tablet";
+  } else if (/Mobi|Android|iPhone|iPod/i.test(ua)) {
+    tipeDevice = "HP";
+  }
+
+  let os = "Tidak diketahui";
+  if (/Windows/i.test(ua)) os = "Windows";
+  else if (/Mac OS X/i.test(ua)) os = "macOS";
+  else if (/Android/i.test(ua)) os = "Android";
+  else if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS";
+  else if (/Linux/i.test(ua)) os = "Linux";
+
+  let browser = "Tidak diketahui";
+  if (/Edg\//.test(ua)) browser = "Edge";
+  else if (/OPR\//.test(ua) || /Opera/i.test(ua)) browser = "Opera";
+  else if (/Chrome\//.test(ua) && !/Chromium/.test(ua)) browser = "Chrome";
+  else if (/Firefox\//.test(ua)) browser = "Firefox";
+  else if (/Safari\//.test(ua) && !/Chrome/.test(ua)) browser = "Safari";
+
+  let merek = "-";
+  if (os === "iOS") {
+    merek = /iPad/i.test(ua) ? "iPad (Apple)" : "iPhone (Apple)";
+  } else if (os === "Android") {
+    // Contoh potongan UA Android: "...Android 13; SM-A155F Build/..."
+    // Regex ambil teks antara "Android x;" dan "Build/" atau ")".
+    const m = ua.match(/Android[^;]*;\s*([^)]+?)(?:\s*Build\/|\))/i);
+    merek = m && m[1] ? m[1].trim() : "Android (merek tidak diketahui)";
+  }
+
+  return { tipeDevice: tipeDevice, os: os, browser: browser, merek: merek, userAgent: ua };
+}
+
+// Reverse-geocode koordinat GPS jadi nama kota/kabupaten (pakai Nominatim
+// OpenStreetMap, gratis, tanpa API key).
+function reverseGeocodeLokasi_(lat, lon) {
+  return fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat=" + lat + "&lon=" + lon + "&zoom=10")
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      const a = data && data.address ? data.address : {};
+      const kota = a.city || a.town || a.village || a.county || a.regency || "";
+      const provinsi = a.state || "";
+      return [kota, provinsi].filter(Boolean).join(", ") || ("Lokasi GPS (" + lat.toFixed(3) + ", " + lon.toFixed(3) + ")");
+    })
+    .catch(function () {
+      return "Lokasi GPS (" + lat.toFixed(3) + ", " + lon.toFixed(3) + ")";
+    });
+}
+
+// Fallback lokasi dari IP publik (dipakai kalau GPS ditolak/gagal) --
+// ipapi.co sekalian ngasih alamat IP-nya, jadi gak perlu request terpisah.
+function getLokasiDariIp_() {
+  return fetch("https://ipapi.co/json/")
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      const lokasi = [data.city, data.region, data.country_name].filter(Boolean).join(", ") || "Tidak diketahui";
+      return {
+        sumberLokasi: "IP",
+        lokasi: lokasi,
+        latitude: data.latitude || "",
+        longitude: data.longitude || "",
+        ip: data.ip || "",
+      };
+    })
+    .catch(function () {
+      return { sumberLokasi: "IP", lokasi: "Tidak diketahui", latitude: "", longitude: "", ip: "" };
+    });
+}
+
+// Coba GPS dulu (butuh izin user); kalau ditolak/timeout/gak didukung,
+// otomatis fallback ke lokasi dari IP -- SELALU resolve (gak pernah
+// reject), biar pemanggilnya gak perlu mikirin .catch().
+function getLokasiPengguna_() {
+  return new Promise(function (resolve) {
+    if (!navigator.geolocation) {
+      getLokasiDariIp_().then(resolve);
+      return;
+    }
+    let selesai = false;
+    const jagaJaga = setTimeout(function () {
+      if (selesai) return;
+      selesai = true;
+      getLokasiDariIp_().then(resolve);
+    }, 6000);
+
+    navigator.geolocation.getCurrentPosition(
+      function (pos) {
+        if (selesai) return;
+        selesai = true;
+        clearTimeout(jagaJaga);
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        reverseGeocodeLokasi_(lat, lon).then(function (namaLokasi) {
+          resolve({ sumberLokasi: "GPS", lokasi: namaLokasi, latitude: lat, longitude: lon, ip: "" });
+        });
+      },
+      function () {
+        if (selesai) return;
+        selesai = true;
+        clearTimeout(jagaJaga);
+        getLokasiDariIp_().then(resolve);
+      },
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 }
+    );
+  });
+}
+
+// Fungsi utama: panggil ini di titik BUKA_APP / LOGIN_SUKSES / LOGIN_GAGAL.
+// extra = { username, nama, role } opsional sesuai tipeEvent-nya.
+function logAksesEvent_(tipeEvent, extra) {
+  try {
+    const device = detectDeviceInfo_();
+    getLokasiPengguna_().then(function (lokasiInfo) {
+      const payload = Object.assign({}, device, lokasiInfo, extra || {});
+      callGAS("catatAksesApp", [AKSES_LOG_CLIENT_KEY, tipeEvent, payload]).catch(function () {});
+    });
+  } catch (e) {
+    // Monitoring gak boleh sampai bikin app utama error -- diamkan aja.
+  }
+}
+
 function callGAS(action, args) {
   return fetch(GAS_AUTH_URL, {
     method: "POST",
@@ -4289,7 +4429,13 @@ function handleLoginSubmit(event) {
       pendingOldPassword = password; 
       onLoginSuccess(res);
     })
-    .catch(function (err) { showLoginError(err.message); })
+    .catch(function (err) {
+      showLoginError(err.message);
+      // 📡 Monitor Akses: percobaan login GAGAL -- Username yang dicoba
+      // dicatat apa adanya (bukan berarti akun itu beneran ada), biar
+      // kelihatan kalau ada yang nyoba nebak-nebak berkali-kali.
+      logAksesEvent_("LOGIN_GAGAL", { username: email });
+    })
     .finally(function () {
       btn.disabled = false;
       btn.textContent = "Masuk";
@@ -4330,7 +4476,10 @@ function handleGoogleCredential(response) {
   setGoogleLoginLoading(true);
   callGASWithRetry_("loginGoogle", [response.credential])
     .then(function (res) { onLoginSuccess(res); })
-    .catch(function (err) { showLoginError(err.message); })
+    .catch(function (err) {
+      showLoginError(err.message);
+      logAksesEvent_("LOGIN_GAGAL", { username: "(Login Google ditolak)" });
+    })
     .finally(function () { setGoogleLoginLoading(false); });
 }
 
@@ -4355,6 +4504,15 @@ function onLoginSuccess(res) {
   localStorage.setItem("yassa_token", authToken);
   localStorage.setItem("yassa_user", JSON.stringify(currentUser));
   document.getElementById("loginForm").reset();
+
+  // 📡 Monitor Akses: login BERHASIL -- baru di titik ini identitas
+  // (username/nama/role) udah pasti valid, jadi baru di sini dicatat
+  // (bukan di BUKA_APP yang identitasnya masih kosong).
+  logAksesEvent_("LOGIN_SUKSES", {
+    username: currentUser.username || currentUser.email || "",
+    nama: currentUser.nama || "",
+    role: currentUser.role || "",
+  });
 
   // Splash "Bismillah" nutupin layar 30 detik selagi showApp()/render()
   // jalan & data awal Beranda diam-diam diambil di belakang layar.
@@ -10760,14 +10918,17 @@ let pengaturanSubTab = "user"; // "user" | "aksesMenu"
 function renderPengaturanPanel(el) {
   el.innerHTML =
     '<div class="section-title">Pengaturan</div>' +
-    '<div style="display:flex;gap:8px;margin-bottom:16px;">' +
-    '<button onclick="setPengaturanSubTab(\'user\')" style="flex:1;padding:10px;border-radius:12px;border:1px solid var(--glass-border);cursor:pointer;font-size:12.5px;font-weight:700;background:' + (pengaturanSubTab === "user" ? "var(--bento-primary);color:#0B1220;" : "var(--glass-strong);color:var(--text-secondary);") + '">Manajemen User</button>' +
-    '<button onclick="setPengaturanSubTab(\'aksesMenu\')" style="flex:1;padding:10px;border-radius:12px;border:1px solid var(--glass-border);cursor:pointer;font-size:12.5px;font-weight:700;background:' + (pengaturanSubTab === "aksesMenu" ? "var(--bento-primary);color:#0B1220;" : "var(--glass-strong);color:var(--text-secondary);") + '">Akses Menu</button>' +
+    '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">' +
+    '<button onclick="setPengaturanSubTab(\'user\')" style="flex:1;min-width:100px;padding:10px 6px;border-radius:12px;border:1px solid var(--glass-border);cursor:pointer;font-size:12px;font-weight:700;background:' + (pengaturanSubTab === "user" ? "var(--bento-primary);color:#0B1220;" : "var(--glass-strong);color:var(--text-secondary);") + '">Manajemen User</button>' +
+    '<button onclick="setPengaturanSubTab(\'aksesMenu\')" style="flex:1;min-width:100px;padding:10px 6px;border-radius:12px;border:1px solid var(--glass-border);cursor:pointer;font-size:12px;font-weight:700;background:' + (pengaturanSubTab === "aksesMenu" ? "var(--bento-primary);color:#0B1220;" : "var(--glass-strong);color:var(--text-secondary);") + '">Akses Menu</button>' +
+    '<button onclick="setPengaturanSubTab(\'monitorAkses\')" style="flex:1;min-width:100px;padding:10px 6px;border-radius:12px;border:1px solid var(--glass-border);cursor:pointer;font-size:12px;font-weight:700;background:' + (pengaturanSubTab === "monitorAkses" ? "var(--bento-primary);color:#0B1220;" : "var(--glass-strong);color:var(--text-secondary);") + '">Monitor Akses</button>' +
     '</div>' +
     '<div id="pengaturanSubContent"></div>';
 
   if (pengaturanSubTab === "aksesMenu") {
     renderAksesMenuPanel();
+  } else if (pengaturanSubTab === "monitorAkses") {
+    renderMonitorAksesPanel();
   } else {
     renderUserManagementPanel();
   }
@@ -10824,6 +10985,140 @@ function loadUserListIntoPanel() {
 
 function escapeHtmlHub(str) {
   return String(str == null ? "" : str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// ============================================================
+// PANEL "MONITOR AKSES" -- siapa buka Hub, dari device/lokasi mana, &
+// percobaan login (sukses/gagal). Data diambil dari getLogAksesAplikasi
+// (Code.gs), yang datanya sendiri dicatat oleh logAksesEvent_() di titik
+// BUKA_APP/LOGIN_SUKSES/LOGIN_GAGAL. SUPERADMIN doang yang bisa buka panel
+// ini (server-side dipaksa lewat requireSession di getLogAksesAplikasi).
+// ============================================================
+let monitorAksesCache = [];
+let monitorAksesFilterAktif = "SEMUA";
+
+const MONITOR_AKSES_META = {
+  BUKA_APP: { label: "Buka App", color: "#60A5FA", bg: "rgba(96,165,250,0.14)", icon: "visibility" },
+  LOGIN_SUKSES: { label: "Login Sukses", color: "#4ADE80", bg: "rgba(74,222,128,0.14)", icon: "check_circle" },
+  LOGIN_GAGAL: { label: "Login Gagal", color: "#F87171", bg: "rgba(248,113,113,0.14)", icon: "gpp_maybe" },
+};
+
+function renderMonitorAksesPanel() {
+  const sub = document.getElementById("pengaturanSubContent");
+  sub.innerHTML =
+    '<div class="settings-toolbar">' +
+    '<span style="font-size:12.5px;color:#94A3B8;">Log siapa buka Hub, dari mana, & percobaan login</span>' +
+    '<button class="btn-add-user" onclick="renderMonitorAksesPanel()"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px;">refresh</span> Muat Ulang</button>' +
+    '</div>' +
+    '<div id="monitorAksesSummary" style="margin-bottom:14px;"></div>' +
+    '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;" id="monitorAksesFilter"></div>' +
+    '<div id="monitorAksesList"><div style="padding:20px;text-align:center;color:#94A3B8;font-size:13px;">Memuat data...</div></div>';
+
+  callGASWithRetry_("getLogAksesAplikasi", [authToken])
+    .then(function (logs) {
+      monitorAksesCache = logs;
+      renderMonitorAksesSummary_(logs);
+      renderMonitorAksesFilterBar_();
+      renderMonitorAksesList_(logs);
+    })
+    .catch(function (err) {
+      const wrap = document.getElementById("monitorAksesList");
+      if (wrap) wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#F87171;font-size:13px;">' + escapeHtmlHub(err.message) + '</div>';
+    });
+}
+
+function monitorAksesIsSameDay_(a, b) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+function monitorAksesSummaryCard_(label, value, icon, color) {
+  return '<div style="background:var(--glass-strong);border:1px solid var(--glass-border);border-radius:14px;padding:12px 8px;text-align:center;">' +
+    '<span class="material-symbols-outlined" style="font-size:18px;color:' + color + ';">' + icon + '</span>' +
+    '<div style="font-size:18px;font-weight:800;margin-top:4px;">' + value + '</div>' +
+    '<div style="font-size:9.5px;color:var(--text-secondary);margin-top:2px;line-height:1.2;">' + label + '</div>' +
+    '</div>';
+}
+
+function renderMonitorAksesSummary_(logs) {
+  const wrap = document.getElementById("monitorAksesSummary");
+  if (!wrap) return;
+  const now = new Date();
+  const jam24 = 24 * 60 * 60 * 1000;
+  const gagal24 = logs.filter(function (l) { return l.tipeEvent === "LOGIN_GAGAL" && (now - new Date(l.timestamp)) <= jam24; });
+  const suksesHariIni = logs.filter(function (l) { return l.tipeEvent === "LOGIN_SUKSES" && monitorAksesIsSameDay_(new Date(l.timestamp), now); });
+  const bukaHariIni = logs.filter(function (l) { return l.tipeEvent === "BUKA_APP" && monitorAksesIsSameDay_(new Date(l.timestamp), now); });
+
+  wrap.innerHTML =
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">' +
+    monitorAksesSummaryCard_("Buka App (hari ini)", bukaHariIni.length, "visibility", "#60A5FA") +
+    monitorAksesSummaryCard_("Login Sukses (hari ini)", suksesHariIni.length, "check_circle", "#4ADE80") +
+    monitorAksesSummaryCard_("Gagal Login (24 jam)", gagal24.length, "gpp_maybe", gagal24.length > 0 ? "#F87171" : "#94A3B8") +
+    '</div>' +
+    (gagal24.length >= 5
+      ? '<div style="margin-top:10px;display:flex;gap:8px;align-items:flex-start;background:rgba(248,113,113,0.14);border:1px solid rgba(248,113,113,0.4);color:#F87171;font-size:11.5px;font-weight:700;padding:10px 14px;border-radius:14px;">' +
+        '<span class="material-symbols-outlined" style="font-size:16px;flex-shrink:0;">warning</span>' +
+        '<span>Ada ' + gagal24.length + ' percobaan login gagal dalam 24 jam terakhir -- cek daftar di bawah, waspada kemungkinan percobaan masuk paksa.</span></div>'
+      : '');
+}
+
+function renderMonitorAksesFilterBar_() {
+  const wrap = document.getElementById("monitorAksesFilter");
+  if (!wrap) return;
+  const opsi = [
+    { key: "SEMUA", label: "Semua" },
+    { key: "BUKA_APP", label: "Buka App" },
+    { key: "LOGIN_SUKSES", label: "Login Sukses" },
+    { key: "LOGIN_GAGAL", label: "Login Gagal" },
+  ];
+  wrap.innerHTML = opsi.map(function (o) {
+    const aktif = monitorAksesFilterAktif === o.key;
+    return '<button onclick="setMonitorAksesFilter(\'' + o.key + '\')" style="padding:7px 14px;border-radius:99px;border:1px solid var(--glass-border);cursor:pointer;font-size:11.5px;font-weight:700;background:' + (aktif ? "var(--bento-primary);color:#0B1220;" : "var(--glass-strong);color:var(--text-secondary);") + '">' + o.label + '</button>';
+  }).join("");
+}
+
+function setMonitorAksesFilter(key) {
+  monitorAksesFilterAktif = key;
+  renderMonitorAksesFilterBar_();
+  renderMonitorAksesList_(monitorAksesCache);
+}
+
+function formatWaktuMonitorAkses_(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+function monitorAksesRow_(l) {
+  const meta = MONITOR_AKSES_META[l.tipeEvent] || { label: l.tipeEvent, color: "#94A3B8", bg: "rgba(148,163,184,0.14)", icon: "help" };
+  const waktu = formatWaktuMonitorAkses_(l.timestamp);
+  const siapa = l.nama
+    ? escapeHtmlHub(l.nama) + (l.role ? " (" + roleLabel(l.role) + ")" : "")
+    : (l.username ? "Percobaan: " + escapeHtmlHub(l.username) : "Belum login");
+  const deviceIcon = l.tipeDevice === "HP" ? "smartphone" : (l.tipeDevice === "Tablet" ? "tablet_mac" : "laptop_mac");
+  const deviceText = [l.merek, l.os, l.browser].filter(function (v) { return v && v !== "-"; }).map(escapeHtmlHub).join(" &middot; ");
+  const lokasiText = l.lokasi ? escapeHtmlHub(l.lokasi) + (l.sumberLokasi ? " (" + l.sumberLokasi + ")" : "") : "Lokasi tidak diketahui";
+
+  return '<div style="background:var(--glass-strong);border:1px solid var(--glass-border);border-left:3px solid ' + meta.color + ';border-radius:14px;padding:12px 14px;margin-bottom:10px;">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;">' +
+    '<span style="display:inline-flex;align-items:center;gap:5px;background:' + meta.bg + ';color:' + meta.color + ';font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:99px;"><span class="material-symbols-outlined" style="font-size:13px;">' + meta.icon + '</span>' + meta.label + '</span>' +
+    '<span style="font-size:10.5px;color:var(--text-muted);">' + waktu + '</span>' +
+    '</div>' +
+    '<div style="font-size:12.5px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">' + siapa + '</div>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--text-secondary);">' +
+    '<span style="display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-outlined" style="font-size:14px;">' + deviceIcon + '</span>' + (deviceText || "Perangkat tidak diketahui") + '</span>' +
+    '<span style="display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-outlined" style="font-size:14px;">location_on</span>' + lokasiText + '</span>' +
+    (l.ip ? '<span style="display:inline-flex;align-items:center;gap:4px;"><span class="material-symbols-outlined" style="font-size:14px;">lan</span>IP: ' + escapeHtmlHub(l.ip) + '</span>' : '') +
+    '</div></div>';
+}
+
+function renderMonitorAksesList_(logs) {
+  const wrap = document.getElementById("monitorAksesList");
+  if (!wrap) return;
+  const filtered = monitorAksesFilterAktif === "SEMUA" ? logs : logs.filter(function (l) { return l.tipeEvent === monitorAksesFilterAktif; });
+  if (!filtered.length) {
+    wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#94A3B8;font-size:13px;">Belum ada catatan.</div>';
+    return;
+  }
+  wrap.innerHTML = filtered.map(monitorAksesRow_).join("");
 }
 
 // ============================================================
@@ -12049,6 +12344,11 @@ function initBackButtonHandling() {
 initBackButtonHandling();
 
 function bootApp() {
+  // 📡 Monitor Akses: rekam "app dibuka" SEDINI mungkin, sebelum tau user
+  // ini bakal login atau enggak -- sengaja gak nunggu (fire-and-forget),
+  // JANGAN sampai proses ini ngelambatin bukaan app.
+  logAksesEvent_("BUKA_APP");
+
   setSplashStatus("Membersihkan cache...");
   cleanupCacheAndUpdate()
     .then(function () {
