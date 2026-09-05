@@ -2370,6 +2370,20 @@
     background: var(--glass); border: 1px solid var(--glass-border); color: var(--text-primary);
     white-space: nowrap;
   }
+  /* 🆕 Dropdown pemilih wilayah di header tab Keuangan -- cuma muncul buat
+     user yang akses > 1 wilayah (mis. Super Admin/"ALL"). Dibungkus select
+     native (bukan panel custom) biar ringan & tetap gampang dipakai di HP,
+     tapi tetap kelihatan kayak pill biasa lewat class .kfin-pill. */
+  .kfin-wilayah-filter-wrap { position: relative; display: inline-flex; align-items: center; max-width: 62%; }
+  .kfin-pill-select {
+    appearance: none; -webkit-appearance: none; -moz-appearance: none;
+    padding-right: 26px; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+    cursor: pointer;
+  }
+  .kfin-wilayah-filter-wrap .material-symbols-outlined {
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    font-size: 16px; color: var(--text-muted); pointer-events: none;
+  }
   .kfin-divider { border-top: 1px dashed var(--glass-border); }
   .kfin-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .kfin-stat-chip {
@@ -5248,6 +5262,12 @@ function tampilkanNotifikasiDariData_(list) {
 let kfinBulanPilihan = new Date().getMonth() + 1; // 1-12
 let kfinTahunPilihan = new Date().getFullYear();
 
+// 🆕 Wilayah yang lagi DIPILIH di dropdown filter tab Keuangan. "ALL" =
+// ikut wilayahAkses asli user (default, perilaku lama). Cuma efektif kalau
+// user akses > 1 wilayah (lihat kfinInfoFilterWilayah_()) -- user yang
+// aksesnya cuma 1 wilayah gak ada dropdown-nya sama sekali.
+let kfinWilayahPilihan = "ALL";
+
 // 🆕 keuanganStatsCache SEKARANG map per "bulan-tahun" (dulu 1 object flat
 // buat bulan berjalan doang), biar pindah-pindah bulan di tab Keuangan
 // bisa instan dari cache tanpa nge-fetch ulang tiap kali, dan gak salah
@@ -5277,8 +5297,48 @@ function saveKeuanganCacheHub() {
   } catch (e) {}
 }
 
-function kfinCacheKey_(bulan, tahun) {
-  return bulan + "-" + tahun;
+function kfinCacheKey_(bulan, tahun, wilayah) {
+  return bulan + "-" + tahun + "_" + String(wilayah || "ALL").toUpperCase();
+}
+
+// 🆕 Info dropdown filter wilayah tab Keuangan: apakah user ini BISA milih
+// (akses > 1 wilayah) dan daftar opsinya. User dengan wilayahAkses "ALL"
+// bisa pilih wilayah manapun (dari getWilayahList()); user dengan daftar
+// terbatas (mis. "BOGOR,DEPOK") cuma bisa pilih di antara wilayahnya
+// sendiri. User yang cuma akses 1 wilayah -> gak ada dropdown, statis aja.
+function kfinInfoFilterWilayah_() {
+  const wa = String((currentUser && currentUser.wilayahAkses) || "ALL").trim().toUpperCase();
+  if (wa === "ALL" || wa === "") {
+    return { bisaPilih: true, mode: "ALL", daftar: wilayahListCache || [] };
+  }
+  const daftar = wa.split(",").map(function (w) { return w.trim(); }).filter(Boolean);
+  return { bisaPilih: daftar.length > 1, mode: "MULTI", daftar: daftar };
+}
+
+// 🆕 Render <select> dropdown filter wilayah buat header tab Keuangan.
+// "Semua Wilayah" (atau "Semua Wilayah Saya" buat user akses terbatas)
+// selalu jadi opsi pertama, lalu daftar wilayah yang boleh diakses user.
+function kfinRenderDropdownWilayah_(info) {
+  const opsiSemua = info.mode === "ALL" ? "Semua Wilayah" : "Semua Wilayah Saya";
+  let opsiHtml = '<option value="ALL"' + (kfinWilayahPilihan === "ALL" ? " selected" : "") + '>' + opsiSemua + '</option>';
+  (info.daftar || []).forEach(function (w) {
+    const dipilih = kfinWilayahPilihan === w ? " selected" : "";
+    opsiHtml += '<option value="' + escapeHtmlHub(w) + '"' + dipilih + '>' + escapeHtmlHub(w) + '</option>';
+  });
+  return '<div class="kfin-wilayah-filter-wrap">' +
+    '<select id="kfinWilayahSelect" class="kfin-pill kfin-pill-select" onchange="gantiWilayahKeuangan(this.value)">' + opsiHtml + '</select>' +
+    '<span class="material-symbols-outlined">expand_more</span>' +
+    '</div>';
+}
+
+// 🆕 Ganti wilayah yang lagi difilter di tab Keuangan (dipanggil dari
+// dropdown <select> di header). Render ulang tab -- loadKeuanganStats()
+// ikut kepanggil lagi di akhir render() SEPERTI pola gantiBulanKeuangan().
+function gantiWilayahKeuangan(wilayahBaru) {
+  const nilaiBaru = String(wilayahBaru || "ALL").trim().toUpperCase() === "ALL" ? "ALL" : wilayahBaru;
+  if (nilaiBaru === kfinWilayahPilihan) return;
+  kfinWilayahPilihan = nilaiBaru;
+  renderContent();
 }
 
 const KFIN_BULAN_SINGKAT_ = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
@@ -5525,11 +5585,12 @@ function terapkanKeuanganStats(hasil) {
       }
 
       // --- Kartu 2: Kebutuhan dan Kekurangan Perwilayah ---
-      // Nama wilayah asli (Bogor, Depok, dst) ikut akun yang login -- SAMA
-      // logic-nya kayak wilayahText di render() tab Keuangan.
-      const kfinWilayahText = currentUser && currentUser.wilayahAkses === "ALL"
-        ? "Semua Wilayah"
-        : ((currentUser && currentUser.wilayahAkses) || "-");
+      // Nama wilayah asli (Bogor, Depok, dst) ikut FILTER dropdown yang lagi
+      // dipilih user (kfinWilayahPilihan) -- SAMA logic-nya kayak wilayahText
+      // di render() tab Keuangan.
+      const kfinWilayahText = kfinWilayahPilihan === "ALL"
+        ? (currentUser && currentUser.wilayahAkses === "ALL" ? "Semua Wilayah" : ((currentUser && currentUser.wilayahAkses) || "-"))
+        : kfinWilayahPilihan;
       if (!manual.ditemukan) {
         // Bendahara belum isi baris bulan ini -- jangan tampilkan Rp0 yang menyesatkan.
         if (elCatatan) elCatatan.textContent = "Kebutuhan Donasi Wilayah " + kfinWilayahText;
@@ -5727,7 +5788,8 @@ function loadKeuanganStats() {
   // bulan berjalan seperti dulu.
   const bulanDiminta = kfinBulanPilihan;
   const tahunDiminta = kfinTahunPilihan;
-  const cacheKeyDiminta = kfinCacheKey_(bulanDiminta, tahunDiminta);
+  const wilayahDiminta = kfinWilayahPilihan;
+  const cacheKeyDiminta = kfinCacheKey_(bulanDiminta, tahunDiminta, wilayahDiminta);
 
   // Kalau bulan-tahun ini udah pernah sukses ke-fetch sebelumnya (mis. user
   // tadi udah buka bulan ini, pindah ke bulan lain, terus balik lagi TANPA
@@ -5775,7 +5837,7 @@ function loadKeuanganStats() {
   // menit di server. Array hasil di bawah (pSantunan/pManual/pKitabisa/
   // pMidtrans) dipertahankan urutannya biar terapkanKeuanganStats() di bawah
   // TIDAK perlu diubah sama sekali.
-  const pRingkasan = callGASWithRetry_("getRingkasanKeuangan", [authToken, false, bulanDiminta, tahunDiminta]).then(function (r) {
+  const pRingkasan = callGASWithRetry_("getRingkasanKeuangan", [authToken, false, bulanDiminta, tahunDiminta, wilayahDiminta]).then(function (r) {
     return [r.penyaluranSantunan, r.keuanganManual, r.kitabisaRealisasi, r.donasiRealisasi];
   });
 
@@ -5784,16 +5846,16 @@ function loadKeuanganStats() {
       const hasil = hasilWrap[0];
       keuanganStatsCache[cacheKeyDiminta] = hasil;
       saveKeuanganCacheHub(); // <-- SIMPAN KE OFFLINE CACHE
-      // Jaga race condition: kalau user udah keburu geser ke bulan lain
-      // SEBELUM fetch bulan ini selesai, jangan timpa tampilan bulan yang
-      // SEDANG dilihat sekarang dengan hasil punya bulan yang lama.
-      if (kfinBulanPilihan === bulanDiminta && kfinTahunPilihan === tahunDiminta) {
+      // Jaga race condition: kalau user udah keburu geser ke bulan/wilayah
+      // lain SEBELUM fetch ini selesai, jangan timpa tampilan yang SEDANG
+      // dilihat sekarang dengan hasil punya bulan/wilayah yang lama.
+      if (kfinBulanPilihan === bulanDiminta && kfinTahunPilihan === tahunDiminta && kfinWilayahPilihan === wilayahDiminta) {
         terapkanKeuanganStats(hasil);
         if (elBanner) elBanner.style.display = "none";
       }
     })
     .catch(function (err) {
-      if (!(kfinBulanPilihan === bulanDiminta && kfinTahunPilihan === tahunDiminta)) return; // udah pindah bulan, biarin aja
+      if (!(kfinBulanPilihan === bulanDiminta && kfinTahunPilihan === tahunDiminta && kfinWilayahPilihan === wilayahDiminta)) return; // udah pindah bulan/wilayah, biarin aja
       // Kalau fetch gagal TAPI sebelumnya udah ada cache yang sukses,
       // biarin angka lama itu tetap tampil (lebih baik daripada direset
       // ke "-" cuma gara-gara 1x gangguan jaringan). Banner tetap disembunyiin.
@@ -6251,7 +6313,18 @@ function renderContent() {
   }
 
   if (active === "keuangan") {
-    const wilayahText = currentUser.wilayahAkses === "ALL" ? "Semua Wilayah" : (currentUser.wilayahAkses || "-");
+    // 🆕 Dropdown filter wilayah -- cuma buat user yang akses > 1 wilayah
+    // (mis. Super Admin/"ALL"). Kalau mode "ALL" tapi daftar wilayah resmi
+    // belum sempat ke-load, tarik dulu di background lalu render ulang
+    // begitu selesai (wilayahListCache jadi array, walau kosong, jadi gak
+    // akan nge-loop terus).
+    const kfinInfoFilter_ = kfinInfoFilterWilayah_();
+    if (kfinInfoFilter_.mode === "ALL" && !wilayahListCache) {
+      loadWilayahListIfNeeded().then(function () { if (active === "keuangan") renderContent(); });
+    }
+    const wilayahText = kfinWilayahPilihan === "ALL"
+      ? (currentUser.wilayahAkses === "ALL" ? "Semua Wilayah" : (currentUser.wilayahAkses || "-"))
+      : kfinWilayahPilihan;
     // Badge kecil buat bedain angka yang PER WILAYAH (ikut filter wilayahAkses
     // user login) vs NASIONAL (1 angka gabungan sama ke semua user).
     const badgeWilayah = `<span class="kfin-badge">Per Wilayah</span>`;
@@ -6314,7 +6387,7 @@ function renderContent() {
           <span class="material-symbols-outlined" style="font-size: 16px; color: var(--bento-primary);">location_on</span>
           Laporan Keuangan Program GOPAY Wilayah
         </div>
-        <div class="kfin-pill">${escapeHtmlHub(wilayahText)}</div>
+        ${kfinInfoFilter_.bisaPilih ? kfinRenderDropdownWilayah_(kfinInfoFilter_) : `<div class="kfin-pill">${escapeHtmlHub(wilayahText)}</div>`}
       </div>
       </div>
 
