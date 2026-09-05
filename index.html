@@ -5241,18 +5241,62 @@ function tampilkanNotifikasiDariData_(list) {
 // app dibuka lagi, angka TERAKHIR yang berhasil diambil langsung
 // tampil instan dari cache, sambil diam-diam refresh ke server di
 // background biar tetap update (stale-while-revalidate).
+// 🆕 Bulan & tahun yang lagi DITAMPILKAN di tab Keuangan -- default bulan
+// berjalan pas app pertama dibuka, tapi bisa digeser user lewat tombol
+// panah </> di header tab Keuangan (lihat gantiBulanKeuangan()) buat lihat
+// HISTORY bulan lain (mis. Januari), bukan cuma bulan berjalan.
+let kfinBulanPilihan = new Date().getMonth() + 1; // 1-12
+let kfinTahunPilihan = new Date().getFullYear();
+
+// 🆕 keuanganStatsCache SEKARANG map per "bulan-tahun" (dulu 1 object flat
+// buat bulan berjalan doang), biar pindah-pindah bulan di tab Keuangan
+// bisa instan dari cache tanpa nge-fetch ulang tiap kali, dan gak salah
+// nampilin data bulan lain pas lagi transisi/fetch gagal.
 let keuanganStatsCache = (function () {
   try {
     const cached = localStorage.getItem("yassa_hub_keuangan_cache");
-    if (cached) return JSON.parse(cached);
+    if (!cached) return {};
+    const parsed = JSON.parse(cached);
+    // Migrasi format lama (1 object flat buat bulan berjalan doang) ke
+    // format baru -- biar cache lama gak sia-sia hilang pas pertama kali
+    // update ke versi pemilih-bulan ini.
+    if (parsed && (parsed.keuanganManual || parsed.penyaluranSantunan)) {
+      const now = new Date();
+      const migrasi = {};
+      migrasi[(now.getMonth() + 1) + "-" + now.getFullYear()] = parsed;
+      return migrasi;
+    }
+    return parsed || {};
   } catch (e) {}
-  return null;
+  return {};
 })();
 
 function saveKeuanganCacheHub() {
   try {
     localStorage.setItem("yassa_hub_keuangan_cache", JSON.stringify(keuanganStatsCache));
   } catch (e) {}
+}
+
+function kfinCacheKey_(bulan, tahun) {
+  return bulan + "-" + tahun;
+}
+
+const KFIN_BULAN_SINGKAT_ = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+
+// Label singkat periode yang LAGI DIPILIH, mis. "Agu 2026".
+function kfinLabelPeriodeSaatIni_() {
+  return KFIN_BULAN_SINGKAT_[kfinBulanPilihan - 1] + " " + kfinTahunPilihan;
+}
+
+// Frasa buat disisipkan ke teks lain: "bulan ini" kalau memang lagi
+// nampilin bulan berjalan, atau "bulan Agu 2026" kalau lagi lihat histori
+// bulan lain -- biar teksnya gak menyesatkan pas lagi buka bulan lampau.
+function kfinFraseWaktu_() {
+  const now = new Date();
+  const bulanIni = now.getMonth() + 1;
+  const tahunIni = now.getFullYear();
+  if (kfinBulanPilihan === bulanIni && kfinTahunPilihan === tahunIni) return "bulan ini";
+  return "bulan " + kfinLabelPeriodeSaatIni_();
 }
 
 // Toggle buka/tutup list "Rincian per Wilayah" (dipakai bareng sama Kartu 1
@@ -5312,6 +5356,20 @@ function toggleRincianWilayahKeuangan(listId, chevronId) {
     }
   }
   if (chevron) chevron.style.transform = sedangTerbuka ? "rotate(0deg)" : "rotate(180deg)";
+}
+
+// 🆕 Kosongin kartu ke status "sedang dimuat" (BUKAN "gagal") -- dipakai
+// pas user pindah ke bulan yang belum ada cache-nya sama sekali, biar gak
+// kelihatan sekilas angka bulan SEBELUMNYA nyangkut di layar, dan gak
+// salah kesan "gagal" padahal cuma lagi nunggu fetch pertama buat bulan itu.
+function tampilkanKeuanganLoadingKosong_() {
+  ["keuanganJumlahYatim", "keuanganYatimPiatu", "keuanganDisabilitas", "keuanganTotalSantunan",
+    "keuanganKebutuhanNominal", "keuanganRealisasiNominal", "keuanganPersenTercapai",
+    "keuanganSelisihNominal"]
+    .forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = '<span class="kv-loading">...</span>';
+    });
 }
 
 function tampilkanKeuanganGagal() {
@@ -5380,7 +5438,7 @@ function terapkanKeuanganStats(hasil) {
         if (elSantunanBelumDiisi) {
           elSantunanBelumDiisi.style.display = "flex";
           const spanTeks = elSantunanBelumDiisi.querySelector("span:last-child");
-          if (spanTeks) spanTeks.textContent = "Bendahara belum mengisi rate santunan bulan ini.";
+          if (spanTeks) spanTeks.textContent = "Bendahara belum mengisi rate santunan " + kfinFraseWaktu_() + ".";
         }
         if (elSantunanWrap) elSantunanWrap.style.display = "none";
       } else {
@@ -5523,8 +5581,8 @@ function terapkanKeuanganStats(hasil) {
       }
       if (elSelisihLabel) {
         elSelisihLabel.textContent = belumAdaRate
-          ? "Bendahara belum mengisi rate santunan bulan ini"
-          : (kurang ? "Kekurangan dari target bulan ini" : "Realisasi donasi sudah melebihi/menyamai target");
+          ? "Bendahara belum mengisi rate santunan " + kfinFraseWaktu_()
+          : (kurang ? "Kekurangan dari target " + kfinFraseWaktu_() : "Realisasi donasi sudah melebihi/menyamai target");
         elSelisihLabel.style.color = belumAdaRate
           ? "rgba(253, 230, 138, 0.85)"
           : (kurang ? "rgba(252, 165, 165, 0.85)" : "rgba(187, 247, 208, 0.85)");
@@ -5609,6 +5667,33 @@ function terapkanKeuanganStats(hasil) {
   }
 }
 
+// 🆕 Geser bulan yang ditampilkan di tab Keuangan (delta -1 = mundur 1
+// bulan, +1 = maju 1 bulan). Gak boleh maju melebihi bulan berjalan (lihat
+// pengecekan kfinBisaMaju_ di render()). Render ulang tab Keuangan
+// (renderContent() akan panggil loadKeuanganStats() lagi di akhir).
+function gantiBulanKeuangan(delta) {
+  let bulanBaru = kfinBulanPilihan + delta;
+  let tahunBaru = kfinTahunPilihan;
+  if (bulanBaru < 1) { bulanBaru = 12; tahunBaru -= 1; }
+  if (bulanBaru > 12) { bulanBaru = 1; tahunBaru += 1; }
+
+  const now = new Date();
+  const skorBaru = tahunBaru * 12 + bulanBaru;
+  const skorSekarang = now.getFullYear() * 12 + (now.getMonth() + 1);
+  if (skorBaru > skorSekarang) return; // gak ada gunanya lihat bulan yang belum terjadi
+
+  kfinBulanPilihan = bulanBaru;
+  kfinTahunPilihan = tahunBaru;
+  renderContent();
+}
+
+function kembaliKeBulanIniKeuangan() {
+  const now = new Date();
+  kfinBulanPilihan = now.getMonth() + 1;
+  kfinTahunPilihan = now.getFullYear();
+  renderContent();
+}
+
 function loadKeuanganStats() {
   const elBanner = document.getElementById("keuanganLoadingBanner");
   const elBannerIcon = document.getElementById("keuanganLoadingIcon");
@@ -5637,15 +5722,27 @@ function loadKeuanganStats() {
     return daftar[Math.floor(Math.random() * daftar.length)];
   };
 
-  // Kalau sesi ini udah pernah sukses ambil data (mis. user tadi udah buka
-  // tab Keuangan, terus pindah ke tab lain, terus balik lagi TANPA keluar
-  // app), langsung tampilin angka lama dari cache duluan -- instan, gak
-  // sempat keliatan reset ke "..."/0. Setelah itu tetap lanjut fetch ke
+  // 🆕 Ambil data buat bulan & tahun yang LAGI DIPILIH user (default bulan
+  // berjalan, bisa digeser lewat tombol panah di header) -- bukan selalu
+  // bulan berjalan seperti dulu.
+  const bulanDiminta = kfinBulanPilihan;
+  const tahunDiminta = kfinTahunPilihan;
+  const cacheKeyDiminta = kfinCacheKey_(bulanDiminta, tahunDiminta);
+
+  // Kalau bulan-tahun ini udah pernah sukses ke-fetch sebelumnya (mis. user
+  // tadi udah buka bulan ini, pindah ke bulan lain, terus balik lagi TANPA
+  // keluar app), langsung tampilin angka lama dari cache duluan -- instan,
+  // gak sempat keliatan reset ke "..."/0. Setelah itu tetap lanjut fetch ke
   // server di background biar datanya tetap update, TAPI banner gak usah
   // ditampilin lagi karena user udah lihat angkanya.
-  const dariCache = !!keuanganStatsCache;
+  const dariCache = !!keuanganStatsCache[cacheKeyDiminta];
   if (dariCache) {
-    terapkanKeuanganStats(keuanganStatsCache);
+    terapkanKeuanganStats(keuanganStatsCache[cacheKeyDiminta]);
+  } else {
+    // Belum ada cache buat bulan ini -- kosongin dulu tampilan kartu (biar
+    // gak kelihatan sekilas angka bulan SEBELUMNYA yang lagi ditampilin)
+    // sebelum data baru datang.
+    tampilkanKeuanganLoadingKosong_();
   }
 
   if (elBanner) {
@@ -5678,19 +5775,25 @@ function loadKeuanganStats() {
   // menit di server. Array hasil di bawah (pSantunan/pManual/pKitabisa/
   // pMidtrans) dipertahankan urutannya biar terapkanKeuanganStats() di bawah
   // TIDAK perlu diubah sama sekali.
-  const pRingkasan = callGASWithRetry_("getRingkasanKeuangan", [authToken, false]).then(function (r) {
+  const pRingkasan = callGASWithRetry_("getRingkasanKeuangan", [authToken, false, bulanDiminta, tahunDiminta]).then(function (r) {
     return [r.penyaluranSantunan, r.keuanganManual, r.kitabisaRealisasi, r.donasiRealisasi];
   });
 
   Promise.all([pRingkasan])
     .then(function (hasilWrap) {
       const hasil = hasilWrap[0];
-      keuanganStatsCache = hasil;
+      keuanganStatsCache[cacheKeyDiminta] = hasil;
       saveKeuanganCacheHub(); // <-- SIMPAN KE OFFLINE CACHE
-      terapkanKeuanganStats(hasil);
-      if (elBanner) elBanner.style.display = "none";
+      // Jaga race condition: kalau user udah keburu geser ke bulan lain
+      // SEBELUM fetch bulan ini selesai, jangan timpa tampilan bulan yang
+      // SEDANG dilihat sekarang dengan hasil punya bulan yang lama.
+      if (kfinBulanPilihan === bulanDiminta && kfinTahunPilihan === tahunDiminta) {
+        terapkanKeuanganStats(hasil);
+        if (elBanner) elBanner.style.display = "none";
+      }
     })
     .catch(function (err) {
+      if (!(kfinBulanPilihan === bulanDiminta && kfinTahunPilihan === tahunDiminta)) return; // udah pindah bulan, biarin aja
       // Kalau fetch gagal TAPI sebelumnya udah ada cache yang sukses,
       // biarin angka lama itu tetap tampil (lebih baik daripada direset
       // ke "-" cuma gara-gara 1x gangguan jaringan). Banner tetap disembunyiin.
@@ -6152,12 +6255,20 @@ function renderContent() {
     // Badge kecil buat bedain angka yang PER WILAYAH (ikut filter wilayahAkses
     // user login) vs NASIONAL (1 angka gabungan sama ke semua user).
     const badgeWilayah = `<span class="kfin-badge">Per Wilayah</span>`;
-    // Label periode bulan berjalan (mis. "Agu 2026") buat badge di header --
-    // diambil dari tanggal device saat render, BUKAN hardcode, jadi otomatis
-    // ganti tiap bulan tanpa perlu update kode.
+    // 🆕 Label periode SEKARANG ikut bulan yang lagi DIPILIH user
+    // (kfinBulanPilihan/kfinTahunPilihan -- default bulan berjalan pas app
+    // pertama dibuka), BUKAN selalu ikut tanggal device seperti dulu.
+    // Digeser lewat tombol panah di sebelahnya, lihat gantiBulanKeuangan().
     const kfinBulanSingkat = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-    const kfinTanggalSekarang = new Date();
-    const kfinLabelPeriode = kfinBulanSingkat[kfinTanggalSekarang.getMonth()] + " " + kfinTanggalSekarang.getFullYear();
+    const kfinLabelPeriode = kfinBulanSingkat[kfinBulanPilihan - 1] + " " + kfinTahunPilihan;
+    // Tombol "bulan berikutnya" dikunci kalau udah nyampe bulan berjalan --
+    // gak ada gunanya lihat proyeksi bulan yang belum terjadi/belum diisi
+    // Bendahara sama sekali.
+    const kfinNow_ = new Date();
+    const kfinSkorPilihan_ = kfinTahunPilihan * 12 + kfinBulanPilihan;
+    const kfinSkorSekarang_ = kfinNow_.getFullYear() * 12 + (kfinNow_.getMonth() + 1);
+    const kfinBisaMaju_ = kfinSkorPilihan_ < kfinSkorSekarang_;
+    const kfinBisaBulanIni_ = kfinSkorPilihan_ !== kfinSkorSekarang_;
     let html = `
       <div class="keuangan-header-section" style="grid-column: 1 / -1;">
       <div style="display:flex; align-items:center; gap:14px; margin-bottom:8px; padding-top:16px;">
@@ -6166,10 +6277,24 @@ function renderContent() {
         </div>
         <div style="flex:1; min-width:0;">
           <h2 style="font-weight:800; font-size:19px; margin:0; letter-spacing:-0.3px; background:linear-gradient(90deg, var(--bento-primary), var(--bento-tertiary)); -webkit-background-clip:text; background-clip:text; color:transparent;">Keuangan</h2>
-          <div style="font-size:12.5px; color:var(--text-secondary); margin-top:2px;">Donasi &amp; santunan Program GOPAY bulan ini</div>
+          <div style="font-size:12.5px; color:var(--text-secondary); margin-top:2px;">Donasi &amp; santunan Program GOPAY ${kfinBisaBulanIni_ ? '&middot; ' + kfinLabelPeriode : 'bulan ini'}</div>
         </div>
-        <span style="font-size:10.5px; font-weight:700; padding:4px 10px; border-radius:999px; background:rgba(var(--bento-primary-rgb),0.15); color:var(--bento-primary); white-space:nowrap; flex-shrink:0;">${kfinLabelPeriode}</span>
+        <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
+          <button type="button" onclick="gantiBulanKeuangan(-1)" title="Bulan sebelumnya" style="width:24px; height:24px; border-radius:999px; background:rgba(255,255,255,0.08); border:1px solid var(--glass-border); color:var(--text-secondary); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0;">
+            <span class="material-symbols-outlined" style="font-size:16px;">chevron_left</span>
+          </button>
+          <span style="font-size:10.5px; font-weight:700; padding:4px 10px; border-radius:999px; background:rgba(var(--bento-primary-rgb),0.15); color:var(--bento-primary); white-space:nowrap;">${kfinLabelPeriode}</span>
+          <button type="button" onclick="gantiBulanKeuangan(1)" title="Bulan berikutnya" ${kfinBisaMaju_ ? '' : 'disabled'} style="width:24px; height:24px; border-radius:999px; background:rgba(255,255,255,0.08); border:1px solid var(--glass-border); color:var(--text-secondary); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; ${kfinBisaMaju_ ? '' : 'opacity:0.3; cursor:default;'}">
+            <span class="material-symbols-outlined" style="font-size:16px;">chevron_right</span>
+          </button>
+        </div>
       </div>
+      ${kfinBisaBulanIni_ ? `
+      <div style="display:flex; justify-content:flex-end; margin-top:-2px; margin-bottom:6px;">
+        <button type="button" onclick="kembaliKeBulanIniKeuangan()" style="font-size:10px; font-weight:700; padding:3px 10px; border-radius:999px; background:transparent; border:1px dashed var(--glass-border); color:var(--text-muted); cursor:pointer;">
+          &larr; Kembali ke Bulan Ini
+        </button>
+      </div>` : ``}
       <div style="height:1px; background:linear-gradient(90deg, var(--glass-border-strong), transparent); margin: 16px 0 22px;"></div>
 
       <!-- Banner status ambil data: nunjukin lagi loading / gagal, biar user
@@ -6212,11 +6337,11 @@ function renderContent() {
         ${(currentUser && ["SUPERADMIN", "ADMIN"].indexOf(currentUser.role) !== -1) ? `
         <button type="button" onclick="bukaInputRateSantunan()" style="display:flex; align-items:center; justify-content:center; gap:6px; width:100%; margin: 14px 0 4px; padding:10px 14px; border-radius:12px; background:linear-gradient(90deg, var(--bento-primary), var(--bento-tertiary)); border:none; color:#062012; font-size:12px; font-weight:800; cursor:pointer; box-shadow:0 6px 16px rgba(var(--bento-primary-rgb),0.35);">
           <span class="material-symbols-outlined" style="font-size:17px; font-variation-settings:'FILL' 1;">bolt</span>
-          Input Data Bulan Ini
+          ${kfinBisaBulanIni_ ? 'Input Data ' + kfinLabelPeriode : 'Input Data Bulan Ini'}
         </button>` : ``}
 
         <div class="kfin-number" id="keuanganJumlahYatim"><span class="kv-loading">...</span></div>
-        <div class="kfin-caption" style="margin: 4px 0 18px;">Anak &middot; Wilayah ${escapeHtmlHub(wilayahText)} &middot; Bulan Ini</div>
+        <div class="kfin-caption" style="margin: 4px 0 18px;">Anak &middot; Wilayah ${escapeHtmlHub(wilayahText)} &middot; ${kfinLabelPeriode}</div>
 
         <div class="kfin-stat-grid" style="margin-bottom: 18px;">
           <div class="keuangan-mini-stat kfin-stat-chip" style="--kfin-chip-rgb: 168,85,247; --kfin-chip-color: #C084FC;">
@@ -6238,10 +6363,10 @@ function renderContent() {
         <div class="kfin-divider" style="padding-top: 16px;">
           <div id="keuanganSantunanBelumDiisi" class="kfin-warning-banner" style="display: none; margin-top: 16px; margin-bottom: 4px;">
             <span class="material-symbols-outlined" style="font-size: 18px; color: #FBBF24;">info</span>
-            <span style="font-size: 11px; color: #FDE68A;">Bendahara belum mengisi rate santunan bulan ini.</span>
+            <span style="font-size: 11px; color: #FDE68A;">Bendahara belum mengisi rate santunan ${kfinBisaBulanIni_ ? kfinLabelPeriode : 'bulan ini'}.</span>
           </div>
           <div id="keuanganSantunanWrap" style="margin-top: 16px;">
-            <div class="kfin-metric-label">Total Santunan Program GOPAY bulan ini</div>
+            <div class="kfin-metric-label">Total Santunan Program GOPAY ${kfinBisaBulanIni_ ? kfinLabelPeriode : 'bulan ini'}</div>
             <div class="kfin-number kfin-number-md" style="margin-bottom: 4px;" id="keuanganTotalSantunan"><span class="kv-loading">...</span></div>
             <div class="kfin-metric-sub" id="keuanganRincianRate"><span class="kv-loading">...</span></div>
 
@@ -6277,7 +6402,7 @@ function renderContent() {
 
         <div id="keuanganBelumDiisi" class="kfin-warning-banner" style="display: none; margin-bottom: 16px;">
           <span class="material-symbols-outlined" style="font-size: 18px; color: #FBBF24;">info</span>
-          <span style="font-size: 11px; color: #FDE68A;">Bendahara belum mengisi data keuangan bulan ini.</span>
+          <span style="font-size: 11px; color: #FDE68A;">Bendahara belum mengisi data keuangan ${kfinBisaBulanIni_ ? kfinLabelPeriode : 'bulan ini'}.</span>
         </div>
 
         <div id="keuanganProgresWrap">
@@ -7359,8 +7484,12 @@ function submitCatatPenyaluran() {
 // SENDIRI tetap bisa diisi/diedit manual seperti biasa.
 // ============================================================
 function bukaInputRateSantunan() {
-  document.getElementById("rsInputBulan").value = String(new Date().getMonth() + 1);
-  document.getElementById("rsInputTahun").value = new Date().getFullYear();
+  // 🆕 Default ke bulan yang LAGI DILIHAT di tab Keuangan (kfinBulanPilihan/
+  // kfinTahunPilihan), bukan selalu bulan device -- biar kalau Admin lagi
+  // nengok histori Januari terus klik tombol ini, formnya udah otomatis
+  // Januari (tetap bisa diganti manual kalau mau input bulan lain).
+  document.getElementById("rsInputBulan").value = String(kfinBulanPilihan);
+  document.getElementById("rsInputTahun").value = kfinTahunPilihan;
   document.getElementById("rsInputCakupan").value = "1";
   document.getElementById("rsInputCatatan").value = "";
   document.getElementById("rsRateGlobalPokok").value = "";
