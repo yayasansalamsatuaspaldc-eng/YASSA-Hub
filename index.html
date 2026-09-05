@@ -1246,6 +1246,9 @@
     min-height: calc(var(--app-vh, 1vh) * 100); /* 🩹 fallback tinggi viewport asli, lihat script di <head> */
     display: flex; align-items: center; justify-content: center;
     background: var(--bg-navy-deep);
+    overflow-y: auto; /* 🩹 FIX: biar bisa di-scroll kalau konten form lebih
+                          tinggi dari layar (mis. HP pendek / keyboard muncul) */
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Splash / loading awal pas aplikasi dibuka (bersihin cache + refresh data) */
@@ -1739,11 +1742,17 @@
   .login-card {
     width: 100%; max-width: 400px;
     background: var(--bg-navy);
-    min-height: 100vh;
+    min-height: 100vh; min-height: 100dvh;
+    min-height: calc(var(--app-vh, 1vh) * 100); /* 🩹 sinkron sama fallback tinggi viewport asli */
     display: flex;
     flex-direction: column;
     position: relative;
-    overflow: hidden;
+    overflow-y: auto;   /* 🩹 FIX: sebelumnya "hidden" -- ikut mematikan scroll
+                            kalau konten (logo+form+footer) lebih tinggi dari
+                            layar; sekarang boleh scroll vertikal. */
+    overflow-x: hidden; /* tetap jaga sudut membulat di desktop (>=1024px)
+                            gak "bocor" secara horizontal */
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Laptop/Desktop asli ke atas: layar login jadi kanvas ambient penuh, kartu login terpusat.
