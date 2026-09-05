@@ -1047,8 +1047,27 @@
     padding: 24px; text-align: center; box-shadow: var(--shadow-deep), var(--shadow-glow-blue);
     border: 1px solid var(--glass-border-strong);
     transform: scale(0.9); transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    /* 🩹 FIX: konten modal (mis. QR Donasi + 2 kartu rekening) bisa lebih
+       tinggi dari layar HP -- SEBELUMNYA gak ada batas tinggi/scroll di sini,
+       jadi judul & tombol "Mengerti" ketutup/gak kejangkau sama sekali dan
+       user gak bisa geser atas-bawah buat lihatnya. Sekarang dibatasi tinggi
+       maksimal + scroll internal kalau kepanjangan. */
+    max-height: 85vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    position: relative;
   }
   .custom-modal-overlay.open .custom-modal { transform: scale(1); }
+  /* 🩹 Tombol tutup (X) -- SELALU kelihatan di pojok kanan atas OVERLAY
+     (bukan di dalam kotak modal yang bisa discroll), biar user tetap bisa
+     nutup modal kapan aja tanpa perlu scroll cari tombol "Mengerti" dulu. */
+  .custom-modal-close {
+    position: absolute; top: 14px; right: 14px; z-index: 1002;
+    width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
+    background: rgba(255,255,255,0.12); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(6px);
+  }
+  .custom-modal-close .material-symbols-outlined { font-size: 19px; }
+  .custom-modal-close:active { background: rgba(255,255,255,0.22); }
   .custom-modal-title { font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px; }
   .custom-modal-message { font-size: 14px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 24px; white-space: pre-line; }
   .custom-modal-actions { display: flex; gap: 12px; justify-content: center; }
@@ -2718,6 +2737,9 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
      modal ini independen, jadi bisa tampil baik di halaman login
      maupun setelah masuk ke app. -->
 <div class="custom-modal-overlay" id="customModalOverlay">
+  <button type="button" class="custom-modal-close" onclick="closeModal()" aria-label="Tutup" title="Tutup">
+    <span class="material-symbols-outlined">close</span>
+  </button>
   <div class="custom-modal">
     <div class="custom-modal-title" id="customModalTitle">Informasi</div>
     <div class="custom-modal-message" id="customModalMessage">Pesan informasi disini.</div>
