@@ -3622,6 +3622,13 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
 
 </div>
 
+<!-- 🔔 FIREBASE CLOUD MESSAGING — dipakai fitur Notifikasi Hub sendiri
+     (lihat renderNotifHubCard/aktifkanNotifikasiHub di <script> utama di
+     bawah). HARUS dimuat SEBELUM <script> utama supaya global "firebase"
+     sudah ada saat initHubForegroundMessaging_() jalan. -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
+
 <script>
 const APP_VERSION = "1.4.1 (Login Redesign)";
 const APP_BUILD_DATE = "2026-08-02";
@@ -6763,6 +6770,8 @@ function renderContent() {
         </div>
       </div>
 
+      <div id="notifHubProfilCard"></div>
+
       <div style="background: var(--glass-strong); border-radius: 20px; display: flex; flex-direction: column; border: 1px solid var(--glass-border); border-left: 4px solid #EF4444; overflow: hidden;">
         <div style="display: flex; align-items: center; gap: 12px; padding: 15px 16px; cursor: pointer;" onclick="handleUserMenuClick('logout')">
           <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(239, 68, 68, 0.15); color: #EF4444; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
@@ -6778,6 +6787,7 @@ function renderContent() {
     `;
     el.innerHTML = html;
     loadProfilePerforma();
+    renderNotifHubCard();
     return;
   }
 
@@ -6867,6 +6877,141 @@ function openMobileApp() {
       document.getElementById("overlayFrame").src = menu.baseUrl;
     });
 }
+
+// ============================================================
+// 🔔 NOTIFIKASI PUSH MILIK HUB SENDIRI (tanpa lewat YASSA Mobile)
+// Beda dari blok "Notifikasi YASSA Mobile lewat Hub" di bawah ini: blok
+// itu buat mengaktifkan notifikasi punya app MOBILE (butuh tab baru karena
+// Mobile dibuka di IFRAME Hub -- iframe cross-origin gak boleh minta izin
+// notifikasi). Halaman Hub ini sendiri BUKAN iframe (dia yang jadi
+// halaman top-level), jadi Notification.requestPermission() boleh
+// dipanggil LANGSUNG dari sini, tanpa tab baru/tab tersembunyi apa pun.
+//
+// Firebase project yang dipakai SAMA dengan Mobile (yassamobile-1e4d2998),
+// tapi token FCM-nya akan BEDA dari token Mobile (token FCM terikat per
+// origin web: Hub jalan di yayasansalamsatuaspaldc-eng.github.io, Mobile
+// di yassa-mobile.github.io) -- makanya user yang mau dapat notif dari
+// Hub DAN Mobile tetap perlu aktifkan di kedua tempat.
+// ============================================================
+const HUB_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAKMECZeKWpbYz5fB_1dWNAaa5uiqoUwIU",
+  authDomain: "yassamobile-1e4d2998.firebaseapp.com",
+  projectId: "yassamobile-1e4d2998",
+  storageBucket: "yassamobile-1e4d2998.firebasestorage.app",
+  messagingSenderId: "1071864272227",
+  appId: "1:1071864272227:web:78b1354aa825b713d36f56"
+};
+const HUB_FCM_VAPID_KEY = "BHIK0YI29D_A7VoUrVQ7kSbCe7BpGbYIvvZn0KX50a2CXWAfNubkRQlhKK3jDMOsKFYUL7mHKoQDh2XtsanW6KA";
+
+let _hubMessaging = null;
+function getHubMessaging_() {
+  if (_hubMessaging) return _hubMessaging;
+  if (typeof firebase === "undefined" || !firebase.messaging || !("serviceWorker" in navigator)) return null;
+  try {
+    if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(HUB_FIREBASE_CONFIG);
+    _hubMessaging = firebase.messaging();
+    return _hubMessaging;
+  } catch (e) {
+    console.log("[FCM Hub] Gagal init:", e);
+    return null;
+  }
+}
+
+// Render kartu "Aktifkan Notifikasi" di tab Profil. Statusnya disimpan di
+// localStorage KUNCI TERPISAH dari punya Mobile ("yassa_hub_notif_status"
+// vs "yassa_mobile_notif_status") -- keduanya memang independen.
+function renderNotifHubCard() {
+  const target = document.getElementById("notifHubProfilCard");
+  if (!target) return;
+
+  if (!("Notification" in window) || !("serviceWorker" in navigator)) {
+    target.innerHTML = "";
+    return;
+  }
+
+  const status = localStorage.getItem("yassa_hub_notif_status"); // 'granted' | 'denied' | 'default' | 'error' | null
+
+  if (status === "granted") {
+    target.innerHTML = "";
+    return;
+  }
+
+  const isDenied = status === "denied";
+  target.innerHTML = `
+    <div style="background: var(--glass-strong); border-radius: 20px; display: flex; flex-direction: column; border: 1px solid var(--glass-border); border-left: 4px solid ${isDenied ? "#EF4444" : "#0B7A45"}; overflow: hidden; margin-bottom: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; padding: 15px 16px; cursor: pointer;" onclick="aktifkanNotifikasiHub()">
+        <div style="width: 40px; height: 40px; border-radius: 12px; background: ${isDenied ? "rgba(239,68,68,0.15)" : "rgba(11,122,69,0.15)"}; color: ${isDenied ? "#EF4444" : "#0B7A45"}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <span class="material-symbols-outlined">${isDenied ? "notifications_off" : "notifications_active"}</span>
+        </div>
+        <div style="flex: 1;">
+          <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${isDenied ? "Notifikasi Diblokir — Coba Lagi" : "Aktifkan Notifikasi"}</div>
+          <div style="font-size: 10px; color: var(--text-secondary);">${isDenied ? "Aktifkan manual lewat pengaturan browser, atau tekan ini lagi" : "Dapat notifikasi langsung dari YASSA Hub, cukup sekali per HP"}</div>
+        </div>
+        <span class="material-symbols-outlined" style="color: var(--text-muted);">chevron_right</span>
+      </div>
+    </div>`;
+}
+
+async function aktifkanNotifikasiHub() {
+  try {
+    const messaging = getHubMessaging_();
+    if (!messaging) {
+      showModal("Notifikasi", "Browser ini tidak mendukung notifikasi push.");
+      return;
+    }
+
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+      localStorage.setItem("yassa_hub_notif_status", permission);
+      renderNotifHubCard();
+      if (permission === "denied") {
+        showModal("Notifikasi Diblokir", "Izin notifikasi ditolak. Aktifkan manual lewat pengaturan browser (ikon gembok di address bar) kalau berubah pikiran.");
+      }
+      return;
+    }
+
+    await navigator.serviceWorker.register("sw.js");
+    const swReg = await navigator.serviceWorker.ready;
+    const token = await messaging.getToken({ vapidKey: HUB_FCM_VAPID_KEY, serviceWorkerRegistration: swReg });
+
+    if (!token) {
+      localStorage.setItem("yassa_hub_notif_status", "error");
+      renderNotifHubCard();
+      return;
+    }
+
+    await callGASWithRetry_("subscribeTokenHub", [authToken, token]);
+    localStorage.setItem("yassa_hub_notif_status", "granted");
+    renderNotifHubCard();
+    showModal("Notifikasi Aktif", "Notifikasi dari YASSA Hub sudah aktif di perangkat ini.");
+  } catch (e) {
+    console.log("[FCM Hub] Gagal aktifkan notifikasi:", e);
+    localStorage.setItem("yassa_hub_notif_status", "error");
+    renderNotifHubCard();
+    showModal("Gagal Mengaktifkan", "Terjadi kendala saat mengaktifkan notifikasi. Coba lagi beberapa saat.");
+  }
+}
+
+// Notifikasi masuk selagi tab Hub lagi kebuka (foreground) -- kalau app
+// ditutup/di-background, notifikasi ditangani otomatis oleh sw.js
+// (lihat firebase-messaging-sw bagian yang ditambahkan di sana).
+(function initHubForegroundMessaging_() {
+  const messaging = getHubMessaging_();
+  if (!messaging) return;
+  try {
+    messaging.onMessage(function (payload) {
+      const title = (payload.notification && payload.notification.title) || "YASSA Hub";
+      const body = (payload.notification && payload.notification.body) || "";
+      if (Notification.permission === "granted" && "serviceWorker" in navigator) {
+        navigator.serviceWorker.ready.then(function (reg) {
+          reg.showNotification(title, { body: body, vibrate: [200, 100, 200] });
+        });
+      }
+    });
+  } catch (e) {
+    console.log("[FCM Hub] Gagal pasang onMessage:", e);
+  }
+})();
 
 // ============================================================
 // 🔔 Notifikasi YASSA Mobile lewat Hub
