@@ -3,7 +3,44 @@
 // bisa kebuka meski koneksi lagi jelek. Konten di dalam iframe (Kotak & Donasi,
 // Absensi, AWG, Penerima Manfaat) TETAP butuh internet karena itu app terpisah.
 
-const CACHE_NAME = "yassa-GOPAY-shell-v8";
+// ============================================================
+// 🔔 FIREBASE CLOUD MESSAGING — Notifikasi push milik Hub sendiri.
+// Blok ini yang bikin notifikasi tetap muncul walau app Hub lagi DITUTUP
+// (bukan cuma pas tab-nya kebuka) -- handler onMessage biasa (di
+// index.html) cuma nangkep notif kalau tab Hub lagi aktif di foreground.
+// TIDAK bentrok/gak dobel-jalan sama fitur cache di bawah -- ini cuma
+// nambah 1 event listener baru ("push" -- ditangani otomatis di dalam
+// onBackgroundMessage), sama sekali gak nyentuh listener install/
+// activate/fetch yang sudah ada.
+// Firebase project SAMA dengan yang dipakai index.html (lihat
+// HUB_FIREBASE_CONFIG di sana) -- kalau config itu diganti, config di
+// sini WAJIB ikut diganti biar tetap sinkron.
+// ============================================================
+importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js");
+
+firebase.initializeApp({
+  apiKey: "AIzaSyAKMECZeKWpbYz5fB_1dWNAaa5uiqoUwIU",
+  authDomain: "yassamobile-1e4d2998.firebaseapp.com",
+  projectId: "yassamobile-1e4d2998",
+  storageBucket: "yassamobile-1e4d2998.firebasestorage.app",
+  messagingSenderId: "1071864272227",
+  appId: "1:1071864272227:web:78b1354aa825b713d36f56",
+});
+
+const _hubMessaging = firebase.messaging();
+_hubMessaging.onBackgroundMessage(function (payload) {
+  const title = (payload.notification && payload.notification.title) || "YASSA Hub";
+  const body = (payload.notification && payload.notification.body) || "";
+  self.registration.showNotification(title, {
+    body: body,
+    icon: "./icon-192.png",
+    badge: "./icon-192.png",
+    vibrate: [200, 100, 200],
+  });
+});
+
+const CACHE_NAME = "yassa-GOPAY-shell-v9"; // dinaikkan dari v8 -- SW ini sekarang juga tangani push notifikasi (FCM), bukan cuma cache shell
 const SHELL_FILES = [
   "./",
   "./index.html",
