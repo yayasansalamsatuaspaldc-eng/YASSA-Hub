@@ -12890,10 +12890,10 @@ function openProgramSapa() {
       </button>
     </div>
   `;
-  showModal("Program SAPA", html);
+  showModal("Program SAPA", html, false, null, "Kembali");
 }
 
-function showModal(title, message, isConfirm = false, onConfirm = null) {
+function showModal(title, message, isConfirm = false, onConfirm = null, okLabel = null) {
   const modal = document.getElementById('customModalOverlay');
   document.getElementById('customModalTitle').textContent = title;
   document.getElementById('customModalMessage').innerHTML = message; 
@@ -12918,9 +12918,14 @@ function showModal(title, message, isConfirm = false, onConfirm = null) {
     actionsContainer.appendChild(btnCancel);
     actionsContainer.appendChild(btnConfirm);
   } else {
+    // 🆕 okLabel: dipakai buat kasus modal ini isinya PILIHAN menu (bukan
+    // pesan info biasa) -- misal openProgramSapa() lewat teks "Kembali",
+    // biar gak kebaca seolah user "menyetujui" sesuatu. Kalau gak diisi,
+    // tetap default "Mengerti" seperti sebelumnya (gak ganggu pemanggilan
+    // showModal() lain yang sudah ada).
     const btnOk = document.createElement('button');
     btnOk.className = 'btn-modal btn-confirm';
-    btnOk.textContent = 'Mengerti';
+    btnOk.textContent = okLabel || 'Mengerti';
     btnOk.onclick = () => closeModal();
     actionsContainer.appendChild(btnOk);
   }
