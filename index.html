@@ -6816,19 +6816,52 @@ function renderContent() {
         <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
       </button>
 
-      <!-- Pintu masuk PROGRAM SAPA -- 1 tombol, tekan buka PILIHAN (bukan
-           langsung ke salah satu fitur) karena Program SAPA punya 2 menu:
-           Laporan Bulanan & Pledge Donatur. Lihat openProgramSapa(). -->
-      <button onclick="openProgramSapa()" class="kfin-cta" style="margin-bottom: 12px;">
-        <div class="kfin-icon-wrap" style="--kfin-accent: #EC4899; --kfin-accent-rgb: 236,72,153; width: 44px; height: 44px;">
-          <span class="material-symbols-outlined" style="font-size: 22px;">diversity_1</span>
+      <!-- Pintu masuk PROGRAM SAPA -- BUKAN modal mengambang lagi (revisi
+           user 2026: dianggap "mengambang", minta "menyatu"). Sekarang
+           jadi ACCORDION menyatu di alur halaman: tekan tombol "Program
+           SAPA" -> submenu (Laporan Bulanan & Pledge Donatur) meluncur
+           turun tepat di bawahnya, reuse toggleRincianWilayahKeuangan()
+           & class .kv-rincian-list yang sudah ada (sama persis kayak
+           "Rincian per Wilayah" di Kartu 1/2 atas). Lihat
+           toggleProgramSapaMenu(). -->
+      <div style="margin-bottom: 12px;">
+        <button onclick="toggleProgramSapaMenu()" class="kfin-cta" style="margin-bottom: 0;">
+          <div class="kfin-icon-wrap" style="--kfin-accent: #EC4899; --kfin-accent-rgb: 236,72,153; width: 44px; height: 44px;">
+            <span class="material-symbols-outlined" style="font-size: 22px;">diversity_1</span>
+          </div>
+          <div style="flex: 1;">
+            <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Program SAPA</div>
+            <div style="font-size: 11px; color: var(--text-secondary);">Sahabat Peduli Anak</div>
+          </div>
+          <span class="material-symbols-outlined" id="programSapaChevron" style="font-size: 20px; color: var(--text-muted); transition: transform 0.25s;">expand_more</span>
+        </button>
+        <div id="programSapaRincianList" class="kv-rincian-list" style="margin-left: 14px; padding-left: 14px; border-left: 2px dashed rgba(236,72,153,0.35);">
+          <div>
+            <button onclick="openLaporanBulananSapa()" class="kfin-cta" style="margin: 10px 0 0;">
+              <div class="kfin-icon-wrap" style="--kfin-accent: #EC4899; --kfin-accent-rgb: 236,72,153; width: 38px; height: 38px;">
+                <span class="material-symbols-outlined" style="font-size: 19px;">diversity_1</span>
+              </div>
+              <div style="flex: 1;">
+                <div style="font-size: 12.5px; font-weight: 700; color: var(--text-primary);">Laporan Bulanan Program SAPA</div>
+                <div style="font-size: 10.5px; color: var(--text-secondary);">Pendapatan &amp; pengeluaran santunan Anak Asuh per bulan</div>
+              </div>
+              <span class="material-symbols-outlined" style="font-size: 18px; color: var(--text-muted);">chevron_right</span>
+            </button>
+          </div>
+          <div>
+            <button onclick="openPledgeDonaturSapa()" class="kfin-cta" style="margin: 10px 0 0;">
+              <div class="kfin-icon-wrap" style="--kfin-accent: #DB2777; --kfin-accent-rgb: 219,39,119; width: 38px; height: 38px;">
+                <span class="material-symbols-outlined" style="font-size: 19px;">handshake</span>
+              </div>
+              <div style="flex: 1;">
+                <div style="font-size: 12.5px; font-weight: 700; color: var(--text-primary);">Pledge Donatur SAPA</div>
+                <div style="font-size: 10.5px; color: var(--text-secondary);">Lacak komitmen donasi per donatur &amp; jadwal bulanannya</div>
+              </div>
+              <span class="material-symbols-outlined" style="font-size: 18px; color: var(--text-muted);">chevron_right</span>
+            </button>
+          </div>
         </div>
-        <div style="flex: 1;">
-          <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Program SAPA</div>
-          <div style="font-size: 11px; color: var(--text-secondary);">Sahabat Peduli Anak</div>
-        </div>
-        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
-      </button>
+      </div>
 
       <!-- Pintu masuk ke Rekap Bantuan Disabilitas (PEDAS) -- gabungan
            santunan disabilitas GOPAY (otomatis) + bantuan insidental
@@ -12860,37 +12893,12 @@ document.getElementById("kalenderKegiatanClose").addEventListener("click", funct
   document.getElementById("kalenderKegiatanPage").classList.remove("open");
 });
 
-// 🆕 Pilihan menu Program SAPA -- ditekan dari tombol "Program SAPA" (tab
-// Keuangan). Dipakai showModal() yang sudah ada, isinya diganti 2 tombol
-// pilihan (bukan pesan biasa): "Laporan Bulanan Program SAPA" &
-// "Pledge Donatur SAPA". Tiap tombol nutup modal dulu (closeModal()) baru
-// manggil fungsi aslinya, biar gak numpuk overlay.
-function openProgramSapa() {
-  const html = `
-    <div style="display:flex; flex-direction:column; gap:10px; margin-top: 2px;">
-      <button onclick="closeModal(); openLaporanBulananSapa();" class="kfin-cta" style="margin:0;">
-        <div class="kfin-icon-wrap" style="--kfin-accent: #EC4899; --kfin-accent-rgb: 236,72,153; width: 40px; height: 40px;">
-          <span class="material-symbols-outlined" style="font-size: 20px;">diversity_1</span>
-        </div>
-        <div style="flex: 1; text-align: left;">
-          <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Laporan Bulanan Program SAPA</div>
-          <div style="font-size: 10.5px; color: var(--text-secondary);">Pendapatan &amp; pengeluaran santunan Anak Asuh per bulan</div>
-        </div>
-        <span class="material-symbols-outlined" style="font-size: 18px; color: var(--text-muted);">chevron_right</span>
-      </button>
-      <button onclick="closeModal(); openPledgeDonaturSapa();" class="kfin-cta" style="margin:0;">
-        <div class="kfin-icon-wrap" style="--kfin-accent: #DB2777; --kfin-accent-rgb: 219,39,119; width: 40px; height: 40px;">
-          <span class="material-symbols-outlined" style="font-size: 20px;">handshake</span>
-        </div>
-        <div style="flex: 1; text-align: left;">
-          <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Pledge Donatur SAPA</div>
-          <div style="font-size: 10.5px; color: var(--text-secondary);">Lacak komitmen donasi per donatur &amp; jadwal bulanannya</div>
-        </div>
-        <span class="material-symbols-outlined" style="font-size: 18px; color: var(--text-muted);">chevron_right</span>
-      </button>
-    </div>
-  `;
-  showModal("Program SAPA", html, false, null, "Kembali");
+// 🆕 Toggle submenu Program SAPA -- REVISI (2026): tadinya popup modal
+// (showModal), diganti jadi accordion MENYATU di alur halaman biar gak
+// keliatan "mengambang". Reuse toggleRincianWilayahKeuangan() yang sudah
+// ada (sama persis kayak "Rincian per Wilayah" di Kartu 1/2 Keuangan).
+function toggleProgramSapaMenu() {
+  toggleRincianWilayahKeuangan('programSapaRincianList', 'programSapaChevron');
 }
 
 function showModal(title, message, isConfirm = false, onConfirm = null, okLabel = null) {
@@ -12919,8 +12927,8 @@ function showModal(title, message, isConfirm = false, onConfirm = null, okLabel 
     actionsContainer.appendChild(btnConfirm);
   } else {
     // 🆕 okLabel: dipakai buat kasus modal ini isinya PILIHAN menu (bukan
-    // pesan info biasa) -- misal openProgramSapa() lewat teks "Kembali",
-    // biar gak kebaca seolah user "menyetujui" sesuatu. Kalau gak diisi,
+    // pesan info biasa), teks tombol bisa diganti mis. "Kembali" biar gak
+    // kebaca seolah user "menyetujui" sesuatu. Kalau gak diisi,
     // tetap default "Mengerti" seperti sebelumnya (gak ganggu pemanggilan
     // showModal() lain yang sudah ada).
     const btnOk = document.createElement('button');
