@@ -3219,6 +3219,12 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
     </div>
   </div>
 
+  <!-- 🆕 Input file tersembunyi buat upload foto dokumentasi bantuan
+       (BASO/BADIK/BATAN + PEDAS) -- SATU input dipakai bergantian buat
+       semua baris/program lewat fotoBantuanUploadClick() (target diisi
+       ke variabel JS fotoBantuanTarget sebelum .click() dipanggil). -->
+  <input type="file" id="fotoBantuanInput" accept="image/*" style="display:none;" onchange="fotoBantuanDipilih(this)">
+
   <!-- 🆕 Modal Input Data Santunan Bulanan (Rate_Santunan_Bulanan) -- khusus
        SUPERADMIN/ADMIN. Jumlah Anak Yatim/Yatim Piatu/Disabilitas SEMUA
        wilayah ditarik OTOMATIS sekaligus dari YASSA Mobile (tombol "Tarik
@@ -8026,7 +8032,9 @@ function renderRekapPedas(data) {
         </div>
         <div style="text-align:right;">
           <div style="font-size:12.5px; font-weight:700; color: var(--text-primary); white-space:nowrap;">${formatRupiahHub(b.nilai)}</div>
-          ${(bisaEdit && b.editable) ? `<button onclick="hapusBantuanPedasClick('${b.id}')" style="margin-top:6px; background:transparent; border:none; color:#FCA5A5; cursor:pointer; font-size:10.5px; display:flex; align-items:center; gap:3px; font-family:inherit;"><span class="material-symbols-outlined" style="font-size:14px;">delete</span> Hapus</button>` : ""}
+          ${b.linkFoto ? `<a href="${escapeHtmlHub(b.linkFoto)}" target="_blank" rel="noopener" style="margin-top:6px; text-decoration:none; color:#93C5FD; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px;"><span class="material-symbols-outlined" style="font-size:14px;">photo</span> Lihat Foto</a>` : ""}
+          ${(bisaEdit && b.editable) ? `<button onclick="fotoBantuanUploadClick('pedas', '${b.id}', loadRekapPedas)" style="margin-top:6px; background:transparent; border:none; color:#67E8F9; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px; font-family:inherit; width:100%;"><span class="material-symbols-outlined" style="font-size:14px;">add_a_photo</span> ${b.linkFoto ? "Ganti Foto" : "Upload Foto"}</button>` : ""}
+          ${(bisaEdit && b.editable) ? `<button onclick="hapusBantuanPedasClick('${b.id}')" style="margin-top:6px; background:transparent; border:none; color:#FCA5A5; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px; font-family:inherit; width:100%;"><span class="material-symbols-outlined" style="font-size:14px;">delete</span> Hapus</button>` : ""}
         </div>
       </div>`;
     });
@@ -8230,6 +8238,58 @@ const PROGRAM_LAIN_META = {
 };
 function capitalizeFirst_(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
+// ============================================================
+// 📸 UPLOAD FOTO DOKUMENTASI BANTUAN (BASO/BADIK/BATAN + PEDAS) -- SATU
+// file input tersembunyi (#fotoBantuanInput) dipakai bergantian buat
+// semua program & semua baris, dibedakan lewat fotoBantuanTarget yang
+// diisi pas tombol "Upload Foto"/"Ganti Foto" diklik. Backend:
+// uploadFotoBantuanBaso/Badik/Batan/Pedas (Code.gs) -- link foto hasil
+// upload disimpan di kolom "LinkFoto" sheet log masing-masing program,
+// lalu ikut dibalikin di getRekap.../getRekapPedas sebagai b.linkFoto
+// (server yang nentuin boleh/gak-nya per role: SUPERADMIN/ADMIN semua
+// wilayah, KORWIL wilayah sendiri, role lain gak dikasih link).
+// ============================================================
+let fotoBantuanTarget = null; // { programKey: "baso"|"badik"|"batan"|"pedas", id, reload: fn }
+
+function fotoBantuanUploadClick(programKey, id, reload) {
+  fotoBantuanTarget = { programKey: programKey, id: id, reload: reload };
+  const input = document.getElementById("fotoBantuanInput");
+  input.value = "";
+  input.click();
+}
+
+function fotoBantuanDipilih(input) {
+  const file = input.files && input.files[0];
+  const target = fotoBantuanTarget;
+  if (!file || !target) return;
+  if (!/^image\//.test(file.type)) {
+    showModal("Gagal", "File yang dipilih harus berupa foto (JPG/PNG/WEBP).");
+    input.value = "";
+    return;
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    showModal("Gagal", "Ukuran foto maksimal 10MB.");
+    input.value = "";
+    return;
+  }
+  const namaFungsi = "uploadFotoBantuan" + capitalizeFirst_(target.programKey);
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const base64Data = e.target.result.split(",")[1];
+    callGASWithRetry_(namaFungsi, [authToken, target.id, base64Data, file.type, file.name], { timeoutMs: 60000, maxAttempts: 1 })
+      .then(function (res) {
+        input.value = "";
+        if (res && res.peringatan) showModal("Foto Terupload", res.peringatan);
+        if (typeof target.reload === "function") target.reload();
+      })
+      .catch(function (err) {
+        input.value = "";
+        showModal("Gagal", err.message);
+      });
+  };
+  reader.readAsDataURL(file);
+}
+
 let programLainAktif = "baso"; // "baso" | "badik" | "batan"
 let programLainBulanAktif = null, programLainTahunAktif = null, programLainWilayahAktif = "";
 let programLainModeAktif = "bulanan"; // "bulanan" | "tahunan"
@@ -8373,7 +8433,9 @@ function renderRekapProgramLain(data) {
         </div>
         <div style="text-align:right;">
           <div style="font-size:12.5px; font-weight:700; color: var(--text-primary); white-space:nowrap;">${formatRupiahHub(b.nilai)}</div>
-          ${(bisaEdit && b.editable) ? `<button onclick="hapusBantuanProgramLainClick('${b.id}')" style="margin-top:6px; background:transparent; border:none; color:#FCA5A5; cursor:pointer; font-size:10.5px; display:flex; align-items:center; gap:3px; font-family:inherit;"><span class="material-symbols-outlined" style="font-size:14px;">delete</span> Hapus</button>` : ""}
+          ${b.linkFoto ? `<a href="${escapeHtmlHub(b.linkFoto)}" target="_blank" rel="noopener" style="margin-top:6px; text-decoration:none; color:#93C5FD; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px;"><span class="material-symbols-outlined" style="font-size:14px;">photo</span> Lihat Foto</a>` : ""}
+          ${(bisaEdit && b.editable) ? `<button onclick="fotoBantuanUploadClick('${programLainAktif}', '${b.id}', loadRekapProgramLain)" style="margin-top:6px; background:transparent; border:none; color:#67E8F9; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px; font-family:inherit; width:100%;"><span class="material-symbols-outlined" style="font-size:14px;">add_a_photo</span> ${b.linkFoto ? "Ganti Foto" : "Upload Foto"}</button>` : ""}
+          ${(bisaEdit && b.editable) ? `<button onclick="hapusBantuanProgramLainClick('${b.id}')" style="margin-top:6px; background:transparent; border:none; color:#FCA5A5; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px; font-family:inherit; width:100%;"><span class="material-symbols-outlined" style="font-size:14px;">delete</span> Hapus</button>` : ""}
         </div>
       </div>`;
     });
