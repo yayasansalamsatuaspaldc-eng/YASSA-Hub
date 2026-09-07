@@ -9010,6 +9010,9 @@ function renderLaporanBulananListSapa(data) {
           <a href="${escapeHtmlHub(b.linkUnduhPdf)}" target="_blank" rel="noopener" style="flex:1; display:flex; align-items:center; justify-content:center; gap: 6px; font-size: 11px; font-weight: 700; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-primary); text-decoration:none;">
             <span class="material-symbols-outlined" style="font-size: 15px;">download</span> Unduh
           </a>` : ''}
+          <button type="button" onclick="event.stopPropagation(); bukaLaporanWilayahUpload(${b.bulan}, ${b.tahun}, '', 'sapa-nasional')" style="flex-shrink:0; display:flex; align-items:center; justify-content:center; width:38px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-secondary); cursor:pointer;">
+            <span class="material-symbols-outlined" style="font-size: 16px;">sync</span>
+          </button>
         </div>` : `
         <div title="Laporan ada, tapi cuma Superadmin/Admin yang boleh buka (isinya ada nomor rekening)." style="margin: 0 16px 14px; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.04); border: 1px dashed var(--glass-border);">
           <div style="display:flex; align-items:center; gap: 5px; margin-bottom: 4px;">
@@ -9020,7 +9023,12 @@ function renderLaporanBulananListSapa(data) {
             <span class="material-symbols-outlined" style="font-size: 15px; color: var(--text-muted); flex-shrink:0;">lock</span>
             <span style="font-size: 10px; color: var(--text-muted); font-family: monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; user-select:none;">${escapeHtmlHub(b.linkUnduhPdfSensor || 'laporan••••••••••.pdf')}</span>
           </div>
-        </div>`) : ''}
+        </div>`) : (laporanBulananSapaBisaLihat ? `
+        <div style="padding: 0 16px 14px;">
+          <button type="button" onclick="event.stopPropagation(); bukaLaporanWilayahUpload(${b.bulan}, ${b.tahun}, '', 'sapa-nasional')" style="width:100%; display:flex; align-items:center; justify-content:center; gap:6px; font-size:11px; font-weight:700; padding:8px 10px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px dashed var(--glass-border); color: var(--text-secondary); cursor:pointer;">
+            <span class="material-symbols-outlined" style="font-size:15px;">upload_file</span> Upload Laporan Nasional SAPA
+          </button>
+        </div>` : '')}
         <div id="laporanDetailSapa-${b.bulan}-${b.tahun}" style="display:none; padding: 0 16px 16px;"></div>
       </div>`;
   });
@@ -9197,24 +9205,24 @@ function openLaporanWilayahPdfViewer(linkPreviewEncoded, linkUnduhEncoded, judul
 // 📤 UPLOAD/GANTI LAPORAN PDF PER WILAYAH (modal, khusus SUPERADMIN/ADMIN)
 // ============================================================
 let lwuBulan = null, lwuTahun = null, lwuWilayah = null, lwuTabAktif = "link", lwuFileTerpilih = null;
-// lwuProgram: "gopay" (default) atau "sapa" -- dipakai lwuSimpan/lwuSelesai
-// buat milih action backend & cache/detail mana yang di-refresh (lihat
-// bukaLaporanWilayahUpload di renderLaporanBulananDetailSapa yang manggil
-// dengan argumen ke-4 'sapa').
+// lwuProgram: "gopay" (default), "sapa" (per wilayah), "nasional" (Gopay
+// nasional), atau "sapa-nasional" (SAPA nasional) -- dipakai
+// lwuSimpan/lwuSelesai buat milih action backend & cache/detail mana yang
+// di-refresh.
 let lwuProgram = "gopay";
 
 function bukaLaporanWilayahUpload(bulan, tahun, wilayahEncoded, program) {
   lwuBulan = bulan;
   lwuTahun = tahun;
   lwuWilayah = decodeURIComponent(wilayahEncoded);
-  lwuProgram = program === "sapa" ? "sapa" : (program === "nasional" ? "nasional" : "gopay");
+  lwuProgram = program === "sapa" ? "sapa" : (program === "nasional" ? "nasional" : (program === "sapa-nasional" ? "sapa-nasional" : "gopay"));
   lwuFileTerpilih = null;
   document.getElementById("lwuInputLink").value = "";
   document.getElementById("lwuInputFile").value = "";
   document.getElementById("lwuFileNamaTerpilih").textContent = "Ketuk buat pilih file PDF (maks 20MB)";
   document.getElementById("laporanWilayahUploadTitle").textContent = lwuProgram === "nasional"
     ? "Laporan Bulanan Nasional"
-    : "Laporan " + lwuWilayah + (lwuProgram === "sapa" ? " (SAPA)" : "");
+    : (lwuProgram === "sapa-nasional" ? "Laporan Nasional SAPA" : "Laporan " + lwuWilayah + (lwuProgram === "sapa" ? " (SAPA)" : ""));
   lwuGantiTab("link");
   document.getElementById("laporanWilayahUploadOverlay").classList.add("open");
 }
@@ -9256,11 +9264,11 @@ function lwuFilePicked(input) {
 
 function lwuSimpan() {
   const btn = document.getElementById("lwuBtnSimpan");
-  const actionLink = lwuProgram === "sapa" ? "setLaporanWilayahLinkSapa" : (lwuProgram === "nasional" ? "setLaporanBulananLinkNasional" : "setLaporanWilayahLink");
-  const actionFile = lwuProgram === "sapa" ? "uploadLaporanWilayahFileSapa" : (lwuProgram === "nasional" ? "uploadLaporanBulananFileNasional" : "uploadLaporanWilayahFile");
-  // Laporan nasional gak punya dimensi wilayah, jadi argumen yang dikirim
-  // ke backend beda (gak ada lwuWilayah di tengah).
-  const argsDasar = lwuProgram === "nasional" ? [authToken, lwuBulan, lwuTahun] : [authToken, lwuBulan, lwuTahun, lwuWilayah];
+  const actionLink = lwuProgram === "sapa" ? "setLaporanWilayahLinkSapa" : (lwuProgram === "nasional" ? "setLaporanBulananLinkNasional" : (lwuProgram === "sapa-nasional" ? "setLaporanNasionalLinkSapa" : "setLaporanWilayahLink"));
+  const actionFile = lwuProgram === "sapa" ? "uploadLaporanWilayahFileSapa" : (lwuProgram === "nasional" ? "uploadLaporanBulananFileNasional" : (lwuProgram === "sapa-nasional" ? "uploadLaporanNasionalFileSapa" : "uploadLaporanWilayahFile"));
+  // Laporan nasional (Gopay maupun SAPA) gak punya dimensi wilayah, jadi
+  // argumen yang dikirim ke backend beda (gak ada lwuWilayah di tengah).
+  const argsDasar = (lwuProgram === "nasional" || lwuProgram === "sapa-nasional") ? [authToken, lwuBulan, lwuTahun] : [authToken, lwuBulan, lwuTahun, lwuWilayah];
   if (lwuTabAktif === "link") {
     const link = document.getElementById("lwuInputLink").value.trim();
     if (!link) { showModal("Gagal", "Link PDF belum diisi."); return; }
@@ -9325,6 +9333,13 @@ function lwuSelesai(res) {
     loadLaporanBulananList(laporanBulananTahunAktif);
     if (bulanTerbukaSebelum) {
       setTimeout(function () { toggleLaporanBulananDetail(lwuBulan, lwuTahun); }, 0);
+    }
+  } else if (lwuProgram === "sapa-nasional") {
+    // Sama pola kayak "nasional" Gopay di atas, cuma buat list SAPA.
+    const bulanTerbukaSebelumSapa = laporanBulananSapaBulanTerbuka;
+    loadLaporanBulananListSapa(laporanBulananSapaTahunAktif);
+    if (bulanTerbukaSebelumSapa) {
+      setTimeout(function () { toggleLaporanBulananDetailSapa(lwuBulan, lwuTahun); }, 0);
     }
   } else {
     delete laporanBulananDetailCache[key];
