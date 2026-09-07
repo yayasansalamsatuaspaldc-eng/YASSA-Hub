@@ -3008,76 +3008,6 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
     <div class="akun-content" id="laporanBulananSapaContent"></div>
   </div>
 
-  <!-- Halaman Penuh: Pledge Donatur SAPA -- alat bantu kontrol komitmen
-       donasi per DONATUR per batch (bukan agregat per wilayah kayak
-       Keuangan_Bulanan_Sapa). Lihat komentar SHEET_NAME_PLEDGE_DONATUR_SAPA
-       di Code.gs buat latar belakang kasusnya. SUPERADMIN/ADMIN aja. -->
-  <div class="overlay" id="pledgeDonaturSapaPage">
-    <div class="overlay-header">
-      <button class="overlay-close" id="pledgeDonaturSapaClose">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E2E8F0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-      </button>
-      <span class="overlay-title">Pledge Donatur SAPA</span>
-    </div>
-    <div class="akun-content" id="pledgeDonaturSapaContent"></div>
-  </div>
-
-  <!-- Modal form tambah Pledge Donatur SAPA -- mirror pola styling
-       psInputOverlay di atas (inline style konsisten, bukan class
-       "input-field" yang gak ada di CSS ini). -->
-  <div class="custom-modal-overlay" id="pdsFormOverlay">
-    <div class="custom-modal" style="max-width:380px; text-align:left;">
-      <div class="custom-modal-title" style="text-align:center; margin-bottom: 16px;">Tambah Pledge Donatur</div>
-
-      <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Nama Donatur</label>
-      <input type="text" id="pdsInputNama" placeholder="Contoh: Ibu Syarifah" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin-bottom: 12px; font-family:inherit;">
-
-      <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Wilayah</label>
-      <select id="pdsInputWilayah" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin-bottom: 12px; font-family:inherit;">
-        <option value="">Memuat wilayah...</option>
-      </select>
-
-      <div style="display:flex; gap:8px; margin-bottom:12px;">
-        <div style="flex:1;">
-          <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Jumlah Anak</label>
-          <input type="number" id="pdsInputJumlahAnak" placeholder="5" min="1" oninput="pdsHitungRingkasan()" style="width:100%; box-sizing:border-box; padding:10px 8px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; font-family:inherit;">
-        </div>
-        <div style="flex:1.4;">
-          <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Nominal/anak/bulan</label>
-          <input type="number" id="pdsInputNominalAnak" placeholder="200000" min="1" oninput="pdsHitungRingkasan()" style="width:100%; box-sizing:border-box; padding:10px 8px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; font-family:inherit;">
-        </div>
-      </div>
-
-      <div style="font-size:9.5px; color:var(--text-muted); margin-bottom:8px; margin-top:-6px;">Bulan mulai = bulan pertama anak MENERIMA (biasanya sebulan setelah donatur setor).</div>
-      <div style="display:flex; gap:8px; margin-bottom:12px;">
-        <div style="flex:1.4;">
-          <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Bulan Mulai</label>
-          <select id="pdsInputBulanMulai" onchange="pdsHitungRingkasan()" style="width:100%; box-sizing:border-box; padding:10px 8px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; font-family:inherit;"></select>
-        </div>
-        <div style="flex:1;">
-          <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Tahun</label>
-          <input type="number" id="pdsInputTahunMulai" oninput="pdsHitungRingkasan()" style="width:100%; box-sizing:border-box; padding:10px 8px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; font-family:inherit;">
-        </div>
-      </div>
-
-      <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Ditopang Berapa Bulan</label>
-      <input type="number" id="pdsInputJumlahBulan" placeholder="Contoh: 9" min="1" oninput="pdsHitungRingkasan()" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin-bottom: 10px; font-family:inherit;">
-
-      <div id="pdsRingkasanHitung" style="font-size: 11px; color: #F9A8D4; background: rgba(219,39,119,0.1); border: 1px solid rgba(219,39,119,0.3); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; display:none; line-height:1.6;"></div>
-
-      <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Tanggal Setor</label>
-      <input type="date" id="pdsInputTanggalSetor" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin-bottom: 12px; font-family:inherit;">
-
-      <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Catatan (opsional)</label>
-      <input type="text" id="pdsInputCatatan" placeholder="Contoh: nama-nama anak yang disponsori" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin-bottom: 6px; font-family:inherit;">
-
-      <div class="custom-modal-actions">
-        <button type="button" class="btn-modal btn-cancel" onclick="tutupPdsForm()">Batal</button>
-        <button type="button" class="btn-modal btn-confirm" id="pdsBtnSimpan" onclick="simpanPledgeDonaturSapa()">Simpan</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Halaman Penuh: Rekap Bantuan Disabilitas (PEDAS) -- gabungan
        santunan disabilitas GOPAY (otomatis) + bantuan insidental manual
        (sembako/kursi roda/dll). Reuse class "overlay" yang sama, jadi
@@ -6816,52 +6746,20 @@ function renderContent() {
         <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
       </button>
 
-      <!-- Pintu masuk PROGRAM SAPA -- BUKAN modal mengambang lagi (revisi
-           user 2026: dianggap "mengambang", minta "menyatu"). Sekarang
-           jadi ACCORDION menyatu di alur halaman: tekan tombol "Program
-           SAPA" -> submenu (Laporan Bulanan & Pledge Donatur) meluncur
-           turun tepat di bawahnya, reuse toggleRincianWilayahKeuangan()
-           & class .kv-rincian-list yang sudah ada (sama persis kayak
-           "Rincian per Wilayah" di Kartu 1/2 atas). Lihat
-           toggleProgramSapaMenu(). -->
-      <div style="margin-bottom: 12px;">
-        <button onclick="toggleProgramSapaMenu()" class="kfin-cta" style="margin-bottom: 0;">
-          <div class="kfin-icon-wrap" style="--kfin-accent: #EC4899; --kfin-accent-rgb: 236,72,153; width: 44px; height: 44px;">
-            <span class="material-symbols-outlined" style="font-size: 22px;">diversity_1</span>
-          </div>
-          <div style="flex: 1;">
-            <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Program SAPA</div>
-            <div style="font-size: 11px; color: var(--text-secondary);">Sahabat Peduli Anak</div>
-          </div>
-          <span class="material-symbols-outlined" id="programSapaChevron" style="font-size: 20px; color: var(--text-muted); transition: transform 0.25s;">expand_more</span>
-        </button>
-        <div id="programSapaRincianList" class="kv-rincian-list" style="margin-left: 14px; padding-left: 14px; border-left: 2px dashed rgba(236,72,153,0.35);">
-          <div>
-            <button onclick="openLaporanBulananSapa()" class="kfin-cta" style="margin: 10px 0 0;">
-              <div class="kfin-icon-wrap" style="--kfin-accent: #EC4899; --kfin-accent-rgb: 236,72,153; width: 38px; height: 38px;">
-                <span class="material-symbols-outlined" style="font-size: 19px;">diversity_1</span>
-              </div>
-              <div style="flex: 1;">
-                <div style="font-size: 12.5px; font-weight: 700; color: var(--text-primary);">Laporan Bulanan Program SAPA</div>
-                <div style="font-size: 10.5px; color: var(--text-secondary);">Pendapatan &amp; pengeluaran santunan Anak Asuh per bulan</div>
-              </div>
-              <span class="material-symbols-outlined" style="font-size: 18px; color: var(--text-muted);">chevron_right</span>
-            </button>
-          </div>
-          <div>
-            <button onclick="openPledgeDonaturSapa()" class="kfin-cta" style="margin: 10px 0 0;">
-              <div class="kfin-icon-wrap" style="--kfin-accent: #DB2777; --kfin-accent-rgb: 219,39,119; width: 38px; height: 38px;">
-                <span class="material-symbols-outlined" style="font-size: 19px;">handshake</span>
-              </div>
-              <div style="flex: 1;">
-                <div style="font-size: 12.5px; font-weight: 700; color: var(--text-primary);">Pledge Donatur SAPA</div>
-                <div style="font-size: 10.5px; color: var(--text-secondary);">Lacak komitmen donasi per donatur &amp; jadwal bulanannya</div>
-              </div>
-              <span class="material-symbols-outlined" style="font-size: 18px; color: var(--text-muted);">chevron_right</span>
-            </button>
-          </div>
+      <!-- Pintu masuk ke Laporan Bulanan PROGRAM SAPA -- kembali jadi 1
+           tombol langsung (revisi user: fitur "Pledge Donatur SAPA"
+           dihilangkan total, jadi gak perlu accordion/pilihan lagi --
+           mirror pola tombol "Program GOPAY" di atas). -->
+      <button onclick="openLaporanBulananSapa()" class="kfin-cta" style="margin-bottom: 12px;">
+        <div class="kfin-icon-wrap" style="--kfin-accent: #EC4899; --kfin-accent-rgb: 236,72,153; width: 44px; height: 44px;">
+          <span class="material-symbols-outlined" style="font-size: 22px;">diversity_1</span>
         </div>
-      </div>
+        <div style="flex: 1;">
+          <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Program SAPA</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">Sahabat Peduli Anak</div>
+        </div>
+        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
+      </button>
 
       <!-- Pintu masuk ke Rekap Bantuan Disabilitas (PEDAS) -- gabungan
            santunan disabilitas GOPAY (otomatis) + bantuan insidental
@@ -9303,214 +9201,6 @@ function openLaporanWilayahPdfViewer(linkPreviewEncoded, linkUnduhEncoded, judul
     elUnduhBtn.style.display = "none";
   }
   document.getElementById("laporanPdfViewerPage").classList.add("open");
-}
-
-// ============================================================
-// 🤝 PLEDGE DONATUR SAPA -- halaman + form tambah/hapus. Backend & latar
-// belakang kasusnya lihat komentar SHEET_NAME_PLEDGE_DONATUR_SAPA di
-// Code.gs. Ini alat BANTU KONTROL, TIDAK menggantikan pengisian manual
-// RealisasiDonasi di Keuangan_Bulanan_Sapa oleh Bendahara.
-// ============================================================
-let pdsTahunAktif = new Date().getFullYear();
-let pdsBulanAktif = new Date().getMonth() + 1;
-
-function openPledgeDonaturSapa() {
-  document.getElementById("pledgeDonaturSapaPage").classList.add("open");
-  loadPledgeDonaturSapaList(pdsBulanAktif, pdsTahunAktif);
-}
-
-function loadPledgeDonaturSapaList(bulan, tahun) {
-  pdsBulanAktif = bulan;
-  pdsTahunAktif = tahun;
-  const el = document.getElementById("pledgeDonaturSapaContent");
-  el.innerHTML = `<div style="padding: 30px 0; text-align:center; color: var(--text-secondary); font-size: 12px;"><span class="material-symbols-outlined spin" style="font-size: 18px; vertical-align: middle;">progress_activity</span> Memuat data pledge...</div>`;
-  callGASWithRetry_("getPledgeDonaturSapaList", [authToken, bulan, tahun])
-    .then(function (data) { renderPledgeDonaturSapaList(data); })
-    .catch(function (err) {
-      el.innerHTML = `<div style="padding: 20px; text-align:center; color:#FCA5A5; font-size:12px;">Gagal memuat: ${escapeHtmlHub(err.message)}</div>`;
-    });
-}
-
-const PDS_LABEL_STATUS_ = {
-  AKTIF: { teks: "Aktif", warna: "#86EFAC", bg: "rgba(34,197,94,0.14)" },
-  AKAN_HABIS: { teks: "Bulan Terakhir", warna: "#FCD34D", bg: "rgba(234,179,8,0.14)" },
-  BELUM_MULAI: { teks: "Belum Mulai", warna: "#94A3B8", bg: "rgba(255,255,255,0.06)" },
-  SELESAI: { teks: "Selesai", warna: "#94A3B8", bg: "rgba(255,255,255,0.04)" },
-};
-
-function renderPledgeDonaturSapaList(data) {
-  const el = document.getElementById("pledgeDonaturSapaContent");
-  const totalRingkasan = Object.keys(data.totalPerWilayah || {})
-    .map(function (w) { return `<div style="display:flex; justify-content:space-between; padding:4px 0; font-size:11px;"><span style="color:var(--text-secondary);">${escapeHtmlHub(w)}</span><span style="font-weight:700; color:var(--text-primary);">${formatRupiahHub(data.totalPerWilayah[w])}</span></div>`; })
-    .join("");
-
-  let html = `
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 18px;">
-      <button onclick="pdsGantiBulan(-1)" style="width: 36px; height: 36px; border-radius: 12px; background: var(--glass-strong); border: 1px solid var(--glass-border); color: var(--text-primary); display:flex; align-items:center; justify-content:center; cursor:pointer;">
-        <span class="material-symbols-outlined" style="font-size: 18px;">chevron_left</span>
-      </button>
-      <div style="font-size: 15px; font-weight: 700; color: var(--text-primary);">${data.namaBulan} ${data.tahun}</div>
-      <button onclick="pdsGantiBulan(1)" style="width: 36px; height: 36px; border-radius: 12px; background: var(--glass-strong); border: 1px solid var(--glass-border); color: var(--text-primary); display:flex; align-items:center; justify-content:center; cursor:pointer;">
-        <span class="material-symbols-outlined" style="font-size: 18px;">chevron_right</span>
-      </button>
-    </div>
-    <button onclick="bukaPdsForm()" style="width:100%; display:flex; align-items:center; justify-content:center; gap:6px; font-size:12px; font-weight:700; padding:10px; border-radius:12px; background:#DB2777; border:none; color:#fff; cursor:pointer; margin-bottom:14px;">
-      <span class="material-symbols-outlined" style="font-size:16px;">add</span> Tambah Pledge Donatur
-    </button>
-    ${data.jumlahAkanHabis > 0 ? `
-    <div style="display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:10px; background: rgba(234,179,8,0.1); border:1px solid rgba(234,179,8,0.3); margin-bottom:14px;">
-      <span class="material-symbols-outlined" style="font-size:16px; color:#FCD34D;">warning</span>
-      <span style="font-size:10.5px; color:#FCD34D;">${data.jumlahAkanHabis} pledge donatur habis masa topangnya di bulan ini -- perlu di-follow-up.</span>
-    </div>` : ''}
-    ${totalRingkasan ? `
-    <div style="padding:10px 12px; border-radius:10px; background: var(--glass-strong); border:1px solid var(--glass-border); margin-bottom:14px;">
-      <div style="font-size:9.5px; font-weight:700; letter-spacing:0.3px; color:var(--text-muted); text-transform:uppercase; margin-bottom:6px;">Total dari Pledge Aktif Bulan Ini (cek silang RealisasiDonasi)</div>
-      ${totalRingkasan}
-    </div>` : ''}
-  `;
-
-  const daftar = (data.pledgeList || []).slice().sort(function (a, b) {
-    // Yang relevan bulan ini (aktif/akan habis) ditaruh paling atas.
-    if (a.relevanUntukBulanIni !== b.relevanUntukBulanIni) return a.relevanUntukBulanIni ? -1 : 1;
-    return String(a.namaDonatur).localeCompare(String(b.namaDonatur));
-  });
-
-  if (!daftar.length) {
-    html += `<div style="padding: 30px 0; text-align:center; color: var(--text-muted); font-size: 11.5px;">Belum ada pledge donatur tercatat.</div>`;
-  }
-
-  daftar.forEach(function (p) {
-    const st = PDS_LABEL_STATUS_[p.statusUntukBulanIni] || PDS_LABEL_STATUS_.SELESAI;
-    html += `
-      <div style="background: var(--glass-strong); border-radius: 14px; margin-bottom: 10px; border: 1px solid var(--glass-border); padding: 12px 14px; ${p.relevanUntukBulanIni ? '' : 'opacity:0.6;'}">
-        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:6px;">
-          <div>
-            <div style="font-size:13px; font-weight:700; color:var(--text-primary);">${escapeHtmlHub(p.namaDonatur)}</div>
-            <div style="font-size:10px; color:var(--text-secondary); margin-top:1px;">${escapeHtmlHub(p.wilayah)} &middot; ${p.jumlahAnak} anak &times; ${formatRupiahHub(p.nominalPerAnak)}</div>
-          </div>
-          <span style="flex-shrink:0; font-size:9px; font-weight:700; padding:3px 8px; border-radius:20px; background:${st.bg}; color:${st.warna};">${st.teks}</span>
-        </div>
-        <div style="font-size:11px; color:var(--text-primary); font-weight:600; margin-bottom:4px;">${formatRupiahHub(p.nominalPerBulan)}/bulan</div>
-        <div style="font-size:10px; color:var(--text-muted); margin-bottom:${p.catatan ? '4px' : '8px'};">Menopang ${NAMA_BULAN_ID_JS_[p.bulanMulai]} ${p.tahunMulai} &ndash; ${NAMA_BULAN_ID_JS_[p.bulanSelesai]} ${p.tahunSelesai} &middot; total setor ${formatRupiahHub(p.totalSetor)}</div>
-        ${p.catatan ? `<div style="font-size:10px; color:var(--text-muted); margin-bottom:8px; font-style:italic;">${escapeHtmlHub(p.catatan)}</div>` : ''}
-        <button type="button" onclick="hapusPledgeSapaConfirm('${escapeHtmlHub(p.id)}', '${escapeHtmlHub(p.namaDonatur)}')" style="font-size:10px; font-weight:700; color:#FCA5A5; background:transparent; border:none; cursor:pointer; padding:0; display:flex; align-items:center; gap:4px;">
-          <span class="material-symbols-outlined" style="font-size:13px;">delete</span> Hapus
-        </button>
-      </div>`;
-  });
-
-  el.innerHTML = html;
-}
-
-function pdsGantiBulan(geser) {
-  let bulan = pdsBulanAktif + geser;
-  let tahun = pdsTahunAktif;
-  if (bulan < 1) { bulan = 12; tahun -= 1; }
-  if (bulan > 12) { bulan = 1; tahun += 1; }
-  loadPledgeDonaturSapaList(bulan, tahun);
-}
-
-function bukaPdsForm() {
-  document.getElementById("pdsInputNama").value = "";
-  document.getElementById("pdsInputJumlahAnak").value = "";
-  document.getElementById("pdsInputNominalAnak").value = "";
-  document.getElementById("pdsInputTahunMulai").value = pdsTahunAktif;
-  document.getElementById("pdsInputJumlahBulan").value = "";
-  document.getElementById("pdsInputTanggalSetor").value = new Date().toISOString().slice(0, 10);
-  document.getElementById("pdsInputCatatan").value = "";
-  document.getElementById("pdsRingkasanHitung").style.display = "none";
-
-  const selBulan = document.getElementById("pdsInputBulanMulai");
-  selBulan.innerHTML = NAMA_BULAN_ID_JS_.map(function (nama, i) {
-    return i === 0 ? "" : `<option value="${i}" ${i === pdsBulanAktif ? "selected" : ""}>${nama}</option>`;
-  }).join("");
-
-  const selWilayah = document.getElementById("pdsInputWilayah");
-  selWilayah.innerHTML = `<option value="">Memuat wilayah...</option>`;
-  loadWilayahListIfNeeded().then(function (list) {
-    selWilayah.innerHTML = (list && list.length)
-      ? list.map(function (w) { return `<option value="${escapeHtmlHub(w)}">${escapeHtmlHub(w)}</option>`; }).join("")
-      : `<option value="">(Belum ada data wilayah)</option>`;
-  });
-
-  document.getElementById("pdsFormOverlay").classList.add("open");
-}
-
-function tutupPdsForm() {
-  document.getElementById("pdsFormOverlay").classList.remove("open");
-}
-
-// Preview hitungan nominal/bulan, total setor, & bulan selesai secara
-// REAL-TIME di form, sebelum disimpan -- biar Bendahara bisa cek dulu
-// sebelum submit (perhitungan final tetap dihitung ulang di server).
-function pdsHitungRingkasan() {
-  const jumlahAnak = Number(document.getElementById("pdsInputJumlahAnak").value) || 0;
-  const nominalAnak = Number(document.getElementById("pdsInputNominalAnak").value) || 0;
-  const bulanMulai = Number(document.getElementById("pdsInputBulanMulai").value) || 0;
-  const tahunMulai = Number(document.getElementById("pdsInputTahunMulai").value) || 0;
-  const jumlahBulan = Number(document.getElementById("pdsInputJumlahBulan").value) || 0;
-  const el = document.getElementById("pdsRingkasanHitung");
-
-  if (!jumlahAnak || !nominalAnak || !bulanMulai || !tahunMulai || !jumlahBulan) {
-    el.style.display = "none";
-    return;
-  }
-
-  const nominalPerBulan = jumlahAnak * nominalAnak;
-  const totalSetor = nominalPerBulan * jumlahBulan;
-  const totalGeser = (bulanMulai - 1) + (jumlahBulan - 1);
-  const bulanSelesai = (((totalGeser % 12) + 12) % 12) + 1;
-  const tahunSelesai = tahunMulai + Math.floor(totalGeser / 12);
-
-  el.style.display = "block";
-  el.innerHTML =
-    `Nominal per bulan: <b>${formatRupiahHub(nominalPerBulan)}</b><br>` +
-    `Total setor: <b>${formatRupiahHub(totalSetor)}</b><br>` +
-    `Menopang: <b>${NAMA_BULAN_ID_JS_[bulanMulai]} ${tahunMulai} &ndash; ${NAMA_BULAN_ID_JS_[bulanSelesai]} ${tahunSelesai}</b>`;
-}
-
-function simpanPledgeDonaturSapa() {
-  const payload = {
-    namaDonatur: document.getElementById("pdsInputNama").value.trim(),
-    wilayah: document.getElementById("pdsInputWilayah").value,
-    jumlahAnak: document.getElementById("pdsInputJumlahAnak").value,
-    nominalPerAnak: document.getElementById("pdsInputNominalAnak").value,
-    bulanMulai: document.getElementById("pdsInputBulanMulai").value,
-    tahunMulai: document.getElementById("pdsInputTahunMulai").value,
-    jumlahBulan: document.getElementById("pdsInputJumlahBulan").value,
-    tanggalSetor: document.getElementById("pdsInputTanggalSetor").value,
-    catatan: document.getElementById("pdsInputCatatan").value.trim(),
-  };
-
-  if (!payload.namaDonatur) { showModal("Gagal", "Nama donatur belum diisi."); return; }
-  if (!payload.wilayah) { showModal("Gagal", "Pilih wilayah dulu."); return; }
-  if (!payload.jumlahAnak || !payload.nominalPerAnak) { showModal("Gagal", "Jumlah anak & nominal per anak harus diisi."); return; }
-  if (!payload.bulanMulai || !payload.tahunMulai || !payload.jumlahBulan) { showModal("Gagal", "Bulan mulai, tahun, & jumlah bulan harus diisi."); return; }
-
-  const btn = document.getElementById("pdsBtnSimpan");
-  btn.disabled = true;
-  btn.textContent = "Menyimpan...";
-  callGASWithRetry_("tambahPledgeDonaturSapa", [authToken, payload])
-    .then(function () {
-      btn.disabled = false;
-      btn.textContent = "Simpan";
-      tutupPdsForm();
-      loadPledgeDonaturSapaList(pdsBulanAktif, pdsTahunAktif);
-      showModal("Sukses", "Pledge donatur berhasil dicatat.");
-    })
-    .catch(function (err) {
-      btn.disabled = false;
-      btn.textContent = "Simpan";
-      showModal("Gagal", err.message);
-    });
-}
-
-function hapusPledgeSapaConfirm(id, namaDonatur) {
-  showModal("Hapus Pledge?", "Hapus pledge donatur \"" + namaDonatur + "\" ini? Tindakan ini tidak bisa dibatalkan.", true, function () {
-    callGASWithRetry_("hapusPledgeDonaturSapa", [authToken, id])
-      .then(function () { loadPledgeDonaturSapaList(pdsBulanAktif, pdsTahunAktif); })
-      .catch(function (err) { showModal("Gagal", err.message); });
-  });
 }
 
 // ============================================================
@@ -12864,10 +12554,6 @@ document.getElementById("laporanBulananSapaClose").addEventListener("click", fun
   document.getElementById("laporanBulananSapaPage").classList.remove("open");
 });
 
-document.getElementById("pledgeDonaturSapaClose").addEventListener("click", function () {
-  document.getElementById("pledgeDonaturSapaPage").classList.remove("open");
-});
-
 document.getElementById("pedasClose").addEventListener("click", function () {
   tutupRekapPedas();
 });
@@ -12892,14 +12578,6 @@ document.getElementById("dataAnakAsuhClose").addEventListener("click", function 
 document.getElementById("kalenderKegiatanClose").addEventListener("click", function () {
   document.getElementById("kalenderKegiatanPage").classList.remove("open");
 });
-
-// 🆕 Toggle submenu Program SAPA -- REVISI (2026): tadinya popup modal
-// (showModal), diganti jadi accordion MENYATU di alur halaman biar gak
-// keliatan "mengambang". Reuse toggleRincianWilayahKeuangan() yang sudah
-// ada (sama persis kayak "Rincian per Wilayah" di Kartu 1/2 Keuangan).
-function toggleProgramSapaMenu() {
-  toggleRincianWilayahKeuangan('programSapaRincianList', 'programSapaChevron');
-}
 
 function showModal(title, message, isConfirm = false, onConfirm = null, okLabel = null) {
   const modal = document.getElementById('customModalOverlay');
