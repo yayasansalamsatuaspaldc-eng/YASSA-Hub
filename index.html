@@ -3155,7 +3155,14 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
       <input type="number" id="pedasAddNilai" placeholder="Estimasi nilai/harga" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit;">
 
       <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Keterangan (opsional)</label>
-      <input type="text" id="pedasAddKeterangan" placeholder="Mis. 1 unit, kondisi baru" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 16px; font-family:inherit;">
+      <input type="text" id="pedasAddKeterangan" placeholder="Mis. 1 unit, kondisi baru" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit;">
+
+      <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Foto Dokumentasi (opsional)</label>
+      <div onclick="document.getElementById('pedasAddFotoInput').click()" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px dashed var(--glass-border); color: var(--text-secondary); font-size:11px; margin: 6px 0 16px; cursor:pointer; display:flex; align-items:center; gap:8px;">
+        <span class="material-symbols-outlined" style="font-size:18px; flex-shrink:0;">add_a_photo</span>
+        <span id="pedasAddFotoNama">Ketuk buat pilih foto (maks 10MB)</span>
+      </div>
+      <input type="file" id="pedasAddFotoInput" accept="image/*" style="display:none;" onchange="pedasAddFotoPicked(this)">
 
       <div class="custom-modal-actions">
         <button type="button" class="btn-modal btn-cancel" onclick="tutupTambahBantuanPedas()">Batal</button>
@@ -3210,7 +3217,14 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
       <input type="number" id="programLainAddNilai" placeholder="Estimasi nilai/harga" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit;">
 
       <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Keterangan (opsional)</label>
-      <input type="text" id="programLainAddKeterangan" placeholder="Catatan tambahan" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 16px; font-family:inherit;">
+      <input type="text" id="programLainAddKeterangan" placeholder="Catatan tambahan" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit;">
+
+      <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Foto Dokumentasi (opsional)</label>
+      <div onclick="document.getElementById('programLainAddFotoInput').click()" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px dashed var(--glass-border); color: var(--text-secondary); font-size:11px; margin: 6px 0 16px; cursor:pointer; display:flex; align-items:center; gap:8px;">
+        <span class="material-symbols-outlined" style="font-size:18px; flex-shrink:0;">add_a_photo</span>
+        <span id="programLainAddFotoNama">Ketuk buat pilih foto (maks 10MB)</span>
+      </div>
+      <input type="file" id="programLainAddFotoInput" accept="image/*" style="display:none;" onchange="programLainAddFotoPicked(this)">
 
       <div class="custom-modal-actions">
         <button type="button" class="btn-modal btn-cancel" onclick="tutupTambahBantuanProgramLain()">Batal</button>
@@ -8161,6 +8175,9 @@ function bukaTambahBantuanPedas() {
   document.getElementById("pedasAddJenisLainnya").style.display = "none";
   document.getElementById("pedasAddNilai").value = "";
   document.getElementById("pedasAddKeterangan").value = "";
+  pedasAddFotoTerpilih = null;
+  document.getElementById("pedasAddFotoInput").value = "";
+  document.getElementById("pedasAddFotoNama").textContent = "Ketuk buat pilih foto (maks 10MB)";
 
   const sel = document.getElementById("pedasAddWilayah");
   sel.innerHTML = `<option value="">Memuat wilayah...</option>`;
@@ -8183,6 +8200,13 @@ function pedasToggleJenisLainnya() {
   document.getElementById("pedasAddJenisLainnya").style.display = isLainnya ? "block" : "none";
 }
 
+let pedasAddFotoTerpilih = null;
+function pedasAddFotoPicked(input) {
+  const file = validasiFotoTerpilih_(input);
+  pedasAddFotoTerpilih = file;
+  document.getElementById("pedasAddFotoNama").textContent = file ? file.name : "Ketuk buat pilih foto (maks 10MB)";
+}
+
 function submitTambahBantuanPedas() {
   const tanggal = document.getElementById("pedasAddTanggal").value;
   const wilayah = document.getElementById("pedasAddWilayah").value;
@@ -8191,6 +8215,7 @@ function submitTambahBantuanPedas() {
   if (jenis === "Lainnya") jenis = document.getElementById("pedasAddJenisLainnya").value.trim() || "Lainnya";
   const nilai = document.getElementById("pedasAddNilai").value;
   const keterangan = document.getElementById("pedasAddKeterangan").value.trim();
+  const fotoTerpilih = pedasAddFotoTerpilih;
 
   if (!wilayah) { showModal("Gagal", "Pilih wilayah dulu."); return; }
   if (!penerima) { showModal("Gagal", "Nama penerima wajib diisi."); return; }
@@ -8200,12 +8225,23 @@ function submitTambahBantuanPedas() {
   btn.disabled = true;
   btn.textContent = "Menyimpan...";
   callGASWithRetry_("tambahBantuanPedas", [authToken, tanggal, wilayah, penerima, jenis, nilai, keterangan])
-    .then(function () {
+    .then(function (res) {
       btn.disabled = false;
       btn.textContent = "Simpan";
       tutupTambahBantuanPedas();
       loadRekapPedas();
       showModal("Sukses", "Bantuan berhasil dicatat.");
+      if (fotoTerpilih && res && res.id) {
+        uploadFotoJikaAda_("pedas", res.id, fotoTerpilih)
+          .then(function (resFoto) {
+            if (resFoto && resFoto.peringatan) showModal("Foto Terupload", resFoto.peringatan);
+            loadRekapPedas();
+          })
+          .catch(function (errFoto) {
+            showModal("Data Tersimpan, Foto Gagal", "Data bantuan berhasil disimpan, tapi upload foto gagal: " +
+              errFoto.message + ". Anda bisa upload ulang lewat tombol \"Upload Foto\" di baris data ini.");
+          });
+      }
     })
     .catch(function (err) {
       btn.disabled = false;
@@ -8288,6 +8324,44 @@ function fotoBantuanDipilih(input) {
       });
   };
   reader.readAsDataURL(file);
+}
+
+// Validasi generik file foto yang dipilih di form "Tambah Bantuan"
+// (BASO/BADIK/BATAN + PEDAS) -- return File kalau valid, atau null +
+// showModal kalau gak valid (input value ikut direset).
+function validasiFotoTerpilih_(input) {
+  const file = input.files && input.files[0];
+  if (!file) return null;
+  if (!/^image\//.test(file.type)) {
+    showModal("Gagal", "File yang dipilih harus berupa foto (JPG/PNG/WEBP).");
+    input.value = "";
+    return null;
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    showModal("Gagal", "Ukuran foto maksimal 10MB.");
+    input.value = "";
+    return null;
+  }
+  return file;
+}
+
+// Helper generik: kalau ada file foto terpilih, upload sebagai lampiran
+// baris `id` yang baru saja dibuat (dipanggil setelah tambahBantuan.../
+// tambahBantuanPedas sukses, dari form "Tambah Bantuan"). Kalau gak ada
+// file dipilih, langsung resolve(null) -- gak ada apa-apa yang diupload.
+function uploadFotoJikaAda_(programKey, id, file) {
+  if (!file || !id) return Promise.resolve(null);
+  return new Promise(function (resolve, reject) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const base64Data = e.target.result.split(",")[1];
+      const namaFungsi = "uploadFotoBantuan" + capitalizeFirst_(programKey);
+      callGASWithRetry_(namaFungsi, [authToken, id, base64Data, file.type, file.name], { timeoutMs: 60000, maxAttempts: 1 })
+        .then(resolve).catch(reject);
+    };
+    reader.onerror = function () { reject(new Error("Gagal membaca file foto.")); };
+    reader.readAsDataURL(file);
+  });
 }
 
 let programLainAktif = "baso"; // "baso" | "badik" | "batan"
@@ -8539,6 +8613,9 @@ function bukaTambahBantuanProgramLain() {
   document.getElementById("programLainAddKeterangan").value = "";
   document.getElementById("programLainAddJenisLainnya").value = "";
   document.getElementById("programLainAddJenisLainnya").style.display = "none";
+  programLainAddFotoTerpilih = null;
+  document.getElementById("programLainAddFotoInput").value = "";
+  document.getElementById("programLainAddFotoNama").textContent = "Ketuk buat pilih foto (maks 10MB)";
 
   const selJenis = document.getElementById("programLainAddJenis");
   selJenis.innerHTML = meta.jenisOpsi.map(function (j) {
@@ -8568,6 +8645,13 @@ function programLainToggleJenisLainnya() {
   document.getElementById("programLainAddJenisLainnya").style.display = isLainnya ? "block" : "none";
 }
 
+let programLainAddFotoTerpilih = null;
+function programLainAddFotoPicked(input) {
+  const file = validasiFotoTerpilih_(input);
+  programLainAddFotoTerpilih = file;
+  document.getElementById("programLainAddFotoNama").textContent = file ? file.name : "Ketuk buat pilih foto (maks 10MB)";
+}
+
 function submitTambahBantuanProgramLain() {
   const tanggal = document.getElementById("programLainAddTanggal").value;
   const wilayah = document.getElementById("programLainAddWilayah").value;
@@ -8578,6 +8662,7 @@ function submitTambahBantuanProgramLain() {
   const jenisBantuan = isLainnya ? document.getElementById("programLainAddJenisLainnya").value.trim() : selJenis.value;
   const nilai = document.getElementById("programLainAddNilai").value;
   const keterangan = document.getElementById("programLainAddKeterangan").value.trim();
+  const fotoTerpilih = programLainAddFotoTerpilih;
 
   if (!wilayah) { showModal("Gagal", "Pilih wilayah dulu."); return; }
   if (!penerima) { showModal("Gagal", "Nama penerima wajib diisi."); return; }
@@ -8587,11 +8672,23 @@ function submitTambahBantuanProgramLain() {
   const btn = document.getElementById("programLainAddBtnSimpan");
   btn.disabled = true; btn.textContent = "Menyimpan...";
 
-  const namaFungsi = "tambahBantuan" + capitalizeFirst_(programLainAktif);
+  const programSaatIni = programLainAktif;
+  const namaFungsi = "tambahBantuan" + capitalizeFirst_(programSaatIni);
   callGASWithRetry_(namaFungsi, [authToken, tanggal, wilayah, penerima, jenisBantuan, Number(nilai), keterangan])
-    .then(function () {
+    .then(function (res) {
       tutupTambahBantuanProgramLain();
       programLainMuatSesuaiMode_();
+      if (fotoTerpilih && res && res.id) {
+        uploadFotoJikaAda_(programSaatIni, res.id, fotoTerpilih)
+          .then(function (resFoto) {
+            if (resFoto && resFoto.peringatan) showModal("Foto Terupload", resFoto.peringatan);
+            if (programLainAktif === programSaatIni) programLainMuatSesuaiMode_();
+          })
+          .catch(function (errFoto) {
+            showModal("Data Tersimpan, Foto Gagal", "Data bantuan berhasil disimpan, tapi upload foto gagal: " +
+              errFoto.message + ". Anda bisa upload ulang lewat tombol \"Upload Foto\" di baris data ini.");
+          });
+      }
     })
     .catch(function (err) { showModal("Gagal", err.message); })
     .finally(function () { btn.disabled = false; btn.textContent = "Simpan"; });
