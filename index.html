@@ -4441,8 +4441,12 @@ function showApp() {
   // refresh), langsung arahkan ke layar "Aktifkan Notifikasi" (gate yang
   // sudah ada di tab App) SEBELUM masuk Beranda -- bukan nunggu user
   // klik tab App sendiri.
-  const notifStatus = localStorage.getItem("yassa_mobile_notif_status");
-  active = (notifStatus !== "granted" && notifStatus !== "skipped") ? "app" : "beranda";
+  // 🩹 FIX: "skip" sekarang cuma berlaku per-sesi (sessionStorage), BUKAN
+  // permanen -- lihat isNotifGateBypassed_(). Kalau user pernah tekan
+  // "Lewati dulu", begitu app ditutup & dibuka lagi dari awal, gate ini
+  // akan muncul lagi (terus begitu sampai user beneran tekan "Aktifkan
+  // Notifikasi" & Allow -> baru status "granted" permanen di localStorage).
+  active = isNotifGateBypassed_() ? "beranda" : "app";
   render();
 }
 
@@ -6331,8 +6335,11 @@ function renderContent() {
     // 🔔 GATE: notifikasi WAJIB diaktifkan dulu sebelum grid 6 app muncul.
     // Sebelumnya tombol "Aktifkan Notifikasi" cuma nongol di dalam menu
     // YASSA Mobile (gampang kelewat). Sekarang jadi syarat masuk tab App.
-    const notifStatus = localStorage.getItem("yassa_mobile_notif_status");
-    if (notifStatus !== "granted" && notifStatus !== "skipped") {
+    // 🩹 FIX: pakai isNotifGateBypassed_() -- "skip" cuma valid untuk sesi
+    // app yang sedang berjalan (sessionStorage), BUKAN permanen. Begitu app
+    // ditutup & dibuka lagi dari awal, gate ini wajib muncul lagi sampai
+    // user beneran menekan "Aktifkan Notifikasi" & Allow.
+    if (!isNotifGateBypassed_()) {
       el.innerHTML = `
         <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:60px 24px; gap:16px;">
           <div style="width:72px; height:72px; border-radius:50%; background:rgba(var(--bento-primary-rgb),0.15); color:var(--bento-primary); display:flex; align-items:center; justify-content:center;">
@@ -6347,7 +6354,7 @@ function renderContent() {
           <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:8px; width:100%;">
             ${renderMobileNotifButton()}
           </div>
-          <button onclick="localStorage.setItem('yassa_mobile_notif_status','skipped'); active='beranda'; render();" style="margin-top:4px; background:transparent; border:none; color:var(--text-muted); font-size:12px; text-decoration:underline; cursor:pointer;">
+          <button onclick="sessionStorage.setItem('yassa_mobile_notif_skip_session','1'); active='beranda'; render();" style="margin-top:4px; background:transparent; border:none; color:var(--text-muted); font-size:12px; text-decoration:underline; cursor:pointer;">
             Lewati dulu, nanti saja
           </button>
         </div>`;
@@ -7124,6 +7131,20 @@ async function aktifkanNotifikasiHub() {
 // notifikasi akan tetap berfungsi walau selanjutnya dipakai lewat
 // iframe Hub seperti biasa.
 // ============================================================
+
+// 🩹 [BARU] Helper terpusat: apakah gate "Aktifkan Notifikasi" boleh
+// dilewati sekarang? "granted" = permanen (localStorage, memang
+// merepresentasikan izin asli browser, gak akan hilang sendiri).
+// "skip" SENGAJA disimpan di sessionStorage (bukan localStorage) --
+// artinya cuma berlaku selama app/tab ini masih terbuka. Begitu app
+// ditutup total & dibuka lagi dari awal, sessionStorage kosong lagi,
+// jadi gate wajib muncul ulang sampai user beneran tekan "Aktifkan
+// Notifikasi" & Allow. Dipakai di showApp() dan gate tab "App".
+function isNotifGateBypassed_() {
+  return localStorage.getItem("yassa_mobile_notif_status") === "granted"
+      || sessionStorage.getItem("yassa_mobile_notif_skip_session") === "1";
+}
+
 function renderMobileNotifButton() {
   const status = localStorage.getItem("yassa_mobile_notif_status"); // 'granted' | 'denied' | 'default' | 'error' | null
 
