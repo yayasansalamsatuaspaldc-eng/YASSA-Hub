@@ -5342,6 +5342,30 @@ function tampilkanNotifikasiDariData_(list) {
 let kfinBulanPilihan = new Date().getMonth() + 1; // 1-12
 let kfinTahunPilihan = new Date().getFullYear();
 
+// 🆕 Mode tampilan tab Keuangan:
+//   true  = "ikuti bulan aktif" (default) -- kfinBulanPilihan/kfinTahunPilihan
+//           di atas cuma tebakan awal sebelum data pertama datang, begitu
+//           respons server pertama nyampe langsung disesuaikan ke
+//           bulanAktif/tahunAktif dari server (lihat loadKeuanganStats()).
+//           "Bulan aktif" itu OTOMATIS NAIK ke bulan berikutnya begitu
+//           SEMUA wilayah santunan bulan berjalan sudah tersalur & bulan
+//           depan udah dibikinkan barisnya -- TIDAK harus nunggu kalender
+//           beneran ganti bulan (lihat tentukanBulanTahunSantunanAktif_ di
+//           Code_Hub.gs).
+//   false = user lagi browsing HISTORI bulan lain secara manual lewat
+//           tombol panah </> atau dropdown -- kfinBulanPilihan/
+//           kfinTahunPilihan dipakai APA ADANYA, gak di-auto-advance lagi.
+let kfinModeAuto = true;
+
+// 🆕 Periode aktif TERAKHIR yang diketahui dari server (bulanAktif/
+// tahunAktif di respons getRingkasanKeuangan) -- dipakai sebagai batas
+// "boleh maju sampai sini" buat tombol panah & badge "bulan ini", GANTI
+// dari sebelumnya yang ngebandingin ke tanggal kalender device
+// (new Date()) doang. Diperbarui tiap kali ada respons baru, baik lagi
+// mode auto maupun lagi browsing histori.
+let kfinBulanAktifTerakhir = new Date().getMonth() + 1;
+let kfinTahunAktifTerakhir = new Date().getFullYear();
+
 // 🆕 Wilayah yang lagi DIPILIH di dropdown filter tab Keuangan. "ALL" =
 // ikut wilayahAkses asli user (default, perilaku lama). Cuma efektif kalau
 // user akses > 1 wilayah (lihat kfinInfoFilterWilayah_()) -- user yang
@@ -5432,10 +5456,7 @@ function kfinLabelPeriodeSaatIni_() {
 // nampilin bulan berjalan, atau "bulan Agu 2026" kalau lagi lihat histori
 // bulan lain -- biar teksnya gak menyesatkan pas lagi buka bulan lampau.
 function kfinFraseWaktu_() {
-  const now = new Date();
-  const bulanIni = now.getMonth() + 1;
-  const tahunIni = now.getFullYear();
-  if (kfinBulanPilihan === bulanIni && kfinTahunPilihan === tahunIni) return "bulan ini";
+  if (kfinBulanPilihan === kfinBulanAktifTerakhir && kfinTahunPilihan === kfinTahunAktifTerakhir) return "bulan ini";
   return "bulan " + kfinLabelPeriodeSaatIni_();
 }
 
@@ -5818,20 +5839,23 @@ function gantiBulanKeuangan(delta) {
   if (bulanBaru < 1) { bulanBaru = 12; tahunBaru -= 1; }
   if (bulanBaru > 12) { bulanBaru = 1; tahunBaru += 1; }
 
-  const now = new Date();
+  // 🆕 Batas maju SEKARANG pakai bulan AKTIF (bisa lebih maju dari
+  // kalender kalau bulan berjalan udah kelar semua wilayah & bulan depan
+  // udah dibikinkan barisnya), BUKAN cuma tanggal device kayak dulu.
   const skorBaru = tahunBaru * 12 + bulanBaru;
-  const skorSekarang = now.getFullYear() * 12 + (now.getMonth() + 1);
-  if (skorBaru > skorSekarang) return; // gak ada gunanya lihat bulan yang belum terjadi
+  const skorAktif = kfinTahunAktifTerakhir * 12 + kfinBulanAktifTerakhir;
+  if (skorBaru > skorAktif) return; // gak ada gunanya lihat bulan yang belum jadi bulan aktif
 
+  kfinModeAuto = false; // user browsing histori manual -- jangan auto-advance lagi
   kfinBulanPilihan = bulanBaru;
   kfinTahunPilihan = tahunBaru;
   renderContent();
 }
 
 function kembaliKeBulanIniKeuangan() {
-  const now = new Date();
-  kfinBulanPilihan = now.getMonth() + 1;
-  kfinTahunPilihan = now.getFullYear();
+  kfinModeAuto = true; // balik ikutin bulan aktif otomatis
+  kfinBulanPilihan = kfinBulanAktifTerakhir;
+  kfinTahunPilihan = kfinTahunAktifTerakhir;
   renderContent();
 }
 
@@ -5863,13 +5887,20 @@ function loadKeuanganStats() {
     return daftar[Math.floor(Math.random() * daftar.length)];
   };
 
-  // 🆕 Ambil data buat bulan & tahun yang LAGI DIPILIH user (default bulan
-  // berjalan, bisa digeser lewat tombol panah di header) -- bukan selalu
-  // bulan berjalan seperti dulu.
-  const bulanDiminta = kfinBulanPilihan;
-  const tahunDiminta = kfinTahunPilihan;
+  // 🆕 Ambil data buat bulan & tahun yang LAGI DIPILIH user. Kalau lagi
+  // mode auto (kfinModeAuto true -- default, belum digeser manual), kirim
+  // null/null ke server biar backend yang nentuin "bulan aktif" sendiri
+  // (bisa lebih maju dari kfinBulanPilihan kalau bulan itu baru aja kelar
+  // semua wilayah -- lihat reconciliation di .then() di bawah). Kalau lagi
+  // browsing histori manual (kfinModeAuto false), kirim apa adanya.
+  const modeAutoDiminta = kfinModeAuto;
+  const bulanDiminta = modeAutoDiminta ? null : kfinBulanPilihan;
+  const tahunDiminta = modeAutoDiminta ? null : kfinTahunPilihan;
   const wilayahDiminta = kfinWilayahPilihan;
-  const cacheKeyDiminta = kfinCacheKey_(bulanDiminta, tahunDiminta, wilayahDiminta);
+  // Cache key tetap pakai kfinBulanPilihan/kfinTahunPilihan (bukan null)
+  // sebagai label -- cuma buat cache tampilan instan sisi klien, bukan
+  // parameter yang dikirim ke server.
+  const cacheKeyDiminta = kfinCacheKey_(kfinBulanPilihan, kfinTahunPilihan, wilayahDiminta);
 
   // Kalau bulan-tahun ini udah pernah sukses ke-fetch sebelumnya (mis. user
   // tadi udah buka bulan ini, pindah ke bulan lain, terus balik lagi TANPA
@@ -5914,28 +5945,56 @@ function loadKeuanganStats() {
   // PERBAIKAN PERFORMA: dulu 4 panggilan callGAS() terpisah (masing2 request
   // HTTP sendiri), sekarang digabung jadi 1 panggilan getRingkasanKeuangan()
   // -- backend jalanin ke-4 fungsi lama itu internal + hasilnya di-cache 3
-  // menit di server. Array hasil di bawah (pSantunan/pManual/pKitabisa/
-  // pMidtrans) dipertahankan urutannya biar terapkanKeuanganStats() di bawah
-  // TIDAK perlu diubah sama sekali.
-  const pRingkasan = callGASWithRetry_("getRingkasanKeuangan", [authToken, false, bulanDiminta, tahunDiminta, wilayahDiminta]).then(function (r) {
-    return [r.penyaluranSantunan, r.keuanganManual, r.kitabisaRealisasi, r.donasiRealisasi];
-  });
+  // menit di server.
+  //
+  // 🆕 Helper cek relevansi -- kalau lagi mode auto, respons masih relevan
+  // selama kfinModeAuto belum dimatiin user (geser manual) SEBELUM fetch
+  // ini selesai. Kalau lagi browsing histori manual, harus PERSIS bulan/
+  // tahun yang sama (SEPERTI PERILAKU LAMA). Wilayah harus selalu cocok.
+  function kfinMasihRelevan_() {
+    if (kfinWilayahPilihan !== wilayahDiminta) return false;
+    if (modeAutoDiminta) return kfinModeAuto;
+    return !kfinModeAuto && kfinBulanPilihan === bulanDiminta && kfinTahunPilihan === tahunDiminta;
+  }
+
+  const pRingkasan = callGASWithRetry_("getRingkasanKeuangan", [authToken, false, bulanDiminta, tahunDiminta, wilayahDiminta]);
 
   Promise.all([pRingkasan])
     .then(function (hasilWrap) {
-      const hasil = hasilWrap[0];
+      const r = hasilWrap[0];
+      if (!kfinMasihRelevan_()) return; // udah pindah bulan/wilayah/mode, biarin aja
+
+      // 🆕 Perbarui "bulan aktif terakhir" dari server -- dipakai buat
+      // batas tombol panah & label "bulan ini" (lihat kfinBulanAktifTerakhir
+      // di atas), independen dari lagi mode auto atau browsing histori.
+      if (r.bulanAktif && r.tahunAktif) {
+        kfinBulanAktifTerakhir = r.bulanAktif;
+        kfinTahunAktifTerakhir = r.tahunAktif;
+      }
+
+      // 🆕 Kalau lagi mode auto & ternyata periode aktif dari server BEDA
+      // dari yang lagi ditampilkan (mis. santunan bulan ini baru aja
+      // kelar disalurkan SEMUA wilayah, jadi server udah "naik" ke bulan
+      // depan) -- ikutin, render ulang biar header & datanya konsisten
+      // nunjukin bulan yang sama. renderContent() bakal manggil
+      // loadKeuanganStats() lagi di akhir (masih mode auto -> kirim null
+      // lagi -- kali ini bulanAktif udah sama-sama Oktober misalnya, jadi
+      // gak nge-loop lagi).
+      if (modeAutoDiminta && r.bulanAktif && (r.bulanAktif !== kfinBulanPilihan || r.tahunAktif !== kfinTahunPilihan)) {
+        kfinBulanPilihan = r.bulanAktif;
+        kfinTahunPilihan = r.tahunAktif;
+        renderContent();
+        return;
+      }
+
+      const hasil = [r.penyaluranSantunan, r.keuanganManual, r.kitabisaRealisasi, r.donasiRealisasi];
       keuanganStatsCache[cacheKeyDiminta] = hasil;
       saveKeuanganCacheHub(); // <-- SIMPAN KE OFFLINE CACHE
-      // Jaga race condition: kalau user udah keburu geser ke bulan/wilayah
-      // lain SEBELUM fetch ini selesai, jangan timpa tampilan yang SEDANG
-      // dilihat sekarang dengan hasil punya bulan/wilayah yang lama.
-      if (kfinBulanPilihan === bulanDiminta && kfinTahunPilihan === tahunDiminta && kfinWilayahPilihan === wilayahDiminta) {
-        terapkanKeuanganStats(hasil);
-        if (elBanner) elBanner.style.display = "none";
-      }
+      terapkanKeuanganStats(hasil);
+      if (elBanner) elBanner.style.display = "none";
     })
     .catch(function (err) {
-      if (!(kfinBulanPilihan === bulanDiminta && kfinTahunPilihan === tahunDiminta && kfinWilayahPilihan === wilayahDiminta)) return; // udah pindah bulan/wilayah, biarin aja
+      if (!kfinMasihRelevan_()) return; // udah pindah bulan/wilayah/mode, biarin aja
       // Kalau fetch gagal TAPI sebelumnya udah ada cache yang sukses,
       // biarin angka lama itu tetap tampil (lebih baik daripada direset
       // ke "-" cuma gara-gara 1x gangguan jaringan). Banner tetap disembunyiin.
@@ -6477,14 +6536,14 @@ function renderContent() {
     // Digeser lewat tombol panah di sebelahnya, lihat gantiBulanKeuangan().
     const kfinBulanSingkat = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
     const kfinLabelPeriode = kfinBulanSingkat[kfinBulanPilihan - 1] + " " + kfinTahunPilihan;
-    // Tombol "bulan berikutnya" dikunci kalau udah nyampe bulan berjalan --
-    // gak ada gunanya lihat proyeksi bulan yang belum terjadi/belum diisi
-    // Bendahara sama sekali.
-    const kfinNow_ = new Date();
+    // Tombol "bulan berikutnya" dikunci kalau udah nyampe bulan AKTIF --
+    // gak ada gunanya lihat proyeksi bulan yang belum jadi bulan aktif
+    // sama sekali. "Bulan aktif" bisa lebih maju dari kalender kalau bulan
+    // berjalan udah kelar semua wilayah (lihat kfinBulanAktifTerakhir).
     const kfinSkorPilihan_ = kfinTahunPilihan * 12 + kfinBulanPilihan;
-    const kfinSkorSekarang_ = kfinNow_.getFullYear() * 12 + (kfinNow_.getMonth() + 1);
-    const kfinBisaMaju_ = kfinSkorPilihan_ < kfinSkorSekarang_;
-    const kfinBisaBulanIni_ = kfinSkorPilihan_ !== kfinSkorSekarang_;
+    const kfinSkorAktif_ = kfinTahunAktifTerakhir * 12 + kfinBulanAktifTerakhir;
+    const kfinBisaMaju_ = kfinSkorPilihan_ < kfinSkorAktif_;
+    const kfinBisaBulanIni_ = kfinSkorPilihan_ !== kfinSkorAktif_;
     let html = `
       <div class="keuangan-header-section" style="grid-column: 1 / -1;">
       <div style="display:flex; align-items:center; gap:14px; margin-bottom:8px; padding-top:16px;">
