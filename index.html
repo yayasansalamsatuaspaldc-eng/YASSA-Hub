@@ -3158,7 +3158,7 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
       <input type="text" id="pedasAddKeterangan" placeholder="Mis. 1 unit, kondisi baru" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit;">
 
       <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Foto Dokumentasi (opsional)</label>
-      <div onclick="document.getElementById('pedasAddFotoInput').click()" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px dashed var(--glass-border); color: var(--text-secondary); font-size:11px; margin: 6px 0 16px; cursor:pointer; display:flex; align-items:center; gap:8px;">
+      <div onclick="bukaFotoSumber('pedasAddFotoInput')" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px dashed var(--glass-border); color: var(--text-secondary); font-size:11px; margin: 6px 0 16px; cursor:pointer; display:flex; align-items:center; gap:8px;">
         <span class="material-symbols-outlined" style="font-size:18px; flex-shrink:0;">add_a_photo</span>
         <span id="pedasAddFotoNama">Ketuk buat pilih foto (maks 10MB)</span>
       </div>
@@ -3220,7 +3220,7 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
       <input type="text" id="programLainAddKeterangan" placeholder="Catatan tambahan" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit;">
 
       <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Foto Dokumentasi (opsional)</label>
-      <div onclick="document.getElementById('programLainAddFotoInput').click()" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px dashed var(--glass-border); color: var(--text-secondary); font-size:11px; margin: 6px 0 16px; cursor:pointer; display:flex; align-items:center; gap:8px;">
+      <div onclick="bukaFotoSumber('programLainAddFotoInput')" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px dashed var(--glass-border); color: var(--text-secondary); font-size:11px; margin: 6px 0 16px; cursor:pointer; display:flex; align-items:center; gap:8px;">
         <span class="material-symbols-outlined" style="font-size:18px; flex-shrink:0;">add_a_photo</span>
         <span id="programLainAddFotoNama">Ketuk buat pilih foto (maks 10MB)</span>
       </div>
@@ -3238,6 +3238,24 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
        semua baris/program lewat fotoBantuanUploadClick() (target diisi
        ke variabel JS fotoBantuanTarget sebelum .click() dipanggil). -->
   <input type="file" id="fotoBantuanInput" accept="image/*" style="display:none;" onchange="fotoBantuanDipilih(this)">
+
+  <!-- 🆕 Modal kecil "Pilih Sumber Foto" -- Kamera (attribute capture
+       ditambah dinamis lewat JS sebelum .click()) ATAU Galeri (capture
+       dilepas). Dipakai bareng oleh 3 titik upload foto: form Tambah
+       Bantuan (Program Lainnya & PEDAS) dan tombol Upload/Ganti Foto
+       per baris data -- lihat bukaFotoSumber()/fotoSumberPilih(). -->
+  <div class="custom-modal-overlay" id="fotoSumberOverlay">
+    <div class="custom-modal" style="max-width:300px; text-align:center;">
+      <div class="custom-modal-title" style="margin-bottom:16px;">Pilih Sumber Foto</div>
+      <button type="button" onclick="fotoSumberPilih('kamera')" style="width:100%; box-sizing:border-box; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px; border-radius:12px; background: var(--grad-primary); border:none; color:#fff; font-size:12.5px; font-weight:700; cursor:pointer; margin-bottom:10px; font-family:inherit;">
+        <span class="material-symbols-outlined" style="font-size:18px;">photo_camera</span> Ambil Foto (Kamera)
+      </button>
+      <button type="button" onclick="fotoSumberPilih('galeri')" style="width:100%; box-sizing:border-box; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px; border-radius:12px; background: rgba(255,255,255,0.08); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; font-weight:700; cursor:pointer; margin-bottom:14px; font-family:inherit;">
+        <span class="material-symbols-outlined" style="font-size:18px;">photo_library</span> Pilih dari Galeri
+      </button>
+      <button type="button" class="btn-modal btn-cancel" style="width:100%; box-sizing:border-box;" onclick="tutupFotoSumber()">Batal</button>
+    </div>
+  </div>
 
   <!-- 🆕 Modal Input Data Santunan Bulanan (Rate_Santunan_Bulanan) -- khusus
        SUPERADMIN/ADMIN. Jumlah Anak Yatim/Yatim Piatu/Disabilitas SEMUA
@@ -8287,11 +8305,41 @@ function capitalizeFirst_(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 // ============================================================
 let fotoBantuanTarget = null; // { programKey: "baso"|"badik"|"batan"|"pedas", id, reload: fn }
 
-function fotoBantuanUploadClick(programKey, id, reload) {
-  fotoBantuanTarget = { programKey: programKey, id: id, reload: reload };
-  const input = document.getElementById("fotoBantuanInput");
+// ============================================================
+// 📸 CHOOSER "Pilih Sumber Foto" (Kamera / Galeri) -- dipakai bareng
+// oleh SEMUA titik upload foto bantuan (row-level & form Tambah
+// Bantuan). fotoSumberInputId nyimpen id <input type=file> mana yang
+// mau dipicu abis user milih sumbernya. Kamera dipaksa lewat attribute
+// capture="environment" yang ditambah dinamis SEBELUM .click() --
+// kalau user pilih Galeri, attribute capture dilepas dulu (browser lalu
+// nampilin file picker/galeri biasa, BUKAN langsung buka kamera).
+// ============================================================
+let fotoSumberInputId = null;
+
+function bukaFotoSumber(inputId) {
+  fotoSumberInputId = inputId;
+  document.getElementById("fotoSumberOverlay").classList.add("open");
+}
+
+function tutupFotoSumber() {
+  document.getElementById("fotoSumberOverlay").classList.remove("open");
+}
+
+function fotoSumberPilih(sumber) {
+  const inputId = fotoSumberInputId;
+  tutupFotoSumber();
+  if (!inputId) return;
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  if (sumber === "kamera") input.setAttribute("capture", "environment");
+  else input.removeAttribute("capture");
   input.value = "";
   input.click();
+}
+
+function fotoBantuanUploadClick(programKey, id, reload) {
+  fotoBantuanTarget = { programKey: programKey, id: id, reload: reload };
+  bukaFotoSumber("fotoBantuanInput");
 }
 
 function fotoBantuanDipilih(input) {
@@ -12793,7 +12841,7 @@ initSummaryCardTilt();
 // form user, sheet input, modal konfirmasi, dst) TANPA perlu ubah kode
 // tiap fungsi open/close satu-satu.
 // ============================================================
-const OVERLAY_OPEN_SELECTOR = '.overlay.open, .user-menu.open, #userFormOverlay.open, #customModalOverlay.open, #inputOverlay.open, #forcePwOverlay.open, #kegiatanFormOverlay.open, #laporanWilayahUploadOverlay.open, #psInputOverlay.open, #rsInputOverlay.open, #pedasAddOverlay.open, #programLainAddOverlay.open';
+const OVERLAY_OPEN_SELECTOR = '.overlay.open, .user-menu.open, #userFormOverlay.open, #customModalOverlay.open, #inputOverlay.open, #forcePwOverlay.open, #kegiatanFormOverlay.open, #laporanWilayahUploadOverlay.open, #psInputOverlay.open, #rsInputOverlay.open, #pedasAddOverlay.open, #programLainAddOverlay.open, #fotoSumberOverlay.open';
 
 let backExitArmed = false; // true sesaat setelah toast "tekan lagi buat keluar" muncul
 
