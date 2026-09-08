@@ -4034,16 +4034,18 @@ let authToken = null;
 let pendingOldPassword = null; 
 
 // ===== Daftar Program YASSA (selector "PILIH PROGRAM YASSA" di Beranda) =====
-// GO-PAY, SAPA, & BASO sudah punya data LIVE (BASO ditarik dari sheet
-// Log_Bantuan_Baso yang sama dipakai laporan Program BASO, lihat
-// getTotalSantunanBaso di Code.gs). Program lain (BADIK, BATAN, PEDAS)
-// masih placeholder "segera hadir" -- nanti tinggal disambung ke sumber
-// data masing-masing pas sudah tersedia.
+// GO-PAY, SAPA, BASO, & PEDAS sudah punya data LIVE (BASO ditarik dari
+// sheet Log_Bantuan_Baso yang sama dipakai laporan Program BASO, lihat
+// getTotalSantunanBaso di Code.gs; PEDAS ditarik dari getRekapPedasTahunan
+// -- SAMA PERSIS dipakai laporan Program PEDAS di tab Keuangan, gak ada
+// sheet terpisah, lihat getTotalSantunanPedas di Code.gs). Program lain
+// (BADIK, BATAN) masih placeholder "segera hadir" -- nanti tinggal
+// disambung ke sumber data masing-masing pas sudah tersedia.
 const YASSA_PROGRAMS = [
   { key: "gopay", label: "GO-PAY", sub: "Gojek Peduli Anak Yatim", icon: "volunteer_activism", color: "#22C55E", bg: "rgba(34,197,94,0.15)", ready: true },
   { key: "sapa", label: "SAPA", sub: "Sahabat Peduli Anak", icon: "diversity_1", color: "#EC4899", bg: "rgba(236,72,153,0.15)", ready: true },
   { key: "baso", label: "BASO", sub: "Bantuan Sembako", icon: "shopping_bag", color: "#F59E0B", bg: "rgba(245,158,11,0.15)", ready: true },
-  { key: "pedas", label: "PEDAS", sub: "Peduli Disabilitas", icon: "accessible", color: "#A855F7", bg: "rgba(168,85,247,0.15)", ready: false },
+  { key: "pedas", label: "PEDAS", sub: "Peduli Disabilitas", icon: "accessible", color: "#A855F7", bg: "rgba(168,85,247,0.15)", ready: true },
   { key: "badik", label: "BADIK", sub: "Bantuan Pendidikan", icon: "school", color: "#3B82F6", bg: "rgba(59,130,246,0.15)", ready: false },
   { key: "batan", label: "BATAN", sub: "Bantuan Kesehatan", icon: "favorite", color: "#14B8A6", bg: "rgba(20,184,166,0.15)", ready: false },
 ];
@@ -4839,6 +4841,7 @@ let berandaStatsCache = (function() {
     donasi: null, // { totalSantunanDiperlukan, kekuranganSantunan, santunanDitemukan, totalDonasi, lapangan, kitabisa, midtrans } -- PROGRAM GOPAY
     santunanSapa: null, // { totalSantunanDiperlukan, jumlahAnak } -- PROGRAM SAPA (lihat getTotalSantunanSapa di Code.gs)
     santunanBaso: null, // { tahun, totalDisalurkan, jumlahAnak } -- PROGRAM BASO (lihat getTotalSantunanBaso di Code.gs)
+    santunanPedas: null, // { tahun, totalDisalurkan, jumlahPenerima } -- PROGRAM PEDAS (lihat getTotalSantunanPedas di Code.gs, sumber SAMA dengan Laporan PEDAS)
     dashboard: null,
     verifikasi: null,
     aktivitas: null, // array log aktivitas terbaru (Donasi/Absensi/AWG/PM)
@@ -4902,6 +4905,20 @@ function renderSummaryCardBeranda_() {
     const d = berandaStatsCache.santunanBaso;
     const tahunLabel = d && d.tahun ? d.tahun : new Date().getFullYear();
     if (elLabel) elLabel.textContent = "Total Dana yang Disalurkan Program BASO Tahun " + tahunLabel;
+    if (elSubKekurangan) elSubKekurangan.style.display = "none";
+    if (elSubDonasi) elSubDonasi.style.display = "none";
+    if (elProgressWrap) elProgressWrap.style.display = "none";
+    if (elValue) {
+      if (d) animateRupiahValue_(elValue, d.totalDisalurkan);
+      else elValue.textContent = "...";
+    }
+    return;
+  }
+
+  if (activeProgram === "pedas") {
+    const d = berandaStatsCache.santunanPedas;
+    const tahunLabel = d && d.tahun ? d.tahun : new Date().getFullYear();
+    if (elLabel) elLabel.textContent = "Total Bantuan Disabilitas Tersalur PROGRAM PEDAS Tahun " + tahunLabel;
     if (elSubKekurangan) elSubKekurangan.style.display = "none";
     if (elSubDonasi) elSubDonasi.style.display = "none";
     if (elProgressWrap) elProgressWrap.style.display = "none";
@@ -5050,6 +5067,64 @@ function tutupDetailWilayahBaso() {
   document.getElementById("basoWilayahOverlay").classList.remove("open");
 }
 
+// Isi panel "Program PEDAS" di Beranda (jumlah penerima, jumlah wilayah, &
+// total bantuan tersalur tahun berjalan) -- dipanggil dari loadBerandaStats()
+// begitu bundle.santunanPedas datang, TERLEPAS dari activeProgram lagi
+// apa, sama pola kayak renderProgramPanelBaso_(). Sumbernya SAMA dengan
+// Laporan Program PEDAS (getRekapPedasTahunan), lihat getTotalSantunanPedas
+// di Code.gs -- TIDAK ada sheet/hitungan terpisah.
+function renderProgramPanelPedas_(data, gagal) {
+  const elPenerima = document.getElementById("berandaPedasJumlahPenerima");
+  const elTotal = document.getElementById("berandaPedasTotalDisalurkan");
+  const elWilayah = document.getElementById("berandaPedasJumlahWilayah");
+  const elSub = document.getElementById("berandaPedasSubjudul");
+  if (!elPenerima || !elTotal) return;
+
+  if (data) {
+    elPenerima.textContent = data.jumlahPenerima || 0;
+    elTotal.textContent = formatRupiahHub(data.totalDisalurkan || 0);
+    if (elWilayah) elWilayah.textContent = data.jumlahWilayah || 0;
+    if (elSub) elSub.textContent = "Peduli Disabilitas \u00b7 Tahun " + (data.tahun || new Date().getFullYear());
+  } else if (gagal) {
+    elPenerima.textContent = "-";
+    elTotal.textContent = "-";
+    if (elWilayah) elWilayah.textContent = "-";
+  }
+}
+
+// Popup rincian wilayah PEDAS -- nama wilayah & total bantuan yang sudah
+// tersalur tahun berjalan. Datanya numpang di berandaStatsCache.santunanPedas
+// yang udah kemuat lewat getBerandaBundle, jadi tombol ini GAK fetch ulang
+// ke server, langsung instan (sama pola kayak bukaDetailWilayahBaso()).
+function bukaDetailWilayahPedas() {
+  const data = berandaStatsCache.santunanPedas;
+  const elTitle = document.getElementById("pedasWilayahTitle");
+  const elList = document.getElementById("pedasWilayahList");
+  if (!elList) return;
+
+  const tahunLabel = data && data.tahun ? data.tahun : new Date().getFullYear();
+  if (elTitle) elTitle.textContent = "Wilayah Tersalur Program PEDAS " + tahunLabel;
+
+  const rincian = (data && data.rincianWilayah) || [];
+  if (!rincian.length) {
+    elList.innerHTML = '<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:14px 4px;">Belum ada wilayah yang tersalur tahun ini.</div>';
+  } else {
+    elList.innerHTML = rincian.map(function (w) {
+      return (
+        '<div style="background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; padding: 10px 12px; display:flex; align-items:center; justify-content:space-between; gap:10px;">' +
+          '<div style="font-size:12.5px; font-weight:700; color: var(--text-primary);">' + (w.wilayah || "-") + '</div>' +
+          '<div style="font-size:11px; color: var(--text-secondary); white-space:nowrap;">' + formatRupiahHub(w.nilai || 0) + '</div>' +
+        '</div>'
+      );
+    }).join("");
+  }
+
+  document.getElementById("pedasWilayahOverlay").classList.add("open");
+}
+function tutupDetailWilayahPedas() {
+  document.getElementById("pedasWilayahOverlay").classList.remove("open");
+}
+
 // Fungsi bantuan (Helper) untuk menyimpan ke memori HP
 function saveBerandaCacheHub() {
   try {
@@ -5193,6 +5268,9 @@ function loadBerandaStats() {
   // langsung keliatan tanpa nunggu server (sama pola kayak yang di atas).
   if (berandaStatsCache.santunanBaso) renderProgramPanelBaso_(berandaStatsCache.santunanBaso);
 
+  // Panel "Program PEDAS" -- sama pola kayak panel BASO di atas.
+  if (berandaStatsCache.santunanPedas) renderProgramPanelPedas_(berandaStatsCache.santunanPedas);
+
   // ============================================================
   // SATU permintaan gabungan ke server Hub (getBerandaBundle)
   // ------------------------------------------------------------
@@ -5272,6 +5350,24 @@ function loadBerandaStats() {
         renderProgramPanelBaso_(null, true);
       }
 
+      // 1d) Total Bantuan Disabilitas Tersalur PROGRAM PEDAS -> kartu
+      // ringkasan Beranda (dipakai kalau activeProgram = "pedas") + panel
+      // "Program PEDAS" (jumlah penerima & total bantuan, lihat
+      // renderProgramPanelPedas_()). Sumbernya getRekapPedasTahunan --
+      // SAMA PERSIS dipakai laporan Program PEDAS di tab Keuangan, lihat
+      // getTotalSantunanPedas() di Code.gs.
+      if (bundle.santunanPedas) {
+        berandaStatsCache.santunanPedas = bundle.santunanPedas;
+        renderSummaryCardBeranda_();
+        renderProgramPanelPedas_(bundle.santunanPedas);
+      } else if (!berandaStatsCache.santunanPedas) {
+        if (activeProgram === "pedas") {
+          const elTSD4 = document.getElementById("summaryTotalSantunanDiperlukan");
+          if (elTSD4) elTSD4.textContent = "-";
+        }
+        renderProgramPanelPedas_(null, true);
+      }
+
       // 2) Dashboard Stats -> kartu Total Wilayah & Total Pengurus
       if (bundle.dashboardStats) {
         berandaStatsCache.dashboard = bundle.dashboardStats;
@@ -5329,6 +5425,13 @@ function loadBerandaStats() {
           if (elTSD3) elTSD3.textContent = "-";
         }
         renderProgramPanelBaso_(null, true);
+      }
+      if (!berandaStatsCache.santunanPedas) {
+        if (activeProgram === "pedas") {
+          const elTSD4 = document.getElementById("summaryTotalSantunanDiperlukan");
+          if (elTSD4) elTSD4.textContent = "-";
+        }
+        renderProgramPanelPedas_(null, true);
       }
       if (!berandaStatsCache.dashboard) {
         const elW = document.getElementById("statTotalWilayah");
@@ -6620,10 +6723,63 @@ function renderContent() {
       </div>
       <!-- /Panel Program BASO -->
 
+      <!-- Panel Program PEDAS (Peduli Disabilitas) -- data LIVE dari
+           getRekapPedasTahunan, SUMBER YANG SAMA dipakai Laporan Program
+           PEDAS di tab Keuangan (Rate_Santunan_Bulanan + Log_Bantuan_Pedas),
+           TIDAK ada sheet terpisah -- lihat getTotalSantunanPedas di
+           Code.gs. Nampilin jumlah penerima & wilayah yang sudah
+           tersalur + total bantuan TAHUN BERJALAN (mengikuti tahun
+           sekarang, bukan hardcode). Diisi via renderProgramPanelPedas_().
+           Kartu "Wilayah Tersalur" bisa diklik buat lihat rincian nilai
+           per wilayah (lihat bukaDetailWilayahPedas()). -->
+      <div class="program-panel" id="programPanel-pedas" style="display:none;">
+        <div class="pedas-preview-card" style="background: var(--glass-strong); border-radius: 20px; padding: 18px 18px 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid #A855F7;">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
+            <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(168,85,247,0.15); color: #C084FC; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <span class="material-symbols-outlined" style="font-size: 21px; font-variation-settings: 'FILL' 1;">accessible</span>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <h3 style="font-size: 14px; font-weight: 700; margin: 0;">Program PEDAS</h3>
+              <div style="font-size: 10.5px; color: var(--text-secondary); margin-top: 1px;" id="berandaPedasSubjudul">Peduli Disabilitas &middot; Semua Wilayah</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <div style="flex:1; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+              <div style="font-size:15px; font-weight:800; color:#C084FC;" id="berandaPedasJumlahPenerima"><span class="kv-loading">...</span></div>
+              <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Penerima Tersalur</div>
+            </div>
+            <div style="flex:1.3; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+              <div style="font-size:13px; font-weight:800; color:#C084FC;" id="berandaPedasTotalDisalurkan"><span class="kv-loading">...</span></div>
+              <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Total Bantuan Tersalur</div>
+            </div>
+            <div onclick="bukaDetailWilayahPedas()" style="flex:1; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; padding: 9px 6px; text-align:center; cursor:pointer;">
+              <div style="font-size:15px; font-weight:800; color:#C084FC;" id="berandaPedasJumlahWilayah"><span class="kv-loading">...</span></div>
+              <div style="font-size:9px; color: var(--text-muted); margin-top:2px; display:flex; align-items:center; justify-content:center; gap:1px;">Wilayah Tersalur <span class="material-symbols-outlined" style="font-size:11px;">chevron_right</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal detail: nama wilayah & total bantuan yang sudah tersalur
+           Program PEDAS tahun berjalan -- diisi via bukaDetailWilayahPedas()
+           dari data yang sudah kemuat di berandaStatsCache.santunanPedas
+           (gak perlu fetch baru). -->
+      <div class="custom-modal-overlay" id="pedasWilayahOverlay">
+        <div class="custom-modal" style="max-width:400px; text-align:left; max-height:80vh; overflow-y:auto;">
+          <div class="custom-modal-title" style="text-align:center; margin-bottom: 4px;" id="pedasWilayahTitle">Wilayah Tersalur Program PEDAS</div>
+          <div style="font-size:10.5px; color:var(--text-secondary); text-align:center; margin-bottom:14px;">Nama wilayah & total bantuan tersalur</div>
+          <div id="pedasWilayahList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;"></div>
+          <div class="custom-modal-actions">
+            <button type="button" class="btn-modal btn-cancel" style="width:100%;" onclick="tutupDetailWilayahPedas()">Tutup</button>
+          </div>
+        </div>
+      </div>
+      <!-- /Panel Program PEDAS -->
+
       <!-- Panel placeholder buat program lain yang belum ada datanya
-           (BADIK, BATAN, PEDAS) -- disembunyikan default, tinggal
-           disambung ke sumber data masing-masing pas sudah tersedia
-           (lihat YASSA_PROGRAMS di atas). -->
+           (BADIK, BATAN) -- disembunyikan default, tinggal disambung ke
+           sumber data masing-masing pas sudah tersedia (lihat
+           YASSA_PROGRAMS di atas). -->
       ${YASSA_PROGRAMS.filter(function (p) { return !p.ready; })
         .map(function (p) {
           return '<div class="program-panel" id="programPanel-' + p.key + '" style="display:none;">' + renderProgramComingSoonHtml_(p) + '</div>';
