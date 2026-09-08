@@ -2086,6 +2086,36 @@
 
   .login-app-version { font-size: 11px; font-weight: 500; color: var(--text-muted); margin-top: 10px; text-align: center; }
 
+  /* 🩹 FIX (2026): di HP dengan tinggi layar terbatas (mis. Redmi 9 --
+     viewport-nya makin pendek lagi kalau address bar Chrome kelihatan),
+     total tinggi konten login (header hijau + form + tombol Google + ikon
+     footer + versi app) sedikit LEBIH TINGGI dari layar yang benar-benar
+     terlihat. Sebelumnya cuma diatasi dengan bikin areanya scrollable
+     (overflow-y:auto) -- itu tetap ada sebagai jaring pengaman, tapi lebih
+     enak kalau semuanya muat pas tanpa perlu scroll sama sekali. Jadi di
+     breakpoint tinggi <= 740px, kita "compact"-kan spacing & elemen paling
+     "boros" tempat (header hijau & jarak antar section) TANPA mengubah
+     komposisi/urutan desainnya. Breakpoint 740px sengaja dipilih supaya HP
+     kelas Redmi 9 (viewport ~700-780px pas address bar kelihatan) kena,
+     tapi HP/tablet yang layarnya cukup tinggi tetap dapat versi normal. */
+  @media (max-height: 740px) {
+    .login-header-bg { height: 26%; min-height: 168px; padding-bottom: 28px; }
+    .login-logo { width: 64px; height: 64px; }
+    .login-form-container { padding-top: 20px; }
+    .login-field { margin-bottom: 16px; }
+    .login-links { margin-top: 10px; }
+    .login-divider { margin: 16px 0 12px; }
+    .google-btn-wrap { margin-bottom: 8px; }
+    .login-footer-icons { margin-top: 6px; }
+    .login-footer-icon-circle { width: 34px; height: 34px; }
+    .login-app-version { margin-top: 6px; }
+  }
+  @media (max-height: 620px) {
+    .login-header-bg { height: 20%; min-height: 128px; padding-bottom: 20px; }
+    .login-logo { width: 52px; height: 52px; }
+    .login-footer-icons { display: none; } /* ikon Kehadiran/Keamanan/Keluhan bukan aksi vital di layar sesempit ini -- diprioritaskan form login & tombol Google tetap kelihatan penuh tanpa scroll */
+  }
+
   /* Aksi Cepat: Donasi Kitabisa.com -- dibuat mencolok supaya jadi fokus utama */
   @keyframes kitabisaPulseRing {
     0%   { box-shadow: 0 0 0 0 rgba(255,90,58,0.55), 0 6px 18px rgba(255,90,58,0.35); }
