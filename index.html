@@ -5,14 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>YASSA GOPAY</title>
 <script>
-  // 🌞 Terapkan tema (gelap/terang) SEBELUM CSS/HTML lain di-render, supaya
-  // gak ada "kedipan" balik ke tema gelap sesaat pas app baru dibuka
-  // (FOUC). Preferensi disimpan di localStorage lewat toggleTheme() di
-  // bagian <script> utama bawah.
+  // 🌙 MODE MALAM (DARK MODE) SEBAGAI DEFAULT
+  // Mengikuti standar Yassa Mobile, Mode Malam aktif secara default
   (function () {
     try {
-      if (localStorage.getItem("yassa_gopay_theme") === "light") {
-        document.documentElement.setAttribute("data-theme", "light");
+      var saved = localStorage.getItem("yassa-dark-mode");
+      // Default adalah Dark Mode aktif (kecuali dimatikan manual dengan nilai "0")
+      var isDark = saved === null || saved === "1";
+      if (isDark) {
+        document.documentElement.classList.add("dark-mode");
       }
     } catch (e) {}
   })();
@@ -157,7 +158,9 @@
   })();
 </script>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#121A2F">
+<meta name="theme-color" content="#16a34a">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -168,9 +171,11 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <style>
   :root {
@@ -215,7 +220,7 @@
      ☀️ MODE TERANG ("Outdoor") — supaya app tetap kebaca pas dipakai
      di luar ruangan / siang hari kena matahari langsung. Diaktifkan
      lewat atribut data-theme="light" di <html> (toggle via tombol
-     "Mode Tampilan" di Menu Akun -> lihat toggleTheme() di <script>
+     "Mode Tampilan" di Menu Akun -> lihat toggleTheme() di script
      bawah). Cukup nimpa CSS variable inti di sini; sisanya otomatis
      ikut berubah karena hampir semua komponen sudah pakai var(--...).
      Beberapa komponen yang sengaja punya warna gelap hardcode (kartu
@@ -279,7 +284,7 @@
   /* ============================================================
      🌊 EFEK SENTUH GLOBAL (ripple) -- diterapkan otomatis ke SEMUA
      tombol & elemen berklik lewat JS (lihat initGlobalRippleEffect())
-     di bagian <script> bawah, jadi gak perlu tambahin manual ke tiap
+     di bagian script bawah, jadi gak perlu tambahin manual ke tiap
      tombol satu-satu. Elemen target ditandai class "gtap" oleh JS.
      Ripple-nya lingkaran putih transparan yang membesar & memudar dari
      titik sentuh, dikombinasikan dengan efek "mengecil dikit" (scale)
@@ -507,7 +512,7 @@
   /* ============================================================
      ✨ IMMERSIVE: kartu ringkasan Beranda dibuat "hidup" -- ring cahaya
      yang muter pelan di tepi kartu + tilt 3D ngikutin sentuhan/kursor
-     (lihat initSummaryCardTilt() di <script> bawah buat logic JS-nya).
+     (lihat initSummaryCardTilt() di script bawah buat logic JS-nya).
      Semua efek dimatikan otomatis kalau user aktifin "Reduced Motion"
      di HP-nya (lihat blok @media prefers-reduced-motion di bawah),
      dan tilt-nya dibikin SUBTIL (maks ~6deg) supaya angka tetap kebaca
@@ -1769,7 +1774,7 @@
     min-height: 18px;
   }
   /* Badge hitungan mundur (detik) selama splash "Bismillah" berjalan --
-     dikelola lewat startPostLoginSplashCountdown() di <script> bawah. */
+     dikelola lewat startPostLoginSplashCountdown() di script bawah. */
   .post-login-splash-countdown {
     display: inline-flex; align-items: center; gap: 6px;
     font-size: 12px; font-weight: 700; color: var(--neon-cyan);
@@ -2660,6 +2665,439 @@ html.lite-mode .keuangan-progress-fill::before {
    total, biar user tetap dapat feedback visual pas nge-tap */
 html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
 </style>
+
+<style id="yassa-mobile-neumorphic-style">
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+
+  :root {
+    --yassa-green: #16a34a;
+    --bg-navy: #E0E5EC;
+    --bg-navy-deep: #D4DAE2;
+    --surface-bg: #E0E5EC;
+    --glass: #E0E5EC;
+    --glass-strong: #E0E5EC;
+    --glass-border: rgba(163,177,198,0.3);
+    --glass-border-strong: rgba(255,255,255,0.7);
+    --neon-blue: #0284c7;
+    --neon-cyan: #0ea5e9;
+    --neon-purple: #9333ea;
+    --neon-pink: #ec4899;
+    --neon-amber: #d97706;
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --danger: #ef4444;
+    --success: #16a34a;
+    --grad-primary: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
+    --grad-cool: linear-gradient(135deg, #16A34A 0%, #0EA5E9 100%);
+    --shadow-deep: 9px 9px 16px rgba(163,177,198,0.6), -9px -9px 16px rgba(255,255,255,0.5);
+    --shadow-glow-blue: 6px 6px 12px rgba(163,177,198,0.6), -6px -6px 12px rgba(255,255,255,0.8);
+    --bento-primary: #16a34a;
+    --bento-primary-rgb: 22,163,74;
+    --bento-tertiary: #0ea5e9;
+    --bento-tertiary-rgb: 14,165,233;
+    --bento-secondary: #16a34a;
+    --bento-secondary-rgb: 22,163,74;
+    --bento-amber: #d97706;
+    --bento-amber-rgb: 217,119,6;
+    --bento-error: #ef4444;
+    --bento-error-rgb: 239,68,68;
+    --bento-on-surface-variant: #475569;
+    color-scheme: light;
+  }
+
+  /* Cegah Android/Chrome menerapkan force-dark miliknya sendiri ke form */
+  input, select, textarea {
+    color-scheme: light;
+  }
+
+  /* ============================================================ */
+  /* MODE MALAM (DARK MODE) - YASSA MOBILE FILTER ENGINE          */
+  /* Trik filter invert+hue-rotate: seluruh UI neumorphic terang  */
+  /* otomatis kebalik jadi gelap navy, tanpa merusak shadow 3D.   */
+  /* ============================================================ */
+  html.dark-mode body,
+  body.dark-mode {
+    filter: invert(1) hue-rotate(200deg) saturate(1.25) brightness(0.94) contrast(0.96);
+    background-color: #f8fafc;
+  }
+  body.dark-mode img,
+  body.dark-mode video,
+  body.dark-mode iframe,
+  body.dark-mode .no-invert,
+  body.dark-mode .re-invert,
+  body.dark-mode svg.login-logo,
+  body.dark-mode svg.app-splash-logo,
+  body.dark-mode svg.post-login-splash-logo,
+  body.dark-mode svg.header-logo-svg,
+  body.dark-mode #googleSignInBtn {
+    filter: invert(1) hue-rotate(200deg) saturate(1.25) brightness(0.94) contrast(0.96);
+  }
+  body.dark-mode {
+    transition: filter 0.2s ease;
+  }
+  @media print {
+    html.dark-mode body,
+    body.dark-mode { filter: none !important; }
+    body.dark-mode img,
+    body.dark-mode video,
+    body.dark-mode iframe,
+    body.dark-mode .no-invert { filter: none !important; }
+  }
+
+  html, body {
+    margin: 0; padding: 0;
+    background: #E0E5EC;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    color: var(--text-primary);
+    height: 100%;
+    overflow: hidden;
+  }
+
+  #app {
+    background: #E0E5EC !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+  }
+
+  @media (min-width: 1280px) {
+    body {
+      background: #D4DAE2;
+    }
+    #app {
+      background: #E0E5EC !important;
+      border-radius: 2.5rem;
+      box-shadow: 12px 12px 24px rgba(163,177,198,0.6), -12px -12px 24px rgba(255,255,255,0.8);
+      border: none;
+    }
+  }
+
+  /* Header YASSA Mobile Style */
+  .header {
+    background: #E0E5EC !important;
+    padding: 14px 20px 42px;
+    color: var(--text-primary);
+    border-bottom-left-radius: 2.2rem !important;
+    border-bottom-right-radius: 2.2rem !important;
+    border-bottom: none !important;
+    box-shadow: 6px 6px 12px rgba(163,177,198,0.6), -6px -6px 12px rgba(255,255,255,0.8) !important;
+  }
+  .header.header-compact {
+    padding-bottom: 18px !important;
+  }
+  .header-greet-name {
+    color: #1e293b !important;
+    font-weight: 900 !important;
+    font-size: 18px !important;
+  }
+  .header-greet-meta {
+    color: #16a34a !important;
+    font-weight: 800 !important;
+    font-style: italic !important;
+    font-size: 10.5px !important;
+    text-transform: uppercase !important;
+  }
+  .header-logo-btn {
+    background: #E0E5EC !important;
+    border: none !important;
+    box-shadow: 4px 4px 8px rgba(163,177,198,0.6), -4px -4px 8px rgba(255,255,255,0.8) !important;
+  }
+  .header-logo-btn:active {
+    box-shadow: inset 2px 2px 4px rgba(163,177,198,0.6), inset -2px -2px 4px rgba(255,255,255,0.8) !important;
+  }
+
+  .bell {
+    background: #E0E5EC !important;
+    border: none !important;
+    border-radius: 14px !important;
+    box-shadow: 4px 4px 8px rgba(163,177,198,0.6), -4px -4px 8px rgba(255,255,255,0.8) !important;
+    color: #475569 !important;
+  }
+  .bell:active {
+    box-shadow: inset 3px 3px 6px rgba(163,177,198,0.6), inset -3px -3px 6px rgba(255,255,255,0.8) !important;
+    transform: scale(0.95);
+  }
+
+  /* Neumorphic Cards & Components */
+  .summary-card {
+    margin: -24px 16px 0 !important;
+    background: #E0E5EC !important;
+    border-radius: 2.5rem !important;
+    padding: 22px 20px !important;
+    box-shadow: 9px 9px 16px rgba(163,177,198,0.6), -9px -9px 16px rgba(255,255,255,0.5) !important;
+    border: none !important;
+    color: #1e293b !important;
+  }
+  .summary-card::before, .summary-card::after { display: none !important; }
+  .summary-card .summary-sheen { display: none !important; }
+  .summary-card .summary-value {
+    color: #16a34a !important;
+    font-weight: 900 !important;
+    font-size: 24px !important;
+  }
+  .summary-card .summary-label {
+    color: #64748b !important;
+    font-weight: 800 !important;
+  }
+  .summary-icon {
+    background: #E0E5EC !important;
+    box-shadow: inset 2px 2px 5px rgba(163,177,198,0.6), inset -2px -2px 5px rgba(255,255,255,0.8) !important;
+    color: #16a34a !important;
+    border-radius: 12px !important;
+  }
+  .summary-sub-row {
+    background: #E0E5EC !important;
+    border: none !important;
+    border-radius: 1.5rem !important;
+    box-shadow: inset 3px 3px 6px rgba(163,177,198,0.6), inset -3px -3px 6px rgba(255,255,255,0.8) !important;
+    padding: 12px 14px !important;
+  }
+  .summary-progress-track {
+    background: #E0E5EC !important;
+    box-shadow: inset 2px 2px 4px rgba(163,177,198,0.6), inset -2px -2px 4px rgba(255,255,255,0.8) !important;
+    height: 8px !important;
+  }
+  .summary-progress-fill {
+    background: #16a34a !important;
+    box-shadow: 0 0 10px rgba(22,163,74,0.4);
+  }
+
+  /* Universal Neumorphic Outset Cards */
+  .stat-mini-card,
+  .anak-yatim-preview-card,
+  .anak-asuh-preview-card,
+  .baso-preview-card,
+  .pedas-preview-card,
+  .kfin-card,
+  .menu-panel,
+  .akun-card,
+  .custom-modal,
+  .user-menu,
+  .user-form-sheet,
+  .force-pw-sheet,
+  [style*="border-left: 4px solid"],
+  [style*="border-left:4px solid"] {
+    background-color: #E0E5EC !important;
+    border: none !important;
+    border-radius: 2rem !important;
+    box-shadow: 9px 9px 16px rgba(163,177,198,0.6), -9px -9px 16px rgba(255,255,255,0.5) !important;
+    color: #1e293b !important;
+  }
+
+  /* Universal Neumorphic Inset Containers */
+  .anak-yatim-mini-stat,
+  .anak-asuh-mini-stat,
+  .kfin-stat-chip,
+  .user-table-wrap,
+  .kfin-progress-track {
+    background-color: #E0E5EC !important;
+    border: none !important;
+    border-radius: 1.25rem !important;
+    box-shadow: inset 3px 3px 6px rgba(163,177,198,0.6), inset -3px -3px 6px rgba(255,255,255,0.8) !important;
+  }
+
+  /* Form Elements: Inset */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]),
+  select,
+  textarea,
+  .user-form-input,
+  .user-form-select {
+    background-color: #E0E5EC !important;
+    border: none !important;
+    border-radius: 1.1rem !important;
+    box-shadow: inset 4px 4px 8px rgba(163,177,198,0.6), inset -4px -4px 8px rgba(255,255,255,0.8) !important;
+    color: #1e293b !important;
+    font-weight: 700 !important;
+    outline: none !important;
+  }
+
+  /* Buttons & Action Pills */
+  .program-select-card,
+  .kfin-cta,
+  .menu-item,
+  #appGridContainer button {
+    background: #E0E5EC !important;
+    border: none !important;
+    border-radius: 1.8rem !important;
+    box-shadow: 6px 6px 12px rgba(163,177,198,0.6), -6px -6px 12px rgba(255,255,255,0.8) !important;
+    transition: all 0.2s ease;
+  }
+  .program-select-card.active,
+  .kfin-cta:active,
+  .menu-item:active,
+  #appGridContainer button:active {
+    box-shadow: inset 4px 4px 8px rgba(163,177,198,0.6), inset -4px -4px 8px rgba(255,255,255,0.8) !important;
+    transform: scale(0.97);
+  }
+  .program-select-icon {
+    background: #E0E5EC !important;
+    box-shadow: 3px 3px 6px rgba(163,177,198,0.5), -3px -3px 6px rgba(255,255,255,0.8) !important;
+    border-radius: 16px !important;
+  }
+
+  .btn-confirm, .btn-form-save {
+    background: #16a34a !important;
+    border: none !important;
+    border-radius: 1rem !important;
+    box-shadow: 4px 4px 10px rgba(22,163,74,0.35) !important;
+    color: #fff !important;
+    font-weight: 800 !important;
+  }
+  .btn-cancel, .btn-form-cancel {
+    background: #E0E5EC !important;
+    border: none !important;
+    border-radius: 1rem !important;
+    box-shadow: 4px 4px 8px rgba(163,177,198,0.6), -4px -4px 8px rgba(255,255,255,0.8) !important;
+    color: #475569 !important;
+    font-weight: 700 !important;
+  }
+  .btn-cancel:active, .btn-form-cancel:active {
+    box-shadow: inset 2px 2px 4px rgba(163,177,198,0.6), inset -2px -2px 4px rgba(255,255,255,0.8) !important;
+  }
+
+  /* Bottom Nav (Exact Yassa Mobile Style) */
+  .bottom-nav {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: #E0E5EC !important;
+    border-top: none !important;
+    display: flex !important;
+    justify-content: space-around !important;
+    align-items: flex-end !important;
+    box-shadow: 0 -6px 16px rgba(163,177,198,0.5), 0 -6px 16px rgba(255,255,255,0.7) !important;
+    z-index: 40;
+    height: 75px !important;
+    padding: 0 8px 8px !important;
+    padding-bottom: env(safe-area-inset-bottom, 8px) !important;
+  }
+  .nav-btn {
+    flex: 1;
+    background: none !important;
+    border: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    height: 100% !important;
+    gap: 3px !important;
+    cursor: pointer;
+    position: relative;
+    outline: none !important;
+    padding: 0 0 6px 0 !important;
+    transition: transform 0.2s ease !important;
+  }
+  .nav-btn .nav-icon-wrap {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 56px !important;
+    height: 34px !important;
+    border-radius: 14px !important;
+    transition: all 0.25s ease !important;
+    color: #64748b !important;
+    background: transparent !important;
+  }
+  .nav-btn.active .nav-icon-wrap,
+  .nav-btn .nav-icon-wrap.active {
+    background: #E0E5EC !important;
+    color: #0ea5e9 !important;
+    box-shadow: inset 4px 4px 8px rgba(163,177,198,0.6), inset -4px -4px 8px rgba(255,255,255,0.8) !important;
+  }
+  .nav-btn .nav-label {
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    color: #64748b !important;
+    transition: color 0.2s;
+    letter-spacing: -0.2px;
+  }
+  .nav-btn.active .nav-label,
+  .nav-btn .nav-label.active {
+    font-weight: 800 !important;
+    color: #0ea5e9 !important;
+  }
+  .nav-center-wrap {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+    z-index: 50;
+    padding-bottom: 6px;
+  }
+  .nav-center-island {
+    position: absolute;
+    top: -24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #E0E5EC;
+    border-radius: 24px;
+    padding: 6px;
+    box-shadow: 6px 6px 12px rgba(163,177,198,0.4), -6px -6px 12px rgba(255,255,255,0.6);
+  }
+  .nav-center-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 58px;
+    height: 42px;
+    border-radius: 18px;
+    border: none;
+    background: #E0E5EC;
+    box-shadow: 4px 4px 8px rgba(163,177,198,0.6), -4px -4px 8px rgba(255,255,255,0.8);
+    cursor: pointer;
+    outline: none;
+    transition: all 0.15s ease;
+    color: #16a34a;
+  }
+  .nav-center-btn:active,
+  .nav-center-btn.active {
+    box-shadow: inset 4px 4px 8px rgba(163,177,198,0.6), inset -4px -4px 8px rgba(255,255,255,0.8);
+    transform: scale(0.96);
+  }
+  .nav-center-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #16a34a;
+  }
+
+  /* Overlay & App Screens */
+  .overlay {
+    background: #E0E5EC !important;
+  }
+  .overlay-header {
+    background: #E0E5EC !important;
+    border-bottom: none !important;
+    box-shadow: 6px 6px 12px rgba(163,177,198,0.6), -6px -6px 12px rgba(255,255,255,0.8) !important;
+  }
+  .overlay-title {
+    color: #1e293b !important;
+    font-weight: 800 !important;
+  }
+  .overlay-close {
+    background: #E0E5EC !important;
+    border: none !important;
+    border-radius: 50% !important;
+    box-shadow: 4px 4px 8px rgba(163,177,198,0.6), -4px -4px 8px rgba(255,255,255,0.8) !important;
+    color: #475569 !important;
+  }
+  .overlay-close:active {
+    box-shadow: inset 2px 2px 4px rgba(163,177,198,0.6), inset -2px -2px 4px rgba(255,255,255,0.8) !important;
+  }
+  .overlay-close svg {
+    stroke: #475569 !important;
+  }
+  .akun-content {
+    background: #E0E5EC !important;
+  }
+
+  /* Splashes & Banner */
+  .app-splash, .post-login-splash {
+    background: #0B0F19 !important;
+  }
+</style>
+
 </head>
 <body>
 
@@ -2715,108 +3153,91 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
 </div>
 
 <!-- ============ LAYAR LOGIN ============ -->
-<div id="loginScreen" class="login-screen">
-  <div class="login-card">
-    <div class="login-header-bg">
-      <!-- Background Decorations -->
-      <div class="decor-blob decor-blob-1"></div>
-      <div class="decor-blob decor-blob-2"></div>
-      
-      <!-- Isometric Shapes for Tech Vibe -->
-      <svg class="decor-iso" viewBox="0 0 100 100" style="width: 50px; top: 15%; left: 10%;">
-         <polygon points="50,10 90,30 90,70 50,90 10,70 10,30" fill="rgba(255,255,255,0.1)" stroke="#fff" stroke-width="3"/>
-         <polyline points="10,30 50,50 90,30" fill="none" stroke="#fff" stroke-width="3"/>
-         <line x1="50" y1="50" x2="50" y2="90" stroke="#fff" stroke-width="3"/>
-      </svg>
-      <svg class="decor-iso" viewBox="0 0 100 100" style="width: 35px; top: 40%; right: 12%; animation-delay: 1s;">
-         <polygon points="50,10 90,30 90,70 50,90 10,70 10,30" fill="rgba(255,255,255,0.05)" stroke="#fff" stroke-width="4"/>
-         <polyline points="10,30 50,50 90,30" fill="none" stroke="#fff" stroke-width="4"/>
-         <line x1="50" y1="50" x2="50" y2="90" stroke="#fff" stroke-width="4"/>
-      </svg>
-      
-      <!-- Floating Particles -->
-      <div style="position: absolute; width: 6px; height: 6px; background: #fff; border-radius: 50%; top: 25%; right: 30%; opacity: 0.4; animation: float 4s infinite; z-index: 2;"></div>
-      <div style="position: absolute; width: 4px; height: 4px; background: #fff; border-radius: 50%; top: 60%; left: 25%; opacity: 0.3; animation: float 5s infinite 2s; z-index: 2;"></div>
-      <div style="position: absolute; width: 8px; height: 8px; background: #fff; border-radius: 50%; top: 70%; right: 20%; opacity: 0.2; animation: float 7s infinite 1s; z-index: 2;"></div>
-
-      <svg viewBox="0 0 100 100" class="login-logo" aria-label="YASSA Logo">
-        <circle cx="28" cy="38" r="6" fill="#22C55E"/>
-        <path d="M13 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
-        <circle cx="72" cy="38" r="6" fill="#22C55E"/>
-        <path d="M57 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
-        <circle cx="50" cy="28" r="7.5" fill="#22C55E"/>
-        <path d="M30 53 a 20 20 0 0 1 40 0" fill="none" stroke="#22C55E" stroke-width="6.5" stroke-linecap="round"/>
-        <text x="50" y="76" font-family="'Inter', sans-serif" font-weight="900" font-size="24" text-anchor="middle" letter-spacing="-0.5">
-          <tspan fill="#ffffff">YAS</tspan><tspan fill="#22C55E">SA</tspan>
-        </text>
-      </svg>
-      <!-- Title is optional here since it's already in the logo, but kept for balance -->
-      
-      <div class="login-header-wave"></div>
-    </div>
-
-    <div class="login-form-container">
-      <div id="loginError" class="login-error" style="display:none;"></div>
-
-      <form id="loginForm" onsubmit="handleLoginSubmit(event)">
-        <div class="login-field">
-          <div class="login-field-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          </div>
-          <input type="tel" id="loginEmail" class="login-input" placeholder="Username (628xxxxxxxxx)" required autocomplete="tel">
+<div id="loginScreen" class="login-screen" style="background-color: #f0f0f0; font-family: 'Plus Jakarta Sans', sans-serif;">
+  <main class="flex-1 flex flex-col items-center px-5 max-w-md mx-auto w-full min-h-screen pt-14 pb-20" style="display:flex; flex-direction:column; align-items:center; width:100%; max-width:400px; margin:auto;">
+    <div class="w-full my-auto flex flex-col items-center" style="width:100%; display:flex; flex-direction:column; align-items:center;">
+      <div class="mt-0 mb-4 w-full flex justify-center relative" style="display:flex; justify-content:center; margin-bottom:16px;">
+        <div class="w-[100px] h-[100px] bg-white rounded-full flex items-center justify-center p-2 border border-white/60 mx-auto" style="width:100px; height:100px; background:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow: 6px 6px 12px #d1d1d1, -6px -6px 12px #ffffff;">
+          <svg viewBox="0 0 100 100" class="login-logo" style="width:75px; height:75px;" aria-label="YASSA Logo">
+            <circle cx="28" cy="38" r="6" fill="#22C55E"/>
+            <path d="M13 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="72" cy="38" r="6" fill="#22C55E"/>
+            <path d="M57 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="50" cy="28" r="7.5" fill="#22C55E"/>
+            <path d="M30 53 a 20 20 0 0 1 40 0" fill="none" stroke="#22C55E" stroke-width="6.5" stroke-linecap="round"/>
+            <text x="50" y="76" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-weight="900" font-size="24" text-anchor="middle" letter-spacing="-0.5">
+              <tspan fill="#000000">YAS</tspan><tspan fill="#22C55E">SA</tspan>
+            </text>
+          </svg>
         </div>
-        
-        <div class="login-field">
-          <div class="login-field-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <div class="text-center mb-5 w-full flex flex-col items-center" style="text-align:center; margin-bottom:18px;">
+        <h2 style="font-size:22px; font-weight:900; margin:0 0 4px; color:#1e293b; letter-spacing:-0.5px;">Selamat Datang</h2>
+        <p style="font-size:11px; color:#64748b; font-weight:700; margin:0;">Silakan masuk ke akun Anda</p>
+      </div>
+      <div class="w-full bg-[#ffffff] p-6 rounded-[1.8rem]" style="width:100%; box-sizing:border-box; background:#ffffff; border-radius:1.8rem; box-shadow: 10px 10px 20px #d1d1d1, -10px -10px 20px #ffffff; padding:22px;">
+        <div id="loginError" class="login-error" style="display:none; background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.25); padding:10px 12px; border-radius:12px; font-size:11px; font-weight:700; text-align:center; margin-bottom:14px;"></div>
+        <form id="loginForm" onsubmit="handleLoginSubmit(event)">
+          <div style="margin-bottom: 14px;">
+            <label style="display:block; font-size: 10px; font-weight: 800; margin-bottom: 6px; color: #1e293b; text-transform:uppercase; letter-spacing:0.5px;">Nomor HP</label>
+            <div style="position: relative;">
+              <span class="material-symbols-outlined" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; color: #94a3b8;">call</span>
+              <input type="tel" id="loginEmail" placeholder="628xxxxxxxxx" required autocomplete="tel" style="width: 100%; box-sizing:border-box; padding: 12px 14px 12px 42px; background: #f5f3f3; border: none; border-radius: 12px; font-size: 13px; font-weight: 700; color: #1e293b; box-shadow: inset 4px 4px 8px #d1d1d1, inset -4px -4px 8px #ffffff; outline: none;">
+            </div>
           </div>
-          <input type="password" id="loginPassword" class="login-input" placeholder="Password" required autocomplete="current-password">
-          <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('loginPassword', this)" aria-label="Tampilkan/Sembunyikan Password">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          <div style="margin-bottom: 14px;">
+            <label style="display:block; font-size: 10px; font-weight: 800; margin-bottom: 6px; color: #1e293b; text-transform:uppercase; letter-spacing:0.5px;">Kata Sandi</label>
+            <div style="position: relative;">
+              <span class="material-symbols-outlined" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; color: #94a3b8;">lock</span>
+              <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password" style="width: 100%; box-sizing:border-box; padding: 12px 44px 12px 42px; background: #f5f3f3; border: none; border-radius: 12px; font-size: 13px; font-weight: 700; color: #1e293b; box-shadow: inset 4px 4px 8px #d1d1d1, inset -4px -4px 8px #ffffff; outline: none;">
+              <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('loginPassword', this)" aria-label="Tampilkan/Sembunyikan Password" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #94a3b8; display: flex; align-items: center;">
+                <span class="material-symbols-outlined" style="font-size: 18px;">visibility</span>
+              </button>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: flex-end; margin-bottom: 14px;">
+            <a href="#" class="login-link" onclick="showModal('Lupa Password', 'Silakan hubungi Super Admin untuk mereset password Anda.'); return false;" style="font-size: 10px; font-weight: 800; color: #16a34a; text-decoration: none;">Lupa Kata Sandi?</a>
+          </div>
+          <button type="submit" id="loginSubmitBtn" style="width: 100%; background: #16a34a; color: white; padding: 14px; border: none; border-radius: 12px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; box-shadow: 5px 5px 10px #b8b8b8, -5px -5px 10px #ffffff; transition: all 0.2s;">
+            Masuk
           </button>
+        </form>
+        <div style="display: flex; align-items: center; margin: 16px 0 14px;">
+          <div style="flex-grow: 1; border-top: 1px solid #e2e8f0;"></div>
+          <span style="padding: 0 12px; font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">ATAU</span>
+          <div style="flex-grow: 1; border-top: 1px solid #e2e8f0;"></div>
         </div>
-        
-        <button type="submit" id="loginSubmitBtn" class="login-btn">Masuk</button>
-        
-        <div class="login-links">
-          <a href="#" class="login-link" onclick="showModal('Lupa Password', 'Silakan hubungi Super Admin untuk mereset password Anda.'); return false;">Lupa Password?</a>
+        <div id="googleSignInBtn" class="google-btn-wrap" style="display: flex; justify-content: center; min-height: 44px; margin-bottom: 10px;"></div>
+        <div id="googleLoginStatus" class="google-login-status" style="display:none; justify-content: center; align-items: center; gap: 8px; font-size: 11px; color: #64748b; margin-top:8px;">
+          <span class="google-login-status-spinner"></span>
+          <span>Sedang masuk dengan Google...</span>
         </div>
-      </form>
-
-      <div class="login-divider"><span>atau Login Otomatis</span></div>
-
-      <div id="googleSignInBtn" class="google-btn-wrap"></div>
-      <div id="googleLoginStatus" class="google-login-status" style="display:none;">
-        <span class="google-login-status-spinner"></span>
-        <span>Sedang masuk dengan Google...</span>
       </div>
-
-      <!-- Additional footer icons mirroring the reference design -->
-      <div class="login-footer-icons">
-        <button class="login-footer-icon-btn" onclick="window.location.href='https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Absensi.html'">
-          <div class="login-footer-icon-circle">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22D3EE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>
+      <!-- Footer icons mirroring YASSA Mobile -->
+      <div class="login-footer-icons" style="display: flex; justify-content: space-around; width: 100%; max-width: 320px; margin-top: 20px;">
+        <button class="login-footer-icon-btn" onclick="window.location.href='https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Absensi.html'" style="display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: none; cursor: pointer;">
+          <div class="login-footer-icon-circle" style="width: 44px; height: 44px; border-radius: 14px; background: #E0E5EC; box-shadow: 4px 4px 8px #d1d1d1, -4px -4px 8px #ffffff; display: flex; align-items: center; justify-content: center; color: #0284c7;">
+            <span class="material-symbols-outlined" style="font-size: 20px;">how_to_reg</span>
           </div>
-          <span class="login-footer-icon-label">Kehadiran</span>
+          <span style="font-size: 10px; font-weight: 700; color: #64748b;">Kehadiran</span>
         </button>
-        <button class="login-footer-icon-btn" onclick="showModal('Keamanan Sistem', 'Insya Allah, sistem ini dalam lindungan Allah SWT. Data yang tersimpan di sini adalah amanah untuk anak-anak yatim — siapa pun yang berniat jahat meretasnya, sama saja menzalimi hak mereka yang tidak berdaya. Semoga Allah melindungi kita semua. 🤲')">
-          <div class="login-footer-icon-circle">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <button class="login-footer-icon-btn" onclick="showModal('Keamanan Sistem', 'Insya Allah, sistem ini dalam lindungan Allah SWT. Data yang tersimpan di sini adalah amanah untuk anak-anak yatim — siapa pun yang berniat jahat meretasnya, sama saja menzalimi hak mereka yang tidak berdaya. Semoga Allah melindungi kita semua. 🤲')" style="display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: none; cursor: pointer;">
+          <div class="login-footer-icon-circle" style="width: 44px; height: 44px; border-radius: 14px; background: #E0E5EC; box-shadow: 4px 4px 8px #d1d1d1, -4px -4px 8px #ffffff; display: flex; align-items: center; justify-content: center; color: #16a34a;">
+            <span class="material-symbols-outlined" style="font-size: 20px;">security</span>
           </div>
-          <span class="login-footer-icon-label">Keamanan</span>
+          <span style="font-size: 10px; font-weight: 700; color: #64748b;">Keamanan</span>
         </button>
-        <button class="login-footer-icon-btn" onclick="tampilkanMotivasiKeluhan()">
-          <div class="login-footer-icon-circle">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        <button class="login-footer-icon-btn" onclick="tampilkanMotivasiKeluhan()" style="display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: none; cursor: pointer;">
+          <div class="login-footer-icon-circle" style="width: 44px; height: 44px; border-radius: 14px; background: #E0E5EC; box-shadow: 4px 4px 8px #d1d1d1, -4px -4px 8px #ffffff; display: flex; align-items: center; justify-content: center; color: #d97706;">
+            <span class="material-symbols-outlined" style="font-size: 20px;">chat</span>
           </div>
-          <span class="login-footer-icon-label">Keluhan</span>
+          <span style="font-size: 10px; font-weight: 700; color: #64748b;">Keluhan</span>
         </button>
       </div>
-
-      <div id="loginAppVersion" class="login-app-version"></div>
-      <div style="text-align:center; font-size:11px; color:var(--text-muted); opacity:0.7; margin-top:4px; letter-spacing:0.2px;">Aplikasi Resmi Yayasan Salam Satu Aspal</div>
+      <div id="loginAppVersion" class="login-app-version" style="font-size: 10.5px; font-weight: 800; color: #94a3b8; margin-top: 14px; text-transform: uppercase; letter-spacing: 1px;"></div>
+      <div style="text-align:center; font-size:9px; font-weight: 700; color:#94a3b8; margin-top:4px; letter-spacing:0.5px; text-transform: uppercase;">Aplikasi Resmi Yayasan Salam Satu Aspal</div>
     </div>
-  </div>
+  </main>
 </div>
 
 <!-- Custom Modal Pengganti Alert/Confirm -- SENGAJA ditaruh di LUAR #app
@@ -2870,6 +3291,9 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
         </div>
       </div>
       <div style="display:flex; align-items:center; gap:10px;">
+        <div class="bell" id="headerDarkModeBtn" onclick="toggleDarkMode()" title="Mode Malam / Siang" aria-label="Mode Malam">
+          <span class="material-symbols-outlined" id="headerDarkModeIcon" style="font-size: 19px;">light_mode</span>
+        </div>
         <div class="bell" id="manualRefreshBtn" onclick="forceRefreshApp()" title="Segarkan Aplikasi" aria-label="Segarkan Aplikasi">
           <svg id="manualRefreshIcon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
         </div>
@@ -2895,7 +3319,7 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
     <div class="summary-value" id="summaryTotalSantunanDiperlukan">...</div>
 
     <!-- Progress bar ringkasan "Donasi vs Kebutuhan" -- lihat CSS .summary-progress
-         & logic isi di renderSummaryCardBeranda_() (<script> bawah). -->
+         & logic isi di renderSummaryCardBeranda_() (fungsi script bawah). -->
     <div class="summary-progress" id="summaryProgressWrap" style="display:none;">
       <div class="summary-progress-track"><div class="summary-progress-fill" id="summaryProgressFill" style="width:0%;"></div></div>
       <div class="summary-progress-meta">
@@ -3774,8 +4198,8 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
 </div>
 
 <!-- 🔔 FIREBASE CLOUD MESSAGING — dipakai fitur Notifikasi Hub sendiri
-     (lihat renderNotifHubCard/aktifkanNotifikasiHub di <script> utama di
-     bawah). HARUS dimuat SEBELUM <script> utama supaya global "firebase"
+     (lihat renderNotifHubCard/aktifkanNotifikasiHub di tag script utama di
+     bawah). HARUS dimuat SEBELUM tag script utama supaya global "firebase"
      sudah ada saat initHubForegroundMessaging_() jalan. -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
@@ -3784,712 +4208,60 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
 const APP_VERSION = "1.4.1 (Login Redesign)";
 const APP_BUILD_DATE = "2026-08-02";
 
-// =================================================================================
-// KONFIGURASI AUTH — GANTI 2 nilai di bawah setelah Code.gs di-deploy
-// =================================================================================
-const GAS_AUTH_URL = "https://script.google.com/macros/s/AKfycbw0I5I6JiDSPJWiwYSsyY52lTcFFu1aSPsa0cPtQjhXGqXQjnf603kIQudX6o0lieaKNw/exec";
-// 🚀 URL project "YASSA SSO Broker" (KECIL & TERPISAH dari GOPAY) -- khusus
-// dipakai buat minta tiket SSO pas buka YASSA Mobile, supaya gak kena cold
-// start file GOPAY yang gede (lihat bukaMobileDenganSso_ di bawah). GANTI
-// dengan URL /exec hasil deploy project broker (lihat code_gs_sso_broker.gs).
-const GAS_SSO_URL = "https://script.google.com/macros/s/AKfycbz85pXQuO6VIfgF5zOuLAqg-biaGrd3xf5WwBA9JTuhvWy9eGBZTCuvazCeCpdjYrnBbw/exec";
-// URL Web App YASSA Mobile -- dipakai buat ambil statistik publik (Total
-// Anak) lewat action 'getPublicStats', TANPA perlu login/token, karena
-// yang diambil cuma 1 angka agregat, bukan data pribadi apapun.
-const GAS_MOBILE_URL = "https://script.google.com/macros/s/AKfycbzAcz0lUypjUnzSIdpmsyg6KZNYQ3OATwnRNZchR7ukFo9-qZMlh3Wr8Tz8nQr0qUj2/exec";
-const GOOGLE_CLIENT_ID = "486322853600-bi8cq6k50ajcue26t3sss20mfqmg8me4.apps.googleusercontent.com";
-
-const ICONS = {
-  home: '<path d="m3 9 9-7 9 7"/><path d="M9 22V12h6v10"/><path d="M21 9v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9"/>',
-  wallet: '<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>',
-  clipboard: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/>',
-  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
-  heart: '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/>',
-  piggy: '<path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5Z"/><path d="M2 9v1"/><circle cx="16" cy="11" r=".5" fill="currentColor"/>',
-  receipt: '<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/>',
-  chart: '<path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
-  calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/>',
-  history: '<path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/>',
-  userplus: '<path d="M2 21a8 8 0 0 1 13.292-6"/><circle cx="10" cy="8" r="5"/><path d="M19 16v6"/><path d="M22 19h-6"/>',
-  shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.79 17 5 19 5a1 1 0 0 1 1 1Z"/><path d="m9 12 2 2 4-4"/>',
-  list: '<path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/>',
-  printer: '<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/><path d="M6 9V3h12v6"/>',
-  gift: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8Z"/><path d="M16.5 8a2.5 2.5 0 0 0 0-5C13 3 12 8 12 8Z"/>',
-  package: '<path d="M16.5 9.4 7.5 4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.29 7.29 12 12l8.71-4.71"/><path d="M12 22V12"/>',
-  more: '<circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/><circle cx="5" cy="12" r="1.5"/>',
-  cloud: '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h.79a4.5 4.5 0 1 1 0 9Z"/>',
-  bookopen: '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3Z"/>',
-  settings: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2Z"/><circle cx="12" cy="12" r="3"/>',
-  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
-  mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
-  lock: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
-  phone: '<path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/>',
-  award: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
-  mapPin: '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
-  edit: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497Z"/><path d="m15 5 3 3"/>',
-  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
-  check: '<path d="M20 6 9 17l-5-5"/>',
-};
-
-function iconSvg(name, color, size) {
-  size = size || 22;
-  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</svg>`;
-}
-
-const ICON_COLORS = {
-  teal:   { bg: "linear-gradient(135deg, rgba(34,211,238,0.22), rgba(59,130,246,0.22))", fg: "#22D3EE" },
-  blue:   { bg: "linear-gradient(135deg, rgba(59,130,246,0.22), rgba(99,102,241,0.22))", fg: "#60A5FA" },
-  coral:  { bg: "linear-gradient(135deg, rgba(236,72,153,0.22), rgba(248,113,113,0.22))", fg: "#F472B6" },
-  amber:  { bg: "linear-gradient(135deg, rgba(251,191,36,0.22), rgba(251,146,60,0.22))", fg: "#FBBF24" },
-  purple: { bg: "linear-gradient(135deg, rgba(168,85,247,0.22), rgba(139,92,246,0.22))", fg: "#C084FC" },
-};
-
-const TABS = [
-  { key: "beranda", label: "Beranda", icon: "home" },
-  { key: "app", label: "App", icon: "grid_view" },
-  { key: "input", label: "Input", icon: "account_balance_wallet", isFab: true },
-  { key: "keuangan", label: "Keuangan", icon: "account_balance_wallet" },
-  { key: "profil", label: "Profil", icon: "person" },
-];
-
-// Pemetaan ikon lama (nama internal) -> Material Symbols, dipakai khusus
-// untuk tampilan bento baru di Beranda (Akses Cepat) dan Bottom Nav.
-// Menu-menu lain (donasi/absensi/awg/pm/bukubesar) tetap pakai iconSvg() lama, tidak diubah.
-const MATERIAL_ICONS = {
-  home: "home",
-  grid_view: "grid_view",
-  add: "add",
-  account_balance_wallet: "account_balance_wallet",
-  person: "person",
-  wallet: "payments",
-  clipboard: "how_to_reg",
-  users: "group",
-  heart: "favorite",
-  cloud: "cloud",
-};
-
-// Warna aksen per tab untuk kartu Akses Cepat & Bottom Nav (palet bento baru).
-const TAB_ACCENTS = {
-  home: "var(--bento-primary)",
-  donasi: "var(--bento-primary)",
-  absensi: "var(--bento-tertiary)",
-  awg: "var(--bento-secondary)",
-  pm: "var(--bento-error)",
-  bukubesar: "var(--bento-primary)",
-};
-
-function materialIconSpan(name, opts) {
-  opts = opts || {};
-  const style = `font-size:${opts.size || 22}px;` + (opts.color ? `color:${opts.color};` : "") + (opts.fill ? `font-variation-settings:'FILL' 1;` : "");
-  return `<span class="material-symbols-outlined" style="${style}">${MATERIAL_ICONS[name] || name}</span>`;
-}
-
-function visibleTabs() {
-  return TABS;
-}
-
 // ============================================================
-// FILTER MENU BERDASARKAN currentUser.aksesMenu (dikirim backend saat login,
-// dari sheet Setting_Akses_Menu). Fail-open di semua kondisi "gak jelas"
-// (data belum ada / app belum terdaftar di sheet) supaya app baru yang
-// belum sempat di-setting SUPERADMIN gak tiba-tiba hilang dari Hub.
+// 🌙 MODE MALAM (DARK MODE) SEBAGAI DEFAULT
+// Engine filter invert+hue-rotate persis YASSA Mobile
 // ============================================================
-function aksesMenuListUntuk(appKey) {
-  if (!currentUser || !currentUser.aksesMenu) return null;
-  return currentUser.aksesMenu[appKey] || null;
-}
+const THEME_STORAGE_KEY = "yassa-dark-mode";
 
-// 🚧 Daftar key app yang masih tahap pengembangan -- munculin strip
-// peringatan kuning nempel di atas iframe-nya selama app itu dibuka
-// (bukan cuma di card pemilihan app). Tinggal tambah/hapus key di sini
-// kalau status app lain berubah, gak perlu ubah logika lain.
-const OVERLAY_DEV_NOTICE_APPS = ["bukubesar", "donasi"];
-
-function toggleOverlayDevNotice_(appKey) {
-  const el = document.getElementById("overlayDevNotice");
-  if (!el) return;
-  if (OVERLAY_DEV_NOTICE_APPS.indexOf(appKey) !== -1) {
-    el.classList.add("show");
-  } else {
-    el.classList.remove("show");
-  }
-}
-
-// Dipakai buat kartu app di tab "Semua Aplikasi": tampil kalau MINIMAL SATU
-// menu di dalam app itu "Ya" buat role user yang login.
-function isAppVisible(appKey) {
-  const list = aksesMenuListUntuk(appKey);
-  if (!list) return true; // app belum terdaftar di sheet -> defaultkan tampil
-  return list.some(function (m) { return m.ya; });
-}
-
-// Dipakai buat tiap tombol menu di dalam 1 app (menu.items[i]) -- index HARUS
-// sama persis urutannya dengan baris di sheet Setting_Akses_Menu utk app itu.
-function isMenuItemVisible(appKey, itemIndex) {
-  const list = aksesMenuListUntuk(appKey);
-  if (!list || !list[itemIndex]) return true; // gak ketemu datanya -> defaultkan tampil
-  return list[itemIndex].ya;
-}
-
-const MENUS = {
-  beranda: { title: "Beranda", items: [] },
-  donasi: {
-    title: "Kotak & Donasi",
-    baseUrl: "https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/",
-    items: [
-      { label: "Dashboard", icon: "chart", color: "teal", tab: "dashboard", desc: "Ringkasan & statistik" },
-      { label: "Informasi Kotak", icon: "piggy", color: "blue", tab: "info-kotak", desc: "Master data kotak" },
-      { label: "Input Buka Kotak", icon: "receipt", color: "coral", tab: "input-kotak", desc: "Catat hasil buka" },
-      { label: "Input Donasi", icon: "heart", color: "amber", tab: "input-donasi", desc: "Catat donasi masuk" },
-      { label: "Admin Hub", icon: "list", color: "purple", tab: "monitor", desc: "Kelola & monitor" },
-    ],
-  },
-  absensi: {
-    title: "Kehadiran & Kegiatan",
-    items: [
-      { label: "Beranda", icon: "home", color: "teal", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/index.html?embed=1", desc: "Ringkasan kegiatan" },
-      { label: "Dashboard", icon: "chart", color: "blue", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Dashboard.html?embed=1", desc: "Statistik kehadiran" },
-      { label: "Kegiatan", icon: "calendar", color: "coral", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Kegiatan.html?embed=1", desc: "Jadwal kegiatan" },
-      { label: "Notulen", icon: "clipboard", color: "amber", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Notulen.html?embed=1", desc: "Catatan rapat" },
-      { label: "Arsip", icon: "package", color: "purple", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Arsip.html?embed=1", desc: "Riwayat & arsip" },
-      { label: "Hadir Sekarang", icon: "userplus", color: "teal", url: "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Absensi.html?embed=1", desc: "Isi kehadiran" },
-    ],
-  },
-  awg: {
-    title: "AWG (Ahli Waris Gojek)",
-    baseUrl: "https://yayasansalamsatuaspaldc-eng.github.io/AWG/",
-    items: [
-      { label: "Beranda AWG", icon: "home", color: "teal", tab: "dashboard", desc: "Ringkasan & statistik" },
-      { label: "Data Baru", icon: "userplus", color: "blue", tab: "registrasi", desc: "Registrasi pemohon" },
-      { label: "Kontrol", icon: "shield", color: "coral", tab: "penyelesaian", desc: "Verifikasi & proses" },
-      { label: "List Antrian", icon: "list", color: "amber", tab: "antrian", desc: "Daftar tunggu" },
-      { label: "Print Data", icon: "printer", color: "purple", tab: "export", desc: "Cetak & ekspor" },
-    ],
-  },
-  pm: {
-    title: "Penerima Manfaat",
-    baseUrl: "https://yayasansalamsatuaspaldc-eng.github.io/Penerima-Manfaat/",
-    items: [
-      { label: "Dashboard", icon: "chart", color: "teal", tab: "dashboard", desc: "Ringkasan & statistik" },
-      { label: "Program", icon: "piggy", color: "blue", tab: "programDonasi", desc: "Program & donasi" },
-      { label: "Penerima", icon: "users", color: "coral", tab: "penerima", desc: "Data penerima" },
-      { label: "Distribusi", icon: "package", color: "purple", tab: "distribusi", desc: "Distribusi bantuan" },
-    ],
-  },
-  bukubesar: {
-    title: "Cloud Buku Besar",
-    baseUrl: "https://yayasansalamsatuaspaldc-eng.github.io/Buku-Besar/",
-    items: [
-      { label: "Dashboard", icon: "chart", color: "teal", tab: "dashboard", desc: "Ringkasan & statistik" },
-      { label: "Input Jurnal", icon: "receipt", color: "blue", tab: "input", desc: "Catat transaksi" },
-      { label: "Buku Besar", icon: "bookopen", color: "coral", tab: "data", desc: "Rekap per akun" },
-      { label: "Laporan", icon: "printer", color: "amber", tab: "laporan", desc: "Laporan Isak 35" },
-      { label: "Aset & Lokasi", icon: "package", color: "purple", tab: "aset", desc: "Data aset & lokasi" },
-    ],
-  },
-  mobile: {
-    title: "YASSA Mobile",
-    // 🔄 UPDATE (08 Agu 2026): dulu cuma 1 tombol "Masuk App" (isFullApp),
-    // sekarang dipecah jadi 5 menu kayak app lain, biar tunduk ke matrix
-    // Setting_Akses_Menu (lewat isMenuItemVisible) sama kayak app lain.
-    // Login & hak akses TETAP 100% ditentukan Mobile sendiri (Code.gs-nya) --
-    // ini cuma nentuin tombol menu mana yang KELIATAN di Hub, filter internal
-    // Mobile (role-based nav) tetap jalan sebagai lapisan kedua.
-    baseUrl: "https://yassa-mobile.github.io/yassamobile/",
-    items: [
-      { label: "Beranda", icon: "home", color: "teal", tab: "home", desc: "Ringkasan & statistik" },
-      { label: "Data KK", icon: "users", color: "blue", tab: "keluarga", desc: "Data keluarga almarhum" },
-      { label: "Kontrol", icon: "shield", color: "purple", tab: "perisai", desc: "Keamanan & blacklist" },
-      { label: "Data Anak", icon: "heart", color: "coral", tab: "anak", desc: "Data anak yatim" },
-      { label: "Profil", icon: "user", color: "amber", tab: "aksi", desc: "Akun & pengaturan" },
-    ],
-  },
-  lentera: {
-    title: "Lentera Yassa",
-    baseUrl: "https://yassa-mobile.github.io/lenterayassa/",
-    // 🔄 UPDATE: dulu cuma 1 tombol "Buka Lentera" pakai url statis (item.url),
-    // beda sendiri dari app lain yang selalu punya beberapa menu di grid App
-    // (Dashboard/Info Kotak/dst). Sekarang dipecah jadi 4 menu, 1-1 sesuai 4
-    // tab asli yang memang sudah ada di dalam app Lentera sendiri (lihat
-    // bottom-nav di index_lentera_yassa.html: quran/yasin/yassa/sholat).
-    // Item pakai "tab" (bukan "url" mentah) + didaftarkan di
-    // APPS_WITH_POSTMESSAGE_NAV, jadi Hub buka lewat baseUrl + "?embed=1&tab=..."
-    // dan kalau app-nya masih hidup di iframe pas ganti menu, cukup kirim
-    // postMessage "YASSA_HUB_NAVIGATE" tanpa reload ulang -- app Lentera
-    // sudah diupdate juga buat baca ?tab= saat load & dengerin pesan itu
-    // (balas "YASSA_HUB_NAV_ACK"), persis pola Kotak & Donasi.
-    items: [
-      { label: "Al-Quran", icon: "bookopen", color: "teal", tab: "quran", desc: "Baca Al-Quran digital" },
-      { label: "Yasin & Tahlil", icon: "heart", color: "amber", tab: "yasin", desc: "Bacaan Yasin & Tahlil" },
-      { label: "Pejuang Yatim", icon: "users", color: "coral", tab: "yassa", desc: "Galeri kenangan YASSA" },
-      { label: "Jadwal Sholat", icon: "calendar", color: "purple", tab: "sholat", desc: "Jadwal sholat harian" }
-    ],
-  },
-  pengaturan: { title: "Pengaturan" }, // dirender khusus lewat renderPengaturanPanel(), bukan menu-grid biasa
-};
-
-let active = "beranda";
-let currentUser = null;
-let authToken = null;
-let pendingOldPassword = null; 
-
-// ===== Daftar Program YASSA (selector "PILIH PROGRAM YASSA" di Beranda) =====
-// GO-PAY, SAPA, BASO, & PEDAS sudah punya data LIVE (BASO ditarik dari
-// sheet Log_Bantuan_Baso yang sama dipakai laporan Program BASO, lihat
-// getTotalSantunanBaso di Code.gs; PEDAS ditarik dari getRekapPedasTahunan
-// -- SAMA PERSIS dipakai laporan Program PEDAS di tab Keuangan, gak ada
-// sheet terpisah, lihat getTotalSantunanPedas di Code.gs). Program lain
-// (BADIK, BATAN) masih placeholder "segera hadir" -- nanti tinggal
-// disambung ke sumber data masing-masing pas sudah tersedia.
-const YASSA_PROGRAMS = [
-  { key: "gopay", label: "GO-PAY", sub: "Gojek Peduli Anak Yatim", icon: "volunteer_activism", color: "#22C55E", bg: "rgba(34,197,94,0.15)", ready: true },
-  { key: "sapa", label: "SAPA", sub: "Sahabat Peduli Anak", icon: "diversity_1", color: "#EC4899", bg: "rgba(236,72,153,0.15)", ready: true },
-  { key: "baso", label: "BASO", sub: "Bantuan Sembako", icon: "shopping_bag", color: "#F59E0B", bg: "rgba(245,158,11,0.15)", ready: true },
-  { key: "pedas", label: "PEDAS", sub: "Peduli Disabilitas", icon: "accessible", color: "#A855F7", bg: "rgba(168,85,247,0.15)", ready: true },
-  { key: "badik", label: "BADIK", sub: "Bantuan Pendidikan", icon: "school", color: "#3B82F6", bg: "rgba(59,130,246,0.15)", ready: false },
-  { key: "batan", label: "BATAN", sub: "Bantuan Kesehatan", icon: "favorite", color: "#14B8A6", bg: "rgba(20,184,166,0.15)", ready: false },
-];
-let activeProgram = "gopay";
-
-function renderProgramSelectorHtml_() {
-  const cards = YASSA_PROGRAMS.map(function (p) {
-    const isActive = p.key === activeProgram;
-    return (
-      '<div class="program-select-card' + (isActive ? " active" : "") + '" data-program="' + p.key + '" ' +
-      'style="--prog-color:' + p.color + '; --prog-bg:' + p.bg + ';" onclick="selectProgramTab(\'' + p.key + '\')">' +
-        '<div class="program-select-icon"><span class="material-symbols-outlined" style="font-variation-settings:\'FILL\' 1;">' + p.icon + '</span></div>' +
-        '<div class="program-select-label">' + p.label + '</div>' +
-        '<div class="program-select-sub">' + p.sub + '</div>' +
-      '</div>'
-    );
-  }).join("");
-  return (
-    '<div style="margin-bottom: 16px;">' +
-      '<h3 style="font-size: 13px; font-weight: 700; margin: 0 0 2px; letter-spacing: 0.3px;">PILIH PROGRAM YASSA</h3>' +
-      '<div style="font-size: 10.5px; color: var(--text-secondary); margin-bottom: 10px;">Pilih salah satu program untuk melihat data dan progres</div>' +
-      '<div class="program-select-scroll" id="programSelectScroll">' + cards + '</div>' +
-    '</div>'
-  );
-}
-
-// Placeholder panel buat program yang datanya belum tersedia ("segera hadir").
-function renderProgramComingSoonHtml_(p) {
-  return (
-    '<div style="background: var(--glass-strong); border-radius: 20px; padding: 30px 20px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid ' + p.color + '; text-align:center;">' +
-      '<div style="width: 48px; height: 48px; border-radius: 14px; background: ' + p.bg + '; color: ' + p.color + '; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">' +
-        '<span class="material-symbols-outlined" style="font-size: 24px; font-variation-settings:\'FILL\' 1;">' + p.icon + '</span>' +
-      '</div>' +
-      '<h3 style="font-size: 14.5px; font-weight: 700; margin: 0 0 4px;">Program ' + p.label + '</h3>' +
-      '<div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">' + p.sub + '</div>' +
-      '<div style="display:inline-flex; align-items:center; gap:5px; font-size: 11px; font-weight:700; color: ' + p.color + '; background: ' + p.bg + '; padding: 5px 12px; border-radius: 99px;">' +
-        '<span class="material-symbols-outlined" style="font-size:13px;">schedule</span> Data segera hadir' +
-      '</div>' +
-    '</div>'
-  );
-}
-
-// Ganti program yang aktif di selector "PILIH PROGRAM YASSA" -- tinggal
-// toggle tampil/sembunyi panel yang udah dirender (gak perlu render ulang
-// seluruh tab Beranda), jadi ringan & data GO-PAY yang udah kemuat gak
-// perlu fetch ulang tiap ganti-ganti tab program.
-function selectProgramTab(key) {
-  if (activeProgram === key) return;
-  activeProgram = key;
-  document.querySelectorAll(".program-select-card").forEach(function (el) {
-    el.classList.toggle("active", el.getAttribute("data-program") === key);
-  });
-  document.querySelectorAll(".program-panel").forEach(function (el) {
-    el.style.display = el.id === "programPanel-" + key ? "" : "none";
-  });
-  // Kartu ringkasan "Total Santunan Diperlukan" di atas ikut berubah sesuai
-  // program yang baru dipilih -- GOPAY & SAPA nampilin data live, program
-  // lain (BADIK dkk) yang belum ready ikut nampilin placeholder "Data
-  // segera hadir" (lihat renderSummaryCardBeranda_), BUKAN dibiarkan
-  // nyisain angka program sebelumnya.
-  renderSummaryCardBeranda_();
-  const cardEl = document.querySelector('.program-select-card[data-program="' + key + '"]');
-  if (cardEl && cardEl.scrollIntoView) {
-    cardEl.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-  }
-}
-
-// ============================================================
-// MONITOR AKSES APLIKASI -- rekam BUKA_APP/LOGIN_SUKSES/LOGIN_GAGAL ke
-// backend (lihat catatAksesApp di Code.gs), dipakai dashboard "Monitor
-// Akses" (Pengaturan, SUPERADMIN doang). SENGAJA fire-and-forget: kalau
-// gagal (jaringan lambat, API pihak ketiga down, dll), diam-diam aja,
-// JANGAN sampai ganggu proses buka app/login utama.
-//
-// AKSES_LOG_CLIENT_KEY harus PERSIS SAMA dengan yang di Code.gs.
-// ============================================================
-const AKSES_LOG_CLIENT_KEY = "yassa-hub-akses-3f7Qz9mN2rL8vXeK";
-
-// Deteksi tipe perangkat (HP/Tablet/Laptop), OS, browser, & tebakan merek
-// dari User-Agent. Untuk iPhone/iPad, Apple SENGAJA gak nyimpen nama model
-// di User-Agent, jadi cuma bisa ditulis "iPhone (Apple)" apa adanya --
-// gak bisa lebih detail dari itu tanpa app native.
-function detectDeviceInfo_() {
-  const ua = navigator.userAgent || "";
-
-  let tipeDevice = "Laptop/Desktop";
-  if (/iPad|Tablet/i.test(ua) || (/Android/i.test(ua) && !/Mobile/i.test(ua))) {
-    tipeDevice = "Tablet";
-  } else if (/Mobi|Android|iPhone|iPod/i.test(ua)) {
-    tipeDevice = "HP";
-  }
-
-  let os = "Tidak diketahui";
-  if (/Windows/i.test(ua)) os = "Windows";
-  else if (/Mac OS X/i.test(ua)) os = "macOS";
-  else if (/Android/i.test(ua)) os = "Android";
-  else if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS";
-  else if (/Linux/i.test(ua)) os = "Linux";
-
-  let browser = "Tidak diketahui";
-  if (/Edg\//.test(ua)) browser = "Edge";
-  else if (/OPR\//.test(ua) || /Opera/i.test(ua)) browser = "Opera";
-  else if (/Chrome\//.test(ua) && !/Chromium/.test(ua)) browser = "Chrome";
-  else if (/Firefox\//.test(ua)) browser = "Firefox";
-  else if (/Safari\//.test(ua) && !/Chrome/.test(ua)) browser = "Safari";
-
-  let merek = "-";
-  if (os === "iOS") {
-    merek = /iPad/i.test(ua) ? "iPad (Apple)" : "iPhone (Apple)";
-  } else if (os === "Android") {
-    // Contoh potongan UA Android: "...Android 13; SM-A155F Build/..."
-    // Regex ambil teks antara "Android x;" dan "Build/" atau ")".
-    const m = ua.match(/Android[^;]*;\s*([^)]+?)(?:\s*Build\/|\))/i);
-    merek = m && m[1] ? m[1].trim() : "Android (merek tidak diketahui)";
-  }
-
-  return { tipeDevice: tipeDevice, os: os, browser: browser, merek: merek, userAgent: ua };
-}
-
-// Reverse-geocode koordinat GPS jadi nama kota/kabupaten (pakai Nominatim
-// OpenStreetMap, gratis, tanpa API key).
-function reverseGeocodeLokasi_(lat, lon) {
-  return fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat=" + lat + "&lon=" + lon + "&zoom=10")
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
-      const a = data && data.address ? data.address : {};
-      const kota = a.city || a.town || a.village || a.county || a.regency || "";
-      const provinsi = a.state || "";
-      return [kota, provinsi].filter(Boolean).join(", ") || ("Lokasi GPS (" + lat.toFixed(3) + ", " + lon.toFixed(3) + ")");
-    })
-    .catch(function () {
-      return "Lokasi GPS (" + lat.toFixed(3) + ", " + lon.toFixed(3) + ")";
-    });
-}
-
-// Fallback lokasi dari IP publik (dipakai kalau GPS ditolak/gagal) --
-// ipapi.co sekalian ngasih alamat IP-nya, jadi gak perlu request terpisah.
-function getLokasiDariIp_() {
-  return fetch("https://ipapi.co/json/")
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
-      const lokasi = [data.city, data.region, data.country_name].filter(Boolean).join(", ") || "Tidak diketahui";
-      return {
-        sumberLokasi: "IP",
-        lokasi: lokasi,
-        latitude: data.latitude || "",
-        longitude: data.longitude || "",
-        ip: data.ip || "",
-      };
-    })
-    .catch(function () {
-      return { sumberLokasi: "IP", lokasi: "Tidak diketahui", latitude: "", longitude: "", ip: "" };
-    });
-}
-
-// Coba GPS dulu (butuh izin user); kalau ditolak/timeout/gak didukung,
-// otomatis fallback ke lokasi dari IP -- SELALU resolve (gak pernah
-// reject), biar pemanggilnya gak perlu mikirin .catch().
-function getLokasiPengguna_() {
-  return new Promise(function (resolve) {
-    if (!navigator.geolocation) {
-      getLokasiDariIp_().then(resolve);
-      return;
-    }
-    let selesai = false;
-    const jagaJaga = setTimeout(function () {
-      if (selesai) return;
-      selesai = true;
-      getLokasiDariIp_().then(resolve);
-    }, 6000);
-
-    navigator.geolocation.getCurrentPosition(
-      function (pos) {
-        if (selesai) return;
-        selesai = true;
-        clearTimeout(jagaJaga);
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-        reverseGeocodeLokasi_(lat, lon).then(function (namaLokasi) {
-          resolve({ sumberLokasi: "GPS", lokasi: namaLokasi, latitude: lat, longitude: lon, ip: "" });
-        });
-      },
-      function () {
-        if (selesai) return;
-        selesai = true;
-        clearTimeout(jagaJaga);
-        getLokasiDariIp_().then(resolve);
-      },
-      { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 }
-    );
-  });
-}
-
-// Fungsi utama: panggil ini di titik BUKA_APP / LOGIN_SUKSES / LOGIN_GAGAL.
-// extra = { username, nama, role } opsional sesuai tipeEvent-nya.
-function logAksesEvent_(tipeEvent, extra) {
+function isDarkModeActive_() {
   try {
-    const device = detectDeviceInfo_();
-    getLokasiPengguna_().then(function (lokasiInfo) {
-      const payload = Object.assign({}, device, lokasiInfo, extra || {});
-      callGAS("catatAksesApp", [AKSES_LOG_CLIENT_KEY, tipeEvent, payload]).catch(function () {});
-    });
+    const saved = localStorage.getItem("yassa-dark-mode");
+    return saved === null || saved === "1"; // Default Mode Malam (Dark Mode)
   } catch (e) {
-    // Monitoring gak boleh sampai bikin app utama error -- diamkan aja.
+    return true;
   }
 }
 
-function callGAS(action, args) {
-  return fetch(GAS_AUTH_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain" },
-    body: JSON.stringify({ action: action, args: args || [] }),
-  })
-    .then(async function (r) {
-      // Ambil respons mentah terlebih dahulu untuk pelacakan (debugging)
-      const textRaw = await r.text();
-      try {
-        // Coba jadikan JSON. Jika gagal (misal karena balasan berupa HTML <!DOCTYPE>), masuk ke catch
-        return JSON.parse(textRaw);
-      } catch (e) {
-        console.error("DEBUG - Respons bukan JSON dari server GAS:", textRaw);
-        // Pesan error diubah sesuai permintaan agar mengarahkan user keluar aplikasi
-        throw new Error("Sesi terputus atau koneksi bermasalah. Silakan keluar (tutup) aplikasi dan masuk kembali.");
-      }
-    })
-    .then(function (res) {
-      if (res.success === false) throw new Error(res.message || "Terjadi kesalahan.");
-      return res._dibungkus ? res.data : res;
-    });
-}
+function applyDarkModeUI_(isDark) {
+  document.body.classList.toggle("dark-mode", isDark);
+  document.documentElement.classList.toggle("dark-mode", isDark);
 
-// ============================================================
-// 🩹 FIX (bug SSO Mobile gagal di jaringan operator yang lambat):
-// callGAS() biasa TIDAK punya timeout & TIDAK retry -- di jaringan
-// lambat/putus-nyambung, satu kali fetch() bisa gantung lama atau
-// gagal sekali doang, dan pemanggilnya (generateSsoToken di openApp)
-// langsung nyerah & buka Mobile TANPA tiket SSO sama sekali begitu
-// promise-nya ke-reject -- akibatnya Mobile langsung nampilin form
-// login manual, bukan auto-login, padahal cuma jaringannya lagi
-// kurang stabil sesaat.
-//
-// callGASWithRetry_ nambahin 2 hal di atas callGAS() biasa:
-//  1) TIMEOUT per percobaan (lewat AbortController) -- biar fetch yang
-//     "gantung" gak nunggu sampai browser nyerah sendiri (bisa lama
-//     banget di jaringan operator).
-//  2) RETRY otomatis beberapa kali dengan jeda singkat sebelum bener-
-//     bener nyerah -- baru fallback (buka tanpa tiket SSO) kalau SEMUA
-//     percobaan gagal.
-// Dipakai KHUSUS buat generateSsoToken (paling kerasa dampaknya kalau
-// gagal), bukan gantiin callGAS() di tempat lain yang udah jalan baik.
-// ============================================================
-function callGASWithRetry_(action, args, opts) {
-  const maxAttempts = (opts && opts.maxAttempts) || 3;
-  // 🩹 FIX: eksekusi doPost di server kadang makan waktu ~8 detik (belum
-  // termasuk latensi jaringan naik-turunnya) -- timeout lama (8000ms) jadi
-  // KEPOTONG PERSIS di batasnya, bikin app ngira "koneksi lambat" & retry
-  // terus-terusan padahal server-nya sebenernya lagi ngerjain, cuma agak
-  // lambat. Dinaikkan ke 15 detik biar request yang genuinely masih jalan
-  // (bukan macet) dikasih waktu selesai dulu sebelum dianggap gagal.
-  const timeoutMs = (opts && opts.timeoutMs) || 15000;
-  const delayMs = (opts && opts.delayMs) || 1200;
-  const onRetry = (opts && opts.onRetry) || function () {};
-  // 🚀 targetUrl: dulu SELALU GAS_AUTH_URL (file GOPAY yang gede). Sekarang
-  // bisa diarahkan ke URL lain (mis. GAS_SSO_URL / broker) lewat opts.targetUrl,
-  // supaya generateSsoToken bisa dipanggil ke broker yang jauh lebih ringan.
-  const targetUrl = (opts && opts.targetUrl) || GAS_AUTH_URL;
-
-  function sekaliCoba(attempt) {
-    const controller = new AbortController();
-    let timer;
-
-    // 🩹 FIX (spinner nyangkut selamanya di jaringan super lambat/WebView
-    // tertentu): controller.abort() doang KADANG gak beneran mutusin fetch
-    // yang lagi nyangkut (tergantung dukungan AbortController di WebView
-    // pembungkus app) -- akibatnya promise gak pernah reject, timeout gak
-    // efektif, dan retry/pesan error di atas gak pernah kepicu. Makanya di
-    // sini timeout dibikin TIDAK bergantung sama nasib fetch()-nya sendiri:
-    // dipasang lewat Promise.race dengan promise timer terpisah yang PASTI
-    // reject setelah timeoutMs, siapa pun yang menang duluan.
-    const timeoutPromise = new Promise(function (_, reject) {
-      timer = setTimeout(function () {
-        try { controller.abort(); } catch (e) {}
-        reject(new Error("Waktu tunggu habis (koneksi lambat)."));
-      }, timeoutMs);
-    });
-
-    const fetchPromise = fetch(targetUrl, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain" },
-      body: JSON.stringify({ action: action, args: args || [] }),
-      signal: controller.signal,
-    })
-      .then(async function (r) {
-        const textRaw = await r.text();
-        try {
-          return JSON.parse(textRaw);
-        } catch (e) {
-          throw new Error("Respons server tidak valid.");
-        }
-      })
-      .then(function (res) {
-        if (res.success === false) {
-          // 🩹 FIX (bug: error logis server disamakan dengan error jaringan):
-          // Ini BUKAN masalah koneksi/sinyal -- server berhasil dijangkau dan
-          // menjawab dengan tegas "gagal" (mis. "Sesi tidak valid, silakan
-          // login ulang"). Mengulang request yang sama 3x tidak akan mengubah
-          // jawaban ini sama sekali, jadi ditandai isLogicalError supaya retry
-          // loop di bawah tahu untuk langsung berhenti, bukan buang waktu
-          // mencoba ulang percuma.
-          const err = new Error(res.message || "Terjadi kesalahan.");
-          err.isLogicalError = true;
-          throw err;
-        }
-        return res._dibungkus ? res.data : res;
-      })
-      .finally(function () { clearTimeout(timer); });
-
-    return Promise.race([fetchPromise, timeoutPromise]);
-  }
-
-  return new Promise(function (resolve, reject) {
-    function coba(attempt) {
-      sekaliCoba(attempt)
-        .then(resolve)
-        .catch(function (err) {
-          // 🩹 FIX: error logis dari server (success:false) tidak pernah
-          // di-retry -- diulang 100x pun hasilnya akan identik, karena
-          // bukan gangguan jaringan. Langsung reject supaya pesan ASLI dari
-          // server (err.message) yang sampai ke pemanggil, bukan tertutup
-          // oleh 2 percobaan ulang yang sia-sia.
-          if (err && err.isLogicalError) {
-            reject(err);
-            return;
-          }
-          if (attempt >= maxAttempts) {
-            reject(err);
-            return;
-          }
-          onRetry(attempt, maxAttempts);
-          setTimeout(function () { coba(attempt + 1); }, delayMs);
-        });
-    }
-    coba(1);
-  });
-}
-
-// ============================================================
-// 🩹 FIX (poin 3: indikator status jaringan)
-// Pakai navigator.onLine + event "online"/"offline" bawaan browser
-// buat nampilin banner "Koneksi terputus" tanpa nunggu request
-// gagal dulu -- user langsung tahu kenapa loading lama/nyangkut,
-// gak nebak-nebak sendiri.
-//
-// CATATAN JUJUR soal navigator.onLine: ini cuma deteksi status
-// adaptor jaringan device (ada sinyal WiFi/data atau enggak), BUKAN
-// jaminan internetnya beneran nyambung ke server (mis. WiFi nyala
-// tapi gak ada akses internet tetap kebaca "online" oleh browser).
-// Makanya banner ini pelengkap, bukan pengganti retry+timeout yang
-// udah dipasang di callGASWithRetry_ -- kalau navigator.onLine bilang
-// "online" tapi request tetap gagal berkali-kali, itu yang bakal
-// ketauan lewat error/pesan dari callGASWithRetry_ itu sendiri.
-// ============================================================
-let networkOnlineToastTimer = null;
-
-function updateNetworkStatusBanner(isOnline) {
-  const banner = document.getElementById("networkStatusBanner");
-  const textEl = document.getElementById("networkStatusText");
-  if (!banner || !textEl) return;
-
-  if (networkOnlineToastTimer) {
-    clearTimeout(networkOnlineToastTimer);
-    networkOnlineToastTimer = null;
-  }
-
-  if (!isOnline) {
-    banner.classList.remove("online");
-    banner.classList.add("offline", "show");
-    textEl.textContent = "Koneksi internet terputus";
-    return;
-  }
-
-  // Baru balik online: kalau banner "offline" lagi keliatan, ganti jadi
-  // "koneksi kembali" sebentar (2.5 detik) baru sembunyi -- biar user
-  // dapet kepastian koneksinya udah pulih, bukan tiba-tiba ilang tanpa
-  // penjelasan. Kalau banner emang lagi gak keliatan, gak perlu apa-apa.
-  if (banner.classList.contains("show")) {
-    banner.classList.remove("offline");
-    banner.classList.add("online");
-    textEl.textContent = "Koneksi internet kembali tersambung";
-    networkOnlineToastTimer = setTimeout(function () {
-      banner.classList.remove("show");
-    }, 2500);
-  }
-}
-
-window.addEventListener("online", function () { updateNetworkStatusBanner(true); });
-window.addEventListener("offline", function () { updateNetworkStatusBanner(false); });
-// Cek status awal pas app baru dibuka (jaga-jaga kalau HP udah dalam
-// keadaan offline SEBELUM app ini dimuat, bukan cuma pas berubah).
-document.addEventListener("DOMContentLoaded", function () {
-  if (!navigator.onLine) updateNetworkStatusBanner(false);
-});
-
-// ============================================================
-// ☀️ MODE TERANG (Outdoor) — toggle tema gelap/terang, disimpan di
-// localStorage supaya "nempel" tiap kali app dibuka lagi. Atribut
-// data-theme sudah diterapkan lebih awal (lihat <script> kecil di
-// <head>) buat cegah kedipan; fungsi di sini cuma nambahin logika
-// toggle + sinkronisasi ikon/label tombol & warna status bar HP.
-// ============================================================
-const THEME_STORAGE_KEY = "yassa_gopay_theme";
-
-function applyThemeUI_(theme) {
   const icon = document.getElementById("themeToggleIcon");
   const label = document.getElementById("themeToggleLabel");
+  const headerIcon = document.getElementById("headerDarkModeIcon");
+  const headerBtn = document.getElementById("headerDarkModeBtn");
   const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-  if (theme === "light") {
-    if (label) label.textContent = "Mode Gelap (Default)";
-    if (icon) icon.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>';
-    if (metaThemeColor) metaThemeColor.setAttribute("content", "#EEF2F7");
-  } else {
-    if (label) label.textContent = "Mode Terang (Outdoor)";
-    if (icon) icon.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+
+  if (isDark) {
+    if (label) label.textContent = "Mode Terang (Siang)";
+    if (icon) icon.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">light_mode</span>';
+    if (headerIcon) headerIcon.textContent = "light_mode";
+    if (headerBtn) headerBtn.title = "Ganti ke Mode Terang (Siang)";
     if (metaThemeColor) metaThemeColor.setAttribute("content", "#121A2F");
+  } else {
+    if (label) label.textContent = "Mode Malam (Default)";
+    if (icon) icon.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">dark_mode</span>';
+    if (headerIcon) headerIcon.textContent = "dark_mode";
+    if (headerBtn) headerBtn.title = "Ganti ke Mode Malam (Default)";
+    if (metaThemeColor) metaThemeColor.setAttribute("content", "#16a34a");
   }
+}
+
+function toggleDarkMode() {
+  const isDark = document.body.classList.contains("dark-mode") || document.documentElement.classList.contains("dark-mode");
+  const next = !isDark;
+  try { localStorage.setItem("yassa-dark-mode", next ? "1" : "0"); } catch (e) {}
+  applyDarkModeUI_(next);
 }
 
 function toggleTheme() {
-  const isLight = document.documentElement.getAttribute("data-theme") === "light";
-  const next = isLight ? "dark" : "light";
-  if (next === "light") {
-    document.documentElement.setAttribute("data-theme", "light");
-  } else {
-    document.documentElement.removeAttribute("data-theme");
-  }
-  try { localStorage.setItem(THEME_STORAGE_KEY, next); } catch (e) {}
-  applyThemeUI_(next);
+  toggleDarkMode();
 }
 
-// Sinkronkan tombol (ikon + teks) begitu app selesai dimuat, sesuai
-// tema yang sudah aktif (baik default gelap maupun terang tersimpan).
 document.addEventListener("DOMContentLoaded", function () {
-  const current = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
-  applyThemeUI_(current);
+  const isDark = isDarkModeActive_();
+  applyDarkModeUI_(isDark);
 });
 
 function togglePasswordVisibility(inputId, btn) {
@@ -7802,26 +7574,25 @@ function renderBottomNav() {
   let html = "";
 
   visibleTabs().forEach((t) => {
+    const isActive = active === t.key;
     if (t.isFab) {
       html += `
-        <div style="position: relative; width: 64px; display: flex; justify-content: center; top: -16px;">
-          <button data-tab="${t.key}" onclick="setActive('${t.key}')" style="width: 52px; height: 52px; border-radius: 50%; background: var(--bento-primary); display: flex; align-items: center; justify-content: center; border: none; box-shadow: 0 4px 20px rgba(34, 197, 94, 0.4); cursor: pointer; transition: transform 0.2s;">
-            ${materialIconSpan(t.icon, { size: 30, color: "white" })}
-          </button>
+        <div class="nav-center-wrap">
+          <div class="nav-center-island">
+            <button data-tab="${t.key}" onclick="setActive('${t.key}')" class="nav-center-btn ${isActive ? 'active' : ''}" aria-label="${t.label}">
+              <span class="material-symbols-outlined" style="font-size: 24px; font-weight: 800;">add</span>
+            </button>
+          </div>
+          <span class="nav-center-label ${isActive ? 'active' : ''}">${t.label}</span>
         </div>
       `;
     } else {
-      const isActive = active === t.key;
-      const color = isActive ? "var(--bento-primary)" : "var(--text-muted)";
-      const activeClass = isActive ? "active" : "";
-      const fontWeight = isActive ? "700" : "500";
-
       html += `
-        <button class="nav-btn ${activeClass}" data-tab="${t.key}" onclick="setActive('${t.key}')">
-          <div class="nav-icon-wrap">
-            ${materialIconSpan(t.icon, { size: 24, color: color, fill: isActive })}
+        <button class="nav-btn ${isActive ? 'active' : ''}" data-tab="${t.key}" onclick="setActive('${t.key}')">
+          <div class="nav-icon-wrap ${isActive ? 'active' : ''}">
+            ${materialIconSpan(t.icon, { size: 22, fill: isActive })}
           </div>
-          <span class="nav-label" style="color: ${color}; font-weight: ${fontWeight};">${t.label}</span>
+          <span class="nav-label ${isActive ? 'active' : ''}">${t.label}</span>
         </button>
       `;
     }
