@@ -2538,8 +2538,9 @@
      Muncul otomatis begitu splash selesai & browser bilang app ini
      "installable" (event beforeinstallprompt), ATAU di iOS Safari
      yang gak punya event itu (dikasih instruksi manual Share > Add
-     to Home Screen). Ada tombol "Nanti Saja" yang nyimpen cooldown
-     ke localStorage biar gak morotin muncul tiap buka.
+     to Home Screen). Tombol "Nanti Saja" cuma nutup popup saat itu
+     juga -- popup boleh nongol lagi di kunjungan/sesi berikutnya,
+     gak ada cooldown buat alasan ini.
      ============================================================ */
   .pwa-install-backdrop {
     position: fixed; inset: 0; z-index: 9998;
@@ -13452,8 +13453,10 @@ bootApp();
 //   popup tetep muncul tapi isinya instruksi manual "Share > Add to
 //   Home Screen" (gak ada tombol Install fungsional, cuma info).
 // - Gak muncul kalau app udah kebuka dalam mode "standalone" (artinya
-//   emang udah ke-install), dan ada cooldown 7 hari di localStorage
-//   kalau user pencet "Nanti Saja" biar gak morotin tiap buka app.
+//   emang udah ke-install). Kalau user pencet "Nanti Saja", popup BOLEH
+//   nongol lagi di sesi/kunjungan berikutnya (gak ada cooldown) -- cooldown
+//   7 hari cuma dipakai buat alasan "installed" (biar gak nawarin install
+//   lagi ke user yang appnya masih ke-pasang).
 // ============================================================
 (function () {
   var STORAGE_KEY = "pwaInstallDismissedAt";
@@ -13464,23 +13467,26 @@ bootApp();
       window.navigator.standalone === true; // iOS Safari
   }
 
-  // 🩹 FIX: dulu markDismissed() nyimpen SATU macam penanda doang buat 2
-  // situasi beda -- "user pencet Nanti Saja" (postponed) DAN "app berhasil
-  // di-install" (installed) -- jadi kalau user UNINSTALL app terus buka lagi
-  // link-nya buat install ulang, popup gak nongol lagi sampai 7 hari
-  // (localStorage browser gak ikut kehapus pas uninstall app). Sekarang
-  // disimpan BEDA alasannya: kalau alasannya "installed" tapi app SEKARANG
-  // ternyata gak lagi standalone (artinya kemungkinan besar udah di-uninstall
-  // sejak terakhir kali), cooldown-nya di-reset otomatis -- popup muncul
-  // lagi TANPA perlu user hapus data browser manual. Kalau alasannya
-  // "postponed" (Nanti Saja), cooldown 7 hari tetap dihormati apa adanya
-  // (itu emang perilaku yang diharapkan, gak ada kaitan sama status install).
+  // 🩹 UPDATE (2026, atas permintaan): dulu "Nanti Saja" (postponed) bikin
+  // popup gak nongol lagi selama 7 hari. Sekarang cooldown itu DIHAPUS
+  // khusus buat alasan "postponed" -- begitu app dibuka ulang lagi
+  // (sesi/kunjungan baru), popup boleh nongol lagi walau baru aja ditutup
+  // pakai "Nanti Saja" sebelumnya. Cooldown 7 hari TETAP dipakai, tapi
+  // CUMA buat alasan "installed" (biar gak nawarin install lagi ke user
+  // yang appnya emang masih ke-pasang), dan itu pun otomatis reset kalau
+  // ternyata app-nya sekarang gak lagi standalone (kemungkinan besar udah
+  // di-uninstall) -- lihat blok di bawah.
   function isDismissedRecently() {
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return false;
       var data = JSON.parse(raw);
-      if (data.reason === "installed" && !isStandalone()) {
+      if (data.reason !== "installed") {
+        // "postponed" (Nanti Saja) TIDAK LAGI bikin cooldown -- popup
+        // boleh langsung nongol lagi di kunjungan/sesi berikutnya.
+        return false;
+      }
+      if (!isStandalone()) {
         // App ditandai "sudah install" sebelumnya, tapi sekarang dibuka
         // BUKAN dalam mode standalone -> app-nya kemungkinan besar udah
         // di-uninstall dari HP. Reset, jangan hormati cooldown lagi.
