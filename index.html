@@ -5,15 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>YASSA GOPAY</title>
 <script>
-  // 🌙 MODE MALAM (DARK MODE) SEBAGAI DEFAULT
-  // Mengikuti standar Yassa Mobile, Mode Malam aktif secara default
+  // 🌞 Terapkan tema (gelap/terang) SEBELUM CSS/HTML lain di-render, supaya
+  // gak ada "kedipan" balik ke tema gelap sesaat pas app baru dibuka
+  // (FOUC). Preferensi disimpan di localStorage lewat toggleTheme() di
+  // bagian <script> utama bawah.
   (function () {
     try {
-      var saved = localStorage.getItem("yassa-dark-mode");
-      // Default adalah Dark Mode aktif (kecuali dimatikan manual dengan nilai "0")
-      var isDark = saved === null || saved === "1";
-      if (isDark) {
-        document.documentElement.classList.add("dark-mode");
+      if (localStorage.getItem("yassa_gopay_theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
       }
     } catch (e) {}
   })();
@@ -158,9 +157,7 @@
   })();
 </script>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#16a34a">
-<meta name="color-scheme" content="light">
-<meta name="supported-color-schemes" content="light">
+<meta name="theme-color" content="#121A2F">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -171,9 +168,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
@@ -2665,441 +2660,6 @@ html.lite-mode .keuangan-progress-fill::before {
    total, biar user tetap dapat feedback visual pas nge-tap */
 html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
 </style>
-
-<style id="yassa-mobile-neumorphic-style">
-  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
-
-  :root {
-    --yassa-green: #16a34a;
-    --bg-navy: #E0E5EC;
-    --bg-navy-deep: #D4DAE2;
-    --surface-bg: #E0E5EC;
-    --glass: #E0E5EC;
-    --glass-strong: #E0E5EC;
-    --glass-border: rgba(163,177,198,0.3);
-    --glass-border-strong: rgba(255,255,255,0.7);
-    --neon-blue: #0284c7;
-    --neon-cyan: #0ea5e9;
-    --neon-purple: #9333ea;
-    --neon-pink: #ec4899;
-    --neon-amber: #d97706;
-    --text-primary: #1e293b;
-    --text-secondary: #475569;
-    --text-muted: #64748b;
-    --danger: #ef4444;
-    --success: #16a34a;
-    --grad-primary: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
-    --grad-cool: linear-gradient(135deg, #16A34A 0%, #0EA5E9 100%);
-    --shadow-deep: 9px 9px 16px rgba(163,177,198,0.6), -9px -9px 16px rgba(255,255,255,0.5);
-    --shadow-glow-blue: 6px 6px 12px rgba(163,177,198,0.6), -6px -6px 12px rgba(255,255,255,0.8);
-    --bento-primary: #16a34a;
-    --bento-primary-rgb: 22,163,74;
-    --bento-tertiary: #0ea5e9;
-    --bento-tertiary-rgb: 14,165,233;
-    --bento-secondary: #16a34a;
-    --bento-secondary-rgb: 22,163,74;
-    --bento-amber: #d97706;
-    --bento-amber-rgb: 217,119,6;
-    --bento-error: #ef4444;
-    --bento-error-rgb: 239,68,68;
-    --bento-on-surface-variant: #475569;
-    color-scheme: light;
-  }
-
-  /* Cegah browser menerapkan force-dark miliknya sendiri ke form */
-  input, select, textarea {
-    color-scheme: light;
-  }
-
-  /* ============================================================ */
-  /* MODE MALAM (DARK MODE) - YASSA MOBILE FILTER ENGINE          */
-  /* Trik filter invert+hue-rotate: seluruh UI neumorphic terang  */
-  /* otomatis kebalik jadi gelap navy, tanpa merusak shadow 3D.   */
-  /* ============================================================ */
-  html.dark-mode body,
-  body.dark-mode {
-    filter: invert(1) hue-rotate(200deg) saturate(1.25) brightness(0.94) contrast(0.96);
-    background-color: #f8fafc;
-  }
-  body.dark-mode img,
-  body.dark-mode video,
-  body.dark-mode iframe,
-  body.dark-mode .no-invert,
-  body.dark-mode .re-invert,
-  body.dark-mode svg.login-logo,
-  body.dark-mode svg.app-splash-logo,
-  body.dark-mode svg.post-login-splash-logo,
-  body.dark-mode svg.header-logo-svg,
-  body.dark-mode #googleSignInBtn {
-    filter: invert(1) hue-rotate(200deg) saturate(1.25) brightness(0.94) contrast(0.96);
-  }
-  body.dark-mode {
-    transition: filter 0.2s ease;
-  }
-  @media print {
-    html.dark-mode body,
-    body.dark-mode { filter: none !important; }
-    body.dark-mode img,
-    body.dark-mode video,
-    body.dark-mode iframe,
-    body.dark-mode .no-invert { filter: none !important; }
-  }
-
-  html, body {
-    margin: 0; padding: 0;
-    background: #E0E5EC;
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
-    color: var(--text-primary);
-    height: 100%;
-    overflow: hidden;
-  }
-
-  #app {
-    background: #E0E5EC !important;
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
-  }
-
-  @media (min-width: 1280px) {
-    body {
-      background: #D4DAE2;
-    }
-    #app {
-      background: #E0E5EC !important;
-      border-radius: 2.5rem;
-      box-shadow: 12px 12px 24px rgba(163,177,198,0.6), -12px -12px 24px rgba(255,255,255,0.8);
-      border: none;
-    }
-  }
-
-  /* Header YASSA Mobile Style */
-  .header {
-    background: #E0E5EC !important;
-    padding: 14px 20px 42px;
-    color: var(--text-primary);
-    border-bottom-left-radius: 2.2rem !important;
-    border-bottom-right-radius: 2.2rem !important;
-    border-bottom: none !important;
-    box-shadow: 6px 6px 12px rgba(163,177,198,0.6), -6px -6px 12px rgba(255,255,255,0.8) !important;
-  }
-  .header.header-compact {
-    padding-bottom: 18px !important;
-  }
-  .header-greet-name {
-    color: #1e293b !important;
-    font-weight: 900 !important;
-    font-size: 18px !important;
-  }
-  .header-greet-meta {
-    color: #16a34a !important;
-    font-weight: 800 !important;
-    font-style: italic !important;
-    font-size: 10.5px !important;
-    text-transform: uppercase !important;
-  }
-  .header-logo-btn {
-    background: #E0E5EC !important;
-    border: none !important;
-    box-shadow: 4px 4px 8px rgba(163,177,198,0.6), -4px -4px 8px rgba(255,255,255,0.8) !important;
-  }
-  .header-logo-btn:active {
-    box-shadow: inset 2px 2px 4px rgba(163,177,198,0.6), inset -2px -2px 4px rgba(255,255,255,0.8);
-  }
-
-  .bell {
-    background: #E0E5EC !important;
-    border: none !important;
-    border-radius: 14px !important;
-    box-shadow: 4px 4px 8px rgba(163,177,198,0.6), -4px -4px 8px rgba(255,255,255,0.8) !important;
-    color: #475569 !important;
-  }
-  .bell:active {
-    box-shadow: inset 3px 3px 6px rgba(163,177,198,0.6), inset -3px -3px 6px rgba(255,255,255,0.8);
-    transform: scale(0.95);
-  }
-
-  /* Neumorphic Cards & Components */
-  .summary-card {
-    margin: -24px 16px 0 !important;
-    background: #E0E5EC !important;
-    border-radius: 2.5rem !important;
-    padding: 22px 20px !important;
-    box-shadow: 9px 9px 16px rgba(163,177,198,0.6), -9px -9px 16px rgba(255,255,255,0.5) !important;
-    border: none !important;
-    color: #1e293b !important;
-    transform: none !important;
-  }
-  .summary-card::before, .summary-card::after { display: none !important; }
-  .summary-card .summary-sheen { display: none !important; }
-  .summary-card .summary-value {
-    color: #16a34a !important;
-    font-weight: 900 !important;
-    font-size: 24px !important;
-  }
-  .summary-card .summary-label {
-    color: #64748b !important;
-    font-weight: 800 !important;
-  }
-  .summary-icon {
-    background: #E0E5EC !important;
-    box-shadow: inset 2px 2px 5px rgba(163,177,198,0.6), inset -2px -2px 5px rgba(255,255,255,0.8) !important;
-    color: #16a34a !important;
-    border-radius: 12px !important;
-  }
-  .summary-sub-row {
-    background: #E0E5EC !important;
-    border: none !important;
-    border-radius: 1.5rem !important;
-    box-shadow: inset 3px 3px 6px rgba(163,177,198,0.6), inset -3px -3px 6px rgba(255,255,255,0.8) !important;
-    padding: 12px 14px !important;
-  }
-  .summary-progress-track {
-    background: #E0E5EC !important;
-    box-shadow: inset 2px 2px 4px rgba(163,177,198,0.6), inset -2px -2px 4px rgba(255,255,255,0.8) !important;
-    height: 8px !important;
-  }
-  .summary-progress-fill {
-    background: #16a34a !important;
-    box-shadow: 0 0 10px rgba(22,163,74,0.4);
-  }
-
-  /* Universal Neumorphic Outset Cards */
-  .stat-mini-card,
-  .anak-yatim-preview-card,
-  .anak-asuh-preview-card,
-  .baso-preview-card,
-  .pedas-preview-card,
-  .kfin-card,
-  .menu-panel,
-  .akun-card,
-  .custom-modal,
-  .user-menu,
-  .user-form-sheet,
-  .force-pw-sheet,
-  [style*="border-left: 4px solid"],
-  [style*="border-left:4px solid"] {
-    background-color: #E0E5EC !important;
-    border: none !important;
-    border-radius: 2rem !important;
-    box-shadow: 9px 9px 16px rgba(163,177,198,0.6), -9px -9px 16px rgba(255,255,255,0.5) !important;
-    color: #1e293b !important;
-  }
-
-  /* Universal Neumorphic Inset Containers */
-  .anak-yatim-mini-stat,
-  .anak-asuh-mini-stat,
-  .kfin-stat-chip,
-  .user-table-wrap,
-  .kfin-progress-track {
-    background-color: #E0E5EC !important;
-    border: none !important;
-    border-radius: 1.25rem !important;
-    box-shadow: inset 3px 3px 6px rgba(163,177,198,0.6), inset -3px -3px 6px rgba(255,255,255,0.8) !important;
-  }
-
-  /* Form Elements: Inset */
-  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]),
-  select,
-  textarea,
-  .user-form-input,
-  .user-form-select {
-    background-color: #E0E5EC !important;
-    border: none !important;
-    border-radius: 1.1rem !important;
-    box-shadow: inset 4px 4px 8px rgba(163,177,198,0.6), inset -4px -4px 8px rgba(255,255,255,0.8) !important;
-    color: #1e293b !important;
-    font-weight: 700 !important;
-    outline: none !important;
-  }
-
-  /* Buttons & Action Pills */
-  .program-select-card,
-  .kfin-cta,
-  .menu-item,
-  #appGridContainer button {
-    background: #E0E5EC !important;
-    border: none !important;
-    border-radius: 1.8rem !important;
-    box-shadow: 6px 6px 12px rgba(163,177,198,0.6), -6px -6px 12px rgba(255,255,255,0.8) !important;
-    transition: all 0.2s ease;
-  }
-  .program-select-card.active,
-  .kfin-cta:active,
-  .menu-item:active,
-  #appGridContainer button:active {
-    box-shadow: inset 4px 4px 8px rgba(163,177,198,0.6), inset -4px -4px 8px rgba(255,255,255,0.8) !important;
-    transform: scale(0.97);
-  }
-  .program-select-icon {
-    background: #E0E5EC !important;
-    box-shadow: 3px 3px 6px rgba(163,177,198,0.5), -3px -3px 6px rgba(255,255,255,0.8) !important;
-    border-radius: 16px !important;
-  }
-
-  .btn-confirm, .btn-form-save {
-    background: #16a34a !important;
-    border: none !important;
-    border-radius: 1rem !important;
-    box-shadow: 4px 4px 10px rgba(22,163,74,0.35) !important;
-    color: #fff !important;
-    font-weight: 800 !important;
-  }
-  .btn-cancel, .btn-form-cancel {
-    background: #E0E5EC !important;
-    border: none !important;
-    border-radius: 1rem !important;
-    box-shadow: 4px 4px 8px rgba(163,177,198,0.6), -4px -4px 8px rgba(255,255,255,0.8) !important;
-    color: #475569 !important;
-    font-weight: 700 !important;
-  }
-  .btn-cancel:active, .btn-form-cancel:active {
-    box-shadow: inset 2px 2px 4px rgba(163,177,198,0.6), inset -2px -2px 4px rgba(255,255,255,0.8) !important;
-  }
-
-  /* Bottom Nav (Exact Yassa Mobile Style) */
-  .bottom-nav {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    background: #E0E5EC !important;
-    border-top: none !important;
-    display: flex !important;
-    justify-content: space-around !important;
-    align-items: flex-end !important;
-    box-shadow: 0 -6px 16px rgba(163,177,198,0.5), 0 -6px 16px rgba(255,255,255,0.7) !important;
-    z-index: 40;
-    height: 75px !important;
-    padding: 0 8px 8px !important;
-    padding-bottom: env(safe-area-inset-bottom, 8px) !important;
-  }
-  .nav-btn {
-    flex: 1;
-    background: none !important;
-    border: none !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: flex-end !important;
-    height: 100% !important;
-    gap: 3px !important;
-    cursor: pointer;
-    position: relative;
-    outline: none !important;
-    padding: 0 0 6px 0 !important;
-    transition: transform 0.2s ease !important;
-    transform: none !important;
-  }
-  .nav-btn .nav-icon-wrap {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 56px !important;
-    height: 34px !important;
-    border-radius: 14px !important;
-    transition: all 0.25s ease !important;
-    color: #64748b !important;
-    background: transparent !important;
-  }
-  .nav-btn.active .nav-icon-wrap,
-  .nav-btn .nav-icon-wrap.active {
-    background: #E0E5EC !important;
-    color: #0ea5e9 !important;
-    box-shadow: inset 4px 4px 8px rgba(163,177,198,0.6), inset -4px -4px 8px rgba(255,255,255,0.8) !important;
-  }
-  .nav-btn .nav-label {
-    font-size: 10px !important;
-    font-weight: 700 !important;
-    color: #64748b !important;
-    transition: color 0.2s;
-    letter-spacing: -0.2px;
-  }
-  .nav-btn.active .nav-label,
-  .nav-btn .nav-label.active {
-    font-weight: 800 !important;
-    color: #0ea5e9 !important;
-  }
-  .nav-center-wrap {
-    position: relative;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
-    height: 100%;
-    z-index: 50;
-    padding-bottom: 6px;
-  }
-  .nav-center-island {
-    position: absolute;
-    top: -24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #E0E5EC;
-    border-radius: 24px;
-    padding: 6px;
-    box-shadow: 6px 6px 12px rgba(163,177,198,0.4), -6px -6px 12px rgba(255,255,255,0.6);
-  }
-  .nav-center-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 58px;
-    height: 42px;
-    border-radius: 18px;
-    border: none;
-    background: #E0E5EC;
-    box-shadow: 4px 4px 8px rgba(163,177,198,0.6), -4px -4px 8px rgba(255,255,255,0.8);
-    cursor: pointer;
-    outline: none;
-    transition: all 0.15s ease;
-    color: #16a34a;
-  }
-  .nav-center-btn:active,
-  .nav-center-btn.active {
-    box-shadow: inset 4px 4px 8px rgba(163,177,198,0.6), inset -4px -4px 8px rgba(255,255,255,0.8);
-    transform: scale(0.96);
-  }
-  .nav-center-label {
-    font-size: 10px;
-    font-weight: 700;
-    color: #16a34a;
-  }
-
-  /* Overlay & App Screens */
-  .overlay {
-    background: #E0E5EC !important;
-  }
-  .overlay-header {
-    background: #E0E5EC !important;
-    border-bottom: none !important;
-    box-shadow: 6px 6px 12px rgba(163,177,198,0.6), -6px -6px 12px rgba(255,255,255,0.8) !important;
-  }
-  .overlay-title {
-    color: #1e293b !important;
-    font-weight: 800 !important;
-  }
-  .overlay-close {
-    background: #E0E5EC !important;
-    border: none !important;
-    border-radius: 50% !important;
-    box-shadow: 4px 4px 8px rgba(163,177,198,0.6), -4px -4px 8px rgba(255,255,255,0.8) !important;
-    color: #475569 !important;
-  }
-  .overlay-close:active {
-    box-shadow: inset 2px 2px 4px rgba(163,177,198,0.6), inset -2px -2px 4px rgba(255,255,255,0.8) !important;
-  }
-  .overlay-close svg {
-    stroke: #475569 !important;
-  }
-  .akun-content {
-    background: #E0E5EC !important;
-  }
-
-  /* Splashes & Banner */
-  .app-splash, .post-login-splash {
-    background: #0B0F19 !important;
-  }
-</style>
-
 </head>
 <body>
 
@@ -3155,93 +2715,118 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
 </div>
 
 <!-- ============ LAYAR LOGIN ============ -->
-<div id="loginScreen" class="login-screen" style="background-color: #f0f0f0; font-family: 'Plus Jakarta Sans', sans-serif;">
-  <main class="flex-1 flex flex-col items-center px-5 max-w-md mx-auto w-full min-h-screen pt-14 pb-20" style="display:flex; flex-direction:column; align-items:center; width:100%; max-width:400px; margin:auto;">
-    <div class="w-full my-auto flex flex-col items-center" style="width:100%; display:flex; flex-direction:column; align-items:center;">
-      <div class="mt-0 mb-4 w-full flex justify-center relative" style="display:flex; justify-content:center; margin-bottom:16px;">
-        <div class="w-[100px] h-[100px] bg-white rounded-full flex items-center justify-center p-2 border border-white/60 mx-auto" style="width:100px; height:100px; background:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow: 6px 6px 12px #d1d1d1, -6px -6px 12px #ffffff;">
-          <svg viewBox="0 0 100 100" class="login-logo" style="width:75px; height:75px;" aria-label="YASSA Logo">
-            <circle cx="28" cy="38" r="6" fill="#22C55E"/>
-            <path d="M13 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
-            <circle cx="72" cy="38" r="6" fill="#22C55E"/>
-            <path d="M57 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
-            <circle cx="50" cy="28" r="7.5" fill="#22C55E"/>
-            <path d="M30 53 a 20 20 0 0 1 40 0" fill="none" stroke="#22C55E" stroke-width="6.5" stroke-linecap="round"/>
-            <text x="50" y="76" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-weight="900" font-size="24" text-anchor="middle" letter-spacing="-0.5">
-              <tspan fill="#000000">YAS</tspan><tspan fill="#22C55E">SA</tspan>
-            </text>
-          </svg>
-        </div>
-      </div>
-      <div class="text-center mb-5 w-full flex flex-col items-center" style="text-align:center; margin-bottom:18px;">
-        <h2 style="font-size:22px; font-weight:900; margin:0 0 4px; color:#1e293b; letter-spacing:-0.5px;">Selamat Datang</h2>
-        <p style="font-size:11px; color:#64748b; font-weight:700; margin:0;">Silakan masuk ke akun Anda</p>
-      </div>
-      <div class="w-full bg-[#ffffff] p-6 rounded-[1.8rem]" style="width:100%; box-sizing:border-box; background:#ffffff; border-radius:1.8rem; box-shadow: 10px 10px 20px #d1d1d1, -10px -10px 20px #ffffff; padding:22px;">
-        <div id="loginError" class="login-error" style="display:none; background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.25); padding:10px 12px; border-radius:12px; font-size:11px; font-weight:700; text-align:center; margin-bottom:14px;"></div>
-        <form id="loginForm" onsubmit="handleLoginSubmit(event)">
-          <div style="margin-bottom: 14px;">
-            <label style="display:block; font-size: 10px; font-weight: 800; margin-bottom: 6px; color: #1e293b; text-transform:uppercase; letter-spacing:0.5px;">Nomor HP</label>
-            <div style="position: relative;">
-              <span class="material-symbols-outlined" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; color: #94a3b8;">call</span>
-              <input type="tel" id="loginEmail" placeholder="628xxxxxxxxx" required autocomplete="tel" style="width: 100%; box-sizing:border-box; padding: 12px 14px 12px 42px; background: #f5f3f3; border: none; border-radius: 12px; font-size: 13px; font-weight: 700; color: #1e293b; box-shadow: inset 4px 4px 8px #d1d1d1, inset -4px -4px 8px #ffffff; outline: none;">
-            </div>
-          </div>
-          <div style="margin-bottom: 14px;">
-            <label style="display:block; font-size: 10px; font-weight: 800; margin-bottom: 6px; color: #1e293b; text-transform:uppercase; letter-spacing:0.5px;">Kata Sandi</label>
-            <div style="position: relative;">
-              <span class="material-symbols-outlined" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; color: #94a3b8;">lock</span>
-              <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password" style="width: 100%; box-sizing:border-box; padding: 12px 44px 12px 42px; background: #f5f3f3; border: none; border-radius: 12px; font-size: 13px; font-weight: 700; color: #1e293b; box-shadow: inset 4px 4px 8px #d1d1d1, inset -4px -4px 8px #ffffff; outline: none;">
-              <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('loginPassword', this)" aria-label="Tampilkan/Sembunyikan Password" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #94a3b8; display: flex; align-items: center;">
-                <span class="material-symbols-outlined" style="font-size: 18px;">visibility</span>
-              </button>
-            </div>
-          </div>
-          <div style="display: flex; justify-content: flex-end; margin-bottom: 14px;">
-            <a href="#" class="login-link" onclick="showModal('Lupa Password', 'Silakan hubungi Super Admin untuk mereset password Anda.'); return false;" style="font-size: 10px; font-weight: 800; color: #16a34a; text-decoration: none;">Lupa Kata Sandi?</a>
-          </div>
-          <button type="submit" id="loginSubmitBtn" style="width: 100%; background: #16a34a; color: white; padding: 14px; border: none; border-radius: 12px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; box-shadow: 5px 5px 10px #b8b8b8, -5px -5px 10px #ffffff; transition: all 0.2s;">
-            Masuk
-          </button>
-        </form>
-        <div style="display: flex; align-items: center; margin: 16px 0 14px;">
-          <div style="flex-grow: 1; border-top: 1px solid #e2e8f0;"></div>
-          <span style="padding: 0 12px; font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">ATAU</span>
-          <div style="flex-grow: 1; border-top: 1px solid #e2e8f0;"></div>
-        </div>
-        <div id="googleSignInBtn" class="google-btn-wrap" style="display: flex; justify-content: center; min-height: 44px; margin-bottom: 10px;"></div>
-        <div id="googleLoginStatus" class="google-login-status" style="display:none; justify-content: center; align-items: center; gap: 8px; font-size: 11px; color: #64748b; margin-top:8px;">
-          <span class="google-login-status-spinner"></span>
-          <span>Sedang masuk dengan Google...</span>
-        </div>
-      </div>
-      <!-- Footer icons mirroring YASSA Mobile -->
-      <div class="login-footer-icons" style="display: flex; justify-content: space-around; width: 100%; max-width: 320px; margin-top: 20px;">
-        <button class="login-footer-icon-btn" onclick="window.location.href='https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Absensi.html'" style="display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: none; cursor: pointer;">
-          <div class="login-footer-icon-circle" style="width: 44px; height: 44px; border-radius: 14px; background: #E0E5EC; box-shadow: 4px 4px 8px #d1d1d1, -4px -4px 8px #ffffff; display: flex; align-items: center; justify-content: center; color: #0284c7;">
-            <span class="material-symbols-outlined" style="font-size: 20px;">how_to_reg</span>
-          </div>
-          <span style="font-size: 10px; font-weight: 700; color: #64748b;">Kehadiran</span>
-        </button>
-        <button class="login-footer-icon-btn" onclick="showModal('Keamanan Sistem', 'Insya Allah, sistem ini dalam lindungan Allah SWT. Data yang tersimpan di sini adalah amanah untuk anak-anak yatim — siapa pun yang berniat jahat meretasnya, sama saja menzalimi hak mereka yang tidak berdaya. Semoga Allah melindungi kita semua. 🤲')" style="display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: none; cursor: pointer;">
-          <div class="login-footer-icon-circle" style="width: 44px; height: 44px; border-radius: 14px; background: #E0E5EC; box-shadow: 4px 4px 8px #d1d1d1, -4px -4px 8px #ffffff; display: flex; align-items: center; justify-content: center; color: #16a34a;">
-            <span class="material-symbols-outlined" style="font-size: 20px;">security</span>
-          </div>
-          <span style="font-size: 10px; font-weight: 700; color: #64748b;">Keamanan</span>
-        </button>
-        <button class="login-footer-icon-btn" onclick="tampilkanMotivasiKeluhan()" style="display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: none; cursor: pointer;">
-          <div class="login-footer-icon-circle" style="width: 44px; height: 44px; border-radius: 14px; background: #E0E5EC; box-shadow: 4px 4px 8px #d1d1d1, -4px -4px 8px #ffffff; display: flex; align-items: center; justify-content: center; color: #d97706;">
-            <span class="material-symbols-outlined" style="font-size: 20px;">chat</span>
-          </div>
-          <span style="font-size: 10px; font-weight: 700; color: #64748b;">Keluhan</span>
-        </button>
-      </div>
-      <div id="loginAppVersion" class="login-app-version" style="font-size: 10.5px; font-weight: 800; color: #94a3b8; margin-top: 14px; text-transform: uppercase; letter-spacing: 1px;"></div>
-      <div style="text-align:center; font-size:9px; font-weight: 700; color:#94a3b8; margin-top:4px; letter-spacing:0.5px; text-transform: uppercase;">Aplikasi Resmi Yayasan Salam Satu Aspal</div>
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <div class="login-header-bg">
+      <!-- Background Decorations -->
+      <div class="decor-blob decor-blob-1"></div>
+      <div class="decor-blob decor-blob-2"></div>
+      
+      <!-- Isometric Shapes for Tech Vibe -->
+      <svg class="decor-iso" viewBox="0 0 100 100" style="width: 50px; top: 15%; left: 10%;">
+         <polygon points="50,10 90,30 90,70 50,90 10,70 10,30" fill="rgba(255,255,255,0.1)" stroke="#fff" stroke-width="3"/>
+         <polyline points="10,30 50,50 90,30" fill="none" stroke="#fff" stroke-width="3"/>
+         <line x1="50" y1="50" x2="50" y2="90" stroke="#fff" stroke-width="3"/>
+      </svg>
+      <svg class="decor-iso" viewBox="0 0 100 100" style="width: 35px; top: 40%; right: 12%; animation-delay: 1s;">
+         <polygon points="50,10 90,30 90,70 50,90 10,70 10,30" fill="rgba(255,255,255,0.05)" stroke="#fff" stroke-width="4"/>
+         <polyline points="10,30 50,50 90,30" fill="none" stroke="#fff" stroke-width="4"/>
+         <line x1="50" y1="50" x2="50" y2="90" stroke="#fff" stroke-width="4"/>
+      </svg>
+      
+      <!-- Floating Particles -->
+      <div style="position: absolute; width: 6px; height: 6px; background: #fff; border-radius: 50%; top: 25%; right: 30%; opacity: 0.4; animation: float 4s infinite; z-index: 2;"></div>
+      <div style="position: absolute; width: 4px; height: 4px; background: #fff; border-radius: 50%; top: 60%; left: 25%; opacity: 0.3; animation: float 5s infinite 2s; z-index: 2;"></div>
+      <div style="position: absolute; width: 8px; height: 8px; background: #fff; border-radius: 50%; top: 70%; right: 20%; opacity: 0.2; animation: float 7s infinite 1s; z-index: 2;"></div>
+
+      <svg viewBox="0 0 100 100" class="login-logo" aria-label="YASSA Logo">
+        <circle cx="28" cy="38" r="6" fill="#22C55E"/>
+        <path d="M13 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="72" cy="38" r="6" fill="#22C55E"/>
+        <path d="M57 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="50" cy="28" r="7.5" fill="#22C55E"/>
+        <path d="M30 53 a 20 20 0 0 1 40 0" fill="none" stroke="#22C55E" stroke-width="6.5" stroke-linecap="round"/>
+        <text x="50" y="76" font-family="'Inter', sans-serif" font-weight="900" font-size="24" text-anchor="middle" letter-spacing="-0.5">
+          <tspan fill="#ffffff">YAS</tspan><tspan fill="#22C55E">SA</tspan>
+        </text>
+      </svg>
+      <!-- Title is optional here since it's already in the logo, but kept for balance -->
+      
+      <div class="login-header-wave"></div>
     </div>
-  </main>
+
+    <div class="login-form-container">
+      <div id="loginError" class="login-error" style="display:none;"></div>
+
+      <form id="loginForm" onsubmit="handleLoginSubmit(event)">
+        <div class="login-field">
+          <div class="login-field-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <input type="tel" id="loginEmail" class="login-input" placeholder="Username (628xxxxxxxxx)" required autocomplete="tel">
+        </div>
+        
+        <div class="login-field">
+          <div class="login-field-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <input type="password" id="loginPassword" class="login-input" placeholder="Password" required autocomplete="current-password">
+          <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('loginPassword', this)" aria-label="Tampilkan/Sembunyikan Password">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        
+        <button type="submit" id="loginSubmitBtn" class="login-btn">Masuk</button>
+        
+        <div class="login-links">
+          <a href="#" class="login-link" onclick="showModal('Lupa Password', 'Silakan hubungi Super Admin untuk mereset password Anda.'); return false;">Lupa Password?</a>
+        </div>
+      </form>
+
+      <div class="login-divider"><span>atau Login Otomatis</span></div>
+
+      <div id="googleSignInBtn" class="google-btn-wrap"></div>
+      <div id="googleLoginStatus" class="google-login-status" style="display:none;">
+        <span class="google-login-status-spinner"></span>
+        <span>Sedang masuk dengan Google...</span>
+      </div>
+
+      <!-- Additional footer icons mirroring the reference design -->
+      <div class="login-footer-icons">
+        <button class="login-footer-icon-btn" onclick="window.location.href='https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Absensi.html'">
+          <div class="login-footer-icon-circle">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22D3EE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>
+          </div>
+          <span class="login-footer-icon-label">Kehadiran</span>
+        </button>
+        <button class="login-footer-icon-btn" onclick="showModal('Keamanan Sistem', 'Insya Allah, sistem ini dalam lindungan Allah SWT. Data yang tersimpan di sini adalah amanah untuk anak-anak yatim — siapa pun yang berniat jahat meretasnya, sama saja menzalimi hak mereka yang tidak berdaya. Semoga Allah melindungi kita semua. 🤲')">
+          <div class="login-footer-icon-circle">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <span class="login-footer-icon-label">Keamanan</span>
+        </button>
+        <button class="login-footer-icon-btn" onclick="tampilkanMotivasiKeluhan()">
+          <div class="login-footer-icon-circle">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          </div>
+          <span class="login-footer-icon-label">Keluhan</span>
+        </button>
+      </div>
+
+      <div id="loginAppVersion" class="login-app-version"></div>
+      <div style="text-align:center; font-size:11px; color:var(--text-muted); opacity:0.7; margin-top:4px; letter-spacing:0.2px;">Aplikasi Resmi Yayasan Salam Satu Aspal</div>
+    </div>
+  </div>
 </div>
 
+<!-- Custom Modal Pengganti Alert/Confirm -- SENGAJA ditaruh di LUAR #app
+     (sejajar dengan #loginScreen & #app), bukan di dalam #app seperti
+     sebelumnya. Dulu div ini nyempil di dalam #app yang display:none
+     sebelum login, jadi showModal() (dipakai tombol "Keamanan" &
+     "Keluhan" di halaman login) SUKSES kepanggil tapi modalnya gak
+     kelihatan sama sekali -- ketimpa ancestor yang hidden. Sekarang
+     modal ini independen, jadi bisa tampil baik di halaman login
+     maupun setelah masuk ke app. -->
 <div class="custom-modal-overlay" id="customModalOverlay">
   <button type="button" class="custom-modal-close" onclick="closeModal()" aria-label="Tutup" title="Tutup">
     <span class="material-symbols-outlined">close</span>
@@ -3285,9 +2870,6 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
         </div>
       </div>
       <div style="display:flex; align-items:center; gap:10px;">
-        <div class="bell" id="headerDarkModeBtn" onclick="toggleDarkMode()" title="Mode Malam / Siang" aria-label="Mode Malam">
-          <span class="material-symbols-outlined" id="headerDarkModeIcon" style="font-size: 19px;">light_mode</span>
-        </div>
         <div class="bell" id="manualRefreshBtn" onclick="forceRefreshApp()" title="Segarkan Aplikasi" aria-label="Segarkan Aplikasi">
           <svg id="manualRefreshIcon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
         </div>
@@ -4874,56 +4456,40 @@ document.addEventListener("DOMContentLoaded", function () {
 // <head>) buat cegah kedipan; fungsi di sini cuma nambahin logika
 // toggle + sinkronisasi ikon/label tombol & warna status bar HP.
 // ============================================================
-const THEME_STORAGE_KEY = "yassa-dark-mode";
+const THEME_STORAGE_KEY = "yassa_gopay_theme";
 
-function isDarkModeActive_() {
-  try {
-    const saved = localStorage.getItem("yassa-dark-mode");
-    return saved === null || saved === "1"; // Default Mode Malam (Dark Mode)
-  } catch (e) {
-    return true;
-  }
-}
-
-function applyDarkModeUI_(isDark) {
-  document.body.classList.toggle("dark-mode", isDark);
-  document.documentElement.classList.toggle("dark-mode", isDark);
-
+function applyThemeUI_(theme) {
   const icon = document.getElementById("themeToggleIcon");
   const label = document.getElementById("themeToggleLabel");
-  const headerIcon = document.getElementById("headerDarkModeIcon");
-  const headerBtn = document.getElementById("headerDarkModeBtn");
   const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-
-  if (isDark) {
-    if (label) label.textContent = "Mode Terang (Siang)";
-    if (icon) icon.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">light_mode</span>';
-    if (headerIcon) headerIcon.textContent = "light_mode";
-    if (headerBtn) headerBtn.title = "Ganti ke Mode Terang (Siang)";
-    if (metaThemeColor) metaThemeColor.setAttribute("content", "#121A2F");
+  if (theme === "light") {
+    if (label) label.textContent = "Mode Gelap (Default)";
+    if (icon) icon.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>';
+    if (metaThemeColor) metaThemeColor.setAttribute("content", "#EEF2F7");
   } else {
-    if (label) label.textContent = "Mode Malam (Default)";
-    if (icon) icon.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">dark_mode</span>';
-    if (headerIcon) headerIcon.textContent = "dark_mode";
-    if (headerBtn) headerBtn.title = "Ganti ke Mode Malam (Default)";
-    if (metaThemeColor) metaThemeColor.setAttribute("content", "#16a34a");
+    if (label) label.textContent = "Mode Terang (Outdoor)";
+    if (icon) icon.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+    if (metaThemeColor) metaThemeColor.setAttribute("content", "#121A2F");
   }
-}
-
-function toggleDarkMode() {
-  const isDark = document.body.classList.contains("dark-mode") || document.documentElement.classList.contains("dark-mode");
-  const next = !isDark;
-  try { localStorage.setItem("yassa-dark-mode", next ? "1" : "0"); } catch (e) {}
-  applyDarkModeUI_(next);
 }
 
 function toggleTheme() {
-  toggleDarkMode();
+  const isLight = document.documentElement.getAttribute("data-theme") === "light";
+  const next = isLight ? "dark" : "light";
+  if (next === "light") {
+    document.documentElement.setAttribute("data-theme", "light");
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+  }
+  try { localStorage.setItem(THEME_STORAGE_KEY, next); } catch (e) {}
+  applyThemeUI_(next);
 }
 
+// Sinkronkan tombol (ikon + teks) begitu app selesai dimuat, sesuai
+// tema yang sudah aktif (baik default gelap maupun terang tersimpan).
 document.addEventListener("DOMContentLoaded", function () {
-  const isDark = isDarkModeActive_();
-  applyDarkModeUI_(isDark);
+  const current = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+  applyThemeUI_(current);
 });
 
 function togglePasswordVisibility(inputId, btn) {
@@ -8236,25 +7802,26 @@ function renderBottomNav() {
   let html = "";
 
   visibleTabs().forEach((t) => {
-    const isActive = active === t.key;
     if (t.isFab) {
       html += `
-        <div class="nav-center-wrap">
-          <div class="nav-center-island">
-            <button data-tab="${t.key}" onclick="setActive('${t.key}')" class="nav-center-btn ${isActive ? 'active' : ''}" aria-label="${t.label}">
-              <span class="material-symbols-outlined" style="font-size: 24px; font-weight: 800;">add</span>
-            </button>
-          </div>
-          <span class="nav-center-label ${isActive ? 'active' : ''}">${t.label}</span>
+        <div style="position: relative; width: 64px; display: flex; justify-content: center; top: -16px;">
+          <button data-tab="${t.key}" onclick="setActive('${t.key}')" style="width: 52px; height: 52px; border-radius: 50%; background: var(--bento-primary); display: flex; align-items: center; justify-content: center; border: none; box-shadow: 0 4px 20px rgba(34, 197, 94, 0.4); cursor: pointer; transition: transform 0.2s;">
+            ${materialIconSpan(t.icon, { size: 30, color: "white" })}
+          </button>
         </div>
       `;
     } else {
+      const isActive = active === t.key;
+      const color = isActive ? "var(--bento-primary)" : "var(--text-muted)";
+      const activeClass = isActive ? "active" : "";
+      const fontWeight = isActive ? "700" : "500";
+
       html += `
-        <button class="nav-btn ${isActive ? 'active' : ''}" data-tab="${t.key}" onclick="setActive('${t.key}')">
-          <div class="nav-icon-wrap ${isActive ? 'active' : ''}">
-            ${materialIconSpan(t.icon, { size: 22, fill: isActive })}
+        <button class="nav-btn ${activeClass}" data-tab="${t.key}" onclick="setActive('${t.key}')">
+          <div class="nav-icon-wrap">
+            ${materialIconSpan(t.icon, { size: 24, color: color, fill: isActive })}
           </div>
-          <span class="nav-label ${isActive ? 'active' : ''}">${t.label}</span>
+          <span class="nav-label" style="color: ${color}; font-weight: ${fontWeight};">${t.label}</span>
         </button>
       `;
     }
@@ -14144,13 +13711,10 @@ function initBackButtonHandling() {
 initBackButtonHandling();
 
 function bootApp() {
-  // 🛡️ Safety fallback: pastikan splash screen SELALU hilang maksimal dalam 2 detik
-  // seperti di YASSA Mobile, bahkan jika koneksi lambat atau dibuka via file://
-  const splashSafetyTimer = setTimeout(function () {
-    hideSplash();
-  }, 2000);
-
-  try { logAksesEvent_("BUKA_APP"); } catch (e) {}
+  // 📡 Monitor Akses: rekam "app dibuka" SEDINI mungkin, sebelum tau user
+  // ini bakal login atau enggak -- sengaja gak nunggu (fire-and-forget),
+  // JANGAN sampai proses ini ngelambatin bukaan app.
+  logAksesEvent_("BUKA_APP");
 
   setSplashStatus("Membersihkan cache...");
   cleanupCacheAndUpdate()
@@ -14159,12 +13723,6 @@ function bootApp() {
       return initAuth();
     })
     .then(function () {
-      clearTimeout(splashSafetyTimer);
-      hideSplash();
-    })
-    .catch(function (err) {
-      console.warn("bootApp error, continuing:", err);
-      clearTimeout(splashSafetyTimer);
       hideSplash();
     });
 }
