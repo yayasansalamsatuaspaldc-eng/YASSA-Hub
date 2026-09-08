@@ -13508,6 +13508,8 @@ bootApp();
   var descBox = document.getElementById("pwaInstallDesc");
   var subText = document.getElementById("pwaInstallSub");
   var deferredPrompt = null;
+  var promptFired = false;   // jadi true begitu Chrome beneran nembak beforeinstallprompt
+  var fallbackTimer = null;  // timer buat nampilin instruksi manual kalau event itu gak nembak
 
   function closePopup() {
     backdrop.classList.remove("show");
@@ -13541,6 +13543,8 @@ bootApp();
   window.addEventListener("beforeinstallprompt", function (e) {
     e.preventDefault();
     deferredPrompt = e;
+    promptFired = true;
+    if (fallbackTimer) { clearTimeout(fallbackTimer); fallbackTimer = null; }
     openPopup();
   });
 
@@ -13601,6 +13605,29 @@ bootApp();
     // gak bisa, batasan browser).
     ov.addEventListener("click", function () { ov.remove(); });
     document.body.appendChild(ov);
+  }
+
+  // 🩹 FALLBACK (2026): Android/Chrome kadang GAK PERNAH nembak
+  // "beforeinstallprompt" walau PWA-nya sebenarnya sudah installable --
+  // salah satunya kejadian kalau Chrome masih nyimpen catatan internal
+  // "situs ini pernah di-install" dari instalasi sebelumnya (mis. user
+  // sempat uninstall lalu buka linknya lagi tanpa clear cache/site data
+  // dulu). Chrome nganggap gak perlu nawarin lagi, padahal ikon di HP
+  // sudah gak ada. Daripada user diem aja gak dikasih tau caranya, kalau
+  // dalam beberapa detik event itu gak nongol (dan bukan iOS -- iOS
+  // ditangani terpisah di bawah), kita tampilin popup yang sama tapi
+  // isinya instruksi manual "pakai menu titik tiga Chrome > Install app".
+  // Jalur ini TETAP bikin app ke-install beneran (cuma lewat menu bawaan
+  // Chrome, bukan tombol custom kita), jadi user tetap kebantu.
+  if (!isIOS()) {
+    fallbackTimer = setTimeout(function () {
+      if (promptFired || isStandalone() || isDismissedRecently()) return;
+      subText.textContent = "Biar buka aplikasi lebih cepat, langsung dari layar utama HP.";
+      descBox.style.display = "block";
+      descBox.innerHTML = "Browser belum menawarkan instalasi otomatis di sini. Ketuk ikon <b>titik tiga (⋮)</b> di pojok kanan atas Chrome, lalu pilih <b>\"Install app\"</b> (atau \"Tambahkan ke layar Utama\").";
+      btnNow.textContent = "Mengerti";
+      openPopup();
+    }, 4000);
   }
 
   if (isIOS()) {
