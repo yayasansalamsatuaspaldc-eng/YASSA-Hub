@@ -1251,14 +1251,17 @@
        dan TIDAK BISA di-scroll ke atas buat ngeliatnya lagi, walau
        overflow-y:auto sudah ada -- ini bug klasik "flex center + overflow"
        (browser nge-clip sisi atas, scroll cuma nyampe ke titik natural,
-       gak bisa negatif). Ganti ke "flex-start" + padding atas-bawah biar
-       kartu SELALU mulai dari paling atas container yang bisa di-scroll --
-       gak ada lagi yang ketutupan permanen, di HP paling pendek sekalipun.
-       Konsekuensi kosmetik: di layar yang jauh lebih tinggi dari kartu,
-       kartu nempel ke atas (dikasih padding-top biar gak mepet ujung),
-       bukan pas di tengah persis kayak sebelumnya -- trade-off yang wajar
-       demi konten gak pernah hilang. */
-    padding: 32px 0;
+       gak bisa negatif). Ganti ke "flex-start" biar kartu SELALU mulai
+       dari paling atas container yang bisa di-scroll -- gak ada lagi yang
+       ketutupan permanen, di HP paling pendek sekalipun.
+       🩹 REVISI: padding-top SENGAJA GAK dipakai -- sempat dicoba
+       "padding: 32px 0" tapi malah nongolin background gelap
+       (--bg-navy-deep) punya .login-screen sendiri sebagai bar hitam di
+       ATAS, sebelum kartu hijau (login-card) mulai (laporan user: "bagian
+       atasnya terlihat hitam, tidak full"). Padding-bottom doang yang
+       dipakai, buat ruang scroll nyaman sampai footer/versi app tanpa
+       nyisain gap kosong di atas. */
+    padding: 0 0 32px;
     box-sizing: border-box;
     background: var(--bg-navy-deep);
     overflow-y: auto; /* 🩹 FIX: biar bisa di-scroll kalau konten form lebih
