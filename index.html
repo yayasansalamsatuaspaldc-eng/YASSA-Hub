@@ -40,11 +40,39 @@
       var h = (vv && vv.height) ? vv.height : window.innerHeight;
       document.documentElement.style.setProperty("--app-vh", (h * 0.01) + "px");
     }
+    // 🩹 FIX TAMBAHAN (2026): sebagian Chrome/WebView Android (mis. Oppo
+    // A31) collapse/muncul-in address bar-nya gara-gara user SCROLL, bukan
+    // cuma resize -- dan itu gak selalu langsung diikuti event "resize"
+    // pada waktu yang tepat, jadi --app-vh sempat "nyangkut" di nilai lama
+    // sesaat sampai browser akhirnya ngirim resize (kadang telat/gak
+    // konsisten). Tambahin listener scroll (di-throttle pakai
+    // requestAnimationFrame biar gak berat) supaya --app-vh ikut nge-update
+    // begitu address bar collapse/expand karena scroll, bukan cuma resize.
+    var scrollTicking = false;
+    function onScrollRecalc() {
+      if (scrollTicking) return;
+      scrollTicking = true;
+      requestAnimationFrame(function () {
+        setAppVh();
+        scrollTicking = false;
+      });
+    }
     setAppVh();
     window.addEventListener("resize", setAppVh);
     window.addEventListener("orientationchange", setAppVh);
+    window.addEventListener("scroll", onScrollRecalc, { passive: true });
+    // 🩹 FIX TAMBAHAN: sebagian browser lawas masih "settle" ukuran address
+    // bar-nya BEBERAPA SAAT setelah halaman selesai load (bukan seketika),
+    // jadi hitungan pertama pas <head> jalan bisa keburu salah. Ukur ulang
+    // di event "load" dan sekali lagi dengan sedikit delay biar ke-capture
+    // ukuran final yang benar, tanpa nunggu user resize/scroll dulu.
+    window.addEventListener("load", function () {
+      setAppVh();
+      setTimeout(setAppVh, 300);
+    });
     if (window.visualViewport) {
       window.visualViewport.addEventListener("resize", setAppVh);
+      window.visualViewport.addEventListener("scroll", onScrollRecalc);
     }
   })();
 </script>
@@ -1260,8 +1288,12 @@
        ATAS, sebelum kartu hijau (login-card) mulai (laporan user: "bagian
        atasnya terlihat hitam, tidak full"). Padding-bottom doang yang
        dipakai, buat ruang scroll nyaman sampai footer/versi app tanpa
-       nyisain gap kosong di atas. */
-    padding: 0 0 32px;
+       nyisain gap kosong di atas.
+       🩹 FIX TAMBAHAN (2026): padding-bottom pakai env(safe-area-inset-bottom)
+       supaya di HP dengan gesture-bar/navigation-bar Android yang "makan"
+       area bawah, footer "Versi ... / Aplikasi Resmi ..." gak mepet/ketutupan
+       -- sama seperti perlakuan .bottom-nav di halaman dalam app. */
+    padding: 0 0 calc(32px + env(safe-area-inset-bottom, 0px));
     box-sizing: border-box;
     background: var(--bg-navy-deep);
     overflow-y: auto; /* 🩹 FIX: biar bisa di-scroll kalau konten form lebih
