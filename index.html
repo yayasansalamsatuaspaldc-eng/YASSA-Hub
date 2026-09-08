@@ -4034,14 +4034,15 @@ let authToken = null;
 let pendingOldPassword = null; 
 
 // ===== Daftar Program YASSA (selector "PILIH PROGRAM YASSA" di Beranda) =====
-// GO-PAY sudah punya data LIVE (sumber sama kayak summaryCard & Data Anak
-// Yatim yang udah ada). Program lain (BADIK, BATAN, BASO, PEDAS, SAPA)
+// GO-PAY, SAPA, & BASO sudah punya data LIVE (BASO ditarik dari sheet
+// Log_Bantuan_Baso yang sama dipakai laporan Program BASO, lihat
+// getTotalSantunanBaso di Code.gs). Program lain (BADIK, BATAN, PEDAS)
 // masih placeholder "segera hadir" -- nanti tinggal disambung ke sumber
 // data masing-masing pas sudah tersedia.
 const YASSA_PROGRAMS = [
   { key: "gopay", label: "GO-PAY", sub: "Gojek Peduli Anak Yatim", icon: "volunteer_activism", color: "#22C55E", bg: "rgba(34,197,94,0.15)", ready: true },
   { key: "sapa", label: "SAPA", sub: "Sahabat Peduli Anak", icon: "diversity_1", color: "#EC4899", bg: "rgba(236,72,153,0.15)", ready: true },
-  { key: "baso", label: "BASO", sub: "Bantuan Sembako", icon: "shopping_bag", color: "#F59E0B", bg: "rgba(245,158,11,0.15)", ready: false },
+  { key: "baso", label: "BASO", sub: "Bantuan Sembako", icon: "shopping_bag", color: "#F59E0B", bg: "rgba(245,158,11,0.15)", ready: true },
   { key: "pedas", label: "PEDAS", sub: "Peduli Disabilitas", icon: "accessible", color: "#A855F7", bg: "rgba(168,85,247,0.15)", ready: false },
   { key: "badik", label: "BADIK", sub: "Bantuan Pendidikan", icon: "school", color: "#3B82F6", bg: "rgba(59,130,246,0.15)", ready: false },
   { key: "batan", label: "BATAN", sub: "Bantuan Kesehatan", icon: "favorite", color: "#14B8A6", bg: "rgba(20,184,166,0.15)", ready: false },
@@ -4837,6 +4838,7 @@ let berandaStatsCache = (function() {
     totalAnak: null,
     donasi: null, // { totalSantunanDiperlukan, kekuranganSantunan, santunanDitemukan, totalDonasi, lapangan, kitabisa, midtrans } -- PROGRAM GOPAY
     santunanSapa: null, // { totalSantunanDiperlukan, jumlahAnak } -- PROGRAM SAPA (lihat getTotalSantunanSapa di Code.gs)
+    santunanBaso: null, // { tahun, totalDisalurkan, jumlahAnak } -- PROGRAM BASO (lihat getTotalSantunanBaso di Code.gs)
     dashboard: null,
     verifikasi: null,
     aktivitas: null, // array log aktivitas terbaru (Donasi/Absensi/AWG/PM)
@@ -4891,6 +4893,20 @@ function renderSummaryCardBeranda_() {
     const d = berandaStatsCache.santunanSapa;
     if (elValue) {
       if (d) animateRupiahValue_(elValue, d.totalSantunanDiperlukan);
+      else elValue.textContent = "...";
+    }
+    return;
+  }
+
+  if (activeProgram === "baso") {
+    const d = berandaStatsCache.santunanBaso;
+    const tahunLabel = d && d.tahun ? d.tahun : new Date().getFullYear();
+    if (elLabel) elLabel.textContent = "Total Dana yang Disalurkan Program BASO Tahun " + tahunLabel;
+    if (elSubKekurangan) elSubKekurangan.style.display = "none";
+    if (elSubDonasi) elSubDonasi.style.display = "none";
+    if (elProgressWrap) elProgressWrap.style.display = "none";
+    if (elValue) {
+      if (d) animateRupiahValue_(elValue, d.totalDisalurkan);
       else elValue.textContent = "...";
     }
     return;
@@ -4976,6 +4992,62 @@ function renderSummaryCardBeranda_() {
       }
     }
   }
+}
+
+// Isi panel "Program BASO" di Beranda (jumlah anak, jumlah wilayah, &
+// total dana tersalur tahun berjalan) -- dipanggil dari loadBerandaStats()
+// begitu bundle.santunanBaso datang, TERLEPAS dari activeProgram lagi
+// apa, biar begitu user pindah tab ke BASO datanya udah kemuat duluan.
+function renderProgramPanelBaso_(data, gagal) {
+  const elAnak = document.getElementById("berandaBasoJumlahAnak");
+  const elTotal = document.getElementById("berandaBasoTotalDisalurkan");
+  const elWilayah = document.getElementById("berandaBasoJumlahWilayah");
+  const elSub = document.getElementById("berandaBasoSubjudul");
+  if (!elAnak || !elTotal) return;
+
+  if (data) {
+    elAnak.textContent = data.jumlahAnak || 0;
+    elTotal.textContent = formatRupiahHub(data.totalDisalurkan || 0);
+    if (elWilayah) elWilayah.textContent = data.jumlahWilayah || 0;
+    if (elSub) elSub.textContent = "Bantuan Sembako \u00b7 Tahun " + (data.tahun || new Date().getFullYear());
+  } else if (gagal) {
+    elAnak.textContent = "-";
+    elTotal.textContent = "-";
+    if (elWilayah) elWilayah.textContent = "-";
+  }
+}
+
+// Popup rincian wilayah BASO -- nama wilayah & bulan apa aja wilayah itu
+// sudah dapat Program BASO tahun berjalan. Datanya numpang di
+// berandaStatsCache.santunanBaso yang udah kemuat lewat getBerandaBundle,
+// jadi tombol ini GAK fetch ulang ke server, langsung instan.
+function bukaDetailWilayahBaso() {
+  const data = berandaStatsCache.santunanBaso;
+  const elTitle = document.getElementById("basoWilayahTitle");
+  const elList = document.getElementById("basoWilayahList");
+  if (!elList) return;
+
+  const tahunLabel = data && data.tahun ? data.tahun : new Date().getFullYear();
+  if (elTitle) elTitle.textContent = "Wilayah Tersalur Program BASO " + tahunLabel;
+
+  const rincian = (data && data.rincianWilayah) || [];
+  if (!rincian.length) {
+    elList.innerHTML = '<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:14px 4px;">Belum ada wilayah yang tersalur tahun ini.</div>';
+  } else {
+    elList.innerHTML = rincian.map(function (w) {
+      return (
+        '<div style="background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; padding: 10px 12px;">' +
+          '<div style="font-size:12.5px; font-weight:700; color: var(--text-primary); margin-bottom:3px;">' + (w.wilayah || "-") + '</div>' +
+          '<div style="font-size:10.5px; color: var(--text-secondary);">' + (w.bulanLabel || "-") + '</div>' +
+        '</div>'
+      );
+    }).join("");
+  }
+
+  document.getElementById("basoWilayahOverlay").classList.add("open");
+}
+function tutupDetailWilayahBaso() {
+  document.getElementById("basoWilayahOverlay").classList.remove("open");
 }
 
 // Fungsi bantuan (Helper) untuk menyimpan ke memori HP
@@ -5117,6 +5189,10 @@ function loadBerandaStats() {
   // cache kalau ada, biar langsung keliatan tanpa nunggu server.
   if (berandaStatsCache.aktivitas) renderAktivitasTerbaru(berandaStatsCache.aktivitas);
 
+  // Panel "Program BASO" -- tampilin dulu dari cache kalau ada, biar
+  // langsung keliatan tanpa nunggu server (sama pola kayak yang di atas).
+  if (berandaStatsCache.santunanBaso) renderProgramPanelBaso_(berandaStatsCache.santunanBaso);
+
   // ============================================================
   // SATU permintaan gabungan ke server Hub (getBerandaBundle)
   // ------------------------------------------------------------
@@ -5179,6 +5255,23 @@ function loadBerandaStats() {
         if (elTSD) elTSD.textContent = "-";
       }
 
+      // 1c) Total Dana Tersalur PROGRAM BASO -> kartu ringkasan Beranda
+      // (dipakai kalau activeProgram = "baso") + panel "Program BASO"
+      // (jumlah anak & total dana, lihat renderProgramPanelBaso_()).
+      // Sumbernya sheet Log_Bantuan_Baso, sama yang dipakai laporan
+      // Program BASO -- lihat getTotalSantunanBaso() di Code.gs.
+      if (bundle.santunanBaso) {
+        berandaStatsCache.santunanBaso = bundle.santunanBaso;
+        renderSummaryCardBeranda_();
+        renderProgramPanelBaso_(bundle.santunanBaso);
+      } else if (!berandaStatsCache.santunanBaso) {
+        if (activeProgram === "baso") {
+          const elTSD3 = document.getElementById("summaryTotalSantunanDiperlukan");
+          if (elTSD3) elTSD3.textContent = "-";
+        }
+        renderProgramPanelBaso_(null, true);
+      }
+
       // 2) Dashboard Stats -> kartu Total Wilayah & Total Pengurus
       if (bundle.dashboardStats) {
         berandaStatsCache.dashboard = bundle.dashboardStats;
@@ -5229,6 +5322,13 @@ function loadBerandaStats() {
       if (!berandaStatsCache.santunanSapa && activeProgram === "sapa") {
         const elTSD2 = document.getElementById("summaryTotalSantunanDiperlukan");
         if (elTSD2) elTSD2.textContent = "-";
+      }
+      if (!berandaStatsCache.santunanBaso) {
+        if (activeProgram === "baso") {
+          const elTSD3 = document.getElementById("summaryTotalSantunanDiperlukan");
+          if (elTSD3) elTSD3.textContent = "-";
+        }
+        renderProgramPanelBaso_(null, true);
       }
       if (!berandaStatsCache.dashboard) {
         const elW = document.getElementById("statTotalWilayah");
@@ -6468,8 +6568,60 @@ function renderContent() {
       </div>
       <!-- /Panel Program SAPA -->
 
+      <!-- Panel Program BASO (Bantuan Sembako) -- data LIVE dari sheet
+           Log_Bantuan_Baso (sheet yang SAMA dipakai Laporan Program
+           BASO), lewat getTotalSantunanBaso di Code.gs. Nampilin jumlah
+           anak & wilayah yang sudah disalurkan + total dana yang sudah
+           disalurkan TAHUN BERJALAN (mengikuti tahun sekarang, bukan
+           hardcode). Diisi via renderProgramPanelBaso_(). Kartu "Wilayah
+           Tersalur" bisa diklik buat lihat rincian nama wilayah & bulan
+           apa aja wilayah itu sudah dapat BASO (lihat bukaDetailWilayahBaso()). -->
+      <div class="program-panel" id="programPanel-baso" style="display:none;">
+        <div class="baso-preview-card" style="background: var(--glass-strong); border-radius: 20px; padding: 18px 18px 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid #F59E0B;">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
+            <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(245,158,11,0.15); color: #FBBF24; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <span class="material-symbols-outlined" style="font-size: 21px; font-variation-settings: 'FILL' 1;">shopping_bag</span>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <h3 style="font-size: 14px; font-weight: 700; margin: 0;">Program BASO</h3>
+              <div style="font-size: 10.5px; color: var(--text-secondary); margin-top: 1px;" id="berandaBasoSubjudul">Bantuan Sembako &middot; Semua Wilayah</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <div style="flex:1; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+              <div style="font-size:15px; font-weight:800; color:#FBBF24;" id="berandaBasoJumlahAnak"><span class="kv-loading">...</span></div>
+              <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Anak Tersalur</div>
+            </div>
+            <div style="flex:1.3; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; padding: 9px 6px; text-align:center;">
+              <div style="font-size:13px; font-weight:800; color:#FBBF24;" id="berandaBasoTotalDisalurkan"><span class="kv-loading">...</span></div>
+              <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Total Dana Tersalur</div>
+            </div>
+            <div onclick="bukaDetailWilayahBaso()" style="flex:1; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; padding: 9px 6px; text-align:center; cursor:pointer;">
+              <div style="font-size:15px; font-weight:800; color:#FBBF24;" id="berandaBasoJumlahWilayah"><span class="kv-loading">...</span></div>
+              <div style="font-size:9px; color: var(--text-muted); margin-top:2px; display:flex; align-items:center; justify-content:center; gap:1px;">Wilayah Tersalur <span class="material-symbols-outlined" style="font-size:11px;">chevron_right</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal detail: nama wilayah & bulan apa saja wilayah tsb sudah
+           dapat Program BASO tahun berjalan -- diisi via
+           bukaDetailWilayahBaso() dari data yang sudah kemuat di
+           berandaStatsCache.santunanBaso (gak perlu fetch baru). -->
+      <div class="custom-modal-overlay" id="basoWilayahOverlay">
+        <div class="custom-modal" style="max-width:400px; text-align:left; max-height:80vh; overflow-y:auto;">
+          <div class="custom-modal-title" style="text-align:center; margin-bottom: 4px;" id="basoWilayahTitle">Wilayah Tersalur Program BASO</div>
+          <div style="font-size:10.5px; color:var(--text-secondary); text-align:center; margin-bottom:14px;">Nama wilayah & bulan penyaluran</div>
+          <div id="basoWilayahList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;"></div>
+          <div class="custom-modal-actions">
+            <button type="button" class="btn-modal btn-cancel" style="width:100%;" onclick="tutupDetailWilayahBaso()">Tutup</button>
+          </div>
+        </div>
+      </div>
+      <!-- /Panel Program BASO -->
+
       <!-- Panel placeholder buat program lain yang belum ada datanya
-           (BADIK, BATAN, BASO, PEDAS) -- disembunyikan default, tinggal
+           (BADIK, BATAN, PEDAS) -- disembunyikan default, tinggal
            disambung ke sumber data masing-masing pas sudah tersedia
            (lihat YASSA_PROGRAMS di atas). -->
       ${YASSA_PROGRAMS.filter(function (p) { return !p.ready; })
@@ -13313,7 +13465,7 @@ initSummaryCardTilt();
 // form user, sheet input, modal konfirmasi, dst) TANPA perlu ubah kode
 // tiap fungsi open/close satu-satu.
 // ============================================================
-const OVERLAY_OPEN_SELECTOR = '.overlay.open, .user-menu.open, #userFormOverlay.open, #customModalOverlay.open, #inputOverlay.open, #forcePwOverlay.open, #kegiatanFormOverlay.open, #laporanWilayahUploadOverlay.open, #psInputOverlay.open, #rsInputOverlay.open, #pedasAddOverlay.open, #programLainAddOverlay.open, #fotoSumberOverlay.open, #pdsFormOverlay.open';
+const OVERLAY_OPEN_SELECTOR = '.overlay.open, .user-menu.open, #userFormOverlay.open, #customModalOverlay.open, #inputOverlay.open, #forcePwOverlay.open, #kegiatanFormOverlay.open, #laporanWilayahUploadOverlay.open, #psInputOverlay.open, #rsInputOverlay.open, #pedasAddOverlay.open, #programLainAddOverlay.open, #fotoSumberOverlay.open, #pdsFormOverlay.open, #basoWilayahOverlay.open';
 
 let backExitArmed = false; // true sesaat setelah toast "tekan lagi buat keluar" muncul
 
@@ -13339,6 +13491,7 @@ function closeTopmostOverlay() {
     if (el.id === "pdsFormOverlay") { tutupPdsForm(); return; }
     if (el.id === "psInputOverlay") { tutupCatatPenyaluran(); return; }
     if (el.id === "rsInputOverlay") { tutupInputRateSantunan(); return; }
+    if (el.id === "basoWilayahOverlay") { tutupDetailWilayahBaso(); return; }
     if (el.id === "inputOverlay") { toggleInputSheet(); return; }
     if (el.id === "kegiatanFormOverlay" && typeof closeKegiatanForm === "function") { closeKegiatanForm(); return; }
     el.classList.remove("open"); // fallback generic
