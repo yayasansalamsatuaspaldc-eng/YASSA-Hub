@@ -4631,7 +4631,6 @@ function handleLoginSubmit(event) {
   btn.textContent = "Memproses...";
 
   callGASWithRetry_("login", [email, password], {
-    timeoutMs: 25000, // Beri kelonggaran ekstra buat cold start Apps Script (~4-8 detik) + rangkaian proses login, biar gak keburu dianggap timeout
     onRetry: function (attempt, maxAttempts) {
       btn.textContent = "Koneksi lambat, mencoba lagi... (" + attempt + "/" + maxAttempts + ")";
     },
@@ -4685,7 +4684,7 @@ function setGoogleLoginLoading(isLoading) {
 function handleGoogleCredential(response) {
   document.getElementById("loginError").style.display = "none";
   setGoogleLoginLoading(true);
-  callGASWithRetry_("loginGoogle", [response.credential], { timeoutMs: 25000 })
+  callGASWithRetry_("loginGoogle", [response.credential])
     .then(function (res) { onLoginSuccess(res); })
     .catch(function (err) {
       showLoginError(err.message);
@@ -4715,13 +4714,6 @@ function onLoginSuccess(res) {
   localStorage.setItem("yassa_token", authToken);
   localStorage.setItem("yassa_user", JSON.stringify(currentUser));
   document.getElementById("loginForm").reset();
-
-  // 🚀 Titip sesi ke SSO Broker di BELAKANG LAYAR (bukan bagian dari respons
-  // login lagi -- lihat finalizeLogin()/syncSessionToBroker() di code_gs).
-  // Sengaja gak di-"await"/gak ada .then buat nunggu -- kalau ini lambat
-  // atau gagal, user TETAP lanjut masuk seperti biasa; efeknya paling
-  // cuma tombol YASSA Mobile butuh sedikit fallback di percobaan pertama.
-  callGASWithRetry_("syncSessionToBroker", [authToken]).catch(function () {});
 
   // 📡 Monitor Akses: login BERHASIL -- baru di titik ini identitas
   // (username/nama/role) udah pasti valid, jadi baru di sini dicatat
