@@ -8662,7 +8662,17 @@ function rsTarikSemuaWilayah() {
   btn.disabled = true;
   btn.innerHTML = '<span class="material-symbols-outlined spin" style="font-size:16px;">progress_activity</span> Menarik data semua wilayah...';
 
-  callGASWithRetry_("tarikSemuaWilayahUntukRateSantunan", [authToken])
+  // 🩹 FIX: aksi ini beda dari panggilan Hub biasa -- doPost Hub-nya masih
+  // manggil UrlFetchApp KE APP MOBILE (getKeuanganStatsSemuaWilayah, scan
+  // data anak 16 wilayah), jadi total waktunya = eksekusi Hub + eksekusi
+  // Mobile + 2x latensi jaringan. Default timeout callGASWithRetry_ (15
+  // detik) ditujukan buat panggilan Hub SENDIRIAN, kepotong presis di
+  // tengah kalau Mobile-nya lagi rada lambat -> muncul "Waktu tunggu habis"
+  // padahal sebenarnya masih jalan. Dikasih timeout lebih panjang (30
+  // detik) & retry dikurangin jadi 2x (bukan 3x) -- aksi ini idempoten
+  // (cuma baca), tapi nunggu 3x percobaan @ 30 detik kelamaan buat UX kalau
+  // memang lagi genuinely lambat/gagal.
+  callGASWithRetry_("tarikSemuaWilayahUntukRateSantunan", [authToken], { timeoutMs: 30000, maxAttempts: 2 })
     .then(function (list) {
       const wadah = document.getElementById("rsDaftarWilayah");
       if (!list || !list.length) {
