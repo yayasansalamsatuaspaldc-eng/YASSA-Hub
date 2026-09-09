@@ -6110,7 +6110,17 @@ function terapkanKeuanganStats(hasil) {
       // biarin apa adanya (cuma dari Keuangan_Bulanan wilayah itu).
       const kitabisa = hasil[2];
       const midtrans = hasil[3];
-      const lagiLihatSemuaWilayah = kfinWilayahPilihan === "ALL";
+      // 🛠️ FIX: kfinWilayahPilihan === "ALL" doang gak cukup buat nentuin
+      // "lagi lihat semua wilayah nasional". Buat Korwil yang wilayahAkses-nya
+      // cuma 1 wilayah (mis. "Kabupaten Bekasi"), kfinWilayahPilihan TETAP
+      // "ALL" secara default (dropdown-nya gak relevan buat dia) -- padahal
+      // yang dia lihat cuma wilayahnya sendiri, BUKAN nasional. Kalau gak
+      // dicek wilayahAkses user-nya juga, donasi netral (Kitabisa/Midtrans)
+      // ikut kehitung ke wilayah dia, bikin angkanya numpuk sama Total Donasi
+      // nasional di Beranda -- padahal donasi itu netral & belum tentu masuk
+      // wilayah dia.
+      const userAksesSemuaWilayah = String((currentUser && currentUser.wilayahAkses) || "").trim().toUpperCase() === "ALL";
+      const lagiLihatSemuaWilayah = kfinWilayahPilihan === "ALL" && userAksesSemuaWilayah;
       const realisasiNasionalLuarWilayah = lagiLihatSemuaWilayah
         ? Number((kitabisa && kitabisa.totalRealisasi) || 0) + Number((midtrans && midtrans.totalRealisasi) || 0)
         : 0;
