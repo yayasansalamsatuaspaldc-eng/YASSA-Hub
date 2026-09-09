@@ -4519,6 +4519,15 @@ function initAuth() {
         currentUser = session;
         localStorage.setItem("yassa_user", JSON.stringify(currentUser));
         showApp();
+        // 🚀 PERBAIKAN (fix "Koneksi lambat"): sama seperti di
+        // onLoginSuccess, sinkronisasi ke broker ditembak di latar
+        // belakang di sini juga (checkSession dipanggil tiap app dibuka
+        // ulang/refresh) -- supaya sesi di broker tetap ter-refresh tanpa
+        // bikin user nunggu network call tambahan tiap buka app.
+        callGASWithRetry_("registerBrokerSessionAsync", [authToken], {
+          maxAttempts: 1,
+          timeoutMs: 20000,
+        }).catch(function () {});
       })
       .catch(function () {
         localStorage.removeItem("yassa_token");
@@ -4631,6 +4640,15 @@ function handleLoginSubmit(event) {
   btn.textContent = "Memproses...";
 
   callGASWithRetry_("login", [email, password], {
+    // 🚀 PERBAIKAN (fix "Koneksi lambat" saat login): dinaikkan dari 15000ms
+    // ke 22000ms -- sekarang broker SSO sudah dicabut dari login() (lihat
+    // finalizeLogin di Code_Hub.gs), jadi login seharusnya jauh lebih
+    // cepat dalam kondisi normal. Tapi pas COLD START (project idle lama)
+    // masih butuh ruang: buka Sheets Akun + hash password + tulis
+    // TerakhirLogin + cold start Apps Script itu sendiri bisa total
+    // 8-15 detik pas kondisi paling lambat -- 22 detik kasih kelonggaran
+    // biar gak keburu dianggap gagal & retry padahal server masih jalan.
+    timeoutMs: 22000,
     onRetry: function (attempt, maxAttempts) {
       btn.textContent = "Koneksi lambat, mencoba lagi... (" + attempt + "/" + maxAttempts + ")";
     },
@@ -4714,6 +4732,19 @@ function onLoginSuccess(res) {
   localStorage.setItem("yassa_token", authToken);
   localStorage.setItem("yassa_user", JSON.stringify(currentUser));
   document.getElementById("loginForm").reset();
+
+  // 🚀 PERBAIKAN (fix "Koneksi lambat" saat login): titip sesi ke SSO
+  // Broker SEKARANG ditembak dari sini, DI LATAR BELAKANG, bukan lagi
+  // ditunggu di dalam login() sisi server (lihat catatan di finalizeLogin,
+  // Code_Hub.gs). Sengaja TIDAK di-return/di-chain ke apa pun & TIDAK ada
+  // onRetry (gak perlu nampilin apa-apa ke user) -- kalaupun gagal/lambat,
+  // itu gak boleh mengganggu proses login yang sudah selesai duluan.
+  // Kalau user kebetulan klik menu Mobile SEBELUM ini selesai, tetap aman:
+  // bukaMobileDenganSso_() sudah punya fallback "Coba Lagi/Login Manual".
+  callGASWithRetry_("registerBrokerSessionAsync", [authToken], {
+    maxAttempts: 1,
+    timeoutMs: 20000,
+  }).catch(function () {});
 
   // 📡 Monitor Akses: login BERHASIL -- baru di titik ini identitas
   // (username/nama/role) udah pasti valid, jadi baru di sini dicatat
