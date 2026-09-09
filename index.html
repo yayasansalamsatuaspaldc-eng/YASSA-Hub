@@ -8174,7 +8174,10 @@ function renderLaporanBulananList(data) {
             ) : ''}
           </div>
           <div style="display:flex; align-items:center; gap: 8px;">
-            ${adaData ? `<span style="font-size: 11.5px; font-weight: 700; color: ${selisihWarna};">${b.selisih >= 0 ? '+' : ''}${formatRupiahHub(b.selisih)}</span>` : ''}
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
+              ${adaData ? `<span style="font-size: 11.5px; font-weight: 700; color: ${selisihWarna};">${b.selisih >= 0 ? '+' : ''}${formatRupiahHub(b.selisih)}</span>` : ''}
+              ${(adaData && b.selisih < 0 && (b.saldoKumulatif - b.selisih) > 0) ? `<span style="font-size: 8.5px; font-weight: 700; color: #86EFAC; background: rgba(34,197,94,0.14); border: 1px solid rgba(34,197,94,0.3); border-radius: 99px; padding: 1px 6px; white-space:nowrap;">✓ tertutup saldo sebelumnya</span>` : ''}
+            </div>
             <span class="material-symbols-outlined laporan-chevron-${b.bulan}-${b.tahun}" style="font-size: 20px; color: var(--text-muted); transition: transform 0.2s;">expand_more</span>
           </div>
         </button>
@@ -8377,10 +8380,14 @@ function renderLaporanBulananDetail(wrap, d) {
   // 🆕 Saldo Kumulatif -- biar kelihatan kalau "minus" bulan ini sebenarnya
   // sudah ketutup surplus bulan-bulan sebelumnya (kasus lag 1 bulan:
   // donasi masuk Bulan 8, disalurkan jadi santunan Bulan 9 -- lihat
-  // komentar di getLaporanBulananList/Detail backend). Cuma ditampilkan
-  // kalau saldo sebelumnya BUKAN 0 (bulan Januari misalnya gak ada
-  // "sebelumnya", gak perlu ditampilin baris ini).
-  if (d.saldoKumulatif && d.saldoKumulatif.sebelumBulanIni !== 0) {
+  // komentar di getLaporanBulananList/Detail backend). Ditampilkan tiap
+  // kali ada "bulan sebelumnya" di tahun itu (d.bulan > 1) -- TERMASUK
+  // pas saldo sebelumnya persis Rp0, karena itu juga info penting ("gak
+  // ada surplus/defisit yang dibawa dari bulan lalu, murni bulan ini").
+  // Sebelumnya baris ini disembunyikan kalau sebelumBulanIni === 0, yang
+  // bikin bulan minus kelihatan "tiba-tiba boncos" tanpa konteks kalau
+  // kebetulan saldo sebelumnya pas nol.
+  if (d.saldoKumulatif && d.bulan > 1) {
     const sk = d.saldoKumulatif;
     const warnaSebelum = sk.sebelumBulanIni >= 0 ? "#86EFAC" : "#FCA5A5";
     const warnaSetelah = sk.setelahBulanIni >= 0 ? "#86EFAC" : "#FCA5A5";
