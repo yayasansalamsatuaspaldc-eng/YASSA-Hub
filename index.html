@@ -8672,7 +8672,11 @@ function rsTarikSemuaWilayah() {
   // detik) & retry dikurangin jadi 2x (bukan 3x) -- aksi ini idempoten
   // (cuma baca), tapi nunggu 3x percobaan @ 30 detik kelamaan buat UX kalau
   // memang lagi genuinely lambat/gagal.
-  callGASWithRetry_("tarikSemuaWilayahUntukRateSantunan", [authToken], { timeoutMs: 30000, maxAttempts: 2 })
+  // 🩹 timeoutMs 40 detik (bukan 30) -- komentar di handleGetKeuanganStatsSemuaWilayah()
+  // sisi Mobile bilang cache-miss aslinya bisa sampai ~34 detik, jadi 30
+  // detik masih mepet/bisa kepotong. 40 detik kasih margin aman di atas
+  // worst-case yang udah terdokumentasi itu.
+  callGASWithRetry_("tarikSemuaWilayahUntukRateSantunan", [authToken], { timeoutMs: 40000, maxAttempts: 2 })
     .then(function (list) {
       const wadah = document.getElementById("rsDaftarWilayah");
       if (!list || !list.length) {
@@ -8743,7 +8747,7 @@ function rsSubmitSemua() {
       btn.disabled = false;
       btn.textContent = "Simpan Semua";
       tutupInputRateSantunan();
-      keuanganStatsCache = null; // paksa refresh Kartu 1, jangan pakai cache lama
+      keuanganStatsCache = {}; // 🩹 FIX: paksa refresh Kartu 1 (cache miss semua key) -- SEBELUMNYA di-set null, bikin loadKeuanganStats() crash "Cannot read properties of null" karena langsung baca keuanganStatsCache[cacheKeyDiminta] begitu dipanggil.
       loadKeuanganStats();
       showModal("Sukses", (r.jumlahBaru || 0) + " wilayah baru dicatat, " + (r.jumlahDiupdate || 0) + " wilayah di-update.");
     })
