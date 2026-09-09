@@ -5300,17 +5300,24 @@ function loadBerandaStats() {
         const kitabisa = r.kitabisaRealisasi; // "Realisasi Donasi GOPAY" -- GoTo, QRIS, Kitabisa.com, dll (nasional, di luar 16 wilayah)
         const midtrans = r.donasiRealisasi; // Donasi online otomatis (webhook Midtrans)
 
-        // 🆕 Total Donasi Beranda SEKARANG gabungan 3 sumber (dulu cuma
-        // realisasiLapangan aja) -- SAMA PERSIS pola yang sudah dipakai di
-        // Laporan Bulanan (getLaporanBulananDetail), biar angka di
-        // Beranda & di Laporan konsisten:
+        // 🆕 Total Donasi Beranda SEKARANG gabungan 4 sumber (dulu 3) --
+        // SAMA PERSIS pola yang sudah dipakai di Laporan Bulanan
+        // (getLaporanBulananDetail), biar angka di Beranda & di Laporan
+        // konsisten:
         //   1. Keuangan Bulanan GOPAY (realisasiLapangan, 16 wilayah)
         //   2. Realisasi Donasi GOPAY (kitabisaRealisasi, nasional -- GoTo/QRIS/Kitabisa.com/dll)
         //   3. Donasi Online Midtrans (donasiRealisasi, nasional -- webhook otomatis)
+        //   4. 🆕 Sisa saldo dari bulan-bulan sebelumnya (r.saldoSebelumBulanIni,
+        //      dari getRingkasanKeuangan) -- biar "Total Donasi" & "Kekurangan
+        //      Santunan" di Beranda gak keliatan boncos padahal sebenarnya
+        //      udah ketutup saldo lama (kasus: bulan berjalan donasi baru
+        //      Rp0, tapi masih ada sisa saldo ~Rp11jt dari bulan sebelumnya).
+        //      Bisa negatif kalau bulan-bulan lalu malah defisit.
         const realisasiLapangan = Number(manual.realisasiDonasi || 0);
         const realisasiDonasiGopay = Number((kitabisa && kitabisa.totalRealisasi) || 0);
         const realisasiMidtrans = Number((midtrans && midtrans.totalRealisasi) || 0);
-        const totalDonasi = realisasiLapangan + realisasiDonasiGopay + realisasiMidtrans;
+        const saldoSebelumBulanIni = Number(r.saldoSebelumBulanIni || 0);
+        const totalDonasi = realisasiLapangan + realisasiDonasiGopay + realisasiMidtrans + saldoSebelumBulanIni;
 
         const totalSantunanDiperlukan = santunan.ditemukan ? Number(santunan.totalPenyaluran || 0) : 0;
         const kekuranganSantunan = santunan.ditemukan ? Math.max(0, totalSantunanDiperlukan - totalDonasi) : 0;
@@ -8117,25 +8124,34 @@ function renderLaporanBulananList(data) {
     const adaData = b.adaPendapatan || b.adaPengeluaran;
     const selisihWarna = b.selisih >= 0 ? "#86EFAC" : "#FCA5A5";
 
-    // 🆕 Gabungan 3 bulan terakhir (bulan ini + 2 bulan sebelumnya) --
-    // buat kasus lag: donasi udah masuk di bulan sebelumnya, tapi baru
-    // disalurkan jadi santunan bulan ini, jadi kartu bulan ini kelihatan
-    // minus polos ("Masuk Rp0") padahal sebenernya ketutup donasi bulan
-    // lalu. Ini CUMA info tambahan (transparan, angka apa adanya, bukan
-    // dipoles biar keliatan positif) -- beda sama Saldo Kumulatif yang
-    // dari Januari (itu tetap ditampilkan minus kalau memang minus).
-    // Cuma muncul kalau bulan ini sendiri minus & ada minimal 2 bulan
-    // sebelumnya buat dibandingin.
-    let gabungan3BulanHtml = "";
-    if (b.selisih < 0 && idxBulan >= 2) {
-      const rentang = [arrBulan[idxBulan - 2], arrBulan[idxBulan - 1], b];
+    // 🆕 Gabungan "sejak surplus terakhir" -- versi carry-forward beneran
+    // (bukan jendela 3 bulan tetap), biar konsisten sama cara Saldo
+    // Kumulatif ngitung (dari Januari, tanpa batas bulan). Nyari mundur
+    // dari bulan ini ke bulan-bulan sebelumnya, terus jalan selama saldo
+    // SEBELUM bulan itu masih minus -- berhenti begitu ketemu bulan yang
+    // saldo sebelumnya udah balik >=0 (atau mentok Januari). Rentang itu
+    // yang digabung Pendapatan & Pengeluarannya. Angka apa adanya (gak
+    // dipoles) -- kalau emang masih minus dari titik itu, tetap tampil
+    // minus.
+    let gabunganSejakSurplusHtml = "";
+    if (adaData && typeof b.saldoKumulatif === "number" && b.saldoKumulatif < 0) {
+      let startIdx = idxBulan;
+      while (startIdx > 0) {
+        const saldoSebelumStartIdx = arrBulan[startIdx - 1].saldoKumulatif;
+        if (typeof saldoSebelumStartIdx !== "number" || saldoSebelumStartIdx >= 0) break;
+        startIdx--;
+      }
+      const rentang = arrBulan.slice(startIdx, idxBulan + 1);
       const gPendapatan = rentang.reduce(function (sum, x) { return sum + (x.totalPendapatan || 0); }, 0);
       const gPengeluaran = rentang.reduce(function (sum, x) { return sum + (x.totalPengeluaran || 0); }, 0);
       const gSelisih = gPendapatan - gPengeluaran;
       const gWarna = gSelisih >= 0 ? "#86EFAC" : "#FCA5A5";
-      gabungan3BulanHtml = `
+      const labelRentang = rentang.length > 1
+        ? `${escapeHtmlHub(rentang[0].namaBulan)}&ndash;${escapeHtmlHub(rentang[rentang.length - 1].namaBulan)}`
+        : escapeHtmlHub(rentang[0].namaBulan);
+      gabunganSejakSurplusHtml = `
         <div style="font-size: 9.5px; color: var(--text-muted); margin-top: 4px;">
-          Gabungan ${escapeHtmlHub(rentang[0].namaBulan)}&ndash;${escapeHtmlHub(rentang[2].namaBulan)}: Masuk ${formatRupiahHub(gPendapatan)} &middot; Tersalur ${formatRupiahHub(gPengeluaran)} &middot;
+          Sejak surplus terakhir (${labelRentang}): Masuk ${formatRupiahHub(gPendapatan)} &middot; Tersalur ${formatRupiahHub(gPengeluaran)} &middot;
           <span style="color:${gWarna}; font-weight:700;">${gSelisih >= 0 ? '+' : ''}${formatRupiahHub(gSelisih)}</span>
         </div>`;
     }
@@ -8190,7 +8206,7 @@ function renderLaporanBulananList(data) {
             <div style="font-size: 10.5px; color: var(--text-secondary); margin-top: 2px;">
               ${adaData ? `Masuk ${formatRupiahHub(b.totalPendapatan)} &middot; Tersalur ${formatRupiahHub(b.totalPengeluaran)}` : 'Belum ada data'}
             </div>
-            ${gabungan3BulanHtml}
+            ${gabunganSejakSurplusHtml}
             ${b.keteranganBulan ? (
               b.keteranganOtomatis
                 ? `<div style="font-size:9.5px; color:#FCA5A5; margin-top:3px; font-style:italic; opacity:1;">\u26A0\uFE0F ${escapeHtmlHub(b.keteranganBulan)} <span style="opacity:0.75; font-style:normal;">(otomatis)</span></div>`
