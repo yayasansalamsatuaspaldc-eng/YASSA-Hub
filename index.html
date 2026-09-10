@@ -3435,6 +3435,58 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
     </div>
   </div>
 
+  <!-- 🆕 Modal Input Data Santunan Bulanan SAPA (Log_Penyaluran_Santunan_Sapa)
+       -- khusus SUPERADMIN/ADMIN. BEDA dari modal GOPAY di atas: SAPA gak
+       butuh Rate sama sekali, karena nominal santunan per anak SUDAH FINAL
+       di sheet "Anak" (kolom SANTUNAN SAPA) -- tombol "Tarik Semua Wilayah"
+       langsung narik TOTAL per wilayah (join Anak+Keluarga by ID_Keluarga).
+       Yang bisa diatur cuma "Jml Bulan Cakupan" (pengali, karena kadang
+       pencairan SAPA dirapel 2 bulan sekaligus) dan Tanggal Pencairan. -->
+  <div class="custom-modal-overlay" id="sspInputOverlay">
+    <div class="custom-modal" style="max-width:400px; text-align:left; max-height:88vh; overflow-y:auto;">
+      <div class="custom-modal-title" style="text-align:center; margin-bottom: 16px;">Input Data Santunan Bulanan SAPA</div>
+
+      <div style="display:flex; gap:8px; margin-bottom:12px;">
+        <div style="flex:1;">
+          <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Bulan</label>
+          <select id="sspInputBulan" style="width:100%; box-sizing:border-box; padding:10px 8px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; font-family:inherit;">
+            <option value="1" style="color:#111;">Januari</option><option value="2" style="color:#111;">Februari</option><option value="3" style="color:#111;">Maret</option>
+            <option value="4" style="color:#111;">April</option><option value="5" style="color:#111;">Mei</option><option value="6" style="color:#111;">Juni</option>
+            <option value="7" style="color:#111;">Juli</option><option value="8" style="color:#111;">Agustus</option><option value="9" style="color:#111;">September</option>
+            <option value="10" style="color:#111;">Oktober</option><option value="11" style="color:#111;">November</option><option value="12" style="color:#111;">Desember</option>
+          </select>
+        </div>
+        <div style="width:90px;">
+          <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Tahun</label>
+          <input type="number" id="sspInputTahun" style="width:100%; box-sizing:border-box; padding:10px 8px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; font-family:inherit;">
+        </div>
+      </div>
+
+      <button type="button" id="sspInputBtnTarik" onclick="sspTarikSemuaWilayah()" style="display:flex; align-items:center; justify-content:center; gap:6px; width:100%; padding:10px 12px; border-radius:10px; background: rgba(236,72,153,0.14); border: 1px solid rgba(236,72,153,0.35); color: #F9A8D4; font-size:12px; font-weight:700; cursor:pointer; margin-bottom:12px;">
+        <span class="material-symbols-outlined" style="font-size:16px;">sync</span> Tarik Semua Wilayah dari Data Anak SAPA
+      </button>
+
+      <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Jml Bulan Cakupan (pengali, berlaku utk semua wilayah -- isi 2 kalau pencairan dirapel 2 bulan)</label>
+      <input type="number" id="sspInputCakupan" placeholder="1" min="1" value="1" oninput="sspHitungSemuaTotal()" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin-bottom: 12px; font-family:inherit;">
+
+      <div id="sspDaftarWilayah" style="max-height:280px; overflow-y:auto; border:1px solid var(--glass-border); border-radius:12px; padding:8px; margin-bottom:10px;">
+        <div style="font-size:11px; color:var(--text-muted); text-align:center; padding:14px 4px;">Tekan "Tarik Semua Wilayah" dulu buat lihat daftarnya.</div>
+      </div>
+      <div style="font-size:9px; color:var(--text-muted); margin-bottom:14px; margin-top:-4px;">*Nominal per wilayah = Total Santunan (dari sheet Anak) &times; Jml Bulan Cakupan. Hilangkan centang buat wilayah yang mau DILEWATI bulan ini.</div>
+
+      <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Tanggal Pencairan (berlaku utk semua wilayah di atas)</label>
+      <input type="date" id="sspInputTanggal" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin-bottom: 10px; font-family:inherit;">
+
+      <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Catatan (opsional, berlaku utk semua wilayah di atas)</label>
+      <input type="text" id="sspInputCatatan" placeholder="Contoh: rapel Juli+Agustus, cair 5 Sep" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin-bottom: 6px; font-family:inherit;">
+
+      <div class="custom-modal-actions">
+        <button type="button" class="btn-modal btn-cancel" onclick="tutupInputSantunanSapa()">Batal</button>
+        <button type="button" class="btn-modal btn-confirm" id="sspInputBtnSimpan" onclick="sspSubmitSemua()">Simpan Semua</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Halaman Penuh: Data Anak Yatim (Program Gopay) -- tabel ringkasan
        SEMUA wilayah, narik LIVE dari YASSA Mobile lewat action
        "getDataAnakYatim" tiap dibuka. Reuse class "overlay" yang sama
@@ -8854,6 +8906,123 @@ function rsTarikSemuaWilayah() {
     });
 }
 
+// ============================================================
+// 🆕 Modal Input Data Santunan Bulanan SAPA (Log_Penyaluran_Santunan_Sapa)
+// -- mirror pola modal Rate Santunan Gopay di atas, TAPI TANPA field Rate
+// (nominal per anak sudah final di sheet Anak, kolom SANTUNAN SAPA). Jumlah
+// Anak Asuh/Yatim Piatu/Disabilitas & Total Santunan SEMUA wilayah ditarik
+// OTOMATIS dari sheet Anak+Keluarga (tombol "Tarik Semua Wilayah", boleh
+// diulang sebelum Simpan). Prefix elemen/fungsi "ssp" (Santunan SAPA) biar
+// gak bentrok sama prefix "rs" punya Gopay.
+// ============================================================
+function bukaInputSantunanSapa() {
+  document.getElementById("sspInputBulan").value = String(laporanBulananSapaBulanTerbuka ? Number(laporanBulananSapaBulanTerbuka.split("-")[0]) : (new Date().getMonth() + 1));
+  document.getElementById("sspInputTahun").value = laporanBulananSapaTahunAktif || new Date().getFullYear();
+  document.getElementById("sspInputCakupan").value = "1";
+  document.getElementById("sspInputTanggal").value = "";
+  document.getElementById("sspInputCatatan").value = "";
+  document.getElementById("sspInputBtnTarik").innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">sync</span> Tarik Semua Wilayah dari Data Anak SAPA';
+  document.getElementById("sspDaftarWilayah").innerHTML = '<div style="font-size:11px; color:var(--text-muted); text-align:center; padding:14px 4px;">Tekan "Tarik Semua Wilayah" dulu buat lihat daftarnya.</div>';
+
+  document.getElementById("sspInputOverlay").classList.add("open");
+}
+
+function tutupInputSantunanSapa() {
+  document.getElementById("sspInputOverlay").classList.remove("open");
+}
+
+// Hitung ulang preview nominal SEMUA blok wilayah sekaligus = totalSantunan
+// dasar (1 bulan, dari sheet Anak) x Jml Bulan Cakupan -- dipanggil pas
+// Admin ganti angka cakupan, TANPA perlu tarik ulang ke server.
+function sspHitungSemuaTotal() {
+  const cakupan = Number(document.getElementById("sspInputCakupan").value) || 1;
+  document.querySelectorAll("#sspDaftarWilayah .ssp-wilayah-block").forEach(function (blok) {
+    const dasar = Number(blok.dataset.dasar) || 0;
+    const total = dasar * cakupan;
+    blok.querySelector(".ssp-total-preview").textContent = formatRupiahHub(total);
+    blok.dataset.total = total;
+  });
+}
+
+function sspTarikSemuaWilayah() {
+  const btn = document.getElementById("sspInputBtnTarik");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined spin" style="font-size:16px;">progress_activity</span> Menarik data semua wilayah...';
+
+  callGASWithRetry_("tarikSemuaWilayahUntukSantunanSapa", [authToken], { timeoutMs: 20000, maxAttempts: 2 })
+    .then(function (list) {
+      const wadah = document.getElementById("sspDaftarWilayah");
+      if (!list || !list.length) {
+        wadah.innerHTML = '<div style="font-size:11px; color:var(--text-muted); text-align:center; padding:14px 4px;">Belum ada data wilayah.</div>';
+      } else {
+        wadah.innerHTML = list.map(function (w, i) {
+          return `
+          <div class="ssp-wilayah-block" data-wilayah="${escapeHtmlHub(w.wilayah)}" data-anak="${w.jumlahAnakAsuh}" data-piatu="${w.jumlahYatimPiatu}" data-dsb="${w.jumlahDisabilitas}" data-dasar="${w.totalSantunan}" data-total="0" style="display:flex; align-items:center; gap:8px; padding:8px 6px; border-bottom:1px solid var(--glass-border);">
+            <input type="checkbox" class="ssp-wilayah-checkbox" id="sspCb${i}" ${w.totalSantunan > 0 ? "checked" : ""} style="width:16px; height:16px; flex-shrink:0; accent-color: #EC4899;">
+            <label for="sspCb${i}" style="flex:1; min-width:0; cursor:pointer;">
+              <div style="font-size:12px; font-weight:700; color:var(--text-primary);">${escapeHtmlHub(w.wilayah)}</div>
+              <div style="font-size:9.5px; color:var(--text-secondary);">${w.jumlahAnakAsuh} anak asuh &middot; ${w.jumlahYatimPiatu} yatim piatu &middot; ${w.jumlahDisabilitas} disabilitas</div>
+            </label>
+            <div style="font-size:11px; font-weight:700; color:#F9A8D4; text-align:right; white-space:nowrap;" class="ssp-total-preview">Rp0</div>
+          </div>`;
+        }).join("");
+        sspHitungSemuaTotal();
+      }
+      btn.disabled = false;
+      btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">sync</span> Tarik Ulang Semua Wilayah';
+    })
+    .catch(function (err) {
+      btn.disabled = false;
+      btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">sync</span> Tarik Semua Wilayah dari Data Anak SAPA';
+      showModal("Gagal", err.message);
+    });
+}
+
+function sspSubmitSemua() {
+  const bulan = document.getElementById("sspInputBulan").value;
+  const tahun = document.getElementById("sspInputTahun").value;
+  const tanggalPencairan = document.getElementById("sspInputTanggal").value;
+  const catatan = document.getElementById("sspInputCatatan").value.trim();
+
+  const blokList = document.querySelectorAll("#sspDaftarWilayah .ssp-wilayah-block");
+  if (!blokList.length) { showModal("Gagal", "Tarik data wilayah dulu sebelum menyimpan."); return; }
+
+  const daftarBaris = [];
+  blokList.forEach(function (blok) {
+    const dicentang = blok.querySelector(".ssp-wilayah-checkbox").checked;
+    if (!dicentang) return; // wilayah ini gak dicentang, lewati
+    daftarBaris.push({
+      wilayah: blok.dataset.wilayah,
+      jumlahAnakAsuh: Number(blok.dataset.anak) || 0,
+      jumlahYatimPiatu: Number(blok.dataset.piatu) || 0,
+      jumlahDisabilitas: Number(blok.dataset.dsb) || 0,
+      jumlahDisalurkan: Number(blok.dataset.total) || 0,
+      tanggalPencairan: tanggalPencairan,
+      catatan: catatan,
+    });
+  });
+
+  if (!daftarBaris.length) { showModal("Gagal", "Belum ada wilayah yang dicentang."); return; }
+
+  const btn = document.getElementById("sspInputBtnSimpan");
+  btn.disabled = true;
+  btn.textContent = "Menyimpan...";
+  callGASWithRetry_("simpanBanyakBarisLogPenyaluranSantunanSapa", [authToken, bulan, tahun, daftarBaris])
+    .then(function (r) {
+      btn.disabled = false;
+      btn.textContent = "Simpan Semua";
+      tutupInputSantunanSapa();
+      laporanBulananSapaDetailCache = {}; // paksa refresh detail bulan yang lagi dibuka
+      loadLaporanBulananListSapa(laporanBulananSapaTahunAktif);
+      showModal("Berhasil", `Tersimpan -- ${r.jumlahBaru} wilayah baru, ${r.jumlahDiupdate} wilayah diupdate${r.jumlahDilewati ? `, ${r.jumlahDilewati} dilewati (belum dicentang/kosong)` : ""}.`);
+    })
+    .catch(function (err) {
+      btn.disabled = false;
+      btn.textContent = "Simpan Semua";
+      showModal("Gagal", err.message);
+    });
+}
+
 function rsSubmitSemua() {
   const bulan = document.getElementById("rsInputBulan").value;
   const tahun = document.getElementById("rsInputTahun").value;
@@ -9838,6 +10007,10 @@ function renderLaporanBulananListSapa(data) {
     <div style="margin-bottom: 12px;">
       ${htmlTombolUnduhPdfProgram_("sapa", "tahunan", null, tahun, "", "#DB2777")}
     </div>
+    ${laporanBulananSapaBisaLihat ? `
+    <button type="button" onclick="bukaInputSantunanSapa()" style="display:flex; align-items:center; justify-content:center; gap:6px; width:100%; margin-bottom: 12px; padding:10px 14px; border-radius:12px; background:linear-gradient(90deg, #EC4899, #DB2777); border:none; color:#fff; font-size:12px; font-weight:800; cursor:pointer; box-shadow:0 6px 16px rgba(236,72,153,0.3);">
+      <span class="material-symbols-outlined" style="font-size:17px; font-variation-settings:'FILL' 1;">bolt</span> Input Data Santunan Bulanan SAPA
+    </button>` : ``}
     <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;">
       Data gabungan SEMUA wilayah, khusus Program SAPA (Anak Asuh). Pengeluaran dihitung berdasarkan <b>bulan periode santunan</b> (bukan tanggal cair) -- santunan yang telat/dirapel tetap tercatat di bulan seharusnya, dengan tanda ⚠️.
     </div>`;
@@ -13893,7 +14066,7 @@ initSummaryCardTilt();
 // form user, sheet input, modal konfirmasi, dst) TANPA perlu ubah kode
 // tiap fungsi open/close satu-satu.
 // ============================================================
-const OVERLAY_OPEN_SELECTOR = '.overlay.open, .user-menu.open, #userFormOverlay.open, #customModalOverlay.open, #inputOverlay.open, #forcePwOverlay.open, #kegiatanFormOverlay.open, #laporanWilayahUploadOverlay.open, #psInputOverlay.open, #rsInputOverlay.open, #pedasAddOverlay.open, #programLainAddOverlay.open, #fotoSumberOverlay.open, #pdsFormOverlay.open, #basoWilayahOverlay.open';
+const OVERLAY_OPEN_SELECTOR = '.overlay.open, .user-menu.open, #userFormOverlay.open, #customModalOverlay.open, #inputOverlay.open, #forcePwOverlay.open, #kegiatanFormOverlay.open, #laporanWilayahUploadOverlay.open, #psInputOverlay.open, #rsInputOverlay.open, #sspInputOverlay.open, #pedasAddOverlay.open, #programLainAddOverlay.open, #fotoSumberOverlay.open, #pdsFormOverlay.open, #basoWilayahOverlay.open';
 
 let backExitArmed = false; // true sesaat setelah toast "tekan lagi buat keluar" muncul
 
@@ -13919,6 +14092,7 @@ function closeTopmostOverlay() {
     if (el.id === "pdsFormOverlay") { tutupPdsForm(); return; }
     if (el.id === "psInputOverlay") { tutupCatatPenyaluran(); return; }
     if (el.id === "rsInputOverlay") { tutupInputRateSantunan(); return; }
+    if (el.id === "sspInputOverlay") { tutupInputSantunanSapa(); return; }
     if (el.id === "basoWilayahOverlay") { tutupDetailWilayahBaso(); return; }
     if (el.id === "inputOverlay") { toggleInputSheet(); return; }
     if (el.id === "kegiatanFormOverlay" && typeof closeKegiatanForm === "function") { closeKegiatanForm(); return; }
