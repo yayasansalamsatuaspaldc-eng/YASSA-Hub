@@ -6593,6 +6593,108 @@ function htmlTombolUnduhPdfProgram_(programKey, mode, bulan, tahun, wilayah, war
   </button>`;
 }
 
+// ============================================================
+// 📄 MODAL "Cetak Laporan Gabungan 6 Program (PDF)" -- gabungan SAPA +
+// PEDAS + BASO + BADIK + BATAN jadi 1 file, dibuka dari tombol kartu
+// hijau di atas daftar 6 program (tab Keuangan). Backend: action
+// "generateLaporanSemuaProgramPdf" (Code.gs). Pola toggle mode
+// Bulanan/Tahunan & download blob-nya mirror pedasSetTab/unduhPdfLaporanProgram
+// di atas, sengaja gak dipakai bareng (fungsi beda) biar gak saling ganggu
+// state antar modal.
+// ============================================================
+let cspModeAktif = "bulanan";
+
+function bukaModalCetakSemuaProgram() {
+  cspModeAktif = "bulanan";
+  cspSetTabStyle_();
+  document.getElementById("cspBulanWrap").style.display = "";
+
+  const selBulan = document.getElementById("cspBulan");
+  selBulan.innerHTML = NAMA_BULAN_ID_JS_.map(function (nama, i) {
+    return i === 0 ? "" : '<option value="' + i + '">' + nama + "</option>";
+  }).join("");
+  // Default ikut periode yang lagi dilihat di tab Keuangan (kfinBulanPilihan/
+  // kfinTahunPilihan), biar user gak perlu geser-geser dulu buat kasus umum.
+  selBulan.value = kfinBulanPilihan;
+  document.getElementById("cspTahun").value = kfinTahunPilihan;
+
+  const selWilayah = document.getElementById("cspWilayah");
+  selWilayah.innerHTML = '<option value="ALL">Semua Wilayah (Nasional)</option>';
+  loadWilayahListIfNeeded().then(function (list) {
+    if (list && list.length) {
+      selWilayah.innerHTML += list.map(function (w) {
+        return '<option value="' + escapeHtmlHub(w) + '">' + escapeHtmlHub(w) + "</option>";
+      }).join("");
+    }
+    selWilayah.value = "ALL";
+  });
+
+  document.getElementById("cetakSemuaProgramOverlay").classList.add("open");
+}
+
+function tutupModalCetakSemuaProgram() {
+  document.getElementById("cetakSemuaProgramOverlay").classList.remove("open");
+}
+
+function cspGantiMode(mode) {
+  if (cspModeAktif === mode) return;
+  cspModeAktif = mode;
+  cspSetTabStyle_();
+  document.getElementById("cspBulanWrap").style.display = mode === "bulanan" ? "" : "none";
+}
+
+function cspSetTabStyle_() {
+  const btnBulanan = document.getElementById("cspTabBulanan");
+  const btnTahunan = document.getElementById("cspTabTahunan");
+  const aktif = "background:#22C55E; color:#fff;";
+  const nonaktif = "background:transparent; color:var(--text-secondary);";
+  const baseStyle = "flex:1; padding: 8px 0; border-radius: 9px; border:none; font-size:11.5px; font-weight:700; cursor:pointer; font-family:inherit;";
+  btnBulanan.style.cssText = baseStyle + (cspModeAktif === "bulanan" ? aktif : nonaktif);
+  btnTahunan.style.cssText = baseStyle + (cspModeAktif === "tahunan" ? aktif : nonaktif);
+}
+
+function prosesCetakSemuaProgram() {
+  const tahun = Number(document.getElementById("cspTahun").value);
+  const bulan = cspModeAktif === "bulanan" ? Number(document.getElementById("cspBulan").value) : null;
+  const wilayah = document.getElementById("cspWilayah").value || "ALL";
+
+  if (!tahun) { showModal("Gagal", "Isi tahun dulu."); return; }
+  if (cspModeAktif === "bulanan" && !bulan) { showModal("Gagal", "Pilih bulan dulu."); return; }
+
+  const btn = document.getElementById("cspBtnCetak");
+  const labelAsli = btn.innerHTML;
+  btn.disabled = true;
+  btn.style.opacity = "0.6";
+  btn.innerHTML = '<span class="material-symbols-outlined spin" style="font-size:14px; vertical-align:middle;">progress_activity</span> Membuat PDF...';
+
+  // timeout lebih longgar (45dtk) dibanding unduhPdfLaporanProgram (30dtk) --
+  // laporan gabungan narik & merender 5 program sekaligus jadi wajar lebih lama.
+  callGASWithRetry_("generateLaporanSemuaProgramPdf", [authToken, cspModeAktif, bulan, tahun, wilayah], { timeoutMs: 45000 })
+    .then(function (res) {
+      const byteChars = atob(res.base64);
+      const byteNumbers = new Array(byteChars.length);
+      for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
+      const blob = new Blob([new Uint8Array(byteNumbers)], { type: res.mimeType || "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = res.namaFile || "laporan-gabungan.pdf";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
+      tutupModalCetakSemuaProgram();
+    })
+    .catch(function (err) {
+      showModal("Gagal", "Gagal membuat PDF: " + (err && err.message ? err.message : err));
+    })
+    .finally(function () {
+      btn.disabled = false;
+      btn.style.opacity = "1";
+      btn.innerHTML = labelAsli;
+    });
+}
+
 // Tombol "Keluhan" di halaman login: bukan formulir keluhan (belum
 // dikembangkan), tapi sengaja diganti jadi pengingat semangat -- biar
 // yang lagi mau ngeluh, ke-alihkan ke energi positif dulu. Kalimatnya
@@ -7313,6 +7415,22 @@ function renderContent() {
         <div style="flex:1; height:1px; background: var(--glass-border);"></div>
         <span style="font-size: 10.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Program YASSA</span>
         <div style="flex:1; height:1px; background: var(--glass-border);"></div>
+      </div>
+
+      <!-- 📄 TOMBOL CETAK LAPORAN GABUNGAN 6 PROGRAM (PDF) -->
+      <div style="background: linear-gradient(135deg, rgba(34,197,94,0.18), rgba(15,23,42,0.6)); border: 1.5px solid rgba(34,197,94,0.35); border-radius: 20px; padding: 16px; margin-bottom: 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.25);">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+          <div style="width: 44px; height: 44px; border-radius: 14px; background: linear-gradient(135deg, #22C55E, #16A34A); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 14px rgba(34,197,94,0.35);">
+            <span class="material-symbols-outlined" style="font-size: 24px;">picture_as_pdf</span>
+          </div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 14px; font-weight: 800; color: var(--text-primary);">Laporan Gabungan 6 Program YASSA</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Cetak rekapitulasi penyaluran seluruh santunan ke dalam satu file PDF resmi</div>
+          </div>
+        </div>
+        <button type="button" onclick="bukaModalCetakSemuaProgram()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12.5px; font-weight: 700; padding: 12px 16px; border-radius: 12px; background: var(--grad-primary); border: none; color: #042f15; cursor: pointer; box-shadow: 0 4px 14px rgba(34,197,94,0.3);">
+          <span class="material-symbols-outlined" style="font-size: 18px;">print</span> Cetak Laporan PDF (Bulanan / Tahunan)
+        </button>
       </div>
 
       <button onclick="openLaporanBulanan()" class="kfin-cta" style="margin-bottom: 12px;">
@@ -14108,6 +14226,44 @@ bootApp();
   }
 })();
 </script>
+
+<!-- 📄 Modal: Cetak Laporan Gabungan 6 Program (PDF) -- dibuka dari tombol
+     "Laporan Gabungan 6 Program YASSA" di tab Keuangan. Backend: action
+     "generateLaporanSemuaProgramPdf" (Code.gs), menggabungkan SAPA +
+     PEDAS + BASO + BADIK + BATAN jadi 1 file PDF. -->
+<div class="custom-modal-overlay" id="cetakSemuaProgramOverlay">
+  <div class="custom-modal" style="max-width:360px; text-align:left;">
+    <div class="custom-modal-title" style="text-align:center; margin-bottom: 4px;">Cetak Laporan Gabungan</div>
+    <div style="font-size:9.5px; color:var(--text-muted); text-align:center; margin-bottom:16px; line-height:1.5;">Rekapitulasi SAPA, PEDAS, BASO, BADIK &amp; BATAN digabung jadi 1 file PDF.</div>
+
+    <div style="display:flex; gap:6px; margin-bottom:14px; background: rgba(255,255,255,0.06); border-radius: 12px; padding: 4px;">
+      <button type="button" id="cspTabBulanan" onclick="cspGantiMode('bulanan')" style="flex:1; padding: 8px 0; border-radius: 9px; border:none; background: #22C55E; color:#fff; font-size:11.5px; font-weight:700; cursor:pointer; font-family:inherit;">Bulanan</button>
+      <button type="button" id="cspTabTahunan" onclick="cspGantiMode('tahunan')" style="flex:1; padding: 8px 0; border-radius: 9px; border:none; background: transparent; color: var(--text-secondary); font-size:11.5px; font-weight:700; cursor:pointer; font-family:inherit;">Tahunan</button>
+    </div>
+
+    <div style="display:flex; gap:8px; margin-bottom:12px;">
+      <div id="cspBulanWrap" style="flex:1.4;">
+        <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Bulan</label>
+        <select id="cspBulan" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; font-family:inherit;"></select>
+      </div>
+      <div style="flex:1;">
+        <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Tahun</label>
+        <input type="number" id="cspTahun" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; font-family:inherit;">
+      </div>
+    </div>
+
+    <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Wilayah</label>
+    <select id="cspWilayah" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin-bottom: 6px; font-family:inherit;">
+      <option value="ALL">Semua Wilayah (Nasional)</option>
+    </select>
+    <div style="font-size:9px; color:var(--text-muted); margin-bottom:14px;">Khusus laporan SAPA selalu digabung semua wilayah, apapun pilihan di atas.</div>
+
+    <div class="custom-modal-actions">
+      <button type="button" class="btn-modal btn-cancel" onclick="tutupModalCetakSemuaProgram()">Batal</button>
+      <button type="button" class="btn-modal btn-confirm" id="cspBtnCetak" onclick="prosesCetakSemuaProgram()">Cetak</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
