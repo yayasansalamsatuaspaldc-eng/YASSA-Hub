@@ -594,6 +594,10 @@
   }
   .summary-icon .material-symbols-outlined { font-size: 14.5px; }
   .summary-label { font-size: 9.5px; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 3px; }
+  /* 🆕 Chip periode di kartu ringkasan Beranda (mis. "Oktober 2026") --
+     lihat #summaryPeriodeChip & renderSummaryCardBeranda_(). */
+  .summary-periode-chip { flex-shrink: 0; font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,0.14); color: var(--text-secondary); white-space: nowrap; position: relative; z-index: 1; }
+  html[data-theme="light"] .summary-periode-chip { background: rgba(0,0,0,0.06); }
   .summary-value { font-size: 18.5px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; position: relative; z-index: 1; }
 
   /* Progress bar "Donasi vs Kebutuhan" -- ringkasan visual satu baris
@@ -2890,7 +2894,16 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
     <div class="summary-sheen" aria-hidden="true"></div>
     <div class="summary-top">
       <div class="summary-icon"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">volunteer_activism</span></div>
-      <div class="summary-label" id="summaryLabelSantunan">Total Santunan Diperlukan PROGRAM GOPAY</div>
+      <div style="flex:1; min-width:0;">
+        <div class="summary-label" id="summaryLabelSantunan">Total Santunan Diperlukan PROGRAM GOPAY</div>
+      </div>
+      <!-- 🆕 Chip periode (mis. "Oktober 2026") -- bulan yang BENERAN dipakai
+           buat hitung angka kartu ini, diambil dari field bulan/tahun yang
+           SUDAH dikirim balik getRingkasanKeuangan (bulan aktif, hasil
+           auto-advance tentukanBulanTahunSantunanAktif_ di backend -- BUKAN
+           sekadar tanggal kalender hari ini). Disembunyikan default,
+           ditampilkan lagi khusus di cabang GOPAY renderSummaryCardBeranda_(). -->
+      <div class="summary-periode-chip" id="summaryPeriodeChip" style="display:none;"></div>
     </div>
     <div class="summary-value" id="summaryTotalSantunanDiperlukan">...</div>
 
@@ -4950,6 +4963,11 @@ function renderSummaryCardBeranda_() {
   const elSubKekurangan = document.getElementById("summarySubRowKekurangan");
   const elSubDonasi = document.getElementById("summarySubRowDonasi");
   const elProgressWrap = document.getElementById("summaryProgressWrap");
+  // 🆕 Chip periode -- default disembunyikan, cuma dinyalakan lagi khusus
+  // di cabang GOPAY paling bawah (satu-satunya program yang sudah punya
+  // field bulan/tahun aktif dari getRingkasanKeuangan).
+  const elPeriodeChip = document.getElementById("summaryPeriodeChip");
+  if (elPeriodeChip) elPeriodeChip.style.display = "none";
 
   // 🩹 FIX: dulu kartu ini DIBIARKAN nampilin data program SEBELUMNYA
   // (mis. masih kelihatan angka SAPA) begitu user pindah ke program yang
@@ -5038,6 +5056,17 @@ function renderSummaryCardBeranda_() {
     if (elValue) elValue.textContent = "...";
     if (elProgressWrap) elProgressWrap.style.display = "none";
     return;
+  }
+
+  // 🆕 Chip periode (mis. "Oktober 2026") -- d.periodeBulan/periodeTahun
+  // diisi dari r.bulan/r.tahun (bundle.ringkasanKeuangan), yaitu bulan
+  // AKTIF yang beneran dipakai buat hitung angka kartu ini (auto-advance,
+  // lihat tentukanBulanTahunSantunanAktif_ di Code_Hub.gs) -- ditampilkan
+  // WALAUPUN santunanDitemukan-nya false, biar user tau bulan APA yang
+  // dimaksud "Belum diisi Bendahara" itu.
+  if (elPeriodeChip && d.periodeBulan) {
+    elPeriodeChip.style.display = "";
+    elPeriodeChip.textContent = NAMA_BULAN_ID_JS_[d.periodeBulan] + " " + d.periodeTahun;
   }
 
   if (elValue) {
@@ -5410,6 +5439,12 @@ function loadBerandaStats() {
           kekuranganSantunan: kekuranganSantunan,
           santunanDitemukan: santunan.ditemukan,
           totalDonasi: totalDonasi,
+          // 🆕 periode aktif (bulan/tahun) yang BENERAN dipakai buat hitung
+          // angka-angka di atas -- dikirim backend lewat r.bulan/r.tahun
+          // (lihat getRingkasanKeuangan di Code_Hub.gs), dipakai buat chip
+          // periode kartu ringkasan (lihat renderSummaryCardBeranda_()).
+          periodeBulan: Number(r.bulan || 0),
+          periodeTahun: Number(r.tahun || 0),
         };
         renderSummaryCardBeranda_();
       } else if (!berandaStatsCache.donasi && activeProgram === "gopay") {
@@ -6828,27 +6863,14 @@ function renderContent() {
            dibungkus jadi panel program supaya bisa disembunyikan pas
            user pindah ke program lain lewat selector di atas. -->
       <div class="program-panel" id="programPanel-gopay">
-      <!-- Ringkasan Angka (Anak, Wilayah, Pengurus) -->
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
-        <div class="stat-mini-card" style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid #60A5FA; cursor: pointer;" onclick="setActive('pm')">
-          <span class="material-symbols-outlined stat-mini-icon" style="color: #60A5FA;">group</span>
-          <div><div style="font-size: 20px; font-weight: 700;" id="statTotalAnak">…</div><div style="font-size: 11px; color: var(--text-secondary);">Anak</div><div style="font-size: 8.5px; color: var(--text-muted); margin-top: 1px; line-height: 1.2;">(Gopay &amp; Anak Asuh)</div></div>
-        </div>
-        <div class="stat-mini-card" style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid #C084FC;">
-          <span class="material-symbols-outlined stat-mini-icon" style="color: #C084FC;">location_on</span>
-          <div><div style="font-size: 20px; font-weight: 700;" id="statTotalWilayah">…</div><div style="font-size: 11px; color: var(--text-secondary);">Wilayah</div></div>
-        </div>
-        <div class="stat-mini-card" style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid var(--bento-primary); cursor: pointer;" onclick="handleUserMenuClick('pengurus')">
-          <span class="material-symbols-outlined stat-mini-icon" style="color: var(--bento-primary);">admin_panel_settings</span>
-          <div><div style="font-size: 20px; font-weight: 700;" id="statTotalPengurus">…</div><div style="font-size: 11px; color: var(--text-secondary);">Pengurus &amp; Tim Kerja</div></div>
-        </div>
-      </div>
-
       <!-- Data Anak Yatim (Program Gopay) -- kartu klik-buat-detail, narik
            LIVE dari YASSA Mobile (action getDataAnakYatim), NASIONAL/semua
            wilayah, khusus Program Gopay (Anak Asuh tidak termasuk).
            Preview 4 angka di sini, rincian lengkap per wilayah muncul pas
-           diklik (lihat openDataAnakYatim() / renderDataAnakYatim()). -->
+           diklik (lihat openDataAnakYatim() / renderDataAnakYatim()).
+           ✨ Dipindah ke ATAS (langsung di bawah selector PILIH PROGRAM
+           YASSA) supaya klik program -> yang muncul duluan adalah kartu
+           Data Anak Yatim-nya, bukan ringkasan angka Anak/Wilayah/Pengurus. -->
       <div onclick="openDataAnakYatim()" class="anak-yatim-preview-card" style="background: var(--glass-strong); border-radius: 20px; padding: 18px 18px 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid #A855F7; cursor: pointer;">
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
           <div class="anak-yatim-icon-wrap" style="width: 40px; height: 40px; border-radius: 12px; background: rgba(168,85,247,0.15); color: #C084FC; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
@@ -6879,6 +6901,23 @@ function renderContent() {
           </div>
         </div>
         <div style="font-size:8.5px; color: var(--text-muted); margin-top:8px;">*Disabilitas = Anak + Ortu digabung (bisa dobel kalau 1 KK punya anak &amp; ibu sama-sama disabilitas).</div>
+      </div>
+
+      <!-- Ringkasan Angka (Anak, Wilayah, Pengurus) -- dipindah ke BAWAH
+           kartu Data Anak Yatim (lihat catatan di atas). -->
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+        <div class="stat-mini-card" style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid #60A5FA; cursor: pointer;" onclick="setActive('pm')">
+          <span class="material-symbols-outlined stat-mini-icon" style="color: #60A5FA;">group</span>
+          <div><div style="font-size: 20px; font-weight: 700;" id="statTotalAnak">…</div><div style="font-size: 11px; color: var(--text-secondary);">Anak</div><div style="font-size: 8.5px; color: var(--text-muted); margin-top: 1px; line-height: 1.2;">(Gopay &amp; Anak Asuh)</div></div>
+        </div>
+        <div class="stat-mini-card" style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid #C084FC;">
+          <span class="material-symbols-outlined stat-mini-icon" style="color: #C084FC;">location_on</span>
+          <div><div style="font-size: 20px; font-weight: 700;" id="statTotalWilayah">…</div><div style="font-size: 11px; color: var(--text-secondary);">Wilayah</div></div>
+        </div>
+        <div class="stat-mini-card" style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid var(--bento-primary); cursor: pointer;" onclick="handleUserMenuClick('pengurus')">
+          <span class="material-symbols-outlined stat-mini-icon" style="color: var(--bento-primary);">admin_panel_settings</span>
+          <div><div style="font-size: 20px; font-weight: 700;" id="statTotalPengurus">…</div><div style="font-size: 11px; color: var(--text-secondary);">Pengurus &amp; Tim Kerja</div></div>
+        </div>
       </div>
       </div>
       <!-- /Panel Program GO-PAY -->
