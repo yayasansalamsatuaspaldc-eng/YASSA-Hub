@@ -25,7 +25,7 @@
   // Kalau gambarnya file lokal (bukan link http), isi nama filenya saja,
   // misal 'banner.jpg' — otomatis TIDAK ikut dikompres (lihat fungsi
   // buatUrlKompres di bawah).
-  var URL_GAMBAR_ASLI = 'https://lh3.googleusercontent.com/d/1z9nazdiOT5CymRhXOeA8qYBx3EV9hLzO';
+  var URL_GAMBAR_ASLI = 'https://lh3.googleusercontent.com/d/1MXcaHSp0Yv5u3h8cA4x3ynsPLk-zMP57';
 
   // Lebar maksimal & kualitas kompresi otomatis (boleh diubah)
   var LEBAR_MAKS = 800;
