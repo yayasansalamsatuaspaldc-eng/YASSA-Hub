@@ -19,6 +19,24 @@
  *    penjelasan cara masukin gambar di bagian bawah file ini).
  * ============================================================
  */
+/**
+ * ============================================================
+ * YASSA — POPUP GAMBAR PEMBUKA (TAMPIL SEKALI SAJA, SETELAH LOGIN)
+ * ============================================================
+ * Popup ini berisi 1 gambar + tombol X untuk menutup. TIDAK tampil
+ * otomatis saat halaman baru dimuat -- baru muncul begitu index.html
+ * memanggil window.tampilkanWelcomePopupSekaliSaja() setelah proses
+ * login/sesi berhasil (lihat onLoginSuccess & initAuth di index.html).
+ * Setelah ditutup, statusnya disimpan di localStorage sehingga
+ * TIDAK akan muncul otomatis lagi di login berikutnya -- tapi tetap
+ * bisa dibuka manual lewat kartu "Info" di lonceng notifikasi
+ * (window.tampilkanWelcomePopup(), lihat renderNotifikasiModalHtml_).
+ *
+ * CARA PAKAI:
+ * 1. Simpan file ini di folder yang sama dengan index.html
+ * 2. Ganti URL_GAMBAR_ASLI di bawah dengan gambar Anda.
+ * ============================================================
+ */
 (function () {
   // 🔧 GANTI BAGIAN INI dengan URL gambar Anda (link online, boleh ukuran
   // besar/belum dikompres — akan otomatis dikompres lewat proxy di bawah).
@@ -89,22 +107,16 @@
     });
   }
 
-  // 🔔 Diekspos ke global supaya bisa dipanggil ULANG kapan saja -- dipakai
+  // 🔔 Buka MANUAL kapan saja, tanpa peduli status localStorage -- dipakai
   // oleh kartu "Info" di modal lonceng notifikasi (lihat renderNotifikasiModalHtml_
   // di index.html) supaya gambar ini bisa dibuka lagi meski sudah pernah ditutup.
   window.tampilkanWelcomePopup = tampilkanPopup;
 
-  // Tampil OTOMATIS cuma sekali (device yang belum pernah lihat sama sekali).
-  // Kalau sudah pernah ditutup, tidak tampil otomatis lagi -- tapi tetap
-  // bisa dibuka manual lewat lonceng notifikasi (lihat window.tampilkanWelcomePopup).
-  function tampilkanOtomatisSekaliSaja() {
+  // 🔑 Dipanggil dari index.html SETELAH login/sesi berhasil (bukan otomatis
+  // saat halaman dimuat). Cuma tampil kalau device ini belum pernah menutup
+  // popup ini sebelumnya.
+  window.tampilkanWelcomePopupSekaliSaja = function () {
     if (localStorage.getItem(STORAGE_KEY)) return;
     tampilkanPopup();
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', tampilkanOtomatisSekaliSaja);
-  } else {
-    tampilkanOtomatisSekaliSaja();
-  }
+  };
 })();
