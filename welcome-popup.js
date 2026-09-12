@@ -82,21 +82,24 @@
       'position:fixed;inset:0;z-index:99999;' +
       'background:rgba(15,23,42,0.75);' +
       'display:flex;align-items:center;justify-content:center;' +
-      'padding:20px;';
+      'padding:20px;overflow-y:auto;box-sizing:border-box;';
 
     overlay.innerHTML =
-      '<div style="position:relative;max-width:420px;width:100%;">' +
+      '<div style="position:relative;max-width:420px;width:100%;margin:auto;">' +
+        '<img src="' + URL_GAMBAR + '" alt="Info" style="' +
+          'display:block;width:100%;height:auto;' +
+          'max-height:85vh;object-fit:contain;' +
+          'border-radius:16px;' +
+          'box-shadow:0 10px 30px rgba(0,0,0,0.35);" />' +
         '<button id="yassa-welcome-close" aria-label="Tutup" style="' +
-          'position:absolute;top:-14px;right:-14px;' +
-          'width:36px;height:36px;border-radius:9999px;' +
-          'background:#ffffff;color:#0f172a;border:none;' +
+          'position:absolute;top:10px;right:10px;' +
+          'width:34px;height:34px;border-radius:9999px;' +
+          'background:rgba(15,23,42,0.65);color:#ffffff;border:none;' +
           'font-size:20px;font-weight:700;line-height:1;' +
-          'cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.25);">' +
+          'cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.35);' +
+          'display:flex;align-items:center;justify-content:center;">' +
           '&times;' +
         '</button>' +
-        '<img src="' + URL_GAMBAR + '" alt="Info" style="' +
-          'width:100%;border-radius:16px;display:block;' +
-          'box-shadow:0 10px 30px rgba(0,0,0,0.35);" />' +
       '</div>';
 
     document.body.appendChild(overlay);
