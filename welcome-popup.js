@@ -31,10 +31,18 @@
   var LEBAR_MAKS = 800;
   var KUALITAS = 75;
 
+  // 🔧 Saklar kompresi otomatis. Untuk link Google Drive/googleusercontent,
+  // proxy weserv sering DITOLAK (hotlink protection Google), jadi default
+  // dimatikan (pakai link asli apa adanya). Kalau URL_GAMBAR_ASLI bukan dari
+  // Google (misal dari hosting/CDN lain yang mengizinkan hotlink), boleh
+  // diaktifkan lagi jadi true untuk coba kompres otomatis.
+  var GUNAKAN_KOMPRES_OTOMATIS = false;
+
   // 🗜️ Kompres otomatis pakai images.weserv.nl (proxy gratis, tanpa perlu
   // akun) -- cuma jalan kalau URL_GAMBAR_ASLI berupa link http/https yang
-  // sudah bisa diakses publik (misal link Google Drive/GitHub, dst).
+  // sudah bisa diakses publik DAN mengizinkan hotlink dari proxy pihak ketiga.
   function buatUrlKompres(url) {
+    if (!GUNAKAN_KOMPRES_OTOMATIS) return url;
     if (!/^https?:\/\//i.test(url)) return url; // file lokal, biarkan apa adanya
     var tanpaProtokol = url.replace(/^https?:\/\//i, '');
     return 'https://images.weserv.nl/?url=' + encodeURIComponent(tanpaProtokol) +
