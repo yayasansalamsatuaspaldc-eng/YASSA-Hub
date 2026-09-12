@@ -40,13 +40,14 @@ _hubMessaging.onBackgroundMessage(function (payload) {
   });
 });
 
-const CACHE_NAME = "yassa-GOPAY-shell-v9"; // dinaikkan dari v8 -- SW ini sekarang juga tangani push notifikasi (FCM), bukan cuma cache shell
+const CACHE_NAME = "yassa-GOPAY-shell-v10"; // dinaikkan dari v9 -- nambah welcome-popup.js (popup gambar pembuka sekali tampil)
 const SHELL_FILES = [
   "./",
   "./index.html",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",
+  "./welcome-popup.js",
 ];
 
 self.addEventListener("install", function (event) {
