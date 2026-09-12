@@ -54,10 +54,10 @@
   // Key penanda "sudah pernah ditutup" di localStorage device ini
   var STORAGE_KEY = 'yassa-welcome-popup-shown';
 
-  // Kalau sudah pernah ditutup sebelumnya, jangan tampilkan lagi
-  if (localStorage.getItem(STORAGE_KEY)) return;
-
   function tampilkanPopup() {
+    // Jangan dobel kalau overlay-nya udah kebuka
+    if (document.getElementById('yassa-welcome-overlay')) return;
+
     var overlay = document.createElement('div');
     overlay.id = 'yassa-welcome-overlay';
     overlay.style.cssText =
@@ -89,9 +89,22 @@
     });
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', tampilkanPopup);
-  } else {
+  // 🔔 Diekspos ke global supaya bisa dipanggil ULANG kapan saja -- dipakai
+  // oleh kartu "Info" di modal lonceng notifikasi (lihat renderNotifikasiModalHtml_
+  // di index.html) supaya gambar ini bisa dibuka lagi meski sudah pernah ditutup.
+  window.tampilkanWelcomePopup = tampilkanPopup;
+
+  // Tampil OTOMATIS cuma sekali (device yang belum pernah lihat sama sekali).
+  // Kalau sudah pernah ditutup, tidak tampil otomatis lagi -- tapi tetap
+  // bisa dibuka manual lewat lonceng notifikasi (lihat window.tampilkanWelcomePopup).
+  function tampilkanOtomatisSekaliSaja() {
+    if (localStorage.getItem(STORAGE_KEY)) return;
     tampilkanPopup();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', tampilkanOtomatisSekaliSaja);
+  } else {
+    tampilkanOtomatisSekaliSaja();
   }
 })();
