@@ -4584,6 +4584,10 @@ function initAuth() {
         currentUser = session;
         localStorage.setItem("yassa_user", JSON.stringify(currentUser));
         showApp();
+        // 🖼️ Popup gambar pembuka (tampil sekali saja per device) -- dipicu
+        // di sini juga karena ini "app siap dipakai" walau bukan login baru
+        // (sesi lama otomatis terpakai lagi). Lihat welcome-popup.js.
+        if (window.tampilkanWelcomePopupSekaliSaja) window.tampilkanWelcomePopupSekaliSaja();
         // 🚀 PERBAIKAN (fix "Koneksi lambat"): sama seperti di
         // onLoginSuccess, sinkronisasi ke broker ditembak di latar
         // belakang di sini juga (checkSession dipanggil tiap app dibuka
@@ -4832,6 +4836,10 @@ function onLoginSuccess(res) {
       openForceChangePasswordModal();
     } else {
       pendingOldPassword = null;
+      // 🖼️ Popup gambar pembuka (tampil sekali saja per device) -- dipicu
+      // SETELAH login sukses & splash hilang, bukan lagi otomatis saat
+      // halaman dimuat. Lihat welcome-popup.js.
+      if (window.tampilkanWelcomePopupSekaliSaja) window.tampilkanWelcomePopupSekaliSaja();
     }
   }, POST_LOGIN_SPLASH_DURATION_MS);
 }
