@@ -5769,8 +5769,22 @@ function updateNotifBadge(list) {
 // dari AKTIVITAS_APP_META, waktu relatif dari formatWaktuAktivitas) biar
 // konsisten, cuma dibungkus lebih rapat karena tampil di dalam modal kecil.
 function renderNotifikasiModalHtml_(list) {
+  // 🆕 Kartu "Info" tetap (statis, bukan dari server) di paling atas --
+  // dipakai untuk buka ulang gambar popup pembuka (welcome-popup.js).
+  // Beda dari item aktivitas di bawahnya yang dinamis dari server.
+  const infoCard = `
+    <div onclick="closeModal(); if (window.tampilkanWelcomePopup) window.tampilkanWelcomePopup();" style="display:flex; align-items:flex-start; gap:10px; text-align:left; cursor:pointer;">
+      <div style="width:30px; height:30px; border-radius:50%; background: var(--glass); color:#22C55E; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px;"><span class="material-symbols-outlined" style="font-size:15px;">campaign</span></div>
+      <div style="flex:1; min-width:0;">
+        <div style="font-size:13px; font-weight:600;">Info Penting</div>
+        <div style="font-size:11.5px; color: var(--text-muted); margin-top:1px;">Ketuk untuk lihat info terbaru dari YASSA</div>
+      </div>
+    </div>
+    <div style="height:1px; background: var(--glass-border); margin: 8px 0;"></div>
+  `;
+
   if (!list || !list.length) {
-    return '<div style="text-align:center; padding: 8px 0; color: var(--text-secondary);">Belum ada aktivitas atau notifikasi baru.</div>';
+    return `<div style="max-height: 55vh; overflow-y: auto; text-align:left;">${infoCard}<div style="text-align:center; padding: 8px 0; color: var(--text-secondary);">Belum ada aktivitas atau notifikasi baru.</div></div>`;
   }
   const items = list.map(function (item, idx) {
     const meta = AKTIVITAS_APP_META[item.app] || { icon: "notifications", color: "var(--text-secondary)" };
@@ -5790,7 +5804,7 @@ function renderNotifikasiModalHtml_(list) {
       ${divider}
     `;
   }).join("");
-  return `<div style="max-height: 55vh; overflow-y: auto; text-align:left;">${items}</div>`;
+  return `<div style="max-height: 55vh; overflow-y: auto; text-align:left;">${infoCard}${items}</div>`;
 }
 
 // Dipanggil pas tombol lonceng ditekan. Prioritas: pakai cache yang udah
