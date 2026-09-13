@@ -5844,49 +5844,85 @@ function updateNotifBadge(list) {
 // dari AKTIVITAS_APP_META, waktu relatif dari formatWaktuAktivitas) biar
 // konsisten, cuma dibungkus lebih rapat karena tampil di dalam modal kecil.
 function renderNotifikasiModalHtml_(list) {
-  // 🆕 Kartu-kartu "Info" di paling atas -- satu kartu per pengumuman AKTIF
-  // dari sheet "Pengumuman_Popup" (lihat welcome-popup.js &
-  // getPengumumanPopup() di Code_Hub.gs), biar user bisa buka-buka lagi
-  // pengumuman lama yang sudah pernah lewat/ditutup. Beda dari item
-  // aktivitas di bawahnya yang dinamis dari Log_Aktivitas.
+  // 🆕 Kartu-kartu "Info" -- satu kartu per pengumuman AKTIF dari sheet
+  // "Pengumuman_Popup" (lihat welcome-popup.js & getPengumumanPopup() di
+  // Code_Hub.gs), biar user bisa buka-buka lagi pengumuman lama yang
+  // sudah pernah lewat/ditutup. Beda dari item aktivitas di bawahnya yang
+  // dinamis dari Log_Aktivitas.
   const daftarPengumuman = (window.YASSA_getPengumumanList ? window.YASSA_getPengumumanList() : []) || [];
 
+  // 🎨 Kartu bergaya "chip" -- latar lembut, border tipis, badge ikon
+  // gradien, dan panah di kanan (bukan cuma teks polos + garis pembatas)
+  // supaya kelihatan lebih hidup & jelas bisa diketuk.
+  function kartuNotif_(opts) {
+    const bisaDiklik = !!opts.onclick;
+    return `
+      <div ${bisaDiklik ? `onclick="${opts.onclick}"` : ""} style="
+        display:flex; align-items:center; gap:12px; text-align:left;
+        cursor:${bisaDiklik ? "pointer" : "default"};
+        padding:11px 12px; margin-bottom:8px; border-radius:14px;
+        background: var(--glass); border:1px solid var(--glass-border);
+      ">
+        <div style="
+          width:36px; height:36px; border-radius:11px; flex-shrink:0;
+          background:${opts.badgeBg}; color:${opts.badgeColor};
+          display:flex; align-items:center; justify-content:center;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+        "><span class="material-symbols-outlined" style="font-size:18px;">${opts.icon}</span></div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:13px; font-weight:700; color:var(--text-primary); line-height:1.3;">${opts.title}</div>
+          ${opts.sub ? `<div style="font-size:11.5px; color: var(--text-muted); margin-top:2px; line-height:1.3;">${opts.sub}</div>` : ""}
+          ${opts.waktu ? `<div style="font-size:10px; color: var(--text-muted); margin-top:4px; font-weight:600; letter-spacing:0.2px;">${opts.waktu}</div>` : ""}
+        </div>
+        ${bisaDiklik ? '<span class="material-symbols-outlined" style="font-size:18px; color:var(--text-muted); flex-shrink:0; opacity:0.6;">chevron_right</span>' : ""}
+      </div>`;
+  }
+
+  function labelSeksi_(teks) {
+    return `<div style="font-size:10.5px; font-weight:800; letter-spacing:0.6px; text-transform:uppercase; color: var(--text-muted); margin:2px 2px 8px;">${teks}</div>`;
+  }
+
   const infoCard = daftarPengumuman.length
-    ? daftarPengumuman.map(function (p) {
-        return `
-    <div onclick="closeModal(); if (window.tampilkanPengumumanById) window.tampilkanPengumumanById('${String(p.id).replace(/'/g, "\\'")}');" style="display:flex; align-items:flex-start; gap:10px; text-align:left; cursor:pointer; margin-bottom:8px;">
-      <div style="width:30px; height:30px; border-radius:50%; background: var(--glass); color:#22C55E; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px;"><span class="material-symbols-outlined" style="font-size:15px;">campaign</span></div>
-      <div style="flex:1; min-width:0;">
-        <div style="font-size:13px; font-weight:600;">${p.judul}</div>
-        <div style="font-size:11.5px; color: var(--text-muted); margin-top:1px;">Ketuk untuk lihat gambar info ini</div>
-      </div>
-    </div>`;
-      }).join("") + '<div style="height:1px; background: var(--glass-border); margin: 8px 0;"></div>'
+    ? labelSeksi_("📢 Info & Pengumuman") + daftarPengumuman.map(function (p) {
+        return kartuNotif_({
+          onclick: `closeModal(); if (window.tampilkanPengumumanById) window.tampilkanPengumumanById('${String(p.id).replace(/'/g, "\\'")}');`,
+          icon: "campaign",
+          badgeBg: "var(--grad-primary)",
+          badgeColor: "#ffffff",
+          title: p.judul,
+          sub: "Ketuk untuk lihat gambar info ini",
+        });
+      }).join("") + '<div style="height:14px;"></div>'
     : "";
 
   if (!list || !list.length) {
-    return `<div style="max-height: 55vh; overflow-y: auto; text-align:left;">${infoCard}<div style="text-align:center; padding: 8px 0; color: var(--text-secondary);">Belum ada aktivitas atau notifikasi baru.</div></div>`;
+    const kosong = daftarPengumuman.length
+      ? ""
+      : `<div style="text-align:center; padding: 24px 8px; color: var(--text-secondary);">
+           <span class="material-symbols-outlined" style="font-size:32px; opacity:0.4; display:block; margin-bottom:6px;">notifications_off</span>
+           Belum ada aktivitas atau notifikasi baru.
+         </div>`;
+    return `<div style="max-height: 60vh; overflow-y: auto; text-align:left; padding:2px;">${infoCard}${kosong}</div>`;
   }
-  const items = list.map(function (item, idx) {
+
+  const items = labelSeksi_("🕒 Aktivitas Terbaru") + list.map(function (item) {
     const meta = AKTIVITAS_APP_META[item.app] || { icon: "notifications", color: "var(--text-secondary)" };
     const sub = item.detail
       ? item.detail + (item.oleh ? " · oleh " + item.oleh : "")
       : (item.oleh ? "oleh " + item.oleh : "");
-    const divider = idx < list.length - 1 ? '<div style="height:1px; background: var(--glass-border); margin: 8px 0;"></div>' : "";
-    return `
-      <div style="display:flex; align-items:flex-start; gap: 10px; text-align:left;">
-        <div style="width: 30px; height: 30px; border-radius: 50%; background: var(--glass); color: ${meta.color}; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px;"><span class="material-symbols-outlined" style="font-size:15px;">${meta.icon}</span></div>
-        <div style="flex:1; min-width:0;">
-          <div style="font-size:13px; font-weight:600;">${item.aksi}</div>
-          ${sub ? `<div style="font-size:11.5px; color: var(--text-muted); margin-top:1px;">${sub}</div>` : ""}
-          <div style="font-size:10.5px; color: var(--text-muted); margin-top:3px;">${formatWaktuAktivitas(item.timestamp)}</div>
-        </div>
-      </div>
-      ${divider}
-    `;
+    return kartuNotif_({
+      icon: meta.icon,
+      badgeBg: "var(--glass-strong)",
+      badgeColor: meta.color,
+      title: item.aksi,
+      sub: sub || "",
+      waktu: formatWaktuAktivitas(item.timestamp),
+    });
   }).join("");
-  return `<div style="max-height: 55vh; overflow-y: auto; text-align:left;">${infoCard}${items}</div>`;
+
+  return `<div style="max-height: 60vh; overflow-y: auto; text-align:left; padding:2px;">${infoCard}${items}</div>`;
 }
+
 
 // Dipanggil pas tombol lonceng ditekan. Prioritas: pakai cache yang udah
 // ada di tangan (instan, gak perlu nunggu jaringan) -- kalau belum ada
