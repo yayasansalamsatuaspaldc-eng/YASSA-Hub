@@ -2517,7 +2517,7 @@
         beneran punya >1 wilayah buat dipilih) -- user yang cuma akses 1
         wilayah tetap dapat pill polos (gak ada gunanya dikasih petunjuk
         milih kalau memang gak ada pilihan lain). */
-  .kfin-wilayah-col { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; max-width: 100%; }
+  .kfin-wilayah-col { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; max-width: 100%; }
   .kfin-pill-hint {
     border: 1.5px solid rgba(var(--bento-primary-rgb), 0.55);
     background: rgba(var(--bento-primary-rgb), 0.14);
@@ -2530,14 +2530,14 @@
   .kfin-wilayah-hint-bubble {
     position: relative;
     background: var(--bento-primary); color: #062B17;
-    font-size: 9.5px; font-weight: 800; letter-spacing: 0.2px;
-    padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1px;
+    padding: 5px 11px; border-radius: 999px; white-space: nowrap;
     box-shadow: 0 4px 14px rgba(var(--bento-primary-rgb), 0.45);
     animation: kfinHintFloat 2.2s ease-in-out infinite;
     pointer-events: none;
   }
   .kfin-wilayah-hint-bubble::after {
-    content: ""; position: absolute; top: 100%; right: 16px;
+    content: ""; position: absolute; top: 100%; left: 16px;
     border: 5px solid transparent; border-top-color: var(--bento-primary);
   }
   @keyframes kfinHintFloat {
@@ -6015,7 +6015,7 @@ function kfinRenderDropdownWilayah_(info) {
     opsiHtml += '<option value="' + escapeHtmlHub(w) + '"' + dipilih + '>' + escapeHtmlHub(w) + '</option>';
   });
   return '<div class="kfin-wilayah-col">' +
-    '<div class="kfin-wilayah-hint-bubble">Pilih Wilayah</div>' +
+    '<div class="kfin-wilayah-hint-bubble">Pilih wilayah yang ingin ditinjau</div>' +
     '<div class="kfin-wilayah-filter-wrap">' +
       '<select id="kfinWilayahSelect" class="kfin-pill kfin-pill-select kfin-pill-hint" onchange="gantiWilayahKeuangan(this.value)">' + opsiHtml + '</select>' +
       '<span class="material-symbols-outlined">expand_more</span>' +
@@ -7583,8 +7583,8 @@ function renderContent() {
            per-wilayah (ikut wilayahAkses user login) -- beda dari Laporan
            Bulanan di bawah (setelah Kartu 2) yang nasional/gabungan semua
            wilayah. -->
-      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:10px; margin: 0 2px 14px;">
-        <div class="kfin-eyebrow" style="align-self:flex-start;">
+      <div style="display:flex; flex-direction:column; align-items:flex-start; gap:10px; margin: 0 2px 14px;">
+        <div class="kfin-eyebrow">
           <span class="material-symbols-outlined" style="font-size: 16px; color: var(--bento-primary);">location_on</span>
           Laporan Keuangan Program Wilayah
         </div>
