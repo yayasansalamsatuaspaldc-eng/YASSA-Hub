@@ -2497,6 +2497,46 @@
     position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
     font-size: 16px; color: var(--text-muted); pointer-events: none;
   }
+  /* 🆕 "Petunjuk" visual biar dropdown wilayah kelihatan JELAS bisa
+     diketuk/dipilih (sebelumnya cuma kelihatan kayak label pill biasa,
+     bukan kontrol interaktif) -- 2 bagian:
+     1. .kfin-pill-hint: pill select-nya sendiri dikasih border & glow
+        warna aksen (bukan abu-abu polos) + chevron ikut warna aksen.
+     2. .kfin-wilayah-hint-bubble: bubble kecil ala cloud/tooltip yang
+        ngambang pelan-pelan di atas pill, isinya "Pilih Wilayah", biar
+        matanya ketarik ke situ. Cuma dipasang di kfinRenderDropdownWilayah_
+        (yaitu SAAT user beneran punya >1 wilayah buat dipilih) -- user
+        yang cuma akses 1 wilayah tetap dapat pill polos (gak ada gunanya
+        dikasih petunjuk milih kalau memang gak ada pilihan lain). */
+  .kfin-pill-hint {
+    border: 1.5px solid rgba(var(--bento-primary-rgb), 0.55);
+    background: rgba(var(--bento-primary-rgb), 0.14);
+    color: var(--bento-primary);
+    box-shadow: 0 0 0 3px rgba(var(--bento-primary-rgb), 0.08);
+  }
+  .kfin-wilayah-filter-wrap .kfin-pill-hint + .material-symbols-outlined {
+    color: var(--bento-primary);
+  }
+  .kfin-wilayah-hint-bubble {
+    position: absolute; bottom: 100%; right: 10px; margin-bottom: 9px;
+    background: var(--bento-primary); color: #062B17;
+    font-size: 9.5px; font-weight: 800; letter-spacing: 0.2px;
+    padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(var(--bento-primary-rgb), 0.45);
+    animation: kfinHintFloat 2.2s ease-in-out infinite;
+    pointer-events: none; z-index: 1;
+  }
+  .kfin-wilayah-hint-bubble::after {
+    content: ""; position: absolute; top: 100%; right: 16px;
+    border: 5px solid transparent; border-top-color: var(--bento-primary);
+  }
+  @keyframes kfinHintFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .kfin-wilayah-hint-bubble { animation: none; }
+  }
   .kfin-divider { border-top: 1px dashed var(--glass-border); }
   .kfin-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .kfin-stat-chip {
@@ -5965,7 +6005,8 @@ function kfinRenderDropdownWilayah_(info) {
     opsiHtml += '<option value="' + escapeHtmlHub(w) + '"' + dipilih + '>' + escapeHtmlHub(w) + '</option>';
   });
   return '<div class="kfin-wilayah-filter-wrap">' +
-    '<select id="kfinWilayahSelect" class="kfin-pill kfin-pill-select" onchange="gantiWilayahKeuangan(this.value)">' + opsiHtml + '</select>' +
+    '<div class="kfin-wilayah-hint-bubble">Pilih Wilayah</div>' +
+    '<select id="kfinWilayahSelect" class="kfin-pill kfin-pill-select kfin-pill-hint" onchange="gantiWilayahKeuangan(this.value)">' + opsiHtml + '</select>' +
     '<span class="material-symbols-outlined">expand_more</span>' +
     '</div>';
 }
@@ -7533,7 +7574,7 @@ function renderContent() {
       <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin: 0 2px 14px; flex-wrap: wrap;">
         <div class="kfin-eyebrow">
           <span class="material-symbols-outlined" style="font-size: 16px; color: var(--bento-primary);">location_on</span>
-          Laporan Keuangan Program GOPAY Wilayah
+          Laporan Keuangan Program Wilayah
         </div>
         ${kfinInfoFilter_.bisaPilih ? kfinRenderDropdownWilayah_(kfinInfoFilter_) : `<div class="kfin-pill">${escapeHtmlHub(wilayahText)}</div>`}
       </div>
