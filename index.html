@@ -2487,7 +2487,7 @@
      user yang akses > 1 wilayah (mis. Super Admin/"ALL"). Dibungkus select
      native (bukan panel custom) biar ringan & tetap gampang dipakai di HP,
      tapi tetap kelihatan kayak pill biasa lewat class .kfin-pill. */
-  .kfin-wilayah-filter-wrap { position: relative; display: inline-flex; align-items: center; max-width: 62%; }
+  .kfin-wilayah-filter-wrap { position: relative; display: inline-flex; align-items: center; max-width: 100%; }
   .kfin-pill-select {
     appearance: none; -webkit-appearance: none; -moz-appearance: none;
     padding-right: 26px; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
@@ -2499,15 +2499,25 @@
   }
   /* 🆕 "Petunjuk" visual biar dropdown wilayah kelihatan JELAS bisa
      diketuk/dipilih (sebelumnya cuma kelihatan kayak label pill biasa,
-     bukan kontrol interaktif) -- 2 bagian:
-     1. .kfin-pill-hint: pill select-nya sendiri dikasih border & glow
+     bukan kontrol interaktif) -- 3 bagian:
+     1. .kfin-wilayah-col: bungkus bubble + pill jadi 1 kolom, biar
+        bubble-nya selalu nempel PERSIS di atas pill lewat flow dokumen
+        biasa (bukan position:absolute lepas dari flow) -- 🩹 FIX: versi
+        sebelumnya bubble-nya position:absolute relatif ke pill, jadi
+        kalau barisnya wrap ke bawah label (layar sempit/nama wilayah
+        panjang), bubble-nya nongol NUTUPIN teks label "Laporan Keuangan
+        Program Wilayah" di atasnya. Sekarang bubble ikut alur dokumen di
+        dalam kolomnya sendiri, jadi PASTI ada di atas pill-nya sendiri,
+        gak akan pernah numpuk ke elemen lain.
+     2. .kfin-pill-hint: pill select-nya sendiri dikasih border & glow
         warna aksen (bukan abu-abu polos) + chevron ikut warna aksen.
-     2. .kfin-wilayah-hint-bubble: bubble kecil ala cloud/tooltip yang
-        ngambang pelan-pelan di atas pill, isinya "Pilih Wilayah", biar
-        matanya ketarik ke situ. Cuma dipasang di kfinRenderDropdownWilayah_
-        (yaitu SAAT user beneran punya >1 wilayah buat dipilih) -- user
-        yang cuma akses 1 wilayah tetap dapat pill polos (gak ada gunanya
-        dikasih petunjuk milih kalau memang gak ada pilihan lain). */
+     3. .kfin-wilayah-hint-bubble: bubble kecil ala cloud/tooltip, isinya
+        "Pilih Wilayah", ngambang pelan-pelan biar matanya ketarik ke
+        situ. Cuma dipasang di kfinRenderDropdownWilayah_ (SAAT user
+        beneran punya >1 wilayah buat dipilih) -- user yang cuma akses 1
+        wilayah tetap dapat pill polos (gak ada gunanya dikasih petunjuk
+        milih kalau memang gak ada pilihan lain). */
+  .kfin-wilayah-col { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; max-width: 100%; }
   .kfin-pill-hint {
     border: 1.5px solid rgba(var(--bento-primary-rgb), 0.55);
     background: rgba(var(--bento-primary-rgb), 0.14);
@@ -2518,13 +2528,13 @@
     color: var(--bento-primary);
   }
   .kfin-wilayah-hint-bubble {
-    position: absolute; bottom: 100%; right: 10px; margin-bottom: 9px;
+    position: relative;
     background: var(--bento-primary); color: #062B17;
     font-size: 9.5px; font-weight: 800; letter-spacing: 0.2px;
     padding: 4px 10px; border-radius: 999px; white-space: nowrap;
     box-shadow: 0 4px 14px rgba(var(--bento-primary-rgb), 0.45);
     animation: kfinHintFloat 2.2s ease-in-out infinite;
-    pointer-events: none; z-index: 1;
+    pointer-events: none;
   }
   .kfin-wilayah-hint-bubble::after {
     content: ""; position: absolute; top: 100%; right: 16px;
@@ -6004,10 +6014,12 @@ function kfinRenderDropdownWilayah_(info) {
     const dipilih = kfinWilayahPilihan === w ? " selected" : "";
     opsiHtml += '<option value="' + escapeHtmlHub(w) + '"' + dipilih + '>' + escapeHtmlHub(w) + '</option>';
   });
-  return '<div class="kfin-wilayah-filter-wrap">' +
+  return '<div class="kfin-wilayah-col">' +
     '<div class="kfin-wilayah-hint-bubble">Pilih Wilayah</div>' +
-    '<select id="kfinWilayahSelect" class="kfin-pill kfin-pill-select kfin-pill-hint" onchange="gantiWilayahKeuangan(this.value)">' + opsiHtml + '</select>' +
-    '<span class="material-symbols-outlined">expand_more</span>' +
+    '<div class="kfin-wilayah-filter-wrap">' +
+      '<select id="kfinWilayahSelect" class="kfin-pill kfin-pill-select kfin-pill-hint" onchange="gantiWilayahKeuangan(this.value)">' + opsiHtml + '</select>' +
+      '<span class="material-symbols-outlined">expand_more</span>' +
+    '</div>' +
     '</div>';
 }
 
@@ -7571,8 +7583,8 @@ function renderContent() {
            per-wilayah (ikut wilayahAkses user login) -- beda dari Laporan
            Bulanan di bawah (setelah Kartu 2) yang nasional/gabungan semua
            wilayah. -->
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin: 0 2px 14px; flex-wrap: wrap;">
-        <div class="kfin-eyebrow">
+      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:10px; margin: 0 2px 14px;">
+        <div class="kfin-eyebrow" style="align-self:flex-start;">
           <span class="material-symbols-outlined" style="font-size: 16px; color: var(--bento-primary);">location_on</span>
           Laporan Keuangan Program Wilayah
         </div>
