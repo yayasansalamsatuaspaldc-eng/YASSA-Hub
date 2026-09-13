@@ -6762,6 +6762,31 @@ const WARNA_PROGRAM_TERSALURKAN_ = {
 };
 
 
+// 🩹 FIX: Cache "Rekap Tersalur Tahun Ini" per wilayah -- SAMA POLA seperti
+// keuanganStatsCache/berandaStatsCache di atas. SEBELUMNYA kartu ini gak
+// punya cache sama sekali, jadi tiap kali tab Keuangan dibuka (mis. pindah
+// ke tab Profil lalu balik lagi ke Keuangan), HTML kartu ini dibangun ulang
+// dari nol ("Memuat data...") dan fetch ke server lagi dari awal -- padahal
+// kartu-kartu lain di tab yang sama udah instan dari cache. Disimpan di
+// localStorage biar juga bertahan lintas sesi/refresh halaman.
+let rekapTersalurCache = (function () {
+  try {
+    const cached = localStorage.getItem("yassa_hub_rekap_tersalur_cache");
+    if (cached) return JSON.parse(cached);
+  } catch (e) {}
+  return {};
+})();
+
+function saveRekapTersalurCacheHub() {
+  try {
+    localStorage.setItem("yassa_hub_rekap_tersalur_cache", JSON.stringify(rekapTersalurCache));
+  } catch (e) {}
+}
+
+function rekapTersalurCacheKey_(wilayah) {
+  return String(wilayah || "ALL").toUpperCase();
+}
+
 function loadRekapTersalurKeuangan() {
   const elKet = document.getElementById("rekapTersalurPeriodeKet");
   const elGrid = document.getElementById("rekapTersalurGrid");
@@ -6774,6 +6799,16 @@ function loadRekapTersalurKeuangan() {
   // Ini" ini otomatis ikut kefilter ke wilayah itu doang -- gak perlu lagi
   // buka popup "Rincian per Wilayah" buat lihat angka 1 wilayah.
   const wilayahDiminta = kfinWilayahPilihan;
+  const cacheKeyDiminta = rekapTersalurCacheKey_(wilayahDiminta);
+
+  // 🩹 FIX: kalau wilayah ini udah pernah sukses ke-fetch sebelumnya di sesi
+  // ini, langsung tampilin data lama dari cache duluan -- instan, gak lagi
+  // keliatan "Memuat data..." tiap pindah-pindah tab. Tetap lanjut fetch ke
+  // server di background biar datanya tetap ke-update.
+  const dariCache = !!rekapTersalurCache[cacheKeyDiminta];
+  if (dariCache) {
+    renderRekapTersalurKeuangan_(rekapTersalurCache[cacheKeyDiminta], elKet, elGrid);
+  }
 
   callGASWithRetry_("getProgramTersalurkanProfil", [authToken, wilayahDiminta])
     .then(function (hasil) {
@@ -6782,10 +6817,16 @@ function loadRekapTersalurKeuangan() {
       // dari gantiWilayahKeuangan()) yang menang, biar gak sekilas nampilin
       // angka wilayah yang salah.
       if (kfinWilayahPilihan !== wilayahDiminta) return;
+      rekapTersalurCache[cacheKeyDiminta] = hasil;
+      saveRekapTersalurCacheHub(); // <-- SIMPAN KE OFFLINE CACHE
       renderRekapTersalurKeuangan_(hasil, elKet, elGrid);
     })
     .catch(function () {
       if (kfinWilayahPilihan !== wilayahDiminta) return;
+      // 🩹 FIX: kalau fetch gagal TAPI sebelumnya udah ada cache yang sukses,
+      // biarin angka lama itu tetap tampil (lebih baik daripada direset ke
+      // pesan error cuma gara-gara 1x gangguan jaringan).
+      if (dariCache) return;
       if (elKet) elKet.textContent = "Gagal memuat data program.";
       if (elGrid) elGrid.innerHTML = "";
     });
@@ -9378,7 +9419,9 @@ function rsSubmitSemua() {
       btn.textContent = "Simpan Semua";
       tutupInputRateSantunan();
       keuanganStatsCache = {}; // 🩹 FIX: paksa refresh Kartu 1 (cache miss semua key) -- SEBELUMNYA di-set null, bikin loadKeuanganStats() crash "Cannot read properties of null" karena langsung baca keuanganStatsCache[cacheKeyDiminta] begitu dipanggil.
+      rekapTersalurCache = {}; // 🩹 FIX: paksa refresh kartu "Rekap Tersalur Tahun Ini" juga -- data santunan yang baru disimpan ini ikut memengaruhi angka di kartu itu.
       loadKeuanganStats();
+      loadRekapTersalurKeuangan();
       showModal("Sukses", (r.jumlahBaru || 0) + " wilayah baru dicatat, " + (r.jumlahDiupdate || 0) + " wilayah di-update.");
     })
     .catch(function (err) {
