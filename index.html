@@ -6625,11 +6625,13 @@ function loadProfilePerforma() {
     });
 }
 
-// 🆕 Ambil & tampilkan kartu "Program yang Tersalurkan" di tab Profil --
+// 🆕 Ambil & tampilkan kartu "Rekap Tersalur Tahun Ini" di tab Keuangan --
 // rekap 6 program (GOPAY/SAPA/PEDAS/BASO/BADIK/BATAN) Januari s/d bulan
 // berjalan, OTOMATIS mengikuti wilayah akses akun yang login (backend:
-// getProgramTersalurkanProfil). Dipanggil bareng loadProfilePerforma()
-// tiap kali tab Profil dibuka.
+// getProgramTersalurkanProfil, nama fungsi backend dipertahankan biar
+// gak perlu ubah Code_Hub.gs meski kartunya dipindah dari Profil ke
+// Keuangan). Dipanggil bareng loadKeuanganStats() tiap kali tab Keuangan
+// dibuka.
 const ICON_PROGRAM_TERSALURKAN_ = {
   gopay: "child_care",
   sapa: "diversity_1",
@@ -6647,14 +6649,14 @@ const WARNA_PROGRAM_TERSALURKAN_ = {
   batan: "#EF4444",
 };
 
-function loadProgramTersalurkanProfil() {
-  const elKet = document.getElementById("profilProgramPeriodeKet");
-  const elGrid = document.getElementById("profilProgramTersalurkanGrid");
+function loadRekapTersalurKeuangan() {
+  const elKet = document.getElementById("rekapTersalurPeriodeKet");
+  const elGrid = document.getElementById("rekapTersalurGrid");
   if (!elGrid) return;
 
   callGASWithRetry_("getProgramTersalurkanProfil", [authToken])
     .then(function (hasil) {
-      renderProgramTersalurkanProfil_(hasil, elKet, elGrid);
+      renderRekapTersalurKeuangan_(hasil, elKet, elGrid);
     })
     .catch(function () {
       if (elKet) elKet.textContent = "Gagal memuat data program.";
@@ -6662,7 +6664,7 @@ function loadProgramTersalurkanProfil() {
     });
 }
 
-function renderProgramTersalurkanProfil_(hasil, elKet, elGrid) {
+function renderRekapTersalurKeuangan_(hasil, elKet, elGrid) {
   const daftar = (hasil && hasil.programList) || [];
 
   if (elKet) {
@@ -7628,6 +7630,29 @@ function renderContent() {
         <div style="flex:1; height:1px; background: var(--glass-border);"></div>
       </div>
 
+      <!-- 🆕 "Rekap Tersalur Tahun Ini" -- ringkasan 6 program (GOPAY/SAPA/
+           PEDAS/BASO/BADIK/BATAN) dari Januari s/d bulan berjalan, OTOMATIS
+           difilter sesuai wilayah akses akun yang login (SUPERADMIN/ADMIN
+           "ALL" lihat nasional, KORWIL cuma wilayahnya sendiri). Ditaruh di
+           tab Keuangan (bukan Profil) biar satu konteks dengan section
+           "Program YASSA" & Kartu 2 "Kebutuhan dan Kekurangan" di atasnya.
+           Diisi lewat loadRekapTersalurKeuangan(), dipanggil bareng
+           loadKeuanganStats() tiap tab Keuangan dibuka. -->
+      <div style="background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-bottom: 18px; border: 1px solid var(--glass-border);">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 2px;">
+          <div style="width: 36px; height: 36px; border-radius: 11px; background: rgba(34,197,94,0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <span class="material-symbols-outlined" style="font-size: 19px;">insights</span>
+          </div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 13.5px; font-weight: 800; color: var(--text-primary);">Rekap Tersalur Tahun Ini</div>
+            <div id="rekapTersalurPeriodeKet" style="font-size: 10.5px; color: var(--text-muted);">Memuat data...</div>
+          </div>
+        </div>
+        <div id="rekapTersalurGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
+          <!-- 6 kartu mini program diisi JS (renderRekapTersalurKeuangan_) -->
+        </div>
+      </div>
+
       <!-- 📄 TOMBOL CETAK LAPORAN GABUNGAN 6 PROGRAM (PDF) -->
       <div style="background: linear-gradient(135deg, rgba(34,197,94,0.18), rgba(15,23,42,0.6)); border: 1.5px solid rgba(34,197,94,0.35); border-radius: 20px; padding: 16px; margin-bottom: 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.25);">
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
@@ -7729,6 +7754,7 @@ function renderContent() {
     `;
     el.innerHTML = html;
     loadKeuanganStats();
+    loadRekapTersalurKeuangan();
     return;
   }
 
@@ -7833,19 +7859,6 @@ function renderContent() {
       </div>
       </div>
 
-      <!-- 🆕 Program yang Tersalurkan -- rekap 6 program YASSA (GOPAY/SAPA/
-           PEDAS/BASO/BADIK/BATAN) dari Januari s/d bulan berjalan, otomatis
-           difilter sesuai wilayah akses akun yang login (diisi lewat
-           loadProgramTersalurkanProfil, dipanggil bareng loadProfilePerforma
-           tiap tab Profil dibuka). -->
-      <div class="profil-program-section">
-      <h3 style="font-weight: 600; font-size: 14px; margin-bottom: 2px; padding: 0 4px;">Program yang Tersalurkan</h3>
-      <div id="profilProgramPeriodeKet" style="font-size: 10.5px; color: var(--text-muted); margin: 0 0 12px; padding: 0 4px;">Memuat data...</div>
-      <div id="profilProgramTersalurkanGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px;">
-        <!-- 6 kartu mini program diisi JS (renderProgramTersalurkanProfil_) -->
-      </div>
-      </div>
-
       <div class="profil-tim-section">
       <h3 style="font-weight: 600; font-size: 14px; margin-bottom: 12px; padding: 0 4px;">Tim & Organisasi</h3>
       <div style="background: var(--glass-strong); border-radius: 20px; display: flex; flex-direction: column; border: 1px solid var(--glass-border); border-left: 4px solid #A855F7; overflow: hidden; margin-bottom: 20px;">
@@ -7878,7 +7891,6 @@ function renderContent() {
     `;
     el.innerHTML = html;
     loadProfilePerforma();
-    loadProgramTersalurkanProfil();
     renderNotifHubCard();
     return;
   }
