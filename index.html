@@ -6660,12 +6660,26 @@ function loadRekapTersalurKeuangan() {
   const elGrid = document.getElementById("rekapTersalurGrid");
   if (!elGrid) return;
 
-  callGASWithRetry_("getProgramTersalurkanProfil", [authToken])
+  // 🆕 Ikut wilayah yang LAGI DIPILIH di dropdown filter tab Keuangan
+  // (kfinWilayahPilihan -- sama variabel yang dipakai Kartu 1 Anak Yatim &
+  // Santunan lewat loadKeuanganStats()/gantiWilayahKeuangan()). Jadi kalau
+  // ADMIN/SUPERADMIN pilih 1 wilayah spesifik, kartu "Rekap Tersalur Tahun
+  // Ini" ini otomatis ikut kefilter ke wilayah itu doang -- gak perlu lagi
+  // buka popup "Rincian per Wilayah" buat lihat angka 1 wilayah.
+  const wilayahDiminta = kfinWilayahPilihan;
+
+  callGASWithRetry_("getProgramTersalurkanProfil", [authToken, wilayahDiminta])
     .then(function (hasil) {
+      // Kalau user udah ganti wilayah lagi SEBELUM fetch ini selesai,
+      // buang hasilnya -- biarin fetch yang lebih baru (dipicu render ulang
+      // dari gantiWilayahKeuangan()) yang menang, biar gak sekilas nampilin
+      // angka wilayah yang salah.
+      if (kfinWilayahPilihan !== wilayahDiminta) return;
       _rekapTersalurCache = hasil;
       renderRekapTersalurKeuangan_(hasil, elKet, elGrid);
     })
     .catch(function () {
+      if (kfinWilayahPilihan !== wilayahDiminta) return;
       if (elKet) elKet.textContent = "Gagal memuat data program.";
       if (elGrid) elGrid.innerHTML = "";
     });
