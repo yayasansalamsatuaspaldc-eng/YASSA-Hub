@@ -4634,10 +4634,12 @@ function initAuth() {
         currentUser = session;
         localStorage.setItem("yassa_user", JSON.stringify(currentUser));
         showApp();
-        // 🖼️ Popup gambar pembuka (tampil sekali saja per device) -- dipicu
-        // di sini juga karena ini "app siap dipakai" walau bukan login baru
-        // (sesi lama otomatis terpakai lagi). Lihat welcome-popup.js.
-        if (window.tampilkanWelcomePopupSekaliSaja) window.tampilkanWelcomePopupSekaliSaja();
+        // 🖼️ Pengumuman/popup gambar (dikelola lewat sheet "Pengumuman_Popup",
+        // bisa lebih dari satu -- tampil satu-satu utk yang belum pernah
+        // dilihat) -- dipicu di sini juga karena ini "app siap dipakai"
+        // walau bukan login baru (sesi lama otomatis terpakai lagi).
+        // Lihat welcome-popup.js & getPengumumanPopup() di Code_Hub.gs.
+        muatDanTampilkanPengumuman_();
         // 🚀 PERBAIKAN (fix "Koneksi lambat"): sama seperti di
         // onLoginSuccess, sinkronisasi ke broker ditembak di latar
         // belakang di sini juga (checkSession dipanggil tiap app dibuka
@@ -4886,12 +4888,27 @@ function onLoginSuccess(res) {
       openForceChangePasswordModal();
     } else {
       pendingOldPassword = null;
-      // 🖼️ Popup gambar pembuka (tampil sekali saja per device) -- dipicu
-      // SETELAH login sukses & splash hilang, bukan lagi otomatis saat
-      // halaman dimuat. Lihat welcome-popup.js.
-      if (window.tampilkanWelcomePopupSekaliSaja) window.tampilkanWelcomePopupSekaliSaja();
+      // 🖼️ Pengumuman/popup gambar (dikelola lewat sheet "Pengumuman_Popup")
+      // -- dipicu SETELAH login sukses & splash hilang, bukan lagi otomatis
+      // saat halaman dimuat. Lihat welcome-popup.js.
+      muatDanTampilkanPengumuman_();
     }
   }, POST_LOGIN_SPLASH_DURATION_MS);
+}
+
+// Ambil daftar pengumuman AKTIF dari server (sheet "Pengumuman_Popup",
+// lihat getPengumumanPopup() di Code_Hub.gs) lalu serahkan ke
+// welcome-popup.js (window.YASSA_setPengumumanList) buat ditampilkan
+// satu-satu (yang belum pernah dilihat device ini) & disimpan sebagai
+// cache buat kartu-kartu di lonceng notifikasi. Gagal diam-diam (mis.
+// koneksi lambat) -- ini bukan bagian kritis dari alur login, jadi
+// jangan sampai ganggu/nge-block apa pun kalau gagal.
+function muatDanTampilkanPengumuman_() {
+  callGASWithRetry_("getPengumumanPopup", [authToken], { maxAttempts: 1, timeoutMs: 15000 })
+    .then(function (list) {
+      if (window.YASSA_setPengumumanList) window.YASSA_setPengumumanList(list);
+    })
+    .catch(function () {});
 }
 
 function openForceChangePasswordModal() {
@@ -5827,19 +5844,25 @@ function updateNotifBadge(list) {
 // dari AKTIVITAS_APP_META, waktu relatif dari formatWaktuAktivitas) biar
 // konsisten, cuma dibungkus lebih rapat karena tampil di dalam modal kecil.
 function renderNotifikasiModalHtml_(list) {
-  // 🆕 Kartu "Info" tetap (statis, bukan dari server) di paling atas --
-  // dipakai untuk buka ulang gambar popup pembuka (welcome-popup.js).
-  // Beda dari item aktivitas di bawahnya yang dinamis dari server.
-  const infoCard = `
-    <div onclick="closeModal(); if (window.tampilkanWelcomePopup) window.tampilkanWelcomePopup();" style="display:flex; align-items:flex-start; gap:10px; text-align:left; cursor:pointer;">
+  // 🆕 Kartu-kartu "Info" di paling atas -- satu kartu per pengumuman AKTIF
+  // dari sheet "Pengumuman_Popup" (lihat welcome-popup.js &
+  // getPengumumanPopup() di Code_Hub.gs), biar user bisa buka-buka lagi
+  // pengumuman lama yang sudah pernah lewat/ditutup. Beda dari item
+  // aktivitas di bawahnya yang dinamis dari Log_Aktivitas.
+  const daftarPengumuman = (window.YASSA_getPengumumanList ? window.YASSA_getPengumumanList() : []) || [];
+
+  const infoCard = daftarPengumuman.length
+    ? daftarPengumuman.map(function (p) {
+        return `
+    <div onclick="closeModal(); if (window.tampilkanPengumumanById) window.tampilkanPengumumanById('${String(p.id).replace(/'/g, "\\'")}');" style="display:flex; align-items:flex-start; gap:10px; text-align:left; cursor:pointer; margin-bottom:8px;">
       <div style="width:30px; height:30px; border-radius:50%; background: var(--glass); color:#22C55E; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px;"><span class="material-symbols-outlined" style="font-size:15px;">campaign</span></div>
       <div style="flex:1; min-width:0;">
-        <div style="font-size:13px; font-weight:600;">Info Penting</div>
-        <div style="font-size:11.5px; color: var(--text-muted); margin-top:1px;">Ketuk untuk lihat info terbaru dari YASSA</div>
+        <div style="font-size:13px; font-weight:600;">${p.judul}</div>
+        <div style="font-size:11.5px; color: var(--text-muted); margin-top:1px;">Ketuk untuk lihat gambar info ini</div>
       </div>
-    </div>
-    <div style="height:1px; background: var(--glass-border); margin: 8px 0;"></div>
-  `;
+    </div>`;
+      }).join("") + '<div style="height:1px; background: var(--glass-border); margin: 8px 0;"></div>'
+    : "";
 
   if (!list || !list.length) {
     return `<div style="max-height: 55vh; overflow-y: auto; text-align:left;">${infoCard}<div style="text-align:center; padding: 8px 0; color: var(--text-secondary);">Belum ada aktivitas atau notifikasi baru.</div></div>`;
