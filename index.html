@@ -6625,6 +6625,85 @@ function loadProfilePerforma() {
     });
 }
 
+// 🆕 Ambil & tampilkan kartu "Program yang Tersalurkan" di tab Profil --
+// rekap 6 program (GOPAY/SAPA/PEDAS/BASO/BADIK/BATAN) Januari s/d bulan
+// berjalan, OTOMATIS mengikuti wilayah akses akun yang login (backend:
+// getProgramTersalurkanProfil). Dipanggil bareng loadProfilePerforma()
+// tiap kali tab Profil dibuka.
+const ICON_PROGRAM_TERSALURKAN_ = {
+  gopay: "child_care",
+  sapa: "diversity_1",
+  pedas: "accessible",
+  baso: "shopping_basket",
+  badik: "school",
+  batan: "health_and_safety",
+};
+const WARNA_PROGRAM_TERSALURKAN_ = {
+  gopay: "#22C55E",
+  sapa: "#A855F7",
+  pedas: "#F97316",
+  baso: "#0EA5E9",
+  badik: "#EAB308",
+  batan: "#EF4444",
+};
+
+function loadProgramTersalurkanProfil() {
+  const elKet = document.getElementById("profilProgramPeriodeKet");
+  const elGrid = document.getElementById("profilProgramTersalurkanGrid");
+  if (!elGrid) return;
+
+  callGASWithRetry_("getProgramTersalurkanProfil", [authToken])
+    .then(function (hasil) {
+      renderProgramTersalurkanProfil_(hasil, elKet, elGrid);
+    })
+    .catch(function () {
+      if (elKet) elKet.textContent = "Gagal memuat data program.";
+      if (elGrid) elGrid.innerHTML = "";
+    });
+}
+
+function renderProgramTersalurkanProfil_(hasil, elKet, elGrid) {
+  const daftar = (hasil && hasil.programList) || [];
+
+  if (elKet) {
+    const periode = "Januari\u2013" + (hasil.namaBulanIni || "") + " " + (hasil.tahun || "");
+    const wilayahTxt = hasil.semuaWilayah ? "Semua Wilayah" : (hasil.wilayahTampil || "-");
+    elKet.textContent = periode + " \u2022 " + wilayahTxt;
+  }
+
+  if (!elGrid) return;
+  if (!daftar.length) {
+    elGrid.innerHTML = "<div style=\"grid-column: 1 / -1; font-size: 11px; color: var(--text-muted); padding: 8px 4px;\">Belum ada data program yang bisa ditampilkan.</div>";
+    return;
+  }
+
+  elGrid.innerHTML = daftar.map(function (p) {
+    const warna = WARNA_PROGRAM_TERSALURKAN_[p.key] || "#94A3B8";
+    const ikon = ICON_PROGRAM_TERSALURKAN_[p.key] || "volunteer_activism";
+    return `
+      <div style="background: var(--glass-strong); border-radius: 16px; padding: 12px; border: 1px solid var(--glass-border); border-left: 3px solid ${warna}; display: flex; flex-direction: column; gap: 6px; min-width: 0;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <div style="width: 26px; height: 26px; border-radius: 8px; background: ${warna}26; color: ${warna}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <span class="material-symbols-outlined" style="font-size: 15px;">${ikon}</span>
+          </div>
+          <div style="min-width: 0;">
+            <div style="font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(p.label)}</div>
+            <div style="font-size: 9px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(p.subLabel || "")}</div>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 2px;">
+          <span style="font-size: 9.5px; color: var(--text-secondary);">Anak Tersalur</span>
+          <span style="font-size: 13px; font-weight: 700;">${Number(p.anak) || 0}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <span style="font-size: 9.5px; color: var(--text-secondary);">Dana Tersalur</span>
+          <span style="font-size: 11.5px; font-weight: 700; color: ${warna}; white-space: nowrap;">${formatRupiahHub(p.dana)}</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
 // Escape teks bebas (mis. nama wilayah) sebelum dipasang lewat innerHTML,
 // biar aman dari karakter HTML aneh (bukan proteksi XSS penuh, cukup buat
 // data internal spreadsheet Bendahara yang formatnya udah lumayan terjaga).
@@ -7754,6 +7833,19 @@ function renderContent() {
       </div>
       </div>
 
+      <!-- 🆕 Program yang Tersalurkan -- rekap 6 program YASSA (GOPAY/SAPA/
+           PEDAS/BASO/BADIK/BATAN) dari Januari s/d bulan berjalan, otomatis
+           difilter sesuai wilayah akses akun yang login (diisi lewat
+           loadProgramTersalurkanProfil, dipanggil bareng loadProfilePerforma
+           tiap tab Profil dibuka). -->
+      <div class="profil-program-section">
+      <h3 style="font-weight: 600; font-size: 14px; margin-bottom: 2px; padding: 0 4px;">Program yang Tersalurkan</h3>
+      <div id="profilProgramPeriodeKet" style="font-size: 10.5px; color: var(--text-muted); margin: 0 0 12px; padding: 0 4px;">Memuat data...</div>
+      <div id="profilProgramTersalurkanGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px;">
+        <!-- 6 kartu mini program diisi JS (renderProgramTersalurkanProfil_) -->
+      </div>
+      </div>
+
       <div class="profil-tim-section">
       <h3 style="font-weight: 600; font-size: 14px; margin-bottom: 12px; padding: 0 4px;">Tim & Organisasi</h3>
       <div style="background: var(--glass-strong); border-radius: 20px; display: flex; flex-direction: column; border: 1px solid var(--glass-border); border-left: 4px solid #A855F7; overflow: hidden; margin-bottom: 20px;">
@@ -7786,6 +7878,7 @@ function renderContent() {
     `;
     el.innerHTML = html;
     loadProfilePerforma();
+    loadProgramTersalurkanProfil();
     renderNotifHubCard();
     return;
   }
