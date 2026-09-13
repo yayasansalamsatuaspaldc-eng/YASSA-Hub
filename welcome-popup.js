@@ -1,79 +1,76 @@
 /**
  * ============================================================
- * YASSA — POPUP GAMBAR PEMBUKA (TAMPIL SEKALI SAJA)
+ * YASSA — POPUP GAMBAR PENGUMUMAN (BISA LEBIH DARI SATU, DIKELOLA
+ * LEWAT SHEET "Pengumuman_Popup", TAMPIL SATU-SATU SETELAH LOGIN)
  * ============================================================
- * Popup ini muncul saat aplikasi pertama kali dibuka di sebuah
- * perangkat/browser, berisi 1 gambar + tombol X untuk menutup.
- * Setelah ditutup, statusnya disimpan di localStorage sehingga
- * TIDAK akan muncul lagi di pembukaan berikutnya (kecuali user
- * menghapus data browser, ganti browser, atau install ulang app).
+ * File ini menangani popup gambar/info yang muncul setelah user
+ * login. Daftar pengumumannya SEKARANG diambil dari server (sheet
+ * "Pengumuman_Popup" di spreadsheet Akun -- lihat getPengumumanPopup()
+ * di Code_Hub.gs), BUKAN lagi 1 gambar yang di-hardcode di sini.
+ * Jadi buat nambah pengumuman baru, ADMIN CUKUP nambah baris baru di
+ * sheet itu (Judul, URL_Gambar, centang Aktif) -- TIDAK perlu ubah
+ * file ini lagi.
  *
- * CARA PAKAI:
- * 1. Simpan file ini di folder yang sama dengan index_gopay.html
- * 2. Buka index_gopay.html, cari tag </body> paling akhir,
- *    tambahkan baris ini TEPAT SEBELUM </body>:
+ * ATURAN TAMPIL:
+ * - Tiap device nyimpen daftar ID pengumuman yang SUDAH pernah
+ *   ditutup/dilihat (localStorage). Pengumuman yang ID-nya BELUM
+ *   pernah dilihat akan tampil SATU PER SATU, urut dari yang paling
+ *   lama dibuat -- begitu 1 ditutup, otomatis lanjut ke berikutnya
+ *   kalau masih ada yang belum dilihat.
+ * - Pengumuman yang sudah pernah dilihat TIDAK muncul otomatis lagi,
+ *   tapi tetap bisa dibuka manual satu-satu lewat kartu "Info" di
+ *   lonceng notifikasi (lihat renderNotifikasiModalHtml_ index.html),
+ *   yang manggil window.tampilkanPengumumanById(id).
  *
- *      <script src="welcome-popup.js"></script>
- *
- * 3. Ganti URL_GAMBAR di bawah dengan gambar Anda (lihat
- *    penjelasan cara masukin gambar di bagian bawah file ini).
- * ============================================================
- */
-/**
- * ============================================================
- * YASSA — POPUP GAMBAR PEMBUKA (TAMPIL SEKALI SAJA, SETELAH LOGIN)
- * ============================================================
- * Popup ini berisi 1 gambar + tombol X untuk menutup. TIDAK tampil
- * otomatis saat halaman baru dimuat -- baru muncul begitu index.html
- * memanggil window.tampilkanWelcomePopupSekaliSaja() setelah proses
- * login/sesi berhasil (lihat onLoginSuccess & initAuth di index.html).
- * Setelah ditutup, statusnya disimpan di localStorage sehingga
- * TIDAK akan muncul otomatis lagi di login berikutnya -- tapi tetap
- * bisa dibuka manual lewat kartu "Info" di lonceng notifikasi
- * (window.tampilkanWelcomePopup(), lihat renderNotifikasiModalHtml_).
- *
- * CARA PAKAI:
- * 1. Simpan file ini di folder yang sama dengan index.html
- * 2. Ganti URL_GAMBAR_ASLI di bawah dengan gambar Anda.
+ * CARA PAKAI (index.html):
+ * 1. Simpan file ini di folder yang sama dengan index.html, sudah
+ *    ada <script src="welcome-popup.js"></script> sebelum </body>.
+ * 2. Setelah login sukses / sesi lama direstore, panggil:
+ *      callGASWithRetry_("getPengumumanPopup", [authToken])
+ *        .then(function (list) { window.YASSA_setPengumumanList(list); });
+ * 3. Buat isi kartu-kartu di lonceng notifikasi, panggil
+ *    window.YASSA_getPengumumanList() buat ambil datanya, dan render
+ *    tiap item dengan onclick="window.tampilkanPengumumanById('ID')".
  * ============================================================
  */
 (function () {
-  // 🔧 GANTI BAGIAN INI dengan URL gambar Anda (link online, boleh ukuran
-  // besar/belum dikompres — akan otomatis dikompres lewat proxy di bawah).
-  // Kalau gambarnya file lokal (bukan link http), isi nama filenya saja,
-  // misal 'banner.jpg' — otomatis TIDAK ikut dikompres (lihat fungsi
-  // buatUrlKompres di bawah).
-  var URL_GAMBAR_ASLI = 'https://lh3.googleusercontent.com/d/1MXcaHSp0Yv5u3h8cA4x3ynsPLk-zMP57';
+  // Key penanda "daftar ID pengumuman yang sudah pernah ditutup" di
+  // localStorage device ini. Isinya JSON array of string, misal:
+  // ["1","2","row7"].
+  var STORAGE_KEY_SUDAH_DILIHAT = 'yassa-welcome-popup-shown-ids';
 
-  // Lebar maksimal & kualitas kompresi otomatis (boleh diubah)
-  var LEBAR_MAKS = 800;
-  var KUALITAS = 75;
+  // 🕰️ Kompatibilitas mundur: key lama (boolean tunggal) dari versi
+  // sebelum ada banyak pengumuman. Kalau ketemu isinya "1" (artinya user
+  // ini sudah pernah nutup popup versi lama), jangan tiba-tiba dibanjiri
+  // semua pengumuman lama sekaligus begitu fitur ini pertama kali aktif
+  // -- baris getSudahDilihat() di bawah otomatis nangani migrasinya.
+  var STORAGE_KEY_LAMA = 'yassa-welcome-popup-shown';
 
-  // 🔧 Saklar kompresi otomatis. Untuk link Google Drive/googleusercontent,
-  // proxy weserv sering DITOLAK (hotlink protection Google), jadi default
-  // dimatikan (pakai link asli apa adanya). Kalau URL_GAMBAR_ASLI bukan dari
-  // Google (misal dari hosting/CDN lain yang mengizinkan hotlink), boleh
-  // diaktifkan lagi jadi true untuk coba kompres otomatis.
-  var GUNAKAN_KOMPRES_OTOMATIS = false;
-
-  // 🗜️ Kompres otomatis pakai images.weserv.nl (proxy gratis, tanpa perlu
-  // akun) -- cuma jalan kalau URL_GAMBAR_ASLI berupa link http/https yang
-  // sudah bisa diakses publik DAN mengizinkan hotlink dari proxy pihak ketiga.
-  function buatUrlKompres(url) {
-    if (!GUNAKAN_KOMPRES_OTOMATIS) return url;
-    if (!/^https?:\/\//i.test(url)) return url; // file lokal, biarkan apa adanya
-    var tanpaProtokol = url.replace(/^https?:\/\//i, '');
-    return 'https://images.weserv.nl/?url=' + encodeURIComponent(tanpaProtokol) +
-      '&w=' + LEBAR_MAKS + '&q=' + KUALITAS + '&output=webp';
+  function getSudahDilihat() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY_SUDAH_DILIHAT);
+      if (raw) return JSON.parse(raw) || [];
+    } catch (e) {}
+    return [];
   }
 
-  var URL_GAMBAR = buatUrlKompres(URL_GAMBAR_ASLI);
+  function tandaiSudahDilihat(id) {
+    var list = getSudahDilihat();
+    if (list.indexOf(String(id)) === -1) list.push(String(id));
+    try { localStorage.setItem(STORAGE_KEY_SUDAH_DILIHAT, JSON.stringify(list)); } catch (e) {}
+  }
 
-  // Key penanda "sudah pernah ditutup" di localStorage device ini
-  var STORAGE_KEY = 'yassa-welcome-popup-shown';
+  // Cache daftar pengumuman terakhir yang diambil dari server (dipakai
+  // ulang buat bangun kartu-kartu di lonceng notifikasi tanpa perlu
+  // nembak server lagi).
+  var daftarPengumumanCache = [];
 
-  function tampilkanPopup() {
-    // Jangan dobel kalau overlay-nya udah kebuka
+  // Antrean pengumuman yang BELUM pernah dilihat & lagi nunggu ditampilkan
+  // satu-satu.
+  var antrean = [];
+
+  function tampilkanOverlay(urlGambar, onTutup) {
+    // Jangan dobel kalau overlay-nya udah kebuka.
     if (document.getElementById('yassa-welcome-overlay')) return;
 
     var overlay = document.createElement('div');
@@ -86,7 +83,7 @@
 
     overlay.innerHTML =
       '<div style="position:relative;max-width:420px;width:100%;margin:auto;">' +
-        '<img src="' + URL_GAMBAR + '" alt="Info" style="' +
+        '<img src="' + urlGambar + '" alt="Info" style="' +
           'display:block;width:100%;height:auto;' +
           'max-height:85vh;object-fit:contain;' +
           'border-radius:16px;' +
@@ -106,20 +103,57 @@
 
     document.getElementById('yassa-welcome-close').addEventListener('click', function () {
       overlay.remove();
-      localStorage.setItem(STORAGE_KEY, '1');
+      if (typeof onTutup === 'function') onTutup();
     });
   }
 
-  // 🔔 Buka MANUAL kapan saja, tanpa peduli status localStorage -- dipakai
-  // oleh kartu "Info" di modal lonceng notifikasi (lihat renderNotifikasiModalHtml_
-  // di index.html) supaya gambar ini bisa dibuka lagi meski sudah pernah ditutup.
-  window.tampilkanWelcomePopup = tampilkanPopup;
+  // Tampilkan 1 pengumuman berikutnya dari antrean (kalau ada). Dipanggil
+  // pertama kali begitu antrean diisi, dan dipanggil lagi tiap popup
+  // ditutup supaya lanjut ke pengumuman berikutnya yang belum dilihat.
+  function tampilkanBerikutnyaDariAntrean() {
+    if (!antrean.length) return;
+    var item = antrean.shift();
+    tampilkanOverlay(item.urlGambar, function () {
+      tandaiSudahDilihat(item.id);
+      tampilkanBerikutnyaDariAntrean();
+    });
+  }
 
-  // 🔑 Dipanggil dari index.html SETELAH login/sesi berhasil (bukan otomatis
-  // saat halaman dimuat). Cuma tampil kalau device ini belum pernah menutup
-  // popup ini sebelumnya.
-  window.tampilkanWelcomePopupSekaliSaja = function () {
-    if (localStorage.getItem(STORAGE_KEY)) return;
-    tampilkanPopup();
+  // 🔑 Dipanggil dari index.html SETELAH login/sesi berhasil, dikasih
+  // hasil getPengumumanPopup(token) dari server (array of {id, judul,
+  // urlGambar, tanggal}, sudah terurut lama->baru). Yang ID-nya BELUM
+  // pernah dilihat device ini dimasukkan ke antrean & ditampilkan
+  // satu-satu.
+  window.YASSA_setPengumumanList = function (list) {
+    daftarPengumumanCache = Array.isArray(list) ? list : [];
+
+    var sudahDilihat = getSudahDilihat();
+    antrean = daftarPengumumanCache.filter(function (item) {
+      return item && item.id && sudahDilihat.indexOf(String(item.id)) === -1;
+    });
+
+    // Kalau overlay kebetulan lagi kebuka (jarang, tapi jaga-jaga),
+    // tunggu sampai kosong dulu baru mulai antrean baru.
+    if (!document.getElementById('yassa-welcome-overlay')) {
+      tampilkanBerikutnyaDariAntrean();
+    }
+  };
+
+  // Dipakai index.html buat bangun kartu-kartu di lonceng notifikasi
+  // (satu kartu per pengumuman yang lagi aktif, terlepas sudah pernah
+  // dilihat atau belum -- biar user bisa buka-buka lagi riwayatnya).
+  window.YASSA_getPengumumanList = function () {
+    return daftarPengumumanCache.slice();
+  };
+
+  // 🔔 Buka MANUAL 1 pengumuman spesifik berdasarkan ID-nya, dipakai
+  // kartu-kartu di lonceng notifikasi. Ikut ditandai "sudah dilihat"
+  // (kalaupun sebelumnya belum) supaya gak nongol lagi otomatis abis ini.
+  window.tampilkanPengumumanById = function (id) {
+    var item = daftarPengumumanCache.find(function (p) { return String(p.id) === String(id); });
+    if (!item) return;
+    tampilkanOverlay(item.urlGambar, function () {
+      tandaiSudahDilihat(item.id);
+    });
   };
 })();
