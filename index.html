@@ -4904,7 +4904,7 @@ function onLoginSuccess(res) {
 // koneksi lambat) -- ini bukan bagian kritis dari alur login, jadi
 // jangan sampai ganggu/nge-block apa pun kalau gagal.
 function muatDanTampilkanPengumuman_() {
-  callGASWithRetry_("getPengumumanPopup", [authToken], { maxAttempts: 1, timeoutMs: 15000 })
+  callGASWithRetry_("getPengumumanPopup", [authToken], { maxAttempts: 3, timeoutMs: 15000 })
     .then(function (list) {
       if (window.YASSA_setPengumumanList) window.YASSA_setPengumumanList(list);
     })
