@@ -7778,13 +7778,29 @@ function renderContent() {
             <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Catat realisasi penyaluran santunan bulanan per wilayah</div>
           </div>
         </div>
+        ${(currentUser && currentUser.role === "SUPERADMIN") ? `
         <button type="button" onclick="bukaInputRateSantunan()" style="display:flex; align-items:center; justify-content:center; gap:6px; width:100%; padding:10px 14px; border-radius:12px; background:linear-gradient(90deg, var(--bento-primary), var(--bento-tertiary)); border:none; color:#062012; font-size:12px; font-weight:800; cursor:pointer; box-shadow:0 6px 16px rgba(var(--bento-primary-rgb),0.35); margin-bottom: 10px;">
           <span class="material-symbols-outlined" style="font-size:17px; font-variation-settings:'FILL' 1;">groups</span>
           ${kfinBisaBulanIni_ ? 'Input Data GOPAY ' + kfinLabelPeriode : 'Input Data GOPAY Bulan Ini'}
-        </button>
+        </button>` : `
+        <!-- 🩹 FIX: Input Data GOPAY dibatasi khusus SUPERADMIN -- ADMIN
+             lihat versi terkunci (bukan disembunyikan total) biar jelas
+             kenapa tombolnya beda, bukan dikira bug. -->
+        <button type="button" disabled title="Input Data GOPAY khusus Super Admin" style="display:flex; align-items:center; justify-content:center; gap:6px; width:100%; padding:10px 14px; border-radius:12px; background: rgba(148,163,184,0.15); border:1px solid rgba(148,163,184,0.3); color: var(--text-muted); font-size:12px; font-weight:800; cursor:not-allowed; margin-bottom: 10px;">
+          <span class="material-symbols-outlined" style="font-size:17px;">lock</span>
+          Input Data GOPAY (Khusus Super Admin)
+        </button>`}
+        ${(currentUser && currentUser.role === "SUPERADMIN") ? `
         <button type="button" onclick="bukaInputSantunanSapa()" style="display:flex; align-items:center; justify-content:center; gap:6px; width:100%; padding:10px 14px; border-radius:12px; background:linear-gradient(90deg, #EC4899, #DB2777); border:none; color:#fff; font-size:12px; font-weight:800; cursor:pointer; box-shadow:0 6px 16px rgba(236,72,153,0.3);">
           <span class="material-symbols-outlined" style="font-size:17px; font-variation-settings:'FILL' 1;">diversity_1</span> Input Data Santunan Bulanan SAPA
-        </button>
+        </button>` : `
+        <!-- 🩹 FIX: Input Data Santunan SAPA dibatasi khusus SUPERADMIN --
+             ADMIN lihat versi terkunci (bukan disembunyikan total) biar
+             jelas kenapa tombolnya beda, bukan dikira bug. -->
+        <button type="button" disabled title="Input Data Santunan SAPA khusus Super Admin" style="display:flex; align-items:center; justify-content:center; gap:6px; width:100%; padding:10px 14px; border-radius:12px; background: rgba(148,163,184,0.15); border:1px solid rgba(148,163,184,0.3); color: var(--text-muted); font-size:12px; font-weight:800; cursor:not-allowed;">
+          <span class="material-symbols-outlined" style="font-size:17px;">lock</span>
+          Input Data Santunan SAPA (Khusus Super Admin)
+        </button>`}
       </div>` : ``}
 
       <!-- 🆕 Section "Program YASSA" -- judul tunggal menaungi keenam
@@ -9172,6 +9188,16 @@ function submitCatatPenyaluran() {
 // SENDIRI tetap bisa diisi/diedit manual seperti biasa.
 // ============================================================
 function bukaInputRateSantunan() {
+  // 🩹 FIX: Input Data GOPAY khusus SUPERADMIN -- guard tambahan di sisi
+  // klien (selain tombolnya sudah dikunci/disembunyikan buat non-SUPERADMIN
+  // di renderContent()), jaga-jaga kalau fungsi ini terpanggil dari jalur
+  // lain. Penegakan SEBENARNYA tetap di backend (requireSession SUPERADMIN
+  // di simpanBanyakBarisRateSantunan/tarikSemuaWilayahUntukRateSantunan/dll).
+  if (!currentUser || currentUser.role !== "SUPERADMIN") {
+    showModal("Akses Ditolak", "Input Data GOPAY hanya bisa dilakukan oleh Super Admin.");
+    return;
+  }
+
   // 🆕 Default ke bulan yang LAGI DILIHAT di tab Keuangan (kfinBulanPilihan/
   // kfinTahunPilihan), bukan selalu bulan device -- biar kalau Admin lagi
   // nengok histori Januari terus klik tombol ini, formnya udah otomatis
@@ -9269,6 +9295,17 @@ function rsTarikSemuaWilayah() {
 // gak bentrok sama prefix "rs" punya Gopay.
 // ============================================================
 function bukaInputSantunanSapa() {
+  // 🩹 FIX: Input Data Santunan SAPA khusus SUPERADMIN -- guard tambahan di
+  // sisi klien (selain tombolnya sudah dikunci/disembunyikan buat
+  // non-SUPERADMIN di renderContent()), jaga-jaga kalau fungsi ini
+  // terpanggil dari jalur lain. Penegakan SEBENARNYA tetap di backend
+  // (requireSession SUPERADMIN di tarikSemuaWilayahUntukSantunanSapa/
+  // simpanBanyakBarisLogPenyaluranSantunanSapa).
+  if (!currentUser || currentUser.role !== "SUPERADMIN") {
+    showModal("Akses Ditolak", "Input Data Santunan SAPA hanya bisa dilakukan oleh Super Admin.");
+    return;
+  }
+
   document.getElementById("sspInputBulan").value = String(kfinBulanPilihan);
   document.getElementById("sspInputTahun").value = kfinTahunPilihan;
   document.getElementById("sspInputCakupan").value = "1";
@@ -9410,6 +9447,47 @@ function rsSubmitSemua() {
 
   if (!daftarBaris.length) { showModal("Gagal", "Belum ada wilayah yang dicentang."); return; }
 
+  // 🩹 FIX: cek dulu ke server -- wilayah mana di antara yang mau disimpan ini
+  // yang SUDAH punya data buat Bulan+Tahun yang dipilih. Kalau ada, ini
+  // "Simpan Semua" bakal MENIMPA data lama itu (upsert, lihat backend), jadi
+  // Admin dikasih konfirmasi dulu -- terutama buat nangkep kasus salah pilih
+  // bulan (mis. maksudnya Oktober tapi ke-klik Januari yang udah keisi).
+  const btnCek = document.getElementById("rsInputBtnSimpan");
+  btnCek.disabled = true;
+  btnCek.textContent = "Mengecek data lama...";
+
+  callGASWithRetry_("cekRateSantunanSudahAda", [authToken, bulan, tahun])
+    .then(function (daftarWilayahAda) {
+      const setWilayahAda = new Set((daftarWilayahAda || []).map(function (w) { return String(w).trim().toUpperCase(); }));
+      const wilayahBentrok = daftarBaris
+        .map(function (b) { return b.wilayah; })
+        .filter(function (w) { return setWilayahAda.has(String(w).trim().toUpperCase()); });
+
+      if (wilayahBentrok.length > 0) {
+        const namaBulan = document.getElementById("rsInputBulan").selectedOptions[0].textContent;
+        showModal(
+          "Data Sudah Ada",
+          "Wilayah berikut SUDAH punya data untuk <b>" + escapeHtmlHub(namaBulan) + " " + escapeHtmlHub(String(tahun)) + "</b>:<br><br>" +
+          "• " + wilayahBentrok.map(escapeHtmlHub).join("<br>• ") +
+          "<br><br>Melanjutkan akan MENIMPA data lama wilayah-wilayah di atas dengan angka yang baru saja Anda isi. Lanjutkan?",
+          true,
+          function () { rsLanjutkanSimpan(bulan, tahun, daftarBaris); }
+        );
+        btnCek.disabled = false;
+        btnCek.textContent = "Simpan Semua";
+      } else {
+        rsLanjutkanSimpan(bulan, tahun, daftarBaris);
+      }
+    })
+    .catch(function () {
+      // Gagal cek (mis. jaringan) -- jangan blokir penyimpanan, lanjut aja
+      // seperti perilaku lama (upsert tetap aman per Bulan+Tahun+Wilayah,
+      // cuma gak sempat dikasih peringatan timpa-data).
+      rsLanjutkanSimpan(bulan, tahun, daftarBaris);
+    });
+}
+
+function rsLanjutkanSimpan(bulan, tahun, daftarBaris) {
   const btn = document.getElementById("rsInputBtnSimpan");
   btn.disabled = true;
   btn.textContent = "Menyimpan...";
