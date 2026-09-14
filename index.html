@@ -3392,6 +3392,17 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
       <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Nilai Bantuan (Rp)</label>
       <input type="number" id="programLainAddNilai" placeholder="Estimasi nilai/harga" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit;">
 
+      <!-- 🩹 FIX: field "Biaya Operasional" -- KHUSUS BASO (lihat
+           bukaTambahBantuanProgramLain() yang toggle display:none/block-nya
+           tergantung programLainAktif). SENGAJA field terpisah dari "Nilai
+           Bantuan" di atas -- cuma histori/catatan, TIDAK ikut dijumlahkan
+           ke Total Bantuan (lihat submitTambahBantuanProgramLain() &
+           backend tambahBantuanProgramLain_/getRekapProgramLain_). -->
+      <div id="programLainAddBiayaOpsWrap" style="display:none;">
+        <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Biaya Operasional (Rp, opsional)</label>
+        <input type="number" id="programLainAddBiayaOps" placeholder="Mis. ongkos kirim/BBM tim -- gak ikut Total Bantuan" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit;">
+      </div>
+
       <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Keterangan (opsional)</label>
       <input type="text" id="programLainAddKeterangan" placeholder="Catatan tambahan" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit;">
 
@@ -3845,6 +3856,48 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
         <div style="text-align: left;">
           <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Input Donasi</div>
           <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Catat donasi yang masuk</div>
+        </div>
+      </button>
+
+      <!-- 🩹 FIX: jalan pintas "Tambah Bantuan Program BASO" dari sheet Input
+           Data -- SEBELUMNYA cuma bisa lewat: Beranda > panel "Program BASO" >
+           buka halaman penuh > baru ketemu tombol "Tambah Bantuan BASO", jadi
+           kesannya harus lewat Sheet. Padahal fiturnya udah ada
+           (bukaTambahBantuanProgramLain(), lihat renderRekapProgramLain()),
+           cuma belum ada akses cepatnya. display:none default -- ditampilkan
+           lewat JS di toggleInputSheet() KHUSUS SUPERADMIN/ADMIN, SAMA seperti
+           pembatasan `bisaEdit` yang sudah ada di halaman Program
+           BASO/BADIK/BATAN itu sendiri. -->
+      <button id="inputBasoShortcutBtn" style="display:none; width: 100%; align-items: center; gap: 16px; background: var(--glass-strong); padding: 16px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 16px; cursor: pointer;" onclick="pintasTambahBantuanProgramLain('baso')">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(245, 158, 11, 0.15); color: #F59E0B; display: flex; align-items: center; justify-content: center;">
+          <span class="material-symbols-outlined">shopping_bag</span>
+        </div>
+        <div style="text-align: left;">
+          <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Input Program BASO</div>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Catat bantuan sembako yang disalurkan</div>
+        </div>
+      </button>
+
+      <!-- 🩹 FIX: pintasan yang sama juga buat BADIK & BATAN -- SAMA POLA
+           persis kayak tombol BASO di atas, cuma beda program key/warna/ikon.
+           Tetap khusus SUPERADMIN/ADMIN (dicek bareng di toggleInputSheet()). -->
+      <button id="inputBadikShortcutBtn" style="display:none; width: 100%; align-items: center; gap: 16px; background: var(--glass-strong); padding: 16px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 16px; cursor: pointer;" onclick="pintasTambahBantuanProgramLain('badik')">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(59, 130, 246, 0.15); color: #3B82F6; display: flex; align-items: center; justify-content: center;">
+          <span class="material-symbols-outlined">school</span>
+        </div>
+        <div style="text-align: left;">
+          <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Input Program BADIK</div>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Catat bantuan pendidikan yang disalurkan</div>
+        </div>
+      </button>
+
+      <button id="inputBatanShortcutBtn" style="display:none; width: 100%; align-items: center; gap: 16px; background: var(--glass-strong); padding: 16px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 16px; cursor: pointer;" onclick="pintasTambahBantuanProgramLain('batan')">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(20, 184, 166, 0.15); color: #14B8A6; display: flex; align-items: center; justify-content: center;">
+          <span class="material-symbols-outlined">medical_services</span>
+        </div>
+        <div style="text-align: left;">
+          <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Input Program BATAN</div>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Catat bantuan kesehatan yang disalurkan</div>
         </div>
       </button>
       
@@ -8443,10 +8496,11 @@ function renderBottomNav() {
   visibleTabs().forEach((t) => {
     if (t.isFab) {
       html += `
-        <div style="position: relative; width: 64px; display: flex; justify-content: center; top: -16px;">
+        <div style="position: relative; width: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; top: -16px; gap: 3px;">
           <button data-tab="${t.key}" onclick="setActive('${t.key}')" style="width: 52px; height: 52px; border-radius: 50%; background: var(--bento-primary); display: flex; align-items: center; justify-content: center; border: none; box-shadow: 0 4px 20px rgba(34, 197, 94, 0.4); cursor: pointer; transition: transform 0.2s;">
             ${materialIconSpan(t.icon, { size: 30, color: "white" })}
           </button>
+          <span class="nav-label" style="color: var(--bento-primary); font-weight: 700; font-size: 10px;">${t.label}</span>
         </div>
       `;
     } else {
@@ -8587,8 +8641,28 @@ function toggleInputSheet() {
   if (sheet.classList.contains('open')) {
     sheet.classList.remove('open');
   } else {
+    // 🩹 FIX: tombol pintas "Input Program BASO/BADIK/BATAN" cuma buat
+    // SUPERADMIN/ADMIN -- dicek tiap kali sheet ini dibuka (bukan pas
+    // render awal halaman) biar selalu ikut role currentUser yang lagi
+    // login.
+    const bolehProgramLain = currentUser && ["SUPERADMIN", "ADMIN"].indexOf(currentUser.role) !== -1;
+    ["inputBasoShortcutBtn", "inputBadikShortcutBtn", "inputBatanShortcutBtn"].forEach(function (id) {
+      const btn = document.getElementById(id);
+      if (btn) btn.style.display = bolehProgramLain ? "flex" : "none";
+    });
     sheet.classList.add('open');
   }
+}
+
+// 🩹 FIX: jalan pintas dari sheet "Input Data" (tombol tengah) langsung ke
+// form "Tambah Bantuan" (BASO/BADIK/BATAN) yang sudah ada di halaman
+// Program Lainnya -- gak perlu lagi navigasi manual lewat Beranda > panel
+// program > baru ketemu tombolnya. Backend (simpanBantuanProgramLain dkk.)
+// tetap yang jadi penegak akses SEBENARNYA; ini cuma jalan pintas UI.
+function pintasTambahBantuanProgramLain(key) {
+  toggleInputSheet();
+  programLainAktif = key;
+  bukaTambahBantuanProgramLain();
 }
 
 // ============================================================
@@ -10159,6 +10233,18 @@ function renderRekapProgramLain(data) {
       </div>
     </div>`;
 
+  // 🩹 FIX: info Total Biaya Operasional -- KHUSUS BASO & cuma tampil kalau
+  // ada isinya (>0). SENGAJA di kartu terpisah & lebih kecil/muted, biar
+  // jelas beda dari "Total Bantuan" di atas dan gak ketuker jadi bagian
+  // dari nilai bantuan yang tersalurkan ke penerima.
+  if (programLainAktif === "baso" && data.totalBiayaOperasional > 0) {
+    html += `
+    <div style="background: rgba(255,255,255,0.04); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; border: 1px dashed var(--glass-border); display:flex; align-items:center; justify-content:space-between; gap: 10px;">
+      <div style="font-size: 10.5px; color: var(--text-muted);">Total Biaya Operasional bulan ini (di luar Total Bantuan)</div>
+      <div style="font-size: 12.5px; font-weight:700; color: var(--text-secondary); white-space:nowrap;">${formatRupiahHub(data.totalBiayaOperasional)}</div>
+    </div>`;
+  }
+
   if (bisaEdit) {
     html += `
     <button onclick="bukaTambahBantuanProgramLain()" style="width:100%; display:flex; align-items:center; justify-content:center; gap: 8px; padding: 12px; border-radius: 14px; background: ${meta.warna}; border:none; color:#fff; font-size:12.5px; font-weight:700; cursor:pointer; margin-bottom: 16px; font-family:inherit;">
@@ -10176,6 +10262,7 @@ function renderRekapProgramLain(data) {
           <div style="font-size:12.5px; font-weight:700; color: var(--text-primary);">${escapeHtmlHub(b.jenisBantuan)}</div>
           <div style="font-size:11px; color: var(--text-secondary); margin-top:2px;">${escapeHtmlHub(b.penerima)}${data.global ? " &middot; " + escapeHtmlHub(b.wilayah) : ""}</div>
           ${b.keterangan ? `<div style="font-size:10px; color: var(--text-muted); margin-top:2px;">${escapeHtmlHub(b.keterangan)}</div>` : ""}
+          ${b.biayaOperasional > 0 ? `<div style="font-size:10px; color: var(--text-muted); margin-top:2px;">Biaya operasional: ${formatRupiahHub(b.biayaOperasional)}</div>` : ""}
         </div>
         <div style="text-align:right;">
           <div style="font-size:12.5px; font-weight:700; color: var(--text-primary); white-space:nowrap;">${formatRupiahHub(b.nilai)}</div>
@@ -10293,6 +10380,11 @@ function bukaTambahBantuanProgramLain() {
   document.getElementById("programLainAddFotoInput").value = "";
   document.getElementById("programLainAddFotoNama").textContent = "Ketuk buat pilih foto (maks 10MB)";
 
+  // 🩹 FIX: field "Biaya Operasional" cuma buat BASO (lihat
+  // getOrCreateSheetLogBantuanProgramLain_ di backend).
+  document.getElementById("programLainAddBiayaOps").value = "";
+  document.getElementById("programLainAddBiayaOpsWrap").style.display = (programLainAktif === "baso") ? "block" : "none";
+
   const selJenis = document.getElementById("programLainAddJenis");
   selJenis.innerHTML = meta.jenisOpsi.map(function (j) {
     return `<option value="${escapeHtmlHub(j)}"${j === "Lainnya" ? ' data-lainnya="1"' : ""}>${escapeHtmlHub(j)}${j === "Lainnya" ? "..." : ""}</option>`;
@@ -10337,6 +10429,9 @@ function submitTambahBantuanProgramLain() {
   const isLainnya = optJenis && optJenis.getAttribute("data-lainnya") === "1";
   const jenisBantuan = isLainnya ? document.getElementById("programLainAddJenisLainnya").value.trim() : selJenis.value;
   const nilai = document.getElementById("programLainAddNilai").value;
+  // 🩹 FIX: cuma relevan buat BASO -- di luar BASO field-nya disembunyikan
+  // & selalu kosong, jadi biayaOps otomatis 0.
+  const biayaOps = document.getElementById("programLainAddBiayaOps").value;
   const keterangan = document.getElementById("programLainAddKeterangan").value.trim();
   const fotoTerpilih = programLainAddFotoTerpilih;
 
@@ -10350,7 +10445,7 @@ function submitTambahBantuanProgramLain() {
 
   const programSaatIni = programLainAktif;
   const namaFungsi = "tambahBantuan" + capitalizeFirst_(programSaatIni);
-  callGASWithRetry_(namaFungsi, [authToken, tanggal, wilayah, penerima, jenisBantuan, Number(nilai), keterangan])
+  callGASWithRetry_(namaFungsi, [authToken, tanggal, wilayah, penerima, jenisBantuan, Number(nilai), keterangan, Number(biayaOps) || 0])
     .then(function (res) {
       tutupTambahBantuanProgramLain();
       programLainMuatSesuaiMode_();
