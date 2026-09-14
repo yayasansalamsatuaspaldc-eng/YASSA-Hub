@@ -3406,12 +3406,42 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
       <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Keterangan (opsional)</label>
       <input type="text" id="programLainAddKeterangan" placeholder="Catatan tambahan" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit;">
 
-      <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Foto Dokumentasi (opsional)</label>
-      <div onclick="bukaFotoSumber('programLainAddFotoInput')" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px dashed var(--glass-border); color: var(--text-secondary); font-size:11px; margin: 6px 0 16px; cursor:pointer; display:flex; align-items:center; gap:8px;">
-        <span class="material-symbols-outlined" style="font-size:18px; flex-shrink:0;">add_a_photo</span>
-        <span id="programLainAddFotoNama">Ketuk buat pilih foto (maks 10MB)</span>
+      <!-- 🩹 FIX: field foto generik ini KHUSUS BADIK/BATAN sekarang --
+           BASO pakai 2 slot terpisah di bawah. Dibungkus wrap id biar
+           bisa disembunyikan/ditampilkan lewat JS di
+           bukaTambahBantuanProgramLain(). -->
+      <div id="programLainAddFotoWrap">
+        <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Foto Dokumentasi (opsional)</label>
+        <div onclick="bukaFotoSumber('programLainAddFotoInput')" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px dashed var(--glass-border); color: var(--text-secondary); font-size:11px; margin: 6px 0 16px; cursor:pointer; display:flex; align-items:center; gap:8px;">
+          <span class="material-symbols-outlined" style="font-size:18px; flex-shrink:0;">add_a_photo</span>
+          <span id="programLainAddFotoNama">Ketuk buat pilih foto (maks 10MB)</span>
+        </div>
+        <input type="file" id="programLainAddFotoInput" accept="image/*" style="display:none;" onchange="programLainAddFotoPicked(this)">
       </div>
-      <input type="file" id="programLainAddFotoInput" accept="image/*" style="display:none;" onchange="programLainAddFotoPicked(this)">
+
+      <!-- 🩹 FIX: 2 slot foto TERPISAH khusus BASO -- "Nota" (struk/bukti
+           transfer) & "Bukti Penyaluran" (bukti bantuan sampai ke
+           penerima), masing-masing ke folder Drive sendiri yang dikasih
+           Herudin. Wrap disembunyikan default, ditampilkan hanya kalau
+           programLainAktif === "baso" (lihat
+           bukaTambahBantuanProgramLain()). -->
+      <div id="programLainAddFotoNotaWrap" style="display:none;">
+        <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Foto Nota/Struk Transfer (opsional)</label>
+        <div onclick="bukaFotoSumber('programLainAddFotoNotaInput')" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px dashed var(--glass-border); color: var(--text-secondary); font-size:11px; margin: 6px 0 16px; cursor:pointer; display:flex; align-items:center; gap:8px;">
+          <span class="material-symbols-outlined" style="font-size:18px; flex-shrink:0;">receipt_long</span>
+          <span id="programLainAddFotoNotaNama">Ketuk buat pilih foto (maks 10MB)</span>
+        </div>
+        <input type="file" id="programLainAddFotoNotaInput" accept="image/*" style="display:none;" onchange="programLainAddFotoPicked(this, 'nota')">
+      </div>
+
+      <div id="programLainAddFotoBuktiWrap" style="display:none;">
+        <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Foto Bukti Penyaluran (opsional)</label>
+        <div onclick="bukaFotoSumber('programLainAddFotoBuktiInput')" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px dashed var(--glass-border); color: var(--text-secondary); font-size:11px; margin: 6px 0 16px; cursor:pointer; display:flex; align-items:center; gap:8px;">
+          <span class="material-symbols-outlined" style="font-size:18px; flex-shrink:0;">volunteer_activism</span>
+          <span id="programLainAddFotoBuktiNama">Ketuk buat pilih foto (maks 10MB)</span>
+        </div>
+        <input type="file" id="programLainAddFotoBuktiInput" accept="image/*" style="display:none;" onchange="programLainAddFotoPicked(this, 'bukti')">
+      </div>
 
       <div class="custom-modal-actions">
         <button type="button" class="btn-modal btn-cancel" onclick="tutupTambahBantuanProgramLain()">Batal</button>
@@ -10031,8 +10061,8 @@ function fotoSumberPilih(sumber) {
   input.click();
 }
 
-function fotoBantuanUploadClick(programKey, id, reload) {
-  fotoBantuanTarget = { programKey: programKey, id: id, reload: reload };
+function fotoBantuanUploadClick(programKey, id, reload, jenisFoto) {
+  fotoBantuanTarget = { programKey: programKey, id: id, reload: reload, jenisFoto: jenisFoto };
   bukaFotoSumber("fotoBantuanInput");
 }
 
@@ -10050,7 +10080,11 @@ function fotoBantuanDipilih(input) {
     input.value = "";
     return;
   }
-  const namaFungsi = "uploadFotoBantuan" + capitalizeFirst_(target.programKey);
+  // 🩹 FIX: slot Nota/Bukti Penyaluran khusus BASO pakai fungsi backend
+  // sendiri (lihat uploadFotoJikaAda_ -- pola sama).
+  const namaFungsi = target.jenisFoto === "nota" ? "uploadFotoNotaBaso"
+    : target.jenisFoto === "bukti" ? "uploadFotoBuktiPenyaluranBaso"
+    : "uploadFotoBantuan" + capitalizeFirst_(target.programKey);
   const reader = new FileReader();
   reader.onload = function (e) {
     const base64Data = e.target.result.split(",")[1];
@@ -10091,13 +10125,18 @@ function validasiFotoTerpilih_(input) {
 // baris `id` yang baru saja dibuat (dipanggil setelah tambahBantuan.../
 // tambahBantuanPedas sukses, dari form "Tambah Bantuan"). Kalau gak ada
 // file dipilih, langsung resolve(null) -- gak ada apa-apa yang diupload.
-function uploadFotoJikaAda_(programKey, id, file) {
+function uploadFotoJikaAda_(programKey, id, file, jenisFoto) {
   if (!file || !id) return Promise.resolve(null);
   return new Promise(function (resolve, reject) {
     const reader = new FileReader();
     reader.onload = function (e) {
       const base64Data = e.target.result.split(",")[1];
-      const namaFungsi = "uploadFotoBantuan" + capitalizeFirst_(programKey);
+      // 🩹 FIX: slot Nota/Bukti Penyaluran khusus BASO pakai fungsi
+      // backend sendiri (folder & kolom sheet berbeda) -- lihat
+      // uploadFotoBantuan_/uploadFotoNotaBaso/uploadFotoBuktiPenyaluranBaso.
+      const namaFungsi = jenisFoto === "nota" ? "uploadFotoNotaBaso"
+        : jenisFoto === "bukti" ? "uploadFotoBuktiPenyaluranBaso"
+        : "uploadFotoBantuan" + capitalizeFirst_(programKey);
       callGASWithRetry_(namaFungsi, [authToken, id, base64Data, file.type, file.name], { timeoutMs: 60000, maxAttempts: 1 })
         .then(resolve).catch(reject);
     };
@@ -10266,8 +10305,20 @@ function renderRekapProgramLain(data) {
         </div>
         <div style="text-align:right;">
           <div style="font-size:12.5px; font-weight:700; color: var(--text-primary); white-space:nowrap;">${formatRupiahHub(b.nilai)}</div>
+          ${programLainAktif === "baso" ? `
+          <!-- 🩹 FIX: BASO pakai 2 slot foto terpisah (Nota & Bukti
+               Penyaluran) -- BUKAN 1 link generik kayak BADIK/BATAN di
+               bawah. linkFoto (generik) lama tetap ditampilkan kalau ada
+               isinya, buat kompatibilitas data lama sebelum fitur ini. -->
+          ${b.linkFoto ? `<a href="${escapeHtmlHub(b.linkFoto)}" target="_blank" rel="noopener" style="margin-top:6px; text-decoration:none; color:#93C5FD; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px;"><span class="material-symbols-outlined" style="font-size:14px;">photo</span> Lihat Foto (Lama)</a>` : ""}
+          ${b.linkFotoNota ? `<a href="${escapeHtmlHub(b.linkFotoNota)}" target="_blank" rel="noopener" style="margin-top:6px; text-decoration:none; color:#93C5FD; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px;"><span class="material-symbols-outlined" style="font-size:14px;">receipt_long</span> Lihat Nota</a>` : ""}
+          ${(bisaEdit && b.editable) ? `<button onclick="fotoBantuanUploadClick('baso', '${b.id}', loadRekapProgramLain, 'nota')" style="margin-top:6px; background:transparent; border:none; color:#67E8F9; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px; font-family:inherit; width:100%;"><span class="material-symbols-outlined" style="font-size:14px;">add_a_photo</span> ${b.linkFotoNota ? "Ganti Nota" : "Upload Nota"}</button>` : ""}
+          ${b.linkFotoBuktiPenyaluran ? `<a href="${escapeHtmlHub(b.linkFotoBuktiPenyaluran)}" target="_blank" rel="noopener" style="margin-top:6px; text-decoration:none; color:#93C5FD; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px;"><span class="material-symbols-outlined" style="font-size:14px;">volunteer_activism</span> Lihat Bukti Penyaluran</a>` : ""}
+          ${(bisaEdit && b.editable) ? `<button onclick="fotoBantuanUploadClick('baso', '${b.id}', loadRekapProgramLain, 'bukti')" style="margin-top:6px; background:transparent; border:none; color:#67E8F9; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px; font-family:inherit; width:100%;"><span class="material-symbols-outlined" style="font-size:14px;">add_a_photo</span> ${b.linkFotoBuktiPenyaluran ? "Ganti Bukti Penyaluran" : "Upload Bukti Penyaluran"}</button>` : ""}
+          ` : `
           ${b.linkFoto ? `<a href="${escapeHtmlHub(b.linkFoto)}" target="_blank" rel="noopener" style="margin-top:6px; text-decoration:none; color:#93C5FD; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px;"><span class="material-symbols-outlined" style="font-size:14px;">photo</span> Lihat Foto</a>` : ""}
           ${(bisaEdit && b.editable) ? `<button onclick="fotoBantuanUploadClick('${programLainAktif}', '${b.id}', loadRekapProgramLain)" style="margin-top:6px; background:transparent; border:none; color:#67E8F9; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px; font-family:inherit; width:100%;"><span class="material-symbols-outlined" style="font-size:14px;">add_a_photo</span> ${b.linkFoto ? "Ganti Foto" : "Upload Foto"}</button>` : ""}
+          `}
           ${(bisaEdit && b.editable) ? `<button onclick="hapusBantuanProgramLainClick('${b.id}')" style="margin-top:6px; background:transparent; border:none; color:#FCA5A5; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px; font-family:inherit; width:100%;"><span class="material-symbols-outlined" style="font-size:14px;">delete</span> Hapus</button>` : ""}
         </div>
       </div>`;
@@ -10380,10 +10431,23 @@ function bukaTambahBantuanProgramLain() {
   document.getElementById("programLainAddFotoInput").value = "";
   document.getElementById("programLainAddFotoNama").textContent = "Ketuk buat pilih foto (maks 10MB)";
 
+  // 🩹 FIX: reset + toggle slot foto -- BASO pakai 2 slot terpisah (Nota &
+  // Bukti Penyaluran), BADIK/BATAN tetap pakai 1 slot generik di atas.
+  const isBaso = (programLainAktif === "baso");
+  document.getElementById("programLainAddFotoWrap").style.display = isBaso ? "none" : "block";
+  document.getElementById("programLainAddFotoNotaWrap").style.display = isBaso ? "block" : "none";
+  document.getElementById("programLainAddFotoBuktiWrap").style.display = isBaso ? "block" : "none";
+  programLainAddFotoNotaTerpilih = null;
+  document.getElementById("programLainAddFotoNotaInput").value = "";
+  document.getElementById("programLainAddFotoNotaNama").textContent = "Ketuk buat pilih foto (maks 10MB)";
+  programLainAddFotoBuktiTerpilih = null;
+  document.getElementById("programLainAddFotoBuktiInput").value = "";
+  document.getElementById("programLainAddFotoBuktiNama").textContent = "Ketuk buat pilih foto (maks 10MB)";
+
   // 🩹 FIX: field "Biaya Operasional" cuma buat BASO (lihat
   // getOrCreateSheetLogBantuanProgramLain_ di backend).
   document.getElementById("programLainAddBiayaOps").value = "";
-  document.getElementById("programLainAddBiayaOpsWrap").style.display = (programLainAktif === "baso") ? "block" : "none";
+  document.getElementById("programLainAddBiayaOpsWrap").style.display = isBaso ? "block" : "none";
 
   const selJenis = document.getElementById("programLainAddJenis");
   selJenis.innerHTML = meta.jenisOpsi.map(function (j) {
@@ -10414,10 +10478,20 @@ function programLainToggleJenisLainnya() {
 }
 
 let programLainAddFotoTerpilih = null;
-function programLainAddFotoPicked(input) {
+// 🩹 FIX: 2 variabel tambahan buat slot foto khusus BASO (Nota & Bukti
+// Penyaluran) -- TERPISAH dari programLainAddFotoTerpilih generik di atas
+// (yang sekarang cuma dipakai BADIK/BATAN).
+let programLainAddFotoNotaTerpilih = null;
+let programLainAddFotoBuktiTerpilih = null;
+function programLainAddFotoPicked(input, slot) {
   const file = validasiFotoTerpilih_(input);
-  programLainAddFotoTerpilih = file;
-  document.getElementById("programLainAddFotoNama").textContent = file ? file.name : "Ketuk buat pilih foto (maks 10MB)";
+  const namaElId = slot === "nota" ? "programLainAddFotoNotaNama"
+    : slot === "bukti" ? "programLainAddFotoBuktiNama"
+    : "programLainAddFotoNama";
+  if (slot === "nota") programLainAddFotoNotaTerpilih = file;
+  else if (slot === "bukti") programLainAddFotoBuktiTerpilih = file;
+  else programLainAddFotoTerpilih = file;
+  document.getElementById(namaElId).textContent = file ? file.name : "Ketuk buat pilih foto (maks 10MB)";
 }
 
 function submitTambahBantuanProgramLain() {
@@ -10434,6 +10508,10 @@ function submitTambahBantuanProgramLain() {
   const biayaOps = document.getElementById("programLainAddBiayaOps").value;
   const keterangan = document.getElementById("programLainAddKeterangan").value.trim();
   const fotoTerpilih = programLainAddFotoTerpilih;
+  // 🩹 FIX: khusus BASO -- 2 slot foto terpisah (bukan pakai fotoTerpilih
+  // generik di atas, yang di form BASO memang disembunyikan/kosong).
+  const fotoNotaTerpilih = programLainAddFotoNotaTerpilih;
+  const fotoBuktiTerpilih = programLainAddFotoBuktiTerpilih;
 
   if (!wilayah) { showModal("Gagal", "Pilih wilayah dulu."); return; }
   if (!penerima) { showModal("Gagal", "Nama penerima wajib diisi."); return; }
@@ -10449,16 +10527,45 @@ function submitTambahBantuanProgramLain() {
     .then(function (res) {
       tutupTambahBantuanProgramLain();
       programLainMuatSesuaiMode_();
-      if (fotoTerpilih && res && res.id) {
-        uploadFotoJikaAda_(programSaatIni, res.id, fotoTerpilih)
-          .then(function (resFoto) {
-            if (resFoto && resFoto.peringatan) showModal("Foto Terupload", resFoto.peringatan);
-            if (programLainAktif === programSaatIni) programLainMuatSesuaiMode_();
-          })
-          .catch(function (errFoto) {
-            showModal("Data Tersimpan, Foto Gagal", "Data bantuan berhasil disimpan, tapi upload foto gagal: " +
-              errFoto.message + ". Anda bisa upload ulang lewat tombol \"Upload Foto\" di baris data ini.");
-          });
+      // 🩹 FIX: khusus BASO, upload Nota & Bukti Penyaluran SECARA
+      // TERPISAH (2 panggilan independen -- kalau satu gagal, yang lain
+      // tetap lanjut, gak saling blokir). Di luar BASO, tetap alur lama
+      // (1 foto generik).
+      if (res && res.id) {
+        if (programSaatIni === "baso") {
+          if (fotoNotaTerpilih) {
+            uploadFotoJikaAda_(programSaatIni, res.id, fotoNotaTerpilih, "nota")
+              .then(function (resFoto) {
+                if (resFoto && resFoto.peringatan) showModal("Foto Nota Terupload", resFoto.peringatan);
+                if (programLainAktif === programSaatIni) programLainMuatSesuaiMode_();
+              })
+              .catch(function (errFoto) {
+                showModal("Data Tersimpan, Foto Nota Gagal", "Data bantuan berhasil disimpan, tapi upload foto Nota gagal: " +
+                  errFoto.message + ". Anda bisa upload ulang lewat tombol \"Upload Foto\" di baris data ini.");
+              });
+          }
+          if (fotoBuktiTerpilih) {
+            uploadFotoJikaAda_(programSaatIni, res.id, fotoBuktiTerpilih, "bukti")
+              .then(function (resFoto) {
+                if (resFoto && resFoto.peringatan) showModal("Foto Bukti Penyaluran Terupload", resFoto.peringatan);
+                if (programLainAktif === programSaatIni) programLainMuatSesuaiMode_();
+              })
+              .catch(function (errFoto) {
+                showModal("Data Tersimpan, Foto Bukti Penyaluran Gagal", "Data bantuan berhasil disimpan, tapi upload foto Bukti Penyaluran gagal: " +
+                  errFoto.message + ". Anda bisa upload ulang lewat tombol \"Upload Foto\" di baris data ini.");
+              });
+          }
+        } else if (fotoTerpilih) {
+          uploadFotoJikaAda_(programSaatIni, res.id, fotoTerpilih)
+            .then(function (resFoto) {
+              if (resFoto && resFoto.peringatan) showModal("Foto Terupload", resFoto.peringatan);
+              if (programLainAktif === programSaatIni) programLainMuatSesuaiMode_();
+            })
+            .catch(function (errFoto) {
+              showModal("Data Tersimpan, Foto Gagal", "Data bantuan berhasil disimpan, tapi upload foto gagal: " +
+                errFoto.message + ". Anda bisa upload ulang lewat tombol \"Upload Foto\" di baris data ini.");
+            });
+        }
       }
     })
     .catch(function (err) { showModal("Gagal", err.message); })
