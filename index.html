@@ -4497,13 +4497,11 @@ function callGAS(action, args) {
 // ============================================================
 function callGASWithRetry_(action, args, opts) {
   const maxAttempts = (opts && opts.maxAttempts) || 3;
-  // 🩹 FIX: eksekusi doPost di server kadang makan waktu ~8 detik (belum
-  // termasuk latensi jaringan naik-turunnya) -- timeout lama (8000ms) jadi
-  // KEPOTONG PERSIS di batasnya, bikin app ngira "koneksi lambat" & retry
-  // terus-terusan padahal server-nya sebenernya lagi ngerjain, cuma agak
-  // lambat. Dinaikkan ke 15 detik biar request yang genuinely masih jalan
-  // (bukan macet) dikasih waktu selesai dulu sebelum dianggap gagal.
-  const timeoutMs = (opts && opts.timeoutMs) || 15000;
+  // 🩹 FIX: eksekusi doPost di server kadang makan waktu ~8-15 detik saat
+  // cold start (belum termasuk latensi jaringan naik-turunnya).
+  // Default timeout dinaikkan ke 20 detik agar request yang masih berjalan
+  // tidak keburu dianggap timeout dan memicu retry 1/3 yang tidak perlu.
+  const timeoutMs = (opts && opts.timeoutMs) || 20000;
   const delayMs = (opts && opts.delayMs) || 1200;
   const onRetry = (opts && opts.onRetry) || function () {};
   // 🚀 targetUrl: dulu SELALU GAS_AUTH_URL (file GOPAY yang gede). Sekarang
@@ -6773,34 +6771,11 @@ function loadKeuanganStats() {
     });
 }
 
-// 🩹 FIX: Cache kartu "Dedikasi" (Kehadiran & Pencapaian Donasi) di tab
-// Profil -- SAMA POLA seperti keuanganStatsCache/rekapTersalurCache di
-// atas. SEBELUMNYA kartu ini gak punya cache sama sekali, jadi tiap kali
-// tab Profil dibuka (mis. pindah ke tab lain lalu balik lagi ke Profil),
-// angkanya kembali ke "..." / "Memuat data..." dan nge-fetch ulang ke
-// server dari nol -- padahal kartu-kartu lain (Keuangan, dll) udah instan
-// dari cache. Disimpan di localStorage biar juga bertahan lintas
-// sesi/refresh halaman. Key-nya per authToken, biar kalau ganti akun di
-// device yang sama gak ketuker nampilin data akun lain.
-let profilPerformaCache = (function () {
-  try {
-    const cached = localStorage.getItem("yassa_hub_profil_performa_cache");
-    if (cached) return JSON.parse(cached);
-  } catch (e) {}
-  return {};
-})();
-
-function saveProfilPerformaCacheHub() {
-  try {
-    localStorage.setItem("yassa_hub_profil_performa_cache", JSON.stringify(profilPerformaCache));
-  } catch (e) {}
-}
-
-function profilPerformaCacheKey_() {
-  return String(authToken || "ANON");
-}
-
-function terapkanProfilPerforma_(hasil) {
+// Ambil & tampilkan 2 metrik Performa di tab Profil: Kehadiran Absen
+// (all-time, dari spreadsheet Absensi terpisah) dan Pencapaian Donasi
+// (bulan ini, angka sama dengan tab Keuangan). Dipanggil tiap kali tab
+// Profil dibuka (lihat renderContent, cabang active === "profil").
+function loadProfilePerforma() {
   const elKehadiranPersen = document.getElementById("profilPerformaKehadiranPersen");
   const elKehadiranBar = document.getElementById("profilPerformaKehadiranBar");
   const elKehadiranKet = document.getElementById("profilPerformaKehadiranKeterangan");
@@ -6808,63 +6783,36 @@ function terapkanProfilPerforma_(hasil) {
   const elDonasiBar = document.getElementById("profilPerformaDonasiBar");
   const elDonasiKet = document.getElementById("profilPerformaDonasiKeterangan");
 
-  const kehadiran = (hasil && hasil.kehadiran) || {};
-  const donasi = (hasil && hasil.donasi) || {};
-
-  // --- Kehadiran Absen ---
-  const persenHadir = Math.max(0, Number(kehadiran.persenKehadiran || 0));
-  if (elKehadiranPersen) animateCountValue_(elKehadiranPersen, persenHadir, "%");
-  if (elKehadiranBar) elKehadiranBar.style.width = persenHadir + "%";
-  if (elKehadiranKet) {
-    elKehadiranKet.textContent = Number(kehadiran.totalKegiatan || 0) > 0
-      ? "Hadir " + Number(kehadiran.jumlahHadir || 0) + " dari " + Number(kehadiran.totalKegiatan || 0) + " pertemuan (Jan\u2013bulan ini)"
-      : "Belum ada data kegiatan tahun ini";
-  }
-
-  // --- Pencapaian Donasi ---
-  const persenDonasi = Math.max(0, Number(donasi.persenTercapai || 0));
-  if (!donasi.ditemukan) {
-    if (elDonasiPersen) { elDonasiPersen.removeAttribute("data-raw-value"); elDonasiPersen.textContent = "-"; }
-    if (elDonasiBar) elDonasiBar.style.width = "0%";
-    if (elDonasiKet) elDonasiKet.textContent = "Belum ada data yang diisi Bendahara tahun ini";
-  } else {
-    if (elDonasiPersen) animateCountValue_(elDonasiPersen, persenDonasi, "%");
-    if (elDonasiBar) elDonasiBar.style.width = persenDonasi + "%";
-    if (elDonasiKet) {
-      elDonasiKet.textContent = formatRupiahHub(donasi.realisasiDonasi || 0) + " / " + formatRupiahHub(donasi.kebutuhanDonasi || 0) + " (Jan\u2013bulan ini)";
-    }
-  }
-}
-
-// Ambil & tampilkan 2 metrik Performa di tab Profil: Kehadiran Absen
-// (all-time, dari spreadsheet Absensi terpisah) dan Pencapaian Donasi
-// (bulan ini, angka sama dengan tab Keuangan). Dipanggil tiap kali tab
-// Profil dibuka (lihat renderContent, cabang active === "profil").
-function loadProfilePerforma() {
-  const cacheKey = profilPerformaCacheKey_();
-
-  // 🩹 FIX: kalau data ini udah pernah sukses ke-fetch sebelumnya (sesi ini
-  // atau sesi lalu, lewat localStorage), langsung tampilin dari cache
-  // duluan -- instan, gak lagi keliatan "Memuat data..." tiap pindah-pindah
-  // tab. Tetap lanjut fetch ke server di background biar datanya update.
-  const dariCache = !!profilPerformaCache[cacheKey];
-  if (dariCache) {
-    terapkanProfilPerforma_(profilPerformaCache[cacheKey]);
-  }
-
   callGASWithRetry_("getPerformaProfil", [authToken])
     .then(function (hasil) {
-      profilPerformaCache[cacheKey] = hasil;
-      saveProfilPerformaCacheHub(); // <-- SIMPAN KE OFFLINE CACHE
-      terapkanProfilPerforma_(hasil);
+      const kehadiran = (hasil && hasil.kehadiran) || {};
+      const donasi = (hasil && hasil.donasi) || {};
+
+      // --- Kehadiran Absen ---
+      const persenHadir = Math.max(0, Number(kehadiran.persenKehadiran || 0));
+      if (elKehadiranPersen) animateCountValue_(elKehadiranPersen, persenHadir, "%");
+      if (elKehadiranBar) elKehadiranBar.style.width = persenHadir + "%";
+      if (elKehadiranKet) {
+        elKehadiranKet.textContent = Number(kehadiran.totalKegiatan || 0) > 0
+          ? "Hadir " + Number(kehadiran.jumlahHadir || 0) + " dari " + Number(kehadiran.totalKegiatan || 0) + " pertemuan (Jan\u2013bulan ini)"
+          : "Belum ada data kegiatan tahun ini";
+      }
+
+      // --- Pencapaian Donasi ---
+      const persenDonasi = Math.max(0, Number(donasi.persenTercapai || 0));
+      if (!donasi.ditemukan) {
+        if (elDonasiPersen) { elDonasiPersen.removeAttribute("data-raw-value"); elDonasiPersen.textContent = "-"; }
+        if (elDonasiBar) elDonasiBar.style.width = "0%";
+        if (elDonasiKet) elDonasiKet.textContent = "Belum ada data yang diisi Bendahara tahun ini";
+      } else {
+        if (elDonasiPersen) animateCountValue_(elDonasiPersen, persenDonasi, "%");
+        if (elDonasiBar) elDonasiBar.style.width = persenDonasi + "%";
+        if (elDonasiKet) {
+          elDonasiKet.textContent = formatRupiahHub(donasi.realisasiDonasi || 0) + " / " + formatRupiahHub(donasi.kebutuhanDonasi || 0) + " (Jan\u2013bulan ini)";
+        }
+      }
     })
     .catch(function () {
-      // Kalau fetch gagal TAPI sebelumnya udah ada cache yang sukses,
-      // biarin angka lama itu tetap tampil (lebih baik daripada direset
-      // ke "..." cuma gara-gara 1x gangguan jaringan).
-      if (dariCache) return;
-      const elKehadiranKet = document.getElementById("profilPerformaKehadiranKeterangan");
-      const elDonasiKet = document.getElementById("profilPerformaDonasiKeterangan");
       if (elKehadiranKet) elKehadiranKet.textContent = "Gagal memuat data kehadiran.";
       if (elDonasiKet) elDonasiKet.textContent = "Gagal memuat data donasi.";
     });
@@ -8801,7 +8749,7 @@ function loadLaporanBulananList(tahun) {
     </div>`;
 
   callGASWithRetry_("getLaporanBulananList", [authToken, tahun], {
-    timeoutMs: 12000,
+    timeoutMs: 25000,
     onRetry: function (attempt, maxAttempts) {
       const teksEl = document.getElementById("laporanBulananLoadingText");
       if (teksEl) teksEl.textContent = "Koneksi lambat, mencoba lagi... (" + attempt + "/" + maxAttempts + ")";
@@ -8994,7 +8942,7 @@ function toggleLaporanBulananDetail(bulan, tahun) {
   wrap.innerHTML = `<div style="padding: 16px 0; text-align:center; color: var(--text-secondary); font-size: 11.5px;"><span class="material-symbols-outlined spin" style="font-size: 15px; vertical-align: middle;">progress_activity</span> <span id="laporanDetailLoadingText-${key}">Membuka berkah bulan ini...</span></div>`;
 
   callGASWithRetry_("getLaporanBulananDetail", [authToken, bulan, tahun], {
-    timeoutMs: 12000,
+    timeoutMs: 25000,
     onRetry: function (attempt, maxAttempts) {
       const teksEl = document.getElementById("laporanDetailLoadingText-" + key);
       if (teksEl) teksEl.textContent = "Koneksi lambat, mencoba lagi... (" + attempt + "/" + maxAttempts + ")";
@@ -10656,7 +10604,7 @@ function loadLaporanBulananListSapa(tahun) {
     </div>`;
 
   callGASWithRetry_("getLaporanBulananListSapa", [authToken, tahun], {
-    timeoutMs: 12000,
+    timeoutMs: 25000,
     onRetry: function (attempt, maxAttempts) {
       const teksEl = document.getElementById("laporanBulananSapaLoadingText");
       if (teksEl) teksEl.textContent = "Koneksi lambat, mencoba lagi... (" + attempt + "/" + maxAttempts + ")";
@@ -10777,7 +10725,7 @@ function toggleLaporanBulananDetailSapa(bulan, tahun) {
   wrap.innerHTML = `<div style="padding: 16px 0; text-align:center; color: var(--text-secondary); font-size: 11.5px;"><span class="material-symbols-outlined spin" style="font-size: 15px; vertical-align: middle;">progress_activity</span> <span id="laporanDetailSapaLoadingText-${key}">Membuka berkah bulan ini...</span></div>`;
 
   callGASWithRetry_("getLaporanBulananDetailSapa", [authToken, bulan, tahun], {
-    timeoutMs: 12000,
+    timeoutMs: 25000,
     onRetry: function (attempt, maxAttempts) {
       const teksEl = document.getElementById("laporanDetailSapaLoadingText-" + key);
       if (teksEl) teksEl.textContent = "Koneksi lambat, mencoba lagi... (" + attempt + "/" + maxAttempts + ")";
@@ -14044,8 +13992,8 @@ function bukaMobileDenganSso_(baseTabUrl) {
   callGASWithRetry_("generateSsoToken", [authToken], {
     targetUrl: GAS_SSO_URL,
     maxAttempts: 3,
-    timeoutMs: 8000,
-    delayMs: 1200,
+    timeoutMs: 18000,
+    delayMs: 1500,
     onRetry: function (attempt, maxAttempts) {
       // Kasih tau user kalau lagi nyoba ulang (bukan cuma diem),
       // biar jelas ini masih proses, bukan macet.
