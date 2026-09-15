@@ -6773,11 +6773,34 @@ function loadKeuanganStats() {
     });
 }
 
-// Ambil & tampilkan 2 metrik Performa di tab Profil: Kehadiran Absen
-// (all-time, dari spreadsheet Absensi terpisah) dan Pencapaian Donasi
-// (bulan ini, angka sama dengan tab Keuangan). Dipanggil tiap kali tab
-// Profil dibuka (lihat renderContent, cabang active === "profil").
-function loadProfilePerforma() {
+// 🩹 FIX: Cache kartu "Dedikasi" (Kehadiran & Pencapaian Donasi) di tab
+// Profil -- SAMA POLA seperti keuanganStatsCache/rekapTersalurCache di
+// atas. SEBELUMNYA kartu ini gak punya cache sama sekali, jadi tiap kali
+// tab Profil dibuka (mis. pindah ke tab lain lalu balik lagi ke Profil),
+// angkanya kembali ke "..." / "Memuat data..." dan nge-fetch ulang ke
+// server dari nol -- padahal kartu-kartu lain (Keuangan, dll) udah instan
+// dari cache. Disimpan di localStorage biar juga bertahan lintas
+// sesi/refresh halaman. Key-nya per authToken, biar kalau ganti akun di
+// device yang sama gak ketuker nampilin data akun lain.
+let profilPerformaCache = (function () {
+  try {
+    const cached = localStorage.getItem("yassa_hub_profil_performa_cache");
+    if (cached) return JSON.parse(cached);
+  } catch (e) {}
+  return {};
+})();
+
+function saveProfilPerformaCacheHub() {
+  try {
+    localStorage.setItem("yassa_hub_profil_performa_cache", JSON.stringify(profilPerformaCache));
+  } catch (e) {}
+}
+
+function profilPerformaCacheKey_() {
+  return String(authToken || "ANON");
+}
+
+function terapkanProfilPerforma_(hasil) {
   const elKehadiranPersen = document.getElementById("profilPerformaKehadiranPersen");
   const elKehadiranBar = document.getElementById("profilPerformaKehadiranBar");
   const elKehadiranKet = document.getElementById("profilPerformaKehadiranKeterangan");
@@ -6785,36 +6808,63 @@ function loadProfilePerforma() {
   const elDonasiBar = document.getElementById("profilPerformaDonasiBar");
   const elDonasiKet = document.getElementById("profilPerformaDonasiKeterangan");
 
+  const kehadiran = (hasil && hasil.kehadiran) || {};
+  const donasi = (hasil && hasil.donasi) || {};
+
+  // --- Kehadiran Absen ---
+  const persenHadir = Math.max(0, Number(kehadiran.persenKehadiran || 0));
+  if (elKehadiranPersen) animateCountValue_(elKehadiranPersen, persenHadir, "%");
+  if (elKehadiranBar) elKehadiranBar.style.width = persenHadir + "%";
+  if (elKehadiranKet) {
+    elKehadiranKet.textContent = Number(kehadiran.totalKegiatan || 0) > 0
+      ? "Hadir " + Number(kehadiran.jumlahHadir || 0) + " dari " + Number(kehadiran.totalKegiatan || 0) + " pertemuan (Jan\u2013bulan ini)"
+      : "Belum ada data kegiatan tahun ini";
+  }
+
+  // --- Pencapaian Donasi ---
+  const persenDonasi = Math.max(0, Number(donasi.persenTercapai || 0));
+  if (!donasi.ditemukan) {
+    if (elDonasiPersen) { elDonasiPersen.removeAttribute("data-raw-value"); elDonasiPersen.textContent = "-"; }
+    if (elDonasiBar) elDonasiBar.style.width = "0%";
+    if (elDonasiKet) elDonasiKet.textContent = "Belum ada data yang diisi Bendahara tahun ini";
+  } else {
+    if (elDonasiPersen) animateCountValue_(elDonasiPersen, persenDonasi, "%");
+    if (elDonasiBar) elDonasiBar.style.width = persenDonasi + "%";
+    if (elDonasiKet) {
+      elDonasiKet.textContent = formatRupiahHub(donasi.realisasiDonasi || 0) + " / " + formatRupiahHub(donasi.kebutuhanDonasi || 0) + " (Jan\u2013bulan ini)";
+    }
+  }
+}
+
+// Ambil & tampilkan 2 metrik Performa di tab Profil: Kehadiran Absen
+// (all-time, dari spreadsheet Absensi terpisah) dan Pencapaian Donasi
+// (bulan ini, angka sama dengan tab Keuangan). Dipanggil tiap kali tab
+// Profil dibuka (lihat renderContent, cabang active === "profil").
+function loadProfilePerforma() {
+  const cacheKey = profilPerformaCacheKey_();
+
+  // 🩹 FIX: kalau data ini udah pernah sukses ke-fetch sebelumnya (sesi ini
+  // atau sesi lalu, lewat localStorage), langsung tampilin dari cache
+  // duluan -- instan, gak lagi keliatan "Memuat data..." tiap pindah-pindah
+  // tab. Tetap lanjut fetch ke server di background biar datanya update.
+  const dariCache = !!profilPerformaCache[cacheKey];
+  if (dariCache) {
+    terapkanProfilPerforma_(profilPerformaCache[cacheKey]);
+  }
+
   callGASWithRetry_("getPerformaProfil", [authToken])
     .then(function (hasil) {
-      const kehadiran = (hasil && hasil.kehadiran) || {};
-      const donasi = (hasil && hasil.donasi) || {};
-
-      // --- Kehadiran Absen ---
-      const persenHadir = Math.max(0, Number(kehadiran.persenKehadiran || 0));
-      if (elKehadiranPersen) animateCountValue_(elKehadiranPersen, persenHadir, "%");
-      if (elKehadiranBar) elKehadiranBar.style.width = persenHadir + "%";
-      if (elKehadiranKet) {
-        elKehadiranKet.textContent = Number(kehadiran.totalKegiatan || 0) > 0
-          ? "Hadir " + Number(kehadiran.jumlahHadir || 0) + " dari " + Number(kehadiran.totalKegiatan || 0) + " pertemuan (Jan\u2013bulan ini)"
-          : "Belum ada data kegiatan tahun ini";
-      }
-
-      // --- Pencapaian Donasi ---
-      const persenDonasi = Math.max(0, Number(donasi.persenTercapai || 0));
-      if (!donasi.ditemukan) {
-        if (elDonasiPersen) { elDonasiPersen.removeAttribute("data-raw-value"); elDonasiPersen.textContent = "-"; }
-        if (elDonasiBar) elDonasiBar.style.width = "0%";
-        if (elDonasiKet) elDonasiKet.textContent = "Belum ada data yang diisi Bendahara tahun ini";
-      } else {
-        if (elDonasiPersen) animateCountValue_(elDonasiPersen, persenDonasi, "%");
-        if (elDonasiBar) elDonasiBar.style.width = persenDonasi + "%";
-        if (elDonasiKet) {
-          elDonasiKet.textContent = formatRupiahHub(donasi.realisasiDonasi || 0) + " / " + formatRupiahHub(donasi.kebutuhanDonasi || 0) + " (Jan\u2013bulan ini)";
-        }
-      }
+      profilPerformaCache[cacheKey] = hasil;
+      saveProfilPerformaCacheHub(); // <-- SIMPAN KE OFFLINE CACHE
+      terapkanProfilPerforma_(hasil);
     })
     .catch(function () {
+      // Kalau fetch gagal TAPI sebelumnya udah ada cache yang sukses,
+      // biarin angka lama itu tetap tampil (lebih baik daripada direset
+      // ke "..." cuma gara-gara 1x gangguan jaringan).
+      if (dariCache) return;
+      const elKehadiranKet = document.getElementById("profilPerformaKehadiranKeterangan");
+      const elDonasiKet = document.getElementById("profilPerformaDonasiKeterangan");
       if (elKehadiranKet) elKehadiranKet.textContent = "Gagal memuat data kehadiran.";
       if (elDonasiKet) elDonasiKet.textContent = "Gagal memuat data donasi.";
     });
