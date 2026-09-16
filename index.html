@@ -8364,7 +8364,7 @@ async function aktifkanNotifikasiHub() {
 // Notifikasi masuk selagi tab Hub lagi kebuka (foreground) -- kalau app
 // ditutup/di-background, notifikasi ditangani otomatis oleh sw.js
 // (lihat firebase-messaging-sw bagian yang ditambahkan di sana).
-(function initHubForegroundMessaging_() {
+function initHubForegroundMessaging_() {
   const messaging = getHubMessaging_();
   if (!messaging) return;
   try {
@@ -8380,7 +8380,18 @@ async function aktifkanNotifikasiHub() {
   } catch (e) {
     console.log("[FCM Hub] Gagal pasang onMessage:", e);
   }
-})();
+}
+// 🆕 Dipanggil pas DOMContentLoaded (BUKAN langsung dieksekusi saat baris
+// ini diparsing) -- karena sekarang 2 <script src> Firebase di atas pakai
+// atribut `defer` (biar gak nge-block render halaman), maka global
+// `firebase` BARU DIJAMIN ada tepat sebelum event DOMContentLoaded
+// ditembakkan browser (itu urutan baku script defer). Kalau fungsi ini
+// tetap dipanggil langsung seperti sebelumnya tanpa nunggu
+// DOMContentLoaded, firebase kemungkinan BELUM ke-load sama sekali saat
+// baris ini jalan -- getHubMessaging_() bakal selalu balikin null diam-
+// diam, dan notifikasi foreground (pas tab Hub lagi kebuka) gak akan
+// pernah terpasang sama sekali.
+document.addEventListener("DOMContentLoaded", initHubForegroundMessaging_);
 
 // ============================================================
 // 🔔 Notifikasi YASSA Mobile lewat Hub
