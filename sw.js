@@ -40,7 +40,7 @@ _hubMessaging.onBackgroundMessage(function (payload) {
   });
 });
 
-const CACHE_NAME = "yassa-GOPAY-shell-v10"; // dinaikkan dari v9 -- nambah welcome-popup.js (popup gambar pembuka sekali tampil)
+const CACHE_NAME = "yassa-GOPAY-shell-v11"; // dinaikkan dari v9 -- nambah welcome-popup.js (popup gambar pembuka sekali tampil)
 const SHELL_FILES = [
   "./",
   "./index.html",
