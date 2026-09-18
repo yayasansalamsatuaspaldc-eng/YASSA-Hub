@@ -4773,7 +4773,11 @@ function showApp() {
   // "Lewati dulu", begitu app ditutup & dibuka lagi dari awal, gate ini
   // akan muncul lagi (terus begitu sampai user beneran tekan "Aktifkan
   // Notifikasi" & Allow -> baru status "granted" permanen di localStorage).
-  active = isNotifGateBypassed_() ? "beranda" : "app";
+  // 🆕 GATE 2-LANGKAH: sekarang gate ini mengecek status notifikasi Hub
+  // ATAUPUN Mobile -- kalau salah satu belum kelar (belum granted/di-skip),
+  // gate tetap tampil (lihat percabangan Langkah 1 vs Langkah 2 di
+  // renderContent()). Baru lolos ke Beranda kalau KEDUANYA sudah beres.
+  active = (isHubNotifResolved_() && isNotifGateBypassed_()) ? "beranda" : "app";
   render();
 }
 
@@ -7516,23 +7520,55 @@ function renderContent() {
   }
 
   if (active === "app") {
-    // 🔔 GATE: notifikasi WAJIB diaktifkan dulu sebelum grid 6 app muncul.
-    // Sebelumnya tombol "Aktifkan Notifikasi" cuma nongol di dalam menu
-    // YASSA Mobile (gampang kelewat). Sekarang jadi syarat masuk tab App.
-    // 🩹 FIX: pakai isNotifGateBypassed_() -- "skip" cuma valid untuk sesi
-    // app yang sedang berjalan (sessionStorage), BUKAN permanen. Begitu app
-    // ditutup & dibuka lagi dari awal, gate ini wajib muncul lagi sampai
-    // user beneran menekan "Aktifkan Notifikasi" & Allow.
+    // 🔔 GATE 2-LANGKAH: notifikasi WAJIB diaktifkan dulu sebelum grid 6 app
+    // muncul -- sekarang digabung jadi 1 alur berurutan (dulu tombol
+    // "Aktifkan Notifikasi" Hub cuma ada di tab Profil, terpisah dari gate
+    // Mobile di sini, jadi user gampang kelewat salah satunya). Urutannya:
+    //   Langkah 1: Notifikasi Hub (izin diminta LANGSUNG, gak perlu tab baru
+    //              karena halaman Hub ini sendiri bukan iframe)
+    //   Langkah 2: Notifikasi Mobile (perlu tab baru -- lihat penjelasan di
+    //              openMobileAppForNotif())
+    // Begitu Langkah 1 selesai/dilewati, render() dipanggil ulang dan
+    // otomatis lanjut ke Langkah 2 (lihat aktifkanNotifikasiHub(true)).
+    // 🩹 FIX: pakai isHubNotifResolved_()/isNotifGateBypassed_() -- "skip"
+    // cuma valid untuk sesi app yang sedang berjalan (sessionStorage),
+    // BUKAN permanen. Begitu app ditutup & dibuka lagi dari awal, gate ini
+    // wajib muncul lagi sampai user beneran menekan "Aktifkan Notifikasi"
+    // & Allow di kedua langkah.
+    if (!isHubNotifResolved_()) {
+      el.innerHTML = `
+        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:60px 24px; gap:16px;">
+          <div style="font-size:11px; font-weight:700; letter-spacing:0.5px; color:var(--text-muted); text-transform:uppercase;">Langkah 1 dari 2</div>
+          <div style="width:72px; height:72px; border-radius:50%; background:rgba(11,122,69,0.15); color:#0B7A45; display:flex; align-items:center; justify-content:center;">
+            <span class="material-symbols-outlined" style="font-size:36px;">notifications_active</span>
+          </div>
+          <div>
+            <h2 style="font-weight:700; font-size:17px; margin:0 0 6px;">Aktifkan Notifikasi Hub</h2>
+            <div style="font-size:13px; color:var(--text-secondary); max-width:280px; line-height:1.5;">
+              Supaya kamu langsung dapat info terbaru dari YASSA Hub
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:8px; width:100%;">
+            ${renderHubNotifOnboardingButton_()}
+          </div>
+          <button onclick="sessionStorage.setItem('yassa_hub_notif_skip_session','1'); render();" style="margin-top:4px; background:transparent; border:none; color:var(--text-muted); font-size:12px; text-decoration:underline; cursor:pointer;">
+            Lewati dulu, nanti saja
+          </button>
+        </div>`;
+      return;
+    }
+
     if (!isNotifGateBypassed_()) {
       el.innerHTML = `
         <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:60px 24px; gap:16px;">
+          <div style="font-size:11px; font-weight:700; letter-spacing:0.5px; color:var(--text-muted); text-transform:uppercase;">Langkah 2 dari 2</div>
           <div style="width:72px; height:72px; border-radius:50%; background:rgba(245,158,11,0.15); color:#F59E0B; display:flex; align-items:center; justify-content:center;">
             <span class="material-symbols-outlined" style="font-size:36px;">notifications_active</span>
           </div>
           <div>
-            <h2 style="font-weight:700; font-size:17px; margin:0 0 6px;">Aktifkan Notifikasi Dulu</h2>
+            <h2 style="font-weight:700; font-size:17px; margin:0 0 6px;">Aktifkan Notifikasi Mobile</h2>
             <div style="font-size:13px; color:var(--text-secondary); max-width:280px; line-height:1.5;">
-              Sebelum masuk ke aplikasi, aktifkan Notifikasi untuk mendapatkan info terbaru
+              Supaya kamu juga dapat info terbaru dari YASSA Mobile
             </div>
           </div>
           <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:8px; width:100%;">
@@ -8321,7 +8357,13 @@ function renderNotifHubCard() {
     </div>`;
 }
 
-async function aktifkanNotifikasiHub() {
+// 🆕 Parameter fromOnboarding: kalau true, dipanggil dari gate Langkah 1
+// (tab "app") -- refresh-nya pakai render() penuh supaya renderContent()
+// otomatis lanjut ke Langkah 2 begitu status Hub sudah resolved. Kalau
+// false/kosong (dipanggil dari kartu tab Profil seperti sebelumnya),
+// tetap pakai renderNotifHubCard() saja -- gak perlu render() penuh.
+async function aktifkanNotifikasiHub(fromOnboarding) {
+  const refreshUi_ = () => { fromOnboarding ? render() : renderNotifHubCard(); };
   try {
     const messaging = getHubMessaging_();
     if (!messaging) {
@@ -8332,7 +8374,7 @@ async function aktifkanNotifikasiHub() {
     const permission = await Notification.requestPermission();
     if (permission !== "granted") {
       localStorage.setItem("yassa_hub_notif_status", permission);
-      renderNotifHubCard();
+      refreshUi_();
       if (permission === "denied") {
         showModal("Notifikasi Diblokir", "Izin notifikasi ditolak. Aktifkan manual lewat pengaturan browser (ikon gembok di address bar) kalau berubah pikiran.");
       }
@@ -8345,18 +8387,18 @@ async function aktifkanNotifikasiHub() {
 
     if (!token) {
       localStorage.setItem("yassa_hub_notif_status", "error");
-      renderNotifHubCard();
+      refreshUi_();
       return;
     }
 
     await callGASWithRetry_("subscribeTokenHub", [authToken, token]);
     localStorage.setItem("yassa_hub_notif_status", "granted");
-    renderNotifHubCard();
+    refreshUi_();
     showModal("Notifikasi Aktif", "Notifikasi dari YASSA Hub sudah aktif di perangkat ini.");
   } catch (e) {
     console.log("[FCM Hub] Gagal aktifkan notifikasi:", e);
     localStorage.setItem("yassa_hub_notif_status", "error");
-    renderNotifHubCard();
+    refreshUi_();
     showModal("Gagal Mengaktifkan", "Terjadi kendala saat mengaktifkan notifikasi. Coba lagi beberapa saat.");
   }
 }
@@ -8418,6 +8460,40 @@ document.addEventListener("DOMContentLoaded", initHubForegroundMessaging_);
 function isNotifGateBypassed_() {
   return localStorage.getItem("yassa_mobile_notif_status") === "granted"
       || sessionStorage.getItem("yassa_mobile_notif_skip_session") === "1";
+}
+
+// 🆕 Helper pasangan isNotifGateBypassed_() di atas, tapi buat notifikasi
+// HUB (bukan Mobile). Dipakai untuk gate 2-langkah di tab "app": Langkah 1
+// (Hub) baru dianggap "resolved" kalau granted permanen ATAU pernah
+// di-skip sesi ini -- sama persis pola "skip per-sesi, bukan permanen"
+// seperti punya Mobile.
+function isHubNotifResolved_() {
+  return localStorage.getItem("yassa_hub_notif_status") === "granted"
+      || sessionStorage.getItem("yassa_hub_notif_skip_session") === "1";
+}
+
+// 🆕 Tombol Langkah 1 (Hub) di gate onboarding tab "app" -- mirror
+// renderMobileNotifButton() di bawah (varian normal vs "diblokir/coba
+// lagi"), supaya konsisten gaya & perilakunya dengan Langkah 2 (Mobile).
+function renderHubNotifOnboardingButton_() {
+  const status = localStorage.getItem("yassa_hub_notif_status"); // 'granted' | 'denied' | 'error' | null
+
+  if (status === "denied") {
+    return `
+      <button onclick="aktifkanNotifikasiHub(true)" style="width:100%; max-width:320px; padding:12px; border-radius:16px; background:rgba(239,68,68,0.12); color:#F87171; font-weight:600; font-size:12.5px; border:1px solid rgba(239,68,68,0.3); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+        <span class="material-symbols-outlined" style="font-size:16px;">notifications_off</span>
+        Notifikasi Diblokir — Coba Lagi
+      </button>
+      <div style="font-size:10.5px; color:var(--text-muted); text-align:center; max-width:280px; line-height:1.4; margin-top:-8px;">
+        Sepertinya izin notifikasi pernah ditolak. Aktifkan manual lewat pengaturan browser (ikon gembok di address bar), atau tekan tombol ini lagi.
+      </div>`;
+  }
+
+  return `
+    <button onclick="aktifkanNotifikasiHub(true)" style="width:100%; max-width:320px; padding:12px; border-radius:16px; background:rgba(11,122,69,0.14); color:#0B7A45; font-weight:700; font-size:12.5px; border:1px solid rgba(11,122,69,0.4); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+      <span class="material-symbols-outlined" style="font-size:16px;">notifications_active</span>
+      Tekan disini untuk Aktifkan notifikasi
+    </button>`;
 }
 
 function renderMobileNotifButton() {
