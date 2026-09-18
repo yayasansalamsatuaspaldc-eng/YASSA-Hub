@@ -1444,6 +1444,38 @@
     #keuanganRetryBtn { animation: none !important; }
   }
 
+  /* 🆕 Kartu-kartu tab Keuangan diburamkan (bukan cuma "..." di tiap angka)
+     selagi belum ada data sama sekali buat bulan/wilayah yang lagi dibuka --
+     pola umum di app lain (skeleton/blur) biar jelas kelihatan "ini masih
+     nunggu", bukan malah kelihatan kayak angkanya emang 0/kosong. Begitu
+     data (dari cache ATAU fetch baru) siap, class ini dicopot lagi lewat
+     kfinSetDataBlur_(false) di loadKeuanganStats(). */
+  #kfinDataWrap { transition: filter 0.35s ease, opacity 0.35s ease; }
+  #kfinDataWrap.kfin-loading-blur {
+    filter: blur(7px);
+    opacity: 0.55;
+    pointer-events: none;
+    user-select: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #kfinDataWrap { transition: none !important; }
+  }
+
+  /* 🆕 Versi generik dari efek blur di atas -- dipakai di tab Beranda
+     (berandaPanelsWrap/berandaAktivitasWrap) supaya gak perlu duplikat
+     nama class khusus kfin-*. Sama persis perilakunya: buram + gak bisa
+     disentuh selagi belum ada data sama sekali, ilang begitu data siap. */
+  .hub-data-blur { transition: filter 0.35s ease, opacity 0.35s ease; }
+  .hub-data-blur.is-blurred {
+    filter: blur(7px);
+    opacity: 0.55;
+    pointer-events: none;
+    user-select: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hub-data-blur { transition: none !important; }
+  }
+
   /* ============================================================
      ✨ IMMERSIVE: "Rincian per Wilayah" (dropdown collapsible di Kartu 1
      & Kartu 2 Keuangan, khusus Super Admin/user akses banyak wilayah).
@@ -5446,6 +5478,13 @@ function animateCountValue_(el, targetValue, suffix) {
   el._countRAF = requestAnimationFrame(tick);
 }
 
+function berandaSetDataBlur_(blurOn) {
+  ["berandaPanelsWrap", "berandaAktivitasWrap"].forEach(function (id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle("is-blurred", !!blurOn);
+  });
+}
+
 function loadBerandaStats() {
   // Total Anak (dari YASSA Mobile) -- server BEDA sama Hub, jadi TETAP
   // request terpisah, gak bisa ikut digabung ke getBerandaBundle().
@@ -5701,6 +5740,7 @@ function loadBerandaStats() {
 
       // Simpan SEMUA hasil sekaligus ke Local Storage (1x tulis, bukan 4x)
       saveBerandaCacheHub();
+      berandaSetDataBlur_(false);
     })
     .catch(function () {
       // Seluruh bundle gagal (mis. sesi putus/jaringan mati total). Kalau
@@ -5749,6 +5789,7 @@ function loadBerandaStats() {
       if (!berandaStatsCache.aktivitas) {
         renderAktivitasTerbaru(null, true);
       }
+      berandaSetDataBlur_(false);
     });
 }
 
@@ -5787,6 +5828,23 @@ function formatWaktuAktivitas(isoString) {
 // Semua"/"Sembunyikan" (toggleAktivitasTerbaruList()) buka/tutupnya.
 const AKTIVITAS_TAMPIL_AWAL = 4;
 
+// 🆕 Aktivitas Terbaru (kartu Beranda) cuma nampilin item yang timestamp-nya
+// masih dalam 7 hari terakhir -- item yang lebih lama dari itu disembunyikan
+// total (gak ikut dihitung juga di "Tampilkan Semua (N)"), biar kartunya gak
+// numpuk log lawas yang udah gak relevan.
+const AKTIVITAS_MAKS_UMUR_HARI = 7;
+
+function filterAktivitasTerbaru7Hari_(list) {
+  if (!Array.isArray(list)) return [];
+  const batas = Date.now() - AKTIVITAS_MAKS_UMUR_HARI * 24 * 60 * 60 * 1000;
+  return list.filter(function (item) {
+    const t = new Date(item.timestamp).getTime();
+    // Timestamp rusak/gak kebaca -> tetap ditampilkan (lebih aman daripada
+    // diam-diam disembunyikan gara-gara data aneh, bukan gara-gara emang lama).
+    return isNaN(t) || t >= batas;
+  });
+}
+
 function buatItemHtmlAktivitas_(item, idx, adaDividerSetelahnya) {
   const meta = AKTIVITAS_APP_META[item.app] || { icon: "notifications", color: "var(--text-secondary)" };
   const sub = item.detail
@@ -5819,9 +5877,13 @@ function renderAktivitasTerbaru(data, gagal) {
     return;
   }
 
-  const list = Array.isArray(data) ? data : [];
+  const dataMentah = Array.isArray(data) ? data : [];
+  const list = filterAktivitasTerbaru7Hari_(dataMentah);
   if (list.length === 0) {
-    wrap.innerHTML = '<div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 12px 0;">Belum ada aktivitas.</div>';
+    const pesanKosong = dataMentah.length > 0
+      ? "Tidak ada aktivitas dalam 7 hari terakhir."
+      : "Belum ada aktivitas.";
+    wrap.innerHTML = `<div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 12px 0;">${pesanKosong}</div>`;
     if (wrapExtra) wrapExtra.innerHTML = "";
     if (toggleBtn) toggleBtn.style.display = "none";
     return;
@@ -5876,7 +5938,7 @@ function toggleAktivitasTerbaruList() {
   const toggleBtn = document.getElementById("aktivitasTerbaruToggleBtn");
   const wrapExtra = document.getElementById("aktivitasTerbaruExtra");
   if (!toggleBtn || !wrapExtra) return;
-  const list = (berandaStatsCache && berandaStatsCache.aktivitas) || [];
+  const list = filterAktivitasTerbaru7Hari_((berandaStatsCache && berandaStatsCache.aktivitas) || []);
   const sudahTerbuka = wrapExtra.classList.contains("kv-rincian-open");
   toggleBtn.textContent = sudahTerbuka ? "Sembunyikan" : "Tampilkan Semua (" + list.length + ")";
 }
@@ -6618,6 +6680,11 @@ function kembaliKeBulanIniKeuangan() {
   renderContent();
 }
 
+function kfinSetDataBlur_(blurOn) {
+  const el = document.getElementById("kfinDataWrap");
+  if (el) el.classList.toggle("kfin-loading-blur", !!blurOn);
+}
+
 function loadKeuanganStats() {
   const elBanner = document.getElementById("keuanganLoadingBanner");
   const elBannerIcon = document.getElementById("keuanganLoadingIcon");
@@ -6670,6 +6737,7 @@ function loadKeuanganStats() {
   const dariCache = !!keuanganStatsCache[cacheKeyDiminta];
   if (dariCache) {
     terapkanKeuanganStats(keuanganStatsCache[cacheKeyDiminta]);
+    kfinSetDataBlur_(false);
   } else {
     // Belum ada cache buat bulan ini -- kosongin dulu tampilan kartu (biar
     // gak kelihatan sekilas angka bulan SEBELUMNYA yang lagi ditampilin)
@@ -6750,6 +6818,7 @@ function loadKeuanganStats() {
       keuanganStatsCache[cacheKeyDiminta] = hasil;
       saveKeuanganCacheHub(); // <-- SIMPAN KE OFFLINE CACHE
       terapkanKeuanganStats(hasil);
+      kfinSetDataBlur_(false);
       if (elBanner) elBanner.style.display = "none";
     })
     .catch(function (err) {
@@ -6759,9 +6828,11 @@ function loadKeuanganStats() {
       // ke "-" cuma gara-gara 1x gangguan jaringan). Banner tetap disembunyiin.
       if (dariCache) {
         if (elBanner) elBanner.style.display = "none";
+        kfinSetDataBlur_(false);
         return;
       }
       tampilkanKeuanganGagal();
+      kfinSetDataBlur_(false);
       if (elBanner) {
         elBanner.className = "kv-banner-error kv-banner-shake";
         elBanner.style.display = "flex";
@@ -6775,11 +6846,28 @@ function loadKeuanganStats() {
     });
 }
 
-// Ambil & tampilkan 2 metrik Performa di tab Profil: Kehadiran Absen
-// (all-time, dari spreadsheet Absensi terpisah) dan Pencapaian Donasi
-// (bulan ini, angka sama dengan tab Keuangan). Dipanggil tiap kali tab
-// Profil dibuka (lihat renderContent, cabang active === "profil").
-function loadProfilePerforma() {
+// 🆕 profilPerformaCache -- pola sama kayak rekapTersalurCache/
+// keuanganStatsCache di atas. SEBELUMNYA kartu Dedikasi ini gak punya cache
+// sama sekali, jadi tiap kali tab Profil dibuka (mis. pindah ke tab lain
+// terus balik lagi ke Profil), kartunya balik ke "Memuat data..." dan nunggu
+// network call dari nol -- padahal kartu-kartu lain di app ini udah pada
+// instan dari cache. Disimpan di localStorage biar juga bertahan lintas
+// sesi/refresh halaman.
+let profilPerformaCache = (function () {
+  try {
+    const cached = localStorage.getItem("yassa_hub_profil_performa_cache");
+    if (cached) return JSON.parse(cached);
+  } catch (e) {}
+  return null;
+})();
+
+function saveProfilPerformaCacheHub() {
+  try {
+    localStorage.setItem("yassa_hub_profil_performa_cache", JSON.stringify(profilPerformaCache));
+  } catch (e) {}
+}
+
+function renderProfilPerforma_(hasil) {
   const elKehadiranPersen = document.getElementById("profilPerformaKehadiranPersen");
   const elKehadiranBar = document.getElementById("profilPerformaKehadiranBar");
   const elKehadiranKet = document.getElementById("profilPerformaKehadiranKeterangan");
@@ -6787,36 +6875,63 @@ function loadProfilePerforma() {
   const elDonasiBar = document.getElementById("profilPerformaDonasiBar");
   const elDonasiKet = document.getElementById("profilPerformaDonasiKeterangan");
 
+  const kehadiran = (hasil && hasil.kehadiran) || {};
+  const donasi = (hasil && hasil.donasi) || {};
+
+  // --- Kehadiran Absen ---
+  const persenHadir = Math.max(0, Number(kehadiran.persenKehadiran || 0));
+  if (elKehadiranPersen) animateCountValue_(elKehadiranPersen, persenHadir, "%");
+  if (elKehadiranBar) elKehadiranBar.style.width = persenHadir + "%";
+  if (elKehadiranKet) {
+    elKehadiranKet.textContent = Number(kehadiran.totalKegiatan || 0) > 0
+      ? "Hadir " + Number(kehadiran.jumlahHadir || 0) + " dari " + Number(kehadiran.totalKegiatan || 0) + " pertemuan (Jan\u2013bulan ini)"
+      : "Belum ada data kegiatan tahun ini";
+  }
+
+  // --- Pencapaian Donasi ---
+  const persenDonasi = Math.max(0, Number(donasi.persenTercapai || 0));
+  if (!donasi.ditemukan) {
+    if (elDonasiPersen) { elDonasiPersen.removeAttribute("data-raw-value"); elDonasiPersen.textContent = "-"; }
+    if (elDonasiBar) elDonasiBar.style.width = "0%";
+    if (elDonasiKet) elDonasiKet.textContent = "Belum ada data yang diisi Bendahara tahun ini";
+  } else {
+    if (elDonasiPersen) animateCountValue_(elDonasiPersen, persenDonasi, "%");
+    if (elDonasiBar) elDonasiBar.style.width = persenDonasi + "%";
+    if (elDonasiKet) {
+      elDonasiKet.textContent = formatRupiahHub(donasi.realisasiDonasi || 0) + " / " + formatRupiahHub(donasi.kebutuhanDonasi || 0) + " (Jan\u2013bulan ini)";
+    }
+  }
+}
+
+// Ambil & tampilkan 2 metrik Performa di tab Profil: Kehadiran Absen
+// (all-time, dari spreadsheet Absensi terpisah) dan Pencapaian Donasi
+// (bulan ini, angka sama dengan tab Keuangan). Dipanggil tiap kali tab
+// Profil dibuka (lihat renderContent, cabang active === "profil").
+// 🩹 FIX: kalau udah pernah sukses ke-fetch sebelumnya (sesi ini ATAU
+// tersimpan dari sesi lalu di localStorage), langsung tampil INSTAN dari
+// profilPerformaCache duluan -- gak lagi keliatan "Memuat data..." tiap
+// pindah-pindah tab. Tetap lanjut fetch ke server di background biar
+// datanya tetap ke-update.
+function loadProfilePerforma() {
+  const dariCache = !!profilPerformaCache;
+  if (dariCache) {
+    renderProfilPerforma_(profilPerformaCache);
+  }
+
+  const elKehadiranKet = document.getElementById("profilPerformaKehadiranKeterangan");
+  const elDonasiKet = document.getElementById("profilPerformaDonasiKeterangan");
+
   callGASWithRetry_("getPerformaProfil", [authToken])
     .then(function (hasil) {
-      const kehadiran = (hasil && hasil.kehadiran) || {};
-      const donasi = (hasil && hasil.donasi) || {};
-
-      // --- Kehadiran Absen ---
-      const persenHadir = Math.max(0, Number(kehadiran.persenKehadiran || 0));
-      if (elKehadiranPersen) animateCountValue_(elKehadiranPersen, persenHadir, "%");
-      if (elKehadiranBar) elKehadiranBar.style.width = persenHadir + "%";
-      if (elKehadiranKet) {
-        elKehadiranKet.textContent = Number(kehadiran.totalKegiatan || 0) > 0
-          ? "Hadir " + Number(kehadiran.jumlahHadir || 0) + " dari " + Number(kehadiran.totalKegiatan || 0) + " pertemuan (Jan\u2013bulan ini)"
-          : "Belum ada data kegiatan tahun ini";
-      }
-
-      // --- Pencapaian Donasi ---
-      const persenDonasi = Math.max(0, Number(donasi.persenTercapai || 0));
-      if (!donasi.ditemukan) {
-        if (elDonasiPersen) { elDonasiPersen.removeAttribute("data-raw-value"); elDonasiPersen.textContent = "-"; }
-        if (elDonasiBar) elDonasiBar.style.width = "0%";
-        if (elDonasiKet) elDonasiKet.textContent = "Belum ada data yang diisi Bendahara tahun ini";
-      } else {
-        if (elDonasiPersen) animateCountValue_(elDonasiPersen, persenDonasi, "%");
-        if (elDonasiBar) elDonasiBar.style.width = persenDonasi + "%";
-        if (elDonasiKet) {
-          elDonasiKet.textContent = formatRupiahHub(donasi.realisasiDonasi || 0) + " / " + formatRupiahHub(donasi.kebutuhanDonasi || 0) + " (Jan\u2013bulan ini)";
-        }
-      }
+      profilPerformaCache = hasil;
+      saveProfilPerformaCacheHub(); // <-- SIMPAN KE OFFLINE CACHE
+      renderProfilPerforma_(hasil);
     })
     .catch(function () {
+      // 🩹 FIX: kalau fetch gagal TAPI sebelumnya udah ada cache yang sukses,
+      // biarin angka lama itu tetap tampil (lebih baik daripada direset ke
+      // pesan error cuma gara-gara 1x gangguan jaringan).
+      if (dariCache) return;
       if (elKehadiranKet) elKehadiranKet.textContent = "Gagal memuat data kehadiran.";
       if (elDonasiKet) elDonasiKet.textContent = "Gagal memuat data donasi.";
     });
@@ -7209,10 +7324,19 @@ function renderContent() {
   document.getElementById("appHeader").style.display = active === "profil" ? "none" : "";
 
   if (active === "beranda") {
+    // 🆕 Sama pola kayak kfinSudahAdaCache_ di tab Keuangan: kalau SALAH SATU
+    // bagian utama Beranda udah pernah sukses ke-fetch sebelumnya (sesi ini
+    // ATAU tersimpan dari sesi lalu di localStorage), kartu-kartunya langsung
+    // ditampilin jelas (gak diburamkan) -- blur cuma buat kondisi bener2
+    // belum ada data apapun (pertama kali buka app / cache localStorage
+    // kosong).
+    const berandaSudahAdaCache_ = !!(berandaStatsCache.dashboard || berandaStatsCache.donasi ||
+      berandaStatsCache.aktivitas || berandaStatsCache.totalAnak !== null);
     let html = `
       <div class="beranda-top-section" style="grid-column: 1 / -1;">
       ${renderProgramSelectorHtml_()}
 
+      <div id="berandaPanelsWrap" class="hub-data-blur ${berandaSudahAdaCache_ ? '' : 'is-blurred'}">
       <!-- Panel Program GO-PAY (satu-satunya yang punya data LIVE sekarang) --
            Ringkasan Angka (Anak, Wilayah, Pengurus) + Data Anak Yatim, semua
            konten yang SEBELUMNYA tampil langsung di Beranda, sekarang
@@ -7432,6 +7556,9 @@ function renderContent() {
         })
         .join("")}
 
+      </div>
+      <!-- /berandaPanelsWrap -->
+
       <!-- Aksi Cepat Menu Bawah -->
       <div>
       <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Aksi Cepat Donasi</h3>
@@ -7461,6 +7588,7 @@ function renderContent() {
       </div>
       <!-- /beranda-top-section -->
 
+      <div id="berandaAktivitasWrap" class="hub-data-blur ${berandaSudahAdaCache_ ? '' : 'is-blurred'}">
       <div style="background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid var(--neon-cyan);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
           <h3 style="font-size: 14px; font-weight: 600; margin: 0;">Aktivitas Hari Ini</h3>
@@ -7507,6 +7635,8 @@ function renderContent() {
              sama persis dipakai "Rincian per Wilayah" Keuangan. -->
         <div id="aktivitasTerbaruExtra" class="kv-rincian-list" style="display: flex; flex-direction: column; gap: 14px;"></div>
       </div>
+      </div>
+      <!-- /berandaAktivitasWrap -->
       
     `;
     html += `<div class="app-version-footer">YASSA GOPAY v${APP_VERSION}</div>`;
@@ -7705,6 +7835,11 @@ function renderContent() {
     const kfinSkorAktif_ = kfinTahunAktifTerakhir * 12 + kfinBulanAktifTerakhir;
     const kfinBisaMaju_ = kfinSkorPilihan_ < kfinSkorAktif_;
     const kfinBisaBulanIni_ = kfinSkorPilihan_ !== kfinSkorAktif_;
+    // 🆕 Kalau bulan/wilayah ini UDAH pernah sukses ke-fetch sebelumnya,
+    // kartu-kartu di bawah langsung ditampilin jelas (gak diburamkan) --
+    // sama seperti perilaku "instan dari cache" yang sudah ada. Blur cuma
+    // buat kondisi bener2 belum ada data sama sekali.
+    const kfinSudahAdaCache_ = !!keuanganStatsCache[kfinCacheKey_(kfinBulanPilihan, kfinTahunPilihan, kfinWilayahPilihan)];
     let html = `
       <div class="keuangan-header-section" style="grid-column: 1 / -1;">
       <div style="display:flex; align-items:center; gap:14px; margin-bottom:8px; padding-top:16px;">
@@ -7754,6 +7889,7 @@ function renderContent() {
       </div>
       </div>
 
+      <div id="kfinDataWrap" class="${kfinSudahAdaCache_ ? '' : 'kfin-loading-blur'}">
       <!-- 1. Jumlah Anak Yatim + Total Santunan (per wilayah -- jumlah anak dari
            YASSA Mobile, rate dari Bendahara, dihitung otomatis di Hub) -->
       <div id="keuanganTourTarget" class="keuangan-hero-card kfin-card" style="--kfin-accent: var(--bento-primary); --kfin-accent-rgb: var(--bento-primary-rgb);">
@@ -8052,6 +8188,7 @@ function renderContent() {
            Donasi" tetap ada, cuma pindah ke Aksi Cepat Donasi di tab
            Beranda (gak hilang, cuma gak nampilin kartu totalnya sendiri
            lagi di sini). -->
+      </div>
     `;
     el.innerHTML = html;
     loadKeuanganStats();
@@ -8362,12 +8499,27 @@ function renderNotifHubCard() {
 // otomatis lanjut ke Langkah 2 begitu status Hub sudah resolved. Kalau
 // false/kosong (dipanggil dari kartu tab Profil seperti sebelumnya),
 // tetap pakai renderNotifHubCard() saja -- gak perlu render() penuh.
-async function aktifkanNotifikasiHub(fromOnboarding) {
+async function aktifkanNotifikasiHub(fromOnboarding, btnEl) {
   const refreshUi_ = () => { fromOnboarding ? render() : renderNotifHubCard(); };
+  // 🆕 FIX (tombol kelihatan "gak ada reaksi" pas lagi proses): begitu
+  // ditekan, langsung ubah tampilan tombol jadi loading (teks + disabled)
+  // SEBELUM await apapun -- supaya user langsung lihat feedback, gak
+  // nunggu requestPermission()/getToken()/network call kelar dulu baru ada
+  // perubahan visual. refreshUi_() di titik return manapun otomatis
+  // render ulang tombol ke kondisi normal (via renderHubNotifOnboardingButton_).
+  if (btnEl) {
+    try {
+      btnEl.disabled = true;
+      btnEl.style.opacity = "0.6";
+      btnEl.style.cursor = "default";
+      btnEl.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">hourglass_top</span> Memproses…';
+    } catch (e) {}
+  }
   try {
     const messaging = getHubMessaging_();
     if (!messaging) {
       showModal("Notifikasi", "Browser ini tidak mendukung notifikasi push.");
+      refreshUi_();
       return;
     }
 
@@ -8490,7 +8642,7 @@ function renderHubNotifOnboardingButton_() {
   }
 
   return `
-    <button onclick="aktifkanNotifikasiHub(true)" style="width:100%; max-width:320px; padding:12px; border-radius:16px; background:rgba(11,122,69,0.14); color:#0B7A45; font-weight:700; font-size:12.5px; border:1px solid rgba(11,122,69,0.4); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+    <button id="hubNotifOnboardingBtn" onclick="aktifkanNotifikasiHub(true, this)" style="width:100%; max-width:320px; padding:12px; border-radius:16px; background:rgba(11,122,69,0.14); color:#0B7A45; font-weight:700; font-size:12.5px; border:1px solid rgba(11,122,69,0.4); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
       <span class="material-symbols-outlined" style="font-size:16px;">notifications_active</span>
       Tekan disini untuk Aktifkan notifikasi
     </button>`;
@@ -8566,7 +8718,7 @@ function openMobileAppForNotif() {
     });
   showModal(
     "Aktifkan Notifikasi",
-    "Tab baru YASSA Mobile sudah dibuka. Silakan tekan \"Allow\" saat browser minta izin notifikasi. Tab itu HANYA dipakai buat minta izin -- begitu selesai, sesinya otomatis logout & tab boleh ditutup (atau nutup sendiri)."
+    "Tab baru YASSA Mobile sudah dibuka. Silakan tekan \"Izinkan\" saat browser minta izin notifikasi. Tab itu HANYA dipakai buat minta izin -- begitu selesai, sesinya otomatis logout & tab boleh ditutup (atau nutup sendiri)."
   );
 }
 
