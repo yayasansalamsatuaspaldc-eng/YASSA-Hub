@@ -8703,12 +8703,17 @@ function openMobileAppForNotif() {
   //     BUKAN GAS_AUTH_URL (file GOPAY ~10.700 baris) -- samain dengan fix
   //     yang sudah dipakai di jalur buka Mobile biasa (lihat targetUrl:
   //     GAS_SSO_URL di atas), biar gak kena cold-start file besar.
-  const notifTab = window.open(MENUS.mobile.baseUrl + "?notifOnly=1", "_blank");
+  // Cache-busting: nempelin timestamp unik supaya browser & Service Worker
+  // Mobile gak nyajiin versi index.html lama yang ke-cache -- tanpa ini,
+  // fix tampilan gelap+ikon di layar notifOnly bisa gak kelihatan walau
+  // source code-nya sudah benar, karena yang tampil masih versi cache lama.
+  const notifCacheBust_ = Date.now();
+  const notifTab = window.open(MENUS.mobile.baseUrl + "?notifOnly=1&_cb=" + notifCacheBust_, "_blank");
   callGASWithRetry_("generateSsoToken", [authToken], { targetUrl: GAS_SSO_URL })
     .then(function (res) {
       const ssoToken = res && res.ssoToken;
       if (ssoToken && notifTab && !notifTab.closed) {
-        notifTab.location = MENUS.mobile.baseUrl + "?sso=" + encodeURIComponent(ssoToken) + "&notifOnly=1";
+        notifTab.location = MENUS.mobile.baseUrl + "?sso=" + encodeURIComponent(ssoToken) + "&notifOnly=1&_cb=" + notifCacheBust_;
       }
     })
     .catch(function () {
