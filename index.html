@@ -276,6 +276,14 @@
 
   button, input, select, textarea { color: inherit; font-family: inherit; }
 
+  /* 🩹 FIX: <option> di dalam <select> gak otomatis ikut tema gelap --
+     browser render dropdown pilihan pakai warna default (putih/teks
+     samar) kalau gak dikasih warna eksplisit. Berlaku global biar semua
+     <select> (termasuk Formulir Data Baru GOPAY: Wilayah, Hubungan
+     Dengan Almarhum, Jenis Kelamin, dst) konsisten kebaca. */
+  select option { background: #1F2A44; color: #E5E9F0; }
+  html[data-theme="light"] select option { background: #FFFFFF; color: #0F172A; }
+
   /* ============================================================
      🌊 EFEK SENTUH GLOBAL (ripple) -- diterapkan otomatis ke SEMUA
      tombol & elemen berklik lewat JS (lihat initGlobalRippleEffect())
