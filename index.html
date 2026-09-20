@@ -3300,6 +3300,12 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
 
       <div id="rdInputStatus" style="display:none; font-size:10px; color:var(--text-muted); margin: -4px 0 12px; min-height: 14px; line-height:1.5;"></div>
 
+      <!-- Kebutuhan Donasi: HANYA tampil kalau dibuka dari tab Input (rdModeInput_ = true) -->
+      <div id="rdInputKebutuhanWrap" style="display:none;">
+        <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Kebutuhan Donasi (Rp) -- target/anggaran wilayah</label>
+        <input type="number" id="rdInputKebutuhan" placeholder="Contoh: 20000000" min="0" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin-bottom: 12px; font-family:inherit;">
+      </div>
+
       <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Realisasi Donasi (Rp) -- total/kumulatif periode ini</label>
       <input type="number" id="rdInputJumlah" placeholder="Contoh: 15000000" min="0" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin-bottom: 12px; font-family:inherit;">
 
@@ -9534,6 +9540,10 @@ function bukaInputRealisasiLapangan() {
 
   document.getElementById("rdInputTitle").textContent = "Realisasi Donasi Lapangan";
   document.getElementById("rdInputPeriodeWrap").style.display = "block";
+  const elKebWrap = document.getElementById("rdInputKebutuhanWrap");
+  if (elKebWrap) elKebWrap.style.display = "block";
+  const elKeb = document.getElementById("rdInputKebutuhan");
+  if (elKeb) elKeb.value = "";
   const elStatus = document.getElementById("rdInputStatus");
   elStatus.style.display = "block";
   elStatus.style.color = "var(--text-muted)";
@@ -9572,10 +9582,15 @@ function rdMuatDataSaatIni() {
     .then(function (d) {
       if (penanda !== rdPermintaanTerakhir_) return;
       if (d && d.ditemukan) {
-        document.getElementById("rdInputJumlah").value = d.realisasiDonasi;
+        const elKeb = document.getElementById("rdInputKebutuhan");
+        if (elKeb) elKeb.value = d.kebutuhanDonasi !== undefined ? d.kebutuhanDonasi : "";
+        document.getElementById("rdInputJumlah").value = d.realisasiDonasi !== undefined ? d.realisasiDonasi : "";
         document.getElementById("rdInputCatatan").value = d.catatan || "";
-        elStatus.textContent = "Sudah ada realisasi " + formatRupiahHub(d.realisasiDonasi) + " untuk " + wilayah + " -- menyimpan akan menimpanya.";
+        const kebStr = (d.kebutuhanDonasi !== undefined && d.kebutuhanDonasi > 0) ? "Kebutuhan: " + formatRupiahHub(d.kebutuhanDonasi) + ", " : "";
+        elStatus.textContent = "Sudah ada data " + wilayah + " (" + kebStr + "Realisasi: " + formatRupiahHub(d.realisasiDonasi) + ") -- menyimpan akan menimpanya.";
       } else {
+        const elKeb = document.getElementById("rdInputKebutuhan");
+        if (elKeb) elKeb.value = "";
         document.getElementById("rdInputJumlah").value = "";
         document.getElementById("rdInputCatatan").value = "";
         elStatus.textContent = "Belum ada data " + wilayah + " untuk bulan ini -- akan dibuat baru.";
@@ -9688,6 +9703,10 @@ function submitInputKitabisa() {
 function bukaCatatRealisasiDonasi(bulan, tahun, namaBulanEncoded) {
   rdModeInput_ = false; // dibuka dari detail Laporan Bulanan: bulan/tahun sudah tertentu
   document.getElementById("rdInputPeriodeWrap").style.display = "none";
+  const elKebWrap = document.getElementById("rdInputKebutuhanWrap");
+  if (elKebWrap) elKebWrap.style.display = "none";
+  const elKeb = document.getElementById("rdInputKebutuhan");
+  if (elKeb) elKeb.value = "";
   document.getElementById("rdInputStatus").style.display = "none";
   rdBulan = bulan;
   rdTahun = tahun;
@@ -9713,9 +9732,17 @@ function tutupCatatRealisasiDonasi() {
 }
 
 function submitCatatRealisasiDonasi() {
-  if (rdModeInput_) { // dibuka dari tab Input: periode diambil dari pilihan di form
+  let kebVal = 0;
+  if (rdModeInput_) { // dibuka dari tab Input: periode & kebutuhan diambil dari pilihan di form
     rdBulan = Number(document.getElementById("rdInputBulan").value);
     rdTahun = Number(document.getElementById("rdInputTahun").value);
+    const elKeb = document.getElementById("rdInputKebutuhan");
+    const kebRaw = elKeb ? elKeb.value.trim() : "";
+    if (kebRaw === "" || isNaN(Number(kebRaw)) || Number(kebRaw) < 0) {
+      showModal("Gagal", "Isi angka Kebutuhan Donasi (boleh 0, gak boleh kosong/minus).");
+      return;
+    }
+    kebVal = Number(kebRaw);
   }
   const wilayah = document.getElementById("rdInputWilayah").value;
   const jumlah = document.getElementById("rdInputJumlah").value;
@@ -9727,7 +9754,12 @@ function submitCatatRealisasiDonasi() {
   const btn = document.getElementById("rdInputBtnSimpan");
   btn.disabled = true;
   btn.textContent = "Menyimpan...";
-  callGASWithRetry_("catatRealisasiDonasiLapangan", [authToken, rdBulan, rdTahun, wilayah, jumlah, catatan])
+
+  const actionPromise = rdModeInput_
+    ? callGASWithRetry_("simpanKeuanganBulananLengkap", [authToken, rdBulan, rdTahun, wilayah, kebVal, Number(jumlah), catatan])
+    : callGASWithRetry_("catatRealisasiDonasiLapangan", [authToken, rdBulan, rdTahun, wilayah, Number(jumlah), catatan]);
+
+  actionPromise
     .then(function () {
       btn.disabled = false;
       btn.textContent = "Simpan";
@@ -9747,7 +9779,7 @@ function submitCatatRealisasiDonasi() {
             });
         }
       })();
-      showModal("Sukses", "Realisasi donasi berhasil dicatat.");
+      showModal("Sukses", rdModeInput_ ? "Data kebutuhan & realisasi donasi berhasil disimpan." : "Realisasi donasi berhasil dicatat.");
     })
     .catch(function (err) {
       btn.disabled = false;
