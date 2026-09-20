@@ -3295,6 +3295,42 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
     </div>
   </div>
 
+  <!-- Modal: Input Realisasi Kitabisa (khusus SUPERADMIN/ADMIN) -- dibuka dari
+       sheet "Input Data" (tombol tengah). Jalur INPUT LEWAT APP untuk sheet
+       "Realisasi_Kitabisa"; TIDAK menggantikan isi manual di Google Sheets.
+       Donasi Kitabisa itu NASIONAL (bukan per wilayah). Angka MENIMPA total
+       bulan itu, bukan menambah. -->
+  <div class="custom-modal-overlay" id="kbInputOverlay">
+    <div class="custom-modal" style="max-width:360px; text-align:left;">
+      <div class="custom-modal-title" style="text-align:center; margin-bottom: 6px;">Realisasi Kitabisa</div>
+      <div style="font-size:9.5px; color:var(--text-muted); text-align:center; margin-bottom:14px; line-height:1.5;">Donasi Kitabisa bersifat nasional (bukan per wilayah). Angka di sini MENIMPA total bulan tersebut, bukan ditambah.</div>
+
+      <div style="display:flex; gap:8px;">
+        <div style="flex:1;">
+          <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Bulan</label>
+          <select id="kbInputBulan" onchange="kbMuatDataBulan()" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin-bottom: 12px; font-family:inherit;"></select>
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Tahun</label>
+          <select id="kbInputTahun" onchange="kbMuatDataBulan()" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin-bottom: 12px; font-family:inherit;"></select>
+        </div>
+      </div>
+
+      <div id="kbInputStatus" style="font-size:10px; color:var(--text-muted); margin: -4px 0 12px; min-height: 14px; line-height:1.5;"></div>
+
+      <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Total Realisasi Kitabisa (Rp) -- total bulan ini</label>
+      <input type="number" id="kbInputJumlah" placeholder="Contoh: 2500000" min="0" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin-bottom: 12px; font-family:inherit;">
+
+      <label style="font-size:10.5px; color:var(--text-secondary); display:block; margin-bottom:4px;">Catatan (opsional)</label>
+      <input type="text" id="kbInputCatatan" placeholder="Contoh: Update per 20 Sept" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin-bottom: 12px; font-family:inherit;">
+
+      <div class="custom-modal-actions">
+        <button type="button" class="btn-modal btn-cancel" onclick="tutupInputKitabisa()">Batal</button>
+        <button type="button" class="btn-modal btn-confirm" id="kbInputBtnSimpan" onclick="submitInputKitabisa()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal: Catat Penyaluran Santunan (khusus SUPERADMIN/ADMIN) -- dibuka
        dari tombol "Catat Penyaluran" di detail Laporan Bulanan Program
        Gopay. Nambah jalur INPUT LEWAT APP, TIDAK menggantikan opsi isi
@@ -3970,7 +4006,29 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
           <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Catat bantuan kesehatan yang disalurkan</div>
         </div>
       </button>
-      
+
+      <!-- Jalan pintas INPUT KEUANGAN lewat app (khusus SUPERADMIN/ADMIN, dicek di
+           toggleInputSheet()). TIDAK menggantikan isi manual di Google Sheets. -->
+      <button id="inputRealisasiLapanganShortcutBtn" style="display:none; width: 100%; align-items: center; gap: 16px; background: var(--glass-strong); padding: 16px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 16px; cursor: pointer;" onclick="pintasCatatRealisasiLapangan()">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(34, 197, 94, 0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center;">
+          <span class="material-symbols-outlined">account_balance</span>
+        </div>
+        <div style="text-align: left;">
+          <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Realisasi Donasi Lapangan</div>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Update donasi per wilayah (lewat Laporan Bulanan)</div>
+        </div>
+      </button>
+
+      <button id="inputKitabisaShortcutBtn" style="display:none; width: 100%; align-items: center; gap: 16px; background: var(--glass-strong); padding: 16px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 16px; cursor: pointer;" onclick="bukaInputKitabisa()">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(168, 85, 247, 0.15); color: #A855F7; display: flex; align-items: center; justify-content: center;">
+          <span class="material-symbols-outlined">volunteer_activism</span>
+        </div>
+        <div style="text-align: left;">
+          <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Realisasi Kitabisa</div>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Catat total donasi Kitabisa per bulan</div>
+        </div>
+      </button>
+
       <button style="width: 100%; padding: 14px; background: var(--glass); border-radius: 12px; font-size: 14px; font-weight: 600; color: var(--text-primary); border: 1px solid var(--glass-border); cursor: pointer;" onclick="toggleInputSheet()">Batal</button>
     </div>
   </div>
@@ -8926,7 +8984,7 @@ function toggleInputSheet() {
     // render awal halaman) biar selalu ikut role currentUser yang lagi
     // login.
     const bolehProgramLain = currentUser && ["SUPERADMIN", "ADMIN"].indexOf(currentUser.role) !== -1;
-    ["inputBasoShortcutBtn", "inputBadikShortcutBtn", "inputBatanShortcutBtn"].forEach(function (id) {
+    ["inputBasoShortcutBtn", "inputBadikShortcutBtn", "inputBatanShortcutBtn", "inputRealisasiLapanganShortcutBtn", "inputKitabisaShortcutBtn"].forEach(function (id) {
       const btn = document.getElementById(id);
       if (btn) btn.style.display = bolehProgramLain ? "flex" : "none";
     });
@@ -9391,6 +9449,118 @@ let psBulan = null, psTahun = null;
 // menambah) realisasi lama -- lihat catatRealisasiDonasiLapangan().
 // ============================================================
 let rdBulan = null, rdTahun = null;
+
+// ============================================================
+// 🧾 INPUT REALISASI KITABISA + JALAN PINTAS REALISASI LAPANGAN
+// (dibuka dari sheet "Input Data" -- tombol tengah, khusus SUPERADMIN/ADMIN).
+// Backend: getRealisasiKitabisaSatuBaris / simpanRealisasiKitabisa (Code.gs).
+// Isi manual di Google Sheets TETAP bisa dipakai kapan saja.
+// ============================================================
+const KB_NAMA_BULAN_ = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+let kbPermintaanTerakhir_ = 0; // penanda permintaan terbaru, biar balasan yang sudah usang diabaikan
+
+// Realisasi Donasi Lapangan (per wilayah) sudah punya modalnya sendiri di
+// dalam detail Laporan Bulanan (tombol "Catat Realisasi" per bulan) -- jalan
+// pintas ini cukup membuka halaman Laporan Bulanan.
+function pintasCatatRealisasiLapangan() {
+  toggleInputSheet();
+  openLaporanBulanan();
+}
+
+function bukaInputKitabisa() {
+  toggleInputSheet();
+  const now = new Date();
+  const selBulan = document.getElementById("kbInputBulan");
+  const selTahun = document.getElementById("kbInputTahun");
+  selBulan.innerHTML = KB_NAMA_BULAN_.map(function (nama, i) {
+    return `<option value="${i + 1}">${nama}</option>`;
+  }).join("");
+  const tahunIni = now.getFullYear();
+  let optTahun = "";
+  for (let y = tahunIni - 2; y <= tahunIni + 1; y++) optTahun += `<option value="${y}">${y}</option>`;
+  selTahun.innerHTML = optTahun;
+  selBulan.value = String(now.getMonth() + 1);
+  selTahun.value = String(tahunIni);
+  document.getElementById("kbInputJumlah").value = "";
+  document.getElementById("kbInputCatatan").value = "";
+  document.getElementById("kbInputOverlay").classList.add("open");
+  kbMuatDataBulan();
+}
+
+function tutupInputKitabisa() {
+  kbPermintaanTerakhir_++; // balasan yang masih di jalan tidak boleh mengisi form lagi
+  document.getElementById("kbInputOverlay").classList.remove("open");
+}
+
+// Cek data bulan+tahun terpilih: isi otomatis angka lama, atau beri
+// peringatan kalau di Sheet ada baris ganda.
+function kbMuatDataBulan() {
+  const bulan = Number(document.getElementById("kbInputBulan").value);
+  const tahun = Number(document.getElementById("kbInputTahun").value);
+  const elStatus = document.getElementById("kbInputStatus");
+  const btn = document.getElementById("kbInputBtnSimpan");
+  const penanda = ++kbPermintaanTerakhir_;
+
+  elStatus.style.color = "var(--text-muted)";
+  elStatus.textContent = "Memeriksa data bulan ini...";
+  btn.disabled = true;
+
+  callGASWithRetry_("getRealisasiKitabisaSatuBaris", [authToken, bulan, tahun])
+    .then(function (d) {
+      if (penanda !== kbPermintaanTerakhir_) return;
+      if (d && d.jumlahBaris > 1) {
+        elStatus.style.color = "#F59E0B";
+        elStatus.textContent = "\u26A0\uFE0F Di Sheet ada " + d.jumlahBaris + " baris untuk bulan ini, jadi tidak bisa diubah dari app. Edit langsung di Google Sheets.";
+        document.getElementById("kbInputJumlah").value = "";
+        document.getElementById("kbInputCatatan").value = "";
+        return; // tombol Simpan tetap nonaktif
+      }
+      if (d && d.ditemukan) {
+        document.getElementById("kbInputJumlah").value = d.totalKitabisa;
+        document.getElementById("kbInputCatatan").value = d.catatan || "";
+        elStatus.textContent = "Sudah ada data bulan ini (" + formatRupiahHub(d.totalKitabisa) + ") -- menyimpan akan menimpanya.";
+      } else {
+        document.getElementById("kbInputJumlah").value = "";
+        document.getElementById("kbInputCatatan").value = "";
+        elStatus.textContent = "Belum ada data bulan ini -- akan dibuat baru.";
+      }
+      btn.disabled = false;
+    })
+    .catch(function () {
+      if (penanda !== kbPermintaanTerakhir_) return;
+      // Gagal memeriksa bukan berarti gagal menyimpan -- server tetap
+      // memutuskan (timpa kalau ada, buat baru kalau belum).
+      elStatus.style.color = "#F59E0B";
+      elStatus.textContent = "Tidak bisa memeriksa data lama. Kamu tetap bisa menyimpan; server akan menimpa data bulan ini kalau sudah ada.";
+      btn.disabled = false;
+    });
+}
+
+function submitInputKitabisa() {
+  const bulan = Number(document.getElementById("kbInputBulan").value);
+  const tahun = Number(document.getElementById("kbInputTahun").value);
+  const jumlah = document.getElementById("kbInputJumlah").value;
+  const catatan = document.getElementById("kbInputCatatan").value.trim();
+
+  if (jumlah === "" || Number(jumlah) < 0) { showModal("Gagal", "Isi angka Total Kitabisa (boleh 0, tidak boleh kosong/minus)."); return; }
+
+  const btn = document.getElementById("kbInputBtnSimpan");
+  btn.disabled = true;
+  btn.textContent = "Menyimpan...";
+  callGASWithRetry_("simpanRealisasiKitabisa", [authToken, bulan, tahun, jumlah, catatan])
+    .then(function () {
+      btn.disabled = false;
+      btn.textContent = "Simpan";
+      tutupInputKitabisa();
+      laporanBulananDetailCache = {}; // angka Kitabisa ikut tampil di detail Laporan Bulanan -- buang cache lama
+      showModal("Sukses", "Realisasi Kitabisa " + KB_NAMA_BULAN_[bulan - 1] + " " + tahun + " berhasil disimpan. Tarik refresh (ikon muat ulang di atas) kalau angka di tab Keuangan belum berubah.");
+    })
+    .catch(function (err) {
+      btn.disabled = false;
+      btn.textContent = "Simpan";
+      showModal("Gagal", err.message);
+    });
+}
 
 function bukaCatatRealisasiDonasi(bulan, tahun, namaBulanEncoded) {
   rdBulan = bulan;
