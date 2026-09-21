@@ -14845,6 +14845,17 @@ function openApp(index) {
   const menu = MENUS[active];
   const item = menu.items[index];
 
+  // 💾 Simpan sesi overlay aktif agar jika HP reload karena RAM penuh, bisa dipulihkan otomatis
+  try {
+    localStorage.setItem("yassa_hub_last_overlay", JSON.stringify({
+      active: active,
+      index: index,
+      tab: item.tab || "",
+      label: item.label || "",
+      time: Date.now()
+    }));
+  } catch (e) {}
+
   document.getElementById("overlayTitle").textContent = item.label;
   toggleOverlayDevNotice_(active);
   resetSsoOverlayUi_();
@@ -14949,6 +14960,7 @@ function openApp(index) {
 // ulang dari awal lagi. Iframe cuma bener-bener direset pas ganti ke app
 // LAIN (lihat openApp) atau pas logout (lihat resetOverlayIframe/doLogout).
 document.getElementById("overlayClose").addEventListener("click", function () {
+  try { localStorage.removeItem("yassa_hub_last_overlay"); } catch (e) {}
   document.getElementById("overlay").classList.remove("open");
   resetSsoOverlayUi_();
 });
@@ -15899,6 +15911,30 @@ function bootApp() {
     })
     .then(function () {
       hideSplash();
+
+      // 🔄 Auto-restore sesi overlay: jika browser me-reload halaman karena RAM penuh,
+      // langsung buka kembali aplikasi & tab terakhir yang sedang dibuka user
+      try {
+        const lastOvRaw = localStorage.getItem("yassa_hub_last_overlay");
+        if (lastOvRaw) {
+          const lo = JSON.parse(lastOvRaw);
+          if (lo && lo.active && typeof lo.index === "number" && Date.now() - (lo.time || 0) < 2 * 3600 * 1000) {
+            if (typeof MENUS !== "undefined" && MENUS[lo.active] && MENUS[lo.active].items[lo.index]) {
+              console.log("Memulihkan overlay sesi sebelumnya:", lo);
+              active = lo.active;
+              render();
+              setTimeout(function () {
+                if (typeof openApp === "function") {
+                  openApp(lo.index);
+                  if (typeof showHubToast === "function") {
+                    showHubToast("Jendela " + (lo.label || "aplikasi") + " dipulihkan otomatis", "info", 3000);
+                  }
+                }
+              }, 400);
+            }
+          }
+        }
+      } catch (e) {}
     });
 }
 
