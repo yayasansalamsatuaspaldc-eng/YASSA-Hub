@@ -7484,9 +7484,13 @@ function prosesCetakSemuaProgram() {
   btn.style.opacity = "0.6";
   btn.innerHTML = '<span class="material-symbols-outlined spin" style="font-size:14px; vertical-align:middle;">progress_activity</span> Membuat PDF...';
 
-  // timeout lebih longgar (45dtk) dibanding unduhPdfLaporanProgram (30dtk) --
+  // timeout lebih longgar (90dtk) dibanding unduhPdfLaporanProgram (30dtk) --
   // laporan gabungan narik & merender 6 program sekaligus jadi wajar lebih lama.
-  callGASWithRetry_("generateLaporanSemuaProgramPdf", [authToken, cspModeAktif, bulan, tahun, wilayah], { timeoutMs: 45000 })
+  // maxAttempts: 1 -> JANGAN diulang otomatis: kalau timeout, server biasanya MASIH
+  // memproses request pertama; mengulang 2x lagi hanya melipatgandakan beban server
+  // (3 pembuatan PDF berat bersamaan) dan membuat menunggu jauh lebih lama.
+  // Angka 90dtk = perkiraan; sesuaikan setelah melihat log "[PDF 6 PROGRAM] ... TOTAL ... ms".
+  callGASWithRetry_("generateLaporanSemuaProgramPdf", [authToken, cspModeAktif, bulan, tahun, wilayah], { timeoutMs: 90000, maxAttempts: 1 })
     .then(function (res) {
       const byteChars = atob(res.base64);
       const byteNumbers = new Array(byteChars.length);
