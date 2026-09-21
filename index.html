@@ -5090,24 +5090,12 @@ function onLoginSuccess(res) {
     role: currentUser.role || "",
   });
 
-  // Splash "Bismillah" nutupin layar 30 detik selagi showApp()/render()
-  // jalan & data awal Beranda diam-diam diambil di belakang layar.
-  // Modal "wajib ganti password" (kalau ada) ditahan dulu, baru muncul
-  // SETELAH splash hilang biar gak numpuk 2 overlay sekaligus.
+  // 🌟 SPLASH PINTAR ADAPTIF: Durasi menyesuaikan kecepatan sinyal secara dinamis.
+  // Selagi pesan penyemangat bergulir, sistem langsung menarik data Beranda, Keuangan,
+  // dan Profil secara paralel. Begitu data siap, splash langsung terbuka otomatis!
   showPostLoginSplash();
   showApp();
-  setTimeout(function () {
-    hidePostLoginSplash();
-    if (res.mustChangePassword) {
-      openForceChangePasswordModal();
-    } else {
-      pendingOldPassword = null;
-      // 🖼️ Pengumuman/popup gambar (dikelola lewat sheet "Pengumuman_Popup")
-      // -- dipicu SETELAH login sukses & splash hilang, bukan lagi otomatis
-      // saat halaman dimuat. Lihat welcome-popup.js.
-      muatDanTampilkanPengumuman_();
-    }
-  }, POST_LOGIN_SPLASH_DURATION_MS);
+  mulaiSplashAdaptifSetelahLogin_(res);
 }
 
 // Ambil daftar pengumuman AKTIF dari server (sheet "Pengumuman_Popup",
@@ -5587,7 +5575,7 @@ function loadBerandaStats() {
   // request terpisah, gak bisa ikut digabung ke getBerandaBundle().
   const elA = document.getElementById("statTotalAnak");
   if (elA && berandaStatsCache.totalAnak !== null) animateCountValue_(elA, berandaStatsCache.totalAnak);
-  fetch(GAS_MOBILE_URL, {
+  const pMobile = fetch(GAS_MOBILE_URL, {
     method: "POST",
     headers: { "Content-Type": "text/plain" },
     body: JSON.stringify({ action: "getPublicStats" }),
@@ -5698,7 +5686,7 @@ function loadBerandaStats() {
   // tulis terpisah kayak sebelumnya) -- sama kayak prinsip "batch write"
   // yang udah dipakai di tab Keuangan.
   // ============================================================
-  callGASWithRetry_("getBerandaBundle", [authToken, true])
+  const pBundle = callGASWithRetry_("getBerandaBundle", [authToken, true])
     .then(function (bundle) {
       // 1) Ringkasan Keuangan -> kartu Donasi & Kekurangan Donasi
       if (bundle.ringkasanKeuangan) {
@@ -5888,6 +5876,8 @@ function loadBerandaStats() {
       }
       berandaSetDataBlur_(false);
     });
+
+  return Promise.allSettled([pMobile, pBundle]);
 }
 
 // Metadata tampilan per app buat kartu Aktivitas Terbaru: ikon, warna, dan
@@ -6883,7 +6873,7 @@ function loadKeuanganStats() {
 
   const pRingkasan = callGASWithRetry_("getRingkasanKeuangan", [authToken, false, bulanDiminta, tahunDiminta, wilayahDiminta]);
 
-  Promise.all([pRingkasan])
+  return Promise.all([pRingkasan])
     .then(function (hasilWrap) {
       const r = hasilWrap[0];
       if (!kfinMasihRelevan_()) return; // udah pindah bulan/wilayah/mode, biarin aja
@@ -7018,7 +7008,7 @@ function loadProfilePerforma() {
   const elKehadiranKet = document.getElementById("profilPerformaKehadiranKeterangan");
   const elDonasiKet = document.getElementById("profilPerformaDonasiKeterangan");
 
-  callGASWithRetry_("getPerformaProfil", [authToken])
+  return callGASWithRetry_("getPerformaProfil", [authToken])
     .then(function (hasil) {
       profilPerformaCache = hasil;
       saveProfilPerformaCacheHub(); // <-- SIMPAN KE OFFLINE CACHE
@@ -7107,7 +7097,7 @@ function loadRekapTersalurKeuangan() {
     renderRekapTersalurKeuangan_(rekapTersalurCache[cacheKeyDiminta], elKet, elGrid);
   }
 
-  callGASWithRetry_("getProgramTersalurkanProfil", [authToken, wilayahDiminta])
+  return callGASWithRetry_("getProgramTersalurkanProfil", [authToken, wilayahDiminta])
     .then(function (hasil) {
       // Kalau user udah ganti wilayah lagi SEBELUM fetch ini selesai,
       // buang hasilnya -- biarin fetch yang lebih baru (dipicu render ulang
@@ -14901,63 +14891,56 @@ function hideSplash() {
 }
 
 // ============================================================
-// Splash "Bismillah" -- cuma dipakai SETELAH login baru berhasil
-// (manual & Google), BUKAN pas restore sesi/refresh. Nutupin layar
-// 30 detik sementara showApp()/render() jalan & data awal Beranda
-// diam-diam di-fetch di belakang layar (loadBerandaStats, dst).
+// 🌟 SPLASH "BISMILLAH" PINTAR ADAPTIF & BACKGROUND PREFETCH
+// ------------------------------------------------------------
+// Durasi splash TIDAK LAGI dikunci mati 30 detik. Splash akan
+// otomatis terbuka begitu seluruh data siap (Beranda + Keuangan +
+// Profil).
+//   - Sinyal CEPAT: data selesai dalam 2-4 detik -> langsung masuk!
+//   - Sinyal LAMBAT: hadits & pesan penyemangat terus bergulir
+//     menemani pengguna, dan begitu data tiba langsung terbuka.
+//   - Background Prefetch: Data Tab Keuangan & Profile sudah di-fetch
+//     saat splash, sehingga saat tab dibuka kemudian, tampil INSTAN (0 detik).
 // ============================================================
-const POST_LOGIN_SPLASH_DURATION_MS = 30000;
 let _postLoginSplashStatusTimer = null;
 let _postLoginSplashCountdownTimer = null;
+let _postLoginSplashStartTime = 0;
 
-// Hitungan mundur (detik) yang dipajang selama splash tampil, biar user
-// tahu kira-kira berapa lama lagi proses ini berjalan (bukan macet).
-function startPostLoginSplashCountdown() {
-  const countdownEl = document.getElementById("postLoginSplashCountdown");
-  let secondsLeft = Math.round(POST_LOGIN_SPLASH_DURATION_MS / 1000);
-  if (countdownEl) countdownEl.textContent = secondsLeft + " detik";
-  if (_postLoginSplashCountdownTimer) clearInterval(_postLoginSplashCountdownTimer);
-  _postLoginSplashCountdownTimer = setInterval(function () {
-    secondsLeft -= 1;
-    if (secondsLeft <= 0) {
-      clearInterval(_postLoginSplashCountdownTimer);
-      _postLoginSplashCountdownTimer = null;
-      if (countdownEl) countdownEl.textContent = "0 detik";
-      return;
-    }
-    if (countdownEl) countdownEl.textContent = secondsLeft + " detik";
-  }, 1000);
-}
+// Daftar pesan penyemangat & pengingat mulia mengasuh anak yatim
+const PESAN_SPLASH_ADAPTIF = [
+  "Menyiapkan aplikasi...",
+  "Rasulullah ﷺ bersabda: Pengasuh anak yatim kelak bersanding dengan beliau di surga.",
+  "Mengambil data Beranda & penerima santunan...",
+  "Menyantuni anak yatim adalah pintu pembuka rezeki dan keberkahan.",
+  "Menyinkronkan data keuangan & rekap wilayah...",
+  "QS Al-Ma'un mengingatkan: Janganlah menghardik anak yatim.",
+  "Setiap amanah yang kita jaga hari ini adalah ladang pahala.",
+  "Memeriksa profil & dedikasi pengurus...",
+  "Sedikit lagi, memastikan data akurat untuk mereka...",
+  "Semangat! Yuk lanjutkan amanah untuk anak-anak yatim hari ini.",
+];
 
 function showPostLoginSplash() {
   const el = document.getElementById("postLoginSplash");
   if (!el) return;
+  _postLoginSplashStartTime = Date.now();
   el.classList.remove("hide");
   el.classList.add("show");
-  startPostLoginSplashCountdown();
 
-  // Teks status gantian jalan biar gak jenuh -- diselang-seling antara
-  // status teknis (biar user tetap ngerti app lagi kerja, bukan macet)
-  // dan pengingat semangat/Islami soal anak yatim (sesuai misi YASSA).
-  const pesanUrutan = [
-    "Menyiapkan aplikasi...",
-    "Rasulullah ﷺ bersabda: pengasuh anak yatim kelak bersanding dengan beliau di surga.",
-    "Mengambil data terbaru...",
-    "Menyantuni anak yatim adalah pintu rezeki dan keberkahan.",
-    "Menyusun data Beranda...",
-    "QS Al-Ma'un mengingatkan: jangan menghardik anak yatim.",
-    "Setiap amanah yang kita jaga hari ini adalah ladang pahala.",
-    "Hampir selesai...",
-    "Semangat! Yuk lanjutkan amanah untuk anak-anak yatim hari ini.",
-  ];
+  const countdownEl = document.getElementById("postLoginSplashCountdown");
   const statusEl = document.getElementById("postLoginSplashStatus");
+
+  if (countdownEl) countdownEl.textContent = "Menghubungkan...";
+
   let i = 0;
-  if (statusEl) statusEl.textContent = pesanUrutan[0];
+  if (statusEl) statusEl.textContent = PESAN_SPLASH_ADAPTIF[0];
   if (_postLoginSplashStatusTimer) clearInterval(_postLoginSplashStatusTimer);
+
+  // Pesan berganti halus setiap 3.2 detik
   _postLoginSplashStatusTimer = setInterval(function () {
-    i = (i + 1) % pesanUrutan.length;
-    if (statusEl) statusEl.textContent = pesanUrutan[i];
-  }, 3500);
+    i = (i + 1) % PESAN_SPLASH_ADAPTIF.length;
+    if (statusEl) statusEl.textContent = PESAN_SPLASH_ADAPTIF[i];
+  }, 3200);
 }
 
 function hidePostLoginSplash() {
@@ -14976,6 +14959,90 @@ function hidePostLoginSplash() {
     el.classList.remove("show");
     el.classList.remove("hide");
   }, 400);
+}
+
+// Tarik data Beranda, Keuangan, dan Profil sekaligus di latar belakang
+function prefetchDataSetelahLogin_() {
+  const tasks = [];
+  try {
+    if (typeof loadBerandaStats === "function") tasks.push(loadBerandaStats());
+  } catch (e) {}
+  try {
+    if (typeof loadKeuanganStats === "function") tasks.push(loadKeuanganStats());
+  } catch (e) {}
+  try {
+    if (typeof loadRekapTersalurKeuangan === "function") tasks.push(loadRekapTersalurKeuangan());
+  } catch (e) {}
+  try {
+    if (typeof loadProfilePerforma === "function") tasks.push(loadProfilePerforma());
+  } catch (e) {}
+
+  return Promise.allSettled(tasks);
+}
+
+// Pengendali waktu adaptif: menutup splash secepat data tiba (min 2.5s, max 25s)
+function mulaiSplashAdaptifSetelahLogin_(res) {
+  const MIN_DURASI_MS = 2500; // Minimal jeda sopan agar Bismillah & salam terbaca
+  const MAX_DURASI_MS = 25000; // Batas darurat maksimal jika sinyal sangat lemah
+
+  let dataSelesai = false;
+
+  // Jalankan prefetch paralel
+  prefetchDataSetelahLogin_().finally(function () {
+    dataSelesai = true;
+  });
+
+  const countdownEl = document.getElementById("postLoginSplashCountdown");
+  const statusEl = document.getElementById("postLoginSplashStatus");
+
+  let detikBerjalan = 0;
+  if (_postLoginSplashCountdownTimer) clearInterval(_postLoginSplashCountdownTimer);
+  _postLoginSplashCountdownTimer = setInterval(function () {
+    detikBerjalan++;
+    const elapsed = Date.now() - _postLoginSplashStartTime;
+
+    // Tampilkan indikator status adaptif
+    if (countdownEl && !dataSelesai) {
+      if (detikBerjalan <= 3) {
+        countdownEl.textContent = "Menyiapkan data...";
+      } else if (detikBerjalan <= 6) {
+        countdownEl.textContent = "Sinkronisasi keuangan...";
+      } else {
+        countdownEl.textContent = "Koneksi lambat, memproses (" + detikBerjalan + "s)...";
+      }
+    }
+
+    // Jika data sudah selesai dan sudah melewati jeda minimal
+    if (dataSelesai && elapsed >= MIN_DURASI_MS) {
+      clearInterval(_postLoginSplashCountdownTimer);
+      _postLoginSplashCountdownTimer = null;
+      if (statusEl) statusEl.textContent = "Alhamdulillah, data telah siap!";
+      if (countdownEl) countdownEl.textContent = "Membuka aplikasi...";
+      setTimeout(function () {
+        hidePostLoginSplash();
+        if (res && res.mustChangePassword) {
+          openForceChangePasswordModal();
+        } else {
+          pendingOldPassword = null;
+          muatDanTampilkanPengumuman_();
+        }
+      }, 450);
+      return;
+    }
+
+    // Batas waktu darurat maksimal
+    if (elapsed >= MAX_DURASI_MS) {
+      clearInterval(_postLoginSplashCountdownTimer);
+      _postLoginSplashCountdownTimer = null;
+      hidePostLoginSplash();
+      if (res && res.mustChangePassword) {
+        openForceChangePasswordModal();
+      } else {
+        pendingOldPassword = null;
+        muatDanTampilkanPengumuman_();
+      }
+    }
+  }, 250);
 }
 
 // Beneran bersihin Cache Storage lama & minta service worker cek versi
