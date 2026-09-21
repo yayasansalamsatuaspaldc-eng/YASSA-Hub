@@ -7411,8 +7411,8 @@ function htmlTombolUnduhPdfProgram_(programKey, mode, bulan, tahun, wilayah, war
 }
 
 // ============================================================
-// 📄 MODAL "Cetak Laporan Gabungan 6 Program (PDF)" -- gabungan SAPA +
-// PEDAS + BASO + BADIK + BATAN jadi 1 file, dibuka dari tombol kartu
+// 📄 MODAL "Cetak Laporan Gabungan 6 Program (PDF)" -- gabungan GOPAY +
+// SAPA + PEDAS + BASO + BADIK + BATAN jadi 1 file, dibuka dari tombol kartu
 // hijau di atas daftar 6 program (tab Keuangan). Backend: action
 // "generateLaporanSemuaProgramPdf" (Code.gs). Pola toggle mode
 // Bulanan/Tahunan & download blob-nya mirror pedasSetTab/unduhPdfLaporanProgram
@@ -7485,7 +7485,7 @@ function prosesCetakSemuaProgram() {
   btn.innerHTML = '<span class="material-symbols-outlined spin" style="font-size:14px; vertical-align:middle;">progress_activity</span> Membuat PDF...';
 
   // timeout lebih longgar (45dtk) dibanding unduhPdfLaporanProgram (30dtk) --
-  // laporan gabungan narik & merender 5 program sekaligus jadi wajar lebih lama.
+  // laporan gabungan narik & merender 6 program sekaligus jadi wajar lebih lama.
   callGASWithRetry_("generateLaporanSemuaProgramPdf", [authToken, cspModeAktif, bulan, tahun, wilayah], { timeoutMs: 45000 })
     .then(function (res) {
       const byteChars = atob(res.base64);
@@ -16168,12 +16168,12 @@ bootApp();
 
 <!-- 📄 Modal: Cetak Laporan Gabungan 6 Program (PDF) -- dibuka dari tombol
      "Laporan Gabungan 6 Program YASSA" di tab Keuangan. Backend: action
-     "generateLaporanSemuaProgramPdf" (Code.gs), menggabungkan SAPA +
-     PEDAS + BASO + BADIK + BATAN jadi 1 file PDF. -->
+     "generateLaporanSemuaProgramPdf" (Code.gs), menggabungkan GOPAY +
+     SAPA + PEDAS + BASO + BADIK + BATAN jadi 1 file PDF. -->
 <div class="custom-modal-overlay" id="cetakSemuaProgramOverlay">
   <div class="custom-modal" style="max-width:360px; text-align:left;">
     <div class="custom-modal-title" style="text-align:center; margin-bottom: 4px;">Cetak Laporan Gabungan</div>
-    <div style="font-size:9.5px; color:var(--text-muted); text-align:center; margin-bottom:16px; line-height:1.5;">Rekapitulasi SAPA, PEDAS, BASO, BADIK &amp; BATAN digabung jadi 1 file PDF.</div>
+    <div style="font-size:9.5px; color:var(--text-muted); text-align:center; margin-bottom:16px; line-height:1.5;">Rekapitulasi GOPAY, SAPA, PEDAS, BASO, BADIK &amp; BATAN digabung jadi 1 file PDF.</div>
 
     <div style="display:flex; gap:6px; margin-bottom:14px; background: rgba(255,255,255,0.06); border-radius: 12px; padding: 4px;">
       <button type="button" id="cspTabBulanan" onclick="cspGantiMode('bulanan')" style="flex:1; padding: 8px 0; border-radius: 9px; border:none; background: #22C55E; color:#fff; font-size:11.5px; font-weight:700; cursor:pointer; font-family:inherit;">Bulanan</button>
