@@ -4865,7 +4865,12 @@ function callGASWithRetry_(action, args, opts) {
         try {
           return JSON.parse(textRaw);
         } catch (e) {
-          throw new Error("Respons server tidak valid.");
+          console.error("[callGASWithRetry_] Gagal parse JSON (" + action + "). HTTP " + r.status + ":", textRaw ? textRaw.slice(0, 300) : "(kosong)");
+          if (!r.ok) {
+            throw new Error("Server mengembalikan status HTTP " + r.status + " (" + (r.statusText || "Error") + ").");
+          }
+          const cuplikan = textRaw ? textRaw.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) : "respons kosong";
+          throw new Error("Respons server tidak valid (" + cuplikan + ").");
         }
       })
       .then(function (res) {
