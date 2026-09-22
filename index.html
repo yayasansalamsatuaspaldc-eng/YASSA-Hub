@@ -420,6 +420,35 @@
       flex-direction: column;
       min-width: 0;
     }
+    /* 🩹 FIX: semua isi tab Keuangan setelah header (Kartu 1 & 2, entry
+       Laporan Bulanan, dll) dibungkus 1 div #kfinDataWrap (buat efek blur
+       loading). Karena #kfinDataWrap adalah child LANGSUNG dari .content,
+       grid auto-fill di atas cuma menganggapnya SATU kolom sempit --
+       akibatnya semua yang ada di dalamnya (termasuk Kartu 1 & 2 yang
+       harusnya sejajar berdampingan) malah numpuk ke bawah satu per satu,
+       nyisain banyak ruang kosong di kanan di layar laptop/lebar. Paksa
+       #kfinDataWrap full-width (grid-column: 1/-1) supaya dia bisa
+       memakai lebar penuh #app, baru .kfin-cards-row di dalamnya (lihat
+       bawah) yang mengatur Kartu 1 & 2 sejajar berdampingan. */
+    #kfinDataWrap {
+      grid-column: 1 / -1;
+    }
+    /* Bungkus Kartu 1 (Jumlah Anak & Santunan) + Kartu 2 (Kebutuhan dan
+       Kekurangan) jadi flex-row supaya sejajar berdampingan di layar
+       lebar. flex-wrap:wrap + min-width kartu (~380px) bikin otomatis
+       balik numpuk 1 kolom kalau ruang gak cukup, jadi gak perlu media
+       query terpisah buat tablet/laptop sempit. */
+    .kfin-cards-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      align-items: stretch;
+    }
+    .kfin-cards-row > .kfin-card,
+    .kfin-cards-row > .keuangan-hero-card {
+      flex: 1 1 380px;
+      min-width: 0;
+    }
     /* Tab App: header "Semua Aplikasi" dipaksa full-width sama seperti
        Keuangan. appGridContainer juga dipaksa full-width, tapi kolom
        tetapnya (repeat(2,1fr)) diganti auto-fill kartu kecil supaya gak
@@ -8159,6 +8188,7 @@ function renderContent() {
       </div>
 
       <div id="kfinDataWrap" class="${kfinSudahAdaCache_ ? '' : 'kfin-loading-blur'}">
+      <div class="kfin-cards-row">
       <!-- 1. Jumlah Anak Yatim + Total Santunan (per wilayah -- jumlah anak dari
            YASSA Mobile, rate dari Bendahara, dihitung otomatis di Hub) -->
       <div id="keuanganTourTarget" class="keuangan-hero-card kfin-card" style="--kfin-accent: var(--bento-primary); --kfin-accent-rgb: var(--bento-primary-rgb);">
@@ -8277,6 +8307,7 @@ function renderContent() {
           </button>
           <div id="keuanganRincianWilayahList" class="kv-rincian-list" style="display: block;"></div>
         </div>
+      </div>
       </div>
 
       <!-- Pintu masuk ke Laporan Bulanan (pendapatan vs pengeluaran santunan,
