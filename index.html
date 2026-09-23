@@ -215,7 +215,7 @@
      ☀️ MODE TERANG ("Outdoor") — supaya app tetap kebaca pas dipakai
      di luar ruangan / siang hari kena matahari langsung. Diaktifkan
      lewat atribut data-theme="light" di <html> (toggle via tombol
-     "Mode Tampilan" di Menu Akun -> lihat toggleTheme() di <script>
+     "Mode Tampilan" di Menu Akun -> lihat toggleTheme() di tag script
      bawah). Cukup nimpa CSS variable inti di sini; sisanya otomatis
      ikut berubah karena hampir semua komponen sudah pakai var(--...).
      Beberapa komponen yang sengaja punya warna gelap hardcode (kartu
@@ -287,7 +287,7 @@
   /* ============================================================
      🌊 EFEK SENTUH GLOBAL (ripple) -- diterapkan otomatis ke SEMUA
      tombol & elemen berklik lewat JS (lihat initGlobalRippleEffect())
-     di bagian <script> bawah, jadi gak perlu tambahin manual ke tiap
+     di bagian tag script bawah, jadi gak perlu tambahin manual ke tiap
      tombol satu-satu. Elemen target ditandai class "gtap" oleh JS.
      Ripple-nya lingkaran putih transparan yang membesar & memudar dari
      titik sentuh, dikombinasikan dengan efek "mengecil dikit" (scale)
@@ -544,7 +544,7 @@
   /* ============================================================
      ✨ IMMERSIVE: kartu ringkasan Beranda dibuat "hidup" -- ring cahaya
      yang muter pelan di tepi kartu + tilt 3D ngikutin sentuhan/kursor
-     (lihat initSummaryCardTilt() di <script> bawah buat logic JS-nya).
+     (lihat initSummaryCardTilt() di bagian script bawah buat logic JS-nya).
      Semua efek dimatikan otomatis kalau user aktifin "Reduced Motion"
      di HP-nya (lihat blok @media prefers-reduced-motion di bawah),
      dan tilt-nya dibikin SUBTIL (maks ~6deg) supaya angka tetap kebaca
@@ -1645,15 +1645,9 @@
      nunggu", bukan malah kelihatan kayak angkanya emang 0/kosong. Begitu
      data (dari cache ATAU fetch baru) siap, class ini dicopot lagi lewat
      kfinSetDataBlur_(false) di loadKeuanganStats(). */
-  #kfinDataWrap { transition: filter 0.35s ease, opacity 0.35s ease; }
+  #kfinDataWrap { transition: opacity 0.2s ease; }
   #kfinDataWrap.kfin-loading-blur {
-    filter: blur(7px);
-    opacity: 0.55;
-    pointer-events: none;
-    user-select: none;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    #kfinDataWrap { transition: none !important; }
+    /* Efek buram dihilangkan sesuai permintaan: kartu tetap jelas dan tajam saat memuat */
   }
 
   /* 🆕 Versi generik dari efek blur di atas -- dipakai di tab Beranda
@@ -2000,7 +1994,7 @@
     min-height: 18px;
   }
   /* Badge hitungan mundur (detik) selama splash "Bismillah" berjalan --
-     dikelola lewat startPostLoginSplashCountdown() di <script> bawah. */
+     dikelola lewat startPostLoginSplashCountdown() di bagian script bawah. */
   .post-login-splash-countdown {
     display: inline-flex; align-items: center; gap: 6px;
     font-size: 12px; font-weight: 700; color: var(--neon-cyan);
@@ -3189,7 +3183,7 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
     <div class="summary-value" id="summaryTotalSantunanDiperlukan"><span class="kv-loading">...</span></div>
 
     <!-- Progress bar ringkasan "Donasi vs Kebutuhan" -- lihat CSS .summary-progress
-         & logic isi di renderSummaryCardBeranda_() (<script> bawah). -->
+         & logic isi di renderSummaryCardBeranda_() (script bawah). -->
     <div class="summary-progress" id="summaryProgressWrap" style="display:none;">
       <div class="summary-progress-track"><div class="summary-progress-fill" id="summaryProgressFill" style="width:0%;"></div></div>
       <div class="summary-progress-meta">
@@ -4231,7 +4225,7 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
   <!-- 🩹 FIX: Sub-sheet "Input Program GOPAY" -- muncul kalau tombol "Input Program
        GOPAY" di sheet "Input Data" ditekan, isinya 2 pilihan: "Realisasi Donasi
        Lapangan" & "Realisasi Kitabisa" (sebelumnya 2 tombol terpisah di sheet utama).
-       Lihat toggleInputGopaySubSheet() di <script> utama. -->
+       Lihat toggleInputGopaySubSheet() di bagian script utama. -->
   <div class="user-form-overlay" id="inputGopaySubOverlay" onclick="if(event.target===this) toggleInputGopaySubSheet()" style="align-items: flex-end;">
     <div class="user-form-sheet" style="padding-bottom: 40px; border-radius: 24px 24px 0 0;">
       <div style="width: 48px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 4px; margin: 0 auto 16px;"></div>
@@ -4298,8 +4292,8 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
 </div>
 
 <!-- 🔔 FIREBASE CLOUD MESSAGING — dipakai fitur Notifikasi Hub sendiri
-     (lihat renderNotifHubCard/aktifkanNotifikasiHub di <script> utama di
-     bawah). HARUS dimuat SEBELUM <script> utama supaya global "firebase"
+     (lihat renderNotifHubCard/aktifkanNotifikasiHub di tag script utama di
+     bawah). HARUS dimuat SEBELUM tag script utama supaya global "firebase"
      sudah ada saat initHubForegroundMessaging_() jalan. -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js" defer></script>
@@ -6976,8 +6970,7 @@ function kembaliKeBulanIniKeuangan() {
 }
 
 function kfinSetDataBlur_(blurOn) {
-  const el = document.getElementById("kfinDataWrap");
-  if (el) el.classList.toggle("kfin-loading-blur", !!blurOn);
+  // Efek buram dihilangkan sesuai permintaan user
 }
 
 function loadKeuanganStats() {
@@ -8196,7 +8189,7 @@ function renderContent() {
       </div>
       </div>
 
-      <div id="kfinDataWrap" class="${kfinSudahAdaCache_ ? '' : 'kfin-loading-blur'}">
+      <div id="kfinDataWrap">
       <div class="kfin-cards-row">
       <!-- 1. Jumlah Anak Yatim + Total Santunan (per wilayah -- jumlah anak dari
            YASSA Mobile, rate dari Bendahara, dihitung otomatis di Hub) -->
