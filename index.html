@@ -14248,6 +14248,37 @@ function escapeHtmlHub(str) {
 // ============================================================
 let monitorAksesCache = [];
 let monitorAksesFilterAktif = "SEMUA";
+let monitorAksesTanggalAktif = monitorAksesTanggalHariIni_();
+
+// Dulu Monitor Akses selalu narik & nge-render 500 baris log gabungan
+// SEMUA tanggal sekaligus tiap kali tab ini dibuka -- makin lama sheet log
+// kepakai, makin berat & makin lama loadingnya (bahkan bisa timeout).
+// Sekarang WAJIB pilih 1 tanggal dulu (default hari ini), jadi yang
+// ditarik dari server & dirender ke layar cuma punya hari itu aja.
+function monitorAksesTanggalHariIni_() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+
+function monitorAksesFormatTanggalLabel_(tglStr) {
+  const d = new Date(tglStr + "T00:00:00");
+  if (isNaN(d.getTime())) return tglStr;
+  return d.toLocaleDateString("id-ID", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
+}
+
+function setMonitorAksesTanggal(tglStr) {
+  if (!tglStr) return;
+  monitorAksesTanggalAktif = tglStr;
+  renderMonitorAksesPanel();
+}
+
+function gantiTanggalMonitorAkses(delta) {
+  const d = new Date(monitorAksesTanggalAktif + "T00:00:00");
+  d.setDate(d.getDate() + delta);
+  const baru = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  if (baru > monitorAksesTanggalHariIni_()) return; // gak boleh maju ke tanggal masa depan
+  setMonitorAksesTanggal(baru);
+}
 
 const MONITOR_AKSES_META = {
   BUKA_APP: { label: "Buka App", color: "#60A5FA", bg: "rgba(96,165,250,0.14)", icon: "visibility" },
@@ -14257,16 +14288,25 @@ const MONITOR_AKSES_META = {
 
 function renderMonitorAksesPanel() {
   const sub = document.getElementById("pengaturanSubContent");
+  const hariIni = monitorAksesTanggalHariIni_();
   sub.innerHTML =
     '<div class="settings-toolbar">' +
     '<span style="font-size:12.5px;color:#94A3B8;">Log siapa buka Hub, dari mana, & percobaan login</span>' +
     '<button class="btn-add-user" onclick="renderMonitorAksesPanel()"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px;">refresh</span> Muat Ulang</button>' +
     '</div>' +
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;background:var(--glass-strong);border:1px solid var(--glass-border);border-radius:14px;padding:10px 12px;">' +
+    '<button onclick="gantiTanggalMonitorAkses(-1)" style="width:32px;height:32px;flex-shrink:0;border-radius:10px;border:1px solid var(--glass-border);background:transparent;color:var(--text-primary);cursor:pointer;"><span class="material-symbols-outlined" style="font-size:16px;">chevron_left</span></button>' +
+    '<input type="date" id="monitorAksesTanggalInput" value="' + monitorAksesTanggalAktif + '" max="' + hariIni + '" onchange="setMonitorAksesTanggal(this.value)" style="flex:1;min-width:130px;padding:7px 10px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-strong);color:var(--text-primary);font-size:12.5px;font-weight:700;">' +
+    '<button onclick="gantiTanggalMonitorAkses(1)" style="width:32px;height:32px;flex-shrink:0;border-radius:10px;border:1px solid var(--glass-border);background:transparent;color:var(--text-primary);cursor:pointer;"><span class="material-symbols-outlined" style="font-size:16px;">chevron_right</span></button>' +
+    (monitorAksesTanggalAktif !== hariIni
+      ? '<button onclick="setMonitorAksesTanggal(monitorAksesTanggalHariIni_())" style="padding:7px 12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--bento-primary);color:#0B1220;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;">Hari Ini</button>'
+      : '') +
+    '</div>' +
     '<div id="monitorAksesSummary" style="margin-bottom:14px;"></div>' +
     '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;" id="monitorAksesFilter"></div>' +
-    '<div id="monitorAksesList"><div style="padding:20px;text-align:center;color:#94A3B8;font-size:13px;">Memuat data...</div></div>';
+    '<div id="monitorAksesList"><div style="padding:20px;text-align:center;color:#94A3B8;font-size:13px;">Memuat data tanggal ' + escapeHtmlHub(monitorAksesFormatTanggalLabel_(monitorAksesTanggalAktif)) + '...</div></div>';
 
-  callGASWithRetry_("getLogAksesAplikasi", [authToken])
+  callGASWithRetry_("getLogAksesAplikasi", [authToken, monitorAksesTanggalAktif])
     .then(function (logs) {
       monitorAksesCache = logs;
       renderMonitorAksesSummary_(logs);
@@ -14277,10 +14317,6 @@ function renderMonitorAksesPanel() {
       const wrap = document.getElementById("monitorAksesList");
       if (wrap) wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#F87171;font-size:13px;">' + escapeHtmlHub(err.message) + '</div>';
     });
-}
-
-function monitorAksesIsSameDay_(a, b) {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
 function monitorAksesSummaryCard_(label, value, icon, color) {
@@ -14294,22 +14330,24 @@ function monitorAksesSummaryCard_(label, value, icon, color) {
 function renderMonitorAksesSummary_(logs) {
   const wrap = document.getElementById("monitorAksesSummary");
   if (!wrap) return;
-  const now = new Date();
-  const jam24 = 24 * 60 * 60 * 1000;
-  const gagal24 = logs.filter(function (l) { return l.tipeEvent === "LOGIN_GAGAL" && (now - new Date(l.timestamp)) <= jam24; });
-  const suksesHariIni = logs.filter(function (l) { return l.tipeEvent === "LOGIN_SUKSES" && monitorAksesIsSameDay_(new Date(l.timestamp), now); });
-  const bukaHariIni = logs.filter(function (l) { return l.tipeEvent === "BUKA_APP" && monitorAksesIsSameDay_(new Date(l.timestamp), now); });
+  // `logs` yang masuk ke sini udah difilter server-side cuma buat SATU
+  // tanggal (monitorAksesTanggalAktif), jadi tinggal hitung langsung --
+  // gak perlu filter ulang berdasar jam/hari kayak versi lama.
+  const buka = logs.filter(function (l) { return l.tipeEvent === "BUKA_APP"; });
+  const sukses = logs.filter(function (l) { return l.tipeEvent === "LOGIN_SUKSES"; });
+  const gagal = logs.filter(function (l) { return l.tipeEvent === "LOGIN_GAGAL"; });
+  const labelTgl = monitorAksesTanggalAktif === monitorAksesTanggalHariIni_() ? "hari ini" : "tgl. ini";
 
   wrap.innerHTML =
     '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">' +
-    monitorAksesSummaryCard_("Buka App (hari ini)", bukaHariIni.length, "visibility", "#60A5FA") +
-    monitorAksesSummaryCard_("Login Sukses (hari ini)", suksesHariIni.length, "check_circle", "#4ADE80") +
-    monitorAksesSummaryCard_("Gagal Login (24 jam)", gagal24.length, "gpp_maybe", gagal24.length > 0 ? "#F87171" : "#94A3B8") +
+    monitorAksesSummaryCard_("Buka App (" + labelTgl + ")", buka.length, "visibility", "#60A5FA") +
+    monitorAksesSummaryCard_("Login Sukses (" + labelTgl + ")", sukses.length, "check_circle", "#4ADE80") +
+    monitorAksesSummaryCard_("Login Gagal (" + labelTgl + ")", gagal.length, "gpp_maybe", gagal.length > 0 ? "#F87171" : "#94A3B8") +
     '</div>' +
-    (gagal24.length >= 5
+    (gagal.length >= 5
       ? '<div style="margin-top:10px;display:flex;gap:8px;align-items:flex-start;background:rgba(248,113,113,0.14);border:1px solid rgba(248,113,113,0.4);color:#F87171;font-size:11.5px;font-weight:700;padding:10px 14px;border-radius:14px;">' +
         '<span class="material-symbols-outlined" style="font-size:16px;flex-shrink:0;">warning</span>' +
-        '<span>Ada ' + gagal24.length + ' percobaan login gagal dalam 24 jam terakhir -- cek daftar di bawah, waspada kemungkinan percobaan masuk paksa.</span></div>'
+        '<span>Ada ' + gagal.length + ' percobaan login gagal di tanggal ini -- cek daftar di bawah, waspada kemungkinan percobaan masuk paksa.</span></div>'
       : '');
 }
 
@@ -14367,7 +14405,7 @@ function renderMonitorAksesList_(logs) {
   if (!wrap) return;
   const filtered = monitorAksesFilterAktif === "SEMUA" ? logs : logs.filter(function (l) { return l.tipeEvent === monitorAksesFilterAktif; });
   if (!filtered.length) {
-    wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#94A3B8;font-size:13px;">Belum ada catatan.</div>';
+    wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#94A3B8;font-size:13px;">Belum ada catatan di tanggal ' + escapeHtmlHub(monitorAksesFormatTanggalLabel_(monitorAksesTanggalAktif)) + '.</div>';
     return;
   }
   wrap.innerHTML = filtered.map(monitorAksesRow_).join("");
