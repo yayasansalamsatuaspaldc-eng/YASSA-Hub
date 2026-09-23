@@ -40,7 +40,7 @@ _hubMessaging.onBackgroundMessage(function (payload) {
   });
 });
 
-const CACHE_NAME = "yassa-GOPAY-shell-v11"; // dinaikkan dari v9 -- nambah welcome-popup.js (popup gambar pembuka sekali tampil)
+const CACHE_NAME = "yassa-GOPAY-shell-v12"; // dinaikkan ke v12 agar browser otomatis mengaktifkan update baru ini
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -139,19 +139,42 @@ self.addEventListener("fetch", function (event) {
     });
 
     event.respondWith(
-      fetch(networkRequest)
-        .then(function (response) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(function (cache) {
-            cache.put(event.request, clone);
-          });
+      caches.match(event.request).then(function (cached) {
+        const fetchPromise = fetch(networkRequest).then(function (response) {
+          if (response && response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(function (cache) {
+              cache.put(event.request, clone);
+            });
+          }
           return response;
-        })
-        .catch(function () {
-          return caches.match(event.request).then(function (cached) {
-            return cached || caches.match("./index.html");
+        });
+
+        if (!cached) {
+          return fetchPromise.catch(function () {
+            return caches.match("./index.html");
           });
-        })
+        }
+
+        // Jika sudah ada cache di HP, beri batas toleransi jaringan 2.5 detik.
+        // Jika jaringan cepat (<2.5s), dapat versi terbaru.
+        // Jika jaringan lambat/0.5 KB/s, langsung tampilkan dari cache lokal (0 detik)!
+        return new Promise(function (resolve) {
+          let resolved = false;
+          fetchPromise.then(function (netRes) {
+            if (!resolved) { resolved = true; resolve(netRes); }
+          }).catch(function () {
+            if (!resolved) { resolved = true; resolve(cached); }
+          });
+          setTimeout(function () {
+            if (!resolved) {
+              resolved = true;
+              console.log("[SW] Jaringan lambat, menyajikan index.html langsung dari cache lokal");
+              resolve(cached);
+            }
+          }, 2500);
+        });
+      })
     );
     return;
   }
