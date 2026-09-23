@@ -5062,10 +5062,20 @@ function initAuth() {
           timeoutMs: 20000,
         }).catch(function () {});
       })
-      .catch(function () {
-        localStorage.removeItem("yassa_token");
-        localStorage.removeItem("yassa_user");
-        showLoginScreen();
+      .catch(function (err) {
+        if (err && err.isLogicalError) {
+          // Hanya jika server secara tegas menyatakan sesi tidak sah baru logout
+          localStorage.removeItem("yassa_token");
+          localStorage.removeItem("yassa_user");
+          showLoginScreen();
+        } else {
+          // Koneksi lambat/timeout di data seluler atau wifi: tetap izinkan masuk dengan data profil tersimpan
+          console.warn("Koneksi lambat saat periksa sesi, tetap masuk mode offline:", err);
+          showApp();
+          if (typeof showHubToast === "function") {
+            showHubToast("Koneksi lambat. Menggunakan data tersimpan di perangkat.", "info", 4000);
+          }
+        }
       })
       .finally(function () { resolve(); });
   });
@@ -5177,17 +5187,11 @@ function handleLoginSubmit(event) {
   btn.textContent = "Memproses...";
 
   callGASWithRetry_("login", [email, password], {
-    // 🚀 PERBAIKAN (fix "Koneksi lambat" saat login): dinaikkan dari 15000ms
-    // ke 22000ms -- sekarang broker SSO sudah dicabut dari login() (lihat
-    // finalizeLogin di Code_Hub.gs), jadi login seharusnya jauh lebih
-    // cepat dalam kondisi normal. Tapi pas COLD START (project idle lama)
-    // masih butuh ruang: buka Sheets Akun + hash password + tulis
-    // TerakhirLogin + cold start Apps Script itu sendiri bisa total
-    // 8-15 detik pas kondisi paling lambat -- 22 detik kasih kelonggaran
-    // biar gak keburu dianggap gagal & retry padahal server masih jalan.
-    timeoutMs: 22000,
+    timeoutMs: 40000,
+    maxAttempts: 2,
+    delayMs: 2000,
     onRetry: function (attempt, maxAttempts) {
-      btn.textContent = "Koneksi lambat, mencoba lagi... (" + attempt + "/" + maxAttempts + ")";
+      btn.textContent = "Koneksi lambat, memproses... (" + attempt + "/" + maxAttempts + ")";
     },
   })
     .then(function (res) {
@@ -15216,22 +15220,13 @@ function hidePostLoginSplash() {
   }, 400);
 }
 
-// Tarik data Beranda, Keuangan, dan Profil sekaligus di latar belakang
+// Prioritaskan data Beranda saja saat login agar koneksi seluler tidak kelebihan beban (overload).
+// Data tab Keuangan dan Profil akan dimuat otomatis saat tab tersebut dibuka pengguna.
 function prefetchDataSetelahLogin_() {
   const tasks = [];
   try {
     if (typeof loadBerandaStats === "function") tasks.push(loadBerandaStats());
   } catch (e) {}
-  try {
-    if (typeof loadKeuanganStats === "function") tasks.push(loadKeuanganStats());
-  } catch (e) {}
-  try {
-    if (typeof loadRekapTersalurKeuangan === "function") tasks.push(loadRekapTersalurKeuangan());
-  } catch (e) {}
-  try {
-    if (typeof loadProfilePerforma === "function") tasks.push(loadProfilePerforma());
-  } catch (e) {}
-
   return Promise.allSettled(tasks);
 }
 
@@ -15366,13 +15361,23 @@ function cleanupCacheAndUpdate() {
   setupServiceWorkerAutoReload();
   const tasks = [];
 
-  if ("caches" in window) {
-    tasks.push(
-      caches.keys()
-        .then(function (keys) { return Promise.all(keys.map(function (k) { return caches.delete(k); })); })
-        .catch(function () {})
-    );
-  }
+  // 🔄 Jalur update cache aman: Bersihkan cache HANYA saat APP_VERSION berubah
+  // (misal saat Anda merilis update baru), sehingga user tidak nyangkut di file lama.
+  // Di penggunaan harian normal, cache dipertahankan agar app terbuka instan di data seluler.
+  try {
+    const savedVer = localStorage.getItem("yassa_hub_cached_version");
+    if (savedVer !== APP_VERSION) {
+      console.log("[PWA Cache] Versi baru terdeteksi (" + APP_VERSION + "), membersihkan cache lama...");
+      localStorage.setItem("yassa_hub_cached_version", APP_VERSION);
+      if ("caches" in window) {
+        tasks.push(
+          caches.keys().then(function (keys) {
+            return Promise.all(keys.map(function (k) { return caches.delete(k); }));
+          }).catch(function () {})
+        );
+      }
+    }
+  } catch (e) {}
 
   if ("serviceWorker" in navigator) {
     tasks.push(
@@ -15952,19 +15957,19 @@ function bootApp() {
   initHubPullToRefresh();
   updateHubSyncBadges();
 
-  // 📡 Monitor Akses: rekam "app dibuka" SEDINI mungkin, sebelum tau user
-  // ini bakal login atau enggak -- sengaja gak nunggu (fire-and-forget),
-  // JANGAN sampai proses ini ngelambatin bukaan app.
-  logAksesEvent_("BUKA_APP");
-
-  setSplashStatus("Membersihkan cache...");
+  setSplashStatus("Membuka aplikasi...");
   cleanupCacheAndUpdate()
     .then(function () {
-      setSplashStatus("Memperbarui data...");
+      setSplashStatus("Memeriksa sesi...");
       return initAuth();
     })
     .then(function () {
       hideSplash();
+
+      // Rekam buka app secara santai di latar belakang setelah aplikasi tampil
+      setTimeout(function () {
+        try { logAksesEvent_("BUKA_APP"); } catch (e) {}
+      }, 3500);
 
       // 🔄 Auto-restore sesi overlay: jika browser me-reload halaman karena RAM penuh,
       // langsung buka kembali aplikasi & tab terakhir yang sedang dibuka user
