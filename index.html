@@ -11036,29 +11036,74 @@ function openSejarahPerjalanan() {
   loadSejarahPerjalanan();
 }
 
+// 🩹 FIX (loading kaku + gak enak kalau server lagi "dingin"/cold start
+// dan narik data agak lama): dulu cuma teks polos tanpa animasi, dan
+// teksnya gak pernah berubah walau sudah nunggu lama -- kelihatan kayak
+// macet/nge-hang. Sekarang pakai spinner (pola sama kayak
+// .overlay-sso-spinner yang sudah dipakai di tempat lain), dan kalau
+// lewat 4 detik teksnya berubah jadi lebih menenangkan, biar user tau
+// ini cuma nunggu koneksi/server "panas", bukan error.
 function loadSejarahPerjalanan() {
   const el = document.getElementById("sejarahPerjalananContent");
-  el.innerHTML = `<div style="padding:40px 0; text-align:center; color:var(--text-secondary); font-size:12px;">Memuat perjalanan YASSA...</div>`;
+  el.innerHTML = `
+    <div style="padding:60px 20px 40px; text-align:center;">
+      <div style="width:32px; height:32px; margin:0 auto 16px; border-radius:50%; border:3px solid rgba(245,158,11,0.18); border-top-color:#F59E0B; animation: sejarahSpin_ 0.8s linear infinite;"></div>
+      <div id="sejarahLoadingTeks_" style="color:var(--text-secondary); font-size:12px; transition: opacity .25s ease;">Memuat perjalanan YASSA...</div>
+    </div>
+    <style>@keyframes sejarahSpin_ { to { transform: rotate(360deg); } }</style>`;
+
+  const teksLamaTimer = setTimeout(function () {
+    const teks = document.getElementById("sejarahLoadingTeks_");
+    if (!teks) return;
+    teks.style.opacity = "0";
+    setTimeout(function () {
+      teks.textContent = "Masih memuat, koneksi ke server sedang \"dipanaskan\"… mohon tunggu sebentar ya";
+      teks.style.opacity = "1";
+    }, 250);
+  }, 4000);
+
   callGASWithRetry_("getSejarahPerjalanan", [authToken])
     .then(function (list) {
+      clearTimeout(teksLamaTimer);
       sejarahList_ = list || [];
       renderSejarahPerjalanan();
     })
     .catch(function (err) {
-      el.innerHTML = `<div style="padding:40px 20px; text-align:center; color:var(--text-secondary); font-size:12px;">Gagal memuat data: ${escapeHtmlHub(err.message)}</div>`;
+      clearTimeout(teksLamaTimer);
+      el.innerHTML = `
+        <div style="padding:40px 20px; text-align:center; color:var(--text-secondary); font-size:12px;">
+          Gagal memuat data: ${escapeHtmlHub(err.message)}<br>
+          <button type="button" onclick="loadSejarahPerjalanan()" style="margin-top:12px; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.35); color:#F59E0B; padding:7px 16px; border-radius:10px; font-size:11.5px; font-weight:700; cursor:pointer; font-family:inherit;">Coba Lagi</button>
+        </div>`;
     });
 }
 
 // Ambil nama bulan Indonesia dari tanggal "dd/MM/yyyy" -- dipakai buat
 // tampilan "23 September 2015" di tiap kartu momen.
+// 🩹 FIX (jaga-jaga tampilan "kaku"): kalau untuk alasan apa pun nilai
+// yang dikirim server BUKAN "dd/MM/yyyy" yang rapi (mis. sempat lolos
+// sebagai string tanggal mentah gaya JavaScript), dulu fungsi ini cuma
+// balikin apa adanya -- makanya bisa muncul teks kaku "Sun Jul 26 2026
+// 00:00:00 GMT+0700 (...)" di kartu. Sekarang ada fallback: coba parse
+// pakai `new Date()` dulu, dan kalau berhasil, tetap ditampilkan rapi
+// "26 Juli 2026" -- bukan string mentahnya.
 function sejarahFormatTanggalIndo_(tanggalDdMmYyyy) {
-  const parts = String(tanggalDdMmYyyy || "").split("/");
-  if (parts.length !== 3) return tanggalDdMmYyyy || "";
-  const d = Number(parts[0]);
-  const m = Number(parts[1]);
-  const y = parts[2];
-  const nama = NAMA_BULAN_ID_JS_ && NAMA_BULAN_ID_JS_[m] ? NAMA_BULAN_ID_JS_[m] : "";
-  return d + " " + nama + " " + y;
+  const asli = String(tanggalDdMmYyyy || "").trim();
+  const parts = asli.split("/");
+  if (parts.length === 3) {
+    const d = Number(parts[0]);
+    const m = Number(parts[1]);
+    const y = parts[2];
+    const nama = NAMA_BULAN_ID_JS_ && NAMA_BULAN_ID_JS_[m] ? NAMA_BULAN_ID_JS_[m] : "";
+    if (nama) return d + " " + nama + " " + y;
+  }
+  // Fallback: bukan format "dd/MM/yyyy" yang dikenal -- coba parse biasa.
+  const coba = new Date(asli);
+  if (!isNaN(coba.getTime())) {
+    const nama = NAMA_BULAN_ID_JS_ && NAMA_BULAN_ID_JS_[coba.getMonth() + 1] ? NAMA_BULAN_ID_JS_[coba.getMonth() + 1] : "";
+    if (nama) return coba.getDate() + " " + nama + " " + coba.getFullYear();
+  }
+  return asli;
 }
 
 function renderSejarahPerjalanan() {
