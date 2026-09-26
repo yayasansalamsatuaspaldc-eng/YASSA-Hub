@@ -3231,6 +3231,14 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
       <span class="user-menu-icon tone-purple"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg></span>
       Sejarah YASSA
     </button>
+    <!-- 🆕 Timeline "Perjalanan YASSA" -- PELENGKAP dokumen PDF "Sejarah
+         YASSA" di atas (bukan pengganti). Data & foto diambil dari sheet
+         "Sejarah_Perjalanan" lewat getSejarahPerjalanan (lihat
+         openSejarahPerjalanan() & Code.gs). -->
+    <button class="user-menu-item" onclick="openSejarahPerjalanan()">
+      <span class="user-menu-icon tone-amber"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></span>
+      Perjalanan YASSA
+    </button>
     <button class="user-menu-item" onclick="handleUserMenuClick('pengurus')">
       <span class="user-menu-icon tone-cyan"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
       Daftar Pengurus
@@ -3660,6 +3668,55 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
     <div class="akun-content" id="programLainContent"></div>
   </div>
 
+  <!-- 🆕 Halaman Penuh: Timeline "Perjalanan YASSA" -- PELENGKAP dokumen
+       PDF "Sejarah YASSA" (tombol lama tetap ada). Backend:
+       getSejarahPerjalanan/tambahSejarahPerjalanan/updateSejarahPerjalanan/
+       hapusSejarahPerjalanan/uploadFotoSejarahPerjalanan (Code.gs), data
+       di sheet "Sejarah_Perjalanan". Tombol "+" (FAB) cuma tampil buat
+       SUPERADMIN/ADMIN -- lihat renderSejarahPerjalanan(). -->
+  <div class="overlay" id="sejarahPerjalananPage">
+    <div class="overlay-header">
+      <button class="overlay-close" id="sejarahPerjalananClose">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E2E8F0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <span class="overlay-title">Perjalanan YASSA</span>
+    </div>
+    <div class="akun-content" id="sejarahPerjalananContent" style="position:relative; min-height:200px;"></div>
+    <!-- FAB "Tambah Momen" -- ditampilkan/disembunyikan lewat JS sesuai role -->
+    <button type="button" id="sejarahFabTambah" onclick="bukaTambahSejarah()" style="display:none; position:absolute; right:18px; bottom:22px; width:52px; height:52px; border-radius:50%; border:none; background: linear-gradient(135deg, #F59E0B, #D97706); color:#fff; box-shadow: 0 6px 18px rgba(217,119,6,0.45); align-items:center; justify-content:center; cursor:pointer; z-index:5;">
+      <span class="material-symbols-outlined" style="font-size:26px;">add</span>
+    </button>
+  </div>
+
+  <!-- Modal: Tambah/Edit 1 momen "Perjalanan YASSA" -- khusus SUPERADMIN/ADMIN. -->
+  <div class="custom-modal-overlay" id="sejarahAddOverlay">
+    <div class="custom-modal" style="max-width:360px; text-align:left;">
+      <div class="custom-modal-title" id="sejarahAddTitle" style="text-align:center; margin-bottom: 16px;">Tambah Momen</div>
+
+      <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Tanggal</label>
+      <input type="date" id="sejarahAddTanggal" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit;">
+
+      <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Judul Momen</label>
+      <input type="text" id="sejarahAddJudul" placeholder="Mis. Komunitas GOPAY Terbentuk" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit;">
+
+      <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Cerita/Keterangan (opsional)</label>
+      <textarea id="sejarahAddDeskripsi" placeholder="Ceritakan momen ini secara singkat..." rows="3" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit; resize:vertical;"></textarea>
+
+      <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Foto Kenangan (opsional)</label>
+      <div onclick="bukaFotoSumber('sejarahAddFotoInput')" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px dashed var(--glass-border); color: var(--text-secondary); font-size:11px; margin: 6px 0 4px; cursor:pointer; display:flex; align-items:center; gap:8px;">
+        <span class="material-symbols-outlined" style="font-size:16px;">add_a_photo</span>
+        <span id="sejarahAddFotoNama">Ketuk buat pilih foto (maks 10MB)</span>
+      </div>
+      <img id="sejarahAddFotoPreview" style="display:none; width:100%; max-height:160px; object-fit:cover; border-radius:10px; margin: 6px 0 12px;">
+      <input type="file" id="sejarahAddFotoInput" accept="image/*" style="display:none;" onchange="sejarahAddFotoPicked(this)">
+
+      <div class="custom-modal-actions" style="margin-top:14px;">
+        <button type="button" class="btn-modal btn-cancel" onclick="tutupTambahSejarah()">Batal</button>
+        <button type="button" class="btn-modal btn-confirm" id="sejarahAddBtnSimpan" onclick="submitTambahSejarah()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal: Tambah Bantuan generik "Program Lainnya" (BASO/BADIK/BATAN)
        -- khusus SUPERADMIN/ADMIN. Field sama persis buat ketiganya, cuma
        daftar opsi "Jenis Bantuan" yang beda per program (diisi JS). -->
@@ -3746,6 +3803,11 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
        semua baris/program lewat fotoBantuanUploadClick() (target diisi
        ke variabel JS fotoBantuanTarget sebelum .click() dipanggil). -->
   <input type="file" id="fotoBantuanInput" accept="image/*" style="display:none;" onchange="fotoBantuanDipilih(this)">
+
+  <!-- 🆕 Input file tersembunyi khusus tombol "Tambah Foto" di kartu
+       timeline Perjalanan YASSA -- lihat sejarahUploadFotoClick()/
+       sejarahUploadFotoDipilih() & bukaFotoSumber(). -->
+  <input type="file" id="sejarahUploadFotoInput" accept="image/*" style="display:none;" onchange="sejarahUploadFotoDipilih(this)">
 
   <!-- 🆕 Modal kecil "Pilih Sumber Foto" -- Kamera (attribute capture
        ditambah dinamis lewat JS sebelum .click()) ATAU Galeri (capture
@@ -10933,6 +10995,228 @@ function uploadFotoJikaAda_(programKey, id, file, jenisFoto) {
   });
 }
 
+// ============================================================
+// 🆕 TIMELINE "PERJALANAN YASSA" -- pelengkap dokumen PDF "Sejarah
+// YASSA" yang sudah ada. Menampilkan momen-momen penting (tanggal,
+// judul, cerita, foto) urut dari yang paling lama ke yang terbaru,
+// diambil dari sheet "Sejarah_Perjalanan" lewat getSejarahPerjalanan
+// (Code.gs). Tambah/edit/hapus & upload foto cuma buat SUPERADMIN/ADMIN.
+// ============================================================
+let sejarahList_ = [];
+let sejarahEditId_ = null;       // null = mode "Tambah", terisi id = mode "Edit"
+let sejarahAddFotoTerpilih_ = null;
+
+function sejarahBisaKelola_() {
+  return !!(currentUser && (currentUser.role === "SUPERADMIN" || currentUser.role === "ADMIN"));
+}
+
+function openSejarahPerjalanan() {
+  closeUserMenu();
+  document.getElementById("sejarahPerjalananPage").classList.add("open");
+  document.getElementById("sejarahFabTambah").style.display = sejarahBisaKelola_() ? "flex" : "none";
+  loadSejarahPerjalanan();
+}
+
+function loadSejarahPerjalanan() {
+  const el = document.getElementById("sejarahPerjalananContent");
+  el.innerHTML = `<div style="padding:40px 0; text-align:center; color:var(--text-secondary); font-size:12px;">Memuat perjalanan YASSA...</div>`;
+  callGASWithRetry_("getSejarahPerjalanan", [authToken])
+    .then(function (list) {
+      sejarahList_ = list || [];
+      renderSejarahPerjalanan();
+    })
+    .catch(function (err) {
+      el.innerHTML = `<div style="padding:40px 20px; text-align:center; color:var(--text-secondary); font-size:12px;">Gagal memuat data: ${escapeHtmlHub(err.message)}</div>`;
+    });
+}
+
+// Ambil nama bulan Indonesia dari tanggal "dd/MM/yyyy" -- dipakai buat
+// tampilan "23 September 2015" di tiap kartu momen.
+function sejarahFormatTanggalIndo_(tanggalDdMmYyyy) {
+  const parts = String(tanggalDdMmYyyy || "").split("/");
+  if (parts.length !== 3) return tanggalDdMmYyyy || "";
+  const d = Number(parts[0]);
+  const m = Number(parts[1]);
+  const y = parts[2];
+  const nama = NAMA_BULAN_ID_JS_ && NAMA_BULAN_ID_JS_[m] ? NAMA_BULAN_ID_JS_[m] : "";
+  return d + " " + nama + " " + y;
+}
+
+function renderSejarahPerjalanan() {
+  const el = document.getElementById("sejarahPerjalananContent");
+  const bisaKelola = sejarahBisaKelola_();
+
+  if (!sejarahList_.length) {
+    el.innerHTML = `
+      <div style="padding: 50px 20px; text-align:center; color: var(--text-secondary); font-size: 12px;">
+        <span class="material-symbols-outlined" style="font-size:38px; color:var(--text-muted); display:block; margin-bottom:10px;">history_edu</span>
+        Belum ada momen perjalanan YASSA yang dicatat.${bisaKelola ? "<br>Ketuk tombol + di kanan bawah untuk menambahkan." : ""}
+      </div>`;
+    return;
+  }
+
+  let html = `<div style="padding: 18px 20px 90px; position:relative;">
+    <div style="position:absolute; left:29px; top:8px; bottom:18px; width:2px; background: linear-gradient(180deg, rgba(245,158,11,0.05), rgba(245,158,11,0.5), rgba(245,158,11,0.05));"></div>`;
+
+  sejarahList_.forEach(function (m, idx) {
+    const tglIndo = sejarahFormatTanggalIndo_(m.tanggal);
+    html += `
+    <div style="position:relative; padding-left: 40px; margin-bottom: 22px;">
+      <div style="position:absolute; left:20px; top:2px; width:18px; height:18px; border-radius:50%; background: linear-gradient(135deg, #F59E0B, #D97706); border: 3px solid var(--bg-app, #0F172A); box-shadow: 0 0 0 2px rgba(245,158,11,0.3);"></div>
+      <div style="background: var(--glass-strong); border-radius: 16px; padding: 14px 16px; border: 1px solid var(--glass-border);">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px;">
+          <div style="font-size:10.5px; font-weight:700; color:#F59E0B; letter-spacing:.3px;">${escapeHtmlHub(tglIndo)}</div>
+          ${bisaKelola ? `
+          <div style="display:flex; gap:4px; flex-shrink:0;">
+            <button type="button" onclick="bukaEditSejarah('${m.id}')" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; padding:2px;"><span class="material-symbols-outlined" style="font-size:16px;">edit</span></button>
+            <button type="button" onclick="hapusSejarahClick('${m.id}')" style="background:transparent; border:none; color:#F87171; cursor:pointer; padding:2px;"><span class="material-symbols-outlined" style="font-size:16px;">delete</span></button>
+          </div>` : ""}
+        </div>
+        <div style="font-size:13.5px; font-weight:700; color:var(--text-primary); margin: 4px 0 6px;">${escapeHtmlHub(m.judul)}</div>
+        ${m.deskripsi ? `<div style="font-size:11.5px; color:var(--text-secondary); line-height:1.5; margin-bottom: ${m.linkFoto ? "10px" : "2px"};">${escapeHtmlHub(m.deskripsi)}</div>` : ""}
+        ${m.linkFoto ? `<img src="${escapeHtmlHub(m.linkFoto)}" onclick="sejarahLihatFotoBesar('${escapeHtmlHub(m.linkFoto)}')" style="width:100%; max-height:220px; object-fit:cover; border-radius:12px; cursor:pointer; display:block;" loading="lazy">` : ""}
+        ${(bisaKelola && !m.linkFoto) ? `<button type="button" onclick="sejarahUploadFotoClick('${m.id}')" style="margin-top:6px; background:transparent; border:none; color:#FBBF24; cursor:pointer; font-size:10.5px; display:flex; align-items:center; gap:3px; font-family:inherit; padding:0;"><span class="material-symbols-outlined" style="font-size:14px;">add_a_photo</span> Tambah Foto</button>` : ""}
+      </div>
+    </div>`;
+  });
+
+  html += `</div>`;
+  el.innerHTML = html;
+}
+
+// Lightbox sederhana buat lihat foto momen dalam ukuran penuh.
+function sejarahLihatFotoBesar(url) {
+  const ov = document.createElement("div");
+  ov.style.cssText = "position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.92); display:flex; align-items:center; justify-content:center; padding:20px; cursor:zoom-out;";
+  ov.innerHTML = `<img src="${url}" style="max-width:100%; max-height:100%; border-radius:8px; object-fit:contain;">`;
+  ov.addEventListener("click", function () { ov.remove(); });
+  document.body.appendChild(ov);
+}
+
+function bukaTambahSejarah() {
+  sejarahEditId_ = null;
+  sejarahAddFotoTerpilih_ = null;
+  document.getElementById("sejarahAddTitle").textContent = "Tambah Momen";
+  document.getElementById("sejarahAddTanggal").value = new Date().toISOString().slice(0, 10);
+  document.getElementById("sejarahAddJudul").value = "";
+  document.getElementById("sejarahAddDeskripsi").value = "";
+  document.getElementById("sejarahAddFotoInput").value = "";
+  document.getElementById("sejarahAddFotoNama").textContent = "Ketuk buat pilih foto (maks 10MB)";
+  document.getElementById("sejarahAddFotoPreview").style.display = "none";
+  document.getElementById("sejarahAddOverlay").classList.add("open");
+}
+
+// Edit cuma untuk tanggal/judul/deskripsi -- foto diganti lewat tombol
+// "Tambah Foto"/ketuk foto di kartu (upload langsung, gak lewat modal ini).
+function bukaEditSejarah(id) {
+  const m = sejarahList_.find(function (x) { return x.id === id; });
+  if (!m) return;
+  sejarahEditId_ = id;
+  sejarahAddFotoTerpilih_ = null;
+  document.getElementById("sejarahAddTitle").textContent = "Edit Momen";
+  document.getElementById("sejarahAddTanggal").value = m.tanggalISO || "";
+  document.getElementById("sejarahAddJudul").value = m.judul || "";
+  document.getElementById("sejarahAddDeskripsi").value = m.deskripsi || "";
+  document.getElementById("sejarahAddFotoInput").value = "";
+  document.getElementById("sejarahAddFotoNama").textContent = m.linkFoto ? "Foto sudah ada (ketuk foto di kartu untuk ganti)" : "Ketuk buat pilih foto (maks 10MB)";
+  document.getElementById("sejarahAddFotoPreview").style.display = "none";
+  document.getElementById("sejarahAddOverlay").classList.add("open");
+}
+
+function tutupTambahSejarah() {
+  document.getElementById("sejarahAddOverlay").classList.remove("open");
+}
+
+function sejarahAddFotoPicked(input) {
+  const file = validasiFotoTerpilih_(input);
+  sejarahAddFotoTerpilih_ = file;
+  const preview = document.getElementById("sejarahAddFotoPreview");
+  document.getElementById("sejarahAddFotoNama").textContent = file ? file.name : "Ketuk buat pilih foto (maks 10MB)";
+  if (file) {
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = "block";
+  } else {
+    preview.style.display = "none";
+  }
+}
+
+function submitTambahSejarah() {
+  const tanggal = document.getElementById("sejarahAddTanggal").value;
+  const judul = document.getElementById("sejarahAddJudul").value.trim();
+  const deskripsi = document.getElementById("sejarahAddDeskripsi").value.trim();
+  const fotoTerpilih = sejarahAddFotoTerpilih_;
+
+  if (!tanggal) { showModal("Gagal", "Tanggal wajib diisi."); return; }
+  if (!judul) { showModal("Gagal", "Judul momen wajib diisi."); return; }
+
+  const btn = document.getElementById("sejarahAddBtnSimpan");
+  btn.disabled = true;
+  btn.textContent = "Menyimpan...";
+
+  const aksi = sejarahEditId_
+    ? callGASWithRetry_("updateSejarahPerjalanan", [authToken, sejarahEditId_, tanggal, judul, deskripsi])
+    : callGASWithRetry_("tambahSejarahPerjalanan", [authToken, tanggal, judul, deskripsi]);
+
+  aksi.then(function (res) {
+    btn.disabled = false;
+    btn.textContent = "Simpan";
+    tutupTambahSejarah();
+    loadSejarahPerjalanan();
+    const idBaru = sejarahEditId_ || (res && res.id);
+    if (fotoTerpilih && idBaru) {
+      sejarahUploadFotoUntukId_(idBaru, fotoTerpilih)
+        .then(function () { loadSejarahPerjalanan(); })
+        .catch(function (errFoto) {
+          showModal("Momen Tersimpan, Foto Gagal", "Momen berhasil disimpan, tapi upload foto gagal: " +
+            errFoto.message + ". Anda bisa upload ulang lewat tombol \"Tambah Foto\" pada kartu momen ini.");
+        });
+    } else {
+      showModal("Sukses", sejarahEditId_ ? "Momen berhasil diperbarui." : "Momen berhasil dicatat.");
+    }
+  }).catch(function (err) {
+    btn.disabled = false;
+    btn.textContent = "Simpan";
+    showModal("Gagal", err.message);
+  });
+}
+
+function hapusSejarahClick(id) {
+  showModal("Hapus Momen?", "Momen perjalanan ini akan dihapus permanen (foto di Drive tidak ikut terhapus).", true, function () {
+    callGASWithRetry_("hapusSejarahPerjalanan", [authToken, id])
+      .then(function () { loadSejarahPerjalanan(); })
+      .catch(function (err) { showModal("Gagal", err.message); });
+  });
+}
+
+// Upload/ganti foto langsung dari kartu momen (dipakai baik dari tombol
+// "Tambah Foto" di kartu, maupun sesudah submit form Tambah Momen kalau
+// user sekalian pilih foto).
+let sejarahUploadFotoTargetId_ = null;
+function sejarahUploadFotoClick(id) {
+  sejarahUploadFotoTargetId_ = id;
+  bukaFotoSumber("sejarahUploadFotoInput");
+}
+function sejarahUploadFotoDipilih(input) {
+  const file = validasiFotoTerpilih_(input);
+  const id = sejarahUploadFotoTargetId_;
+  if (!file || !id) return;
+  sejarahUploadFotoUntukId_(id, file)
+    .then(function () { loadSejarahPerjalanan(); })
+    .catch(function (err) { showModal("Gagal", "Upload foto gagal: " + err.message); });
+}
+function sejarahUploadFotoUntukId_(id, file) {
+  return new Promise(function (resolve, reject) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const base64Data = e.target.result.split(",")[1];
+      callGASWithRetry_("uploadFotoSejarahPerjalanan", [authToken, id, base64Data, file.type, file.name], { timeoutMs: 60000, maxAttempts: 1 })
+        .then(resolve).catch(reject);
+    };
+    reader.onerror = function () { reject(new Error("Gagal membaca file foto.")); };
+    reader.readAsDataURL(file);
+  });
+}
+
 let programLainAktif = "baso"; // "baso" | "badik" | "batan"
 let programLainBulanAktif = null, programLainTahunAktif = null, programLainWilayahAktif = "";
 let programLainModeAktif = "bulanan"; // "bulanan" | "tahunan"
@@ -15089,6 +15373,10 @@ document.getElementById("pedasClose").addEventListener("click", function () {
 
 document.getElementById("programLainClose").addEventListener("click", function () {
   tutupProgramLain();
+});
+
+document.getElementById("sejarahPerjalananClose").addEventListener("click", function () {
+  document.getElementById("sejarahPerjalananPage").classList.remove("open");
 });
 
 document.getElementById("laporanPdfViewerClose").addEventListener("click", function () {
