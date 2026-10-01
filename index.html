@@ -7445,6 +7445,92 @@ function renderRekapTersalurKeuangan_(hasil, elKet, elGrid) {
   }).join("");
 }
 
+// ============================================================
+// 🆘 SALDO EMERGENCY NEED (kartu di tab Keuangan, di bawah Rekap Tersalur).
+// Backend: getSaldoEmergencyNeed (Code.gs). Kartu tersembunyi kalau fetch
+// gagal/role gak punya akses (cuma SUPERADMIN/ADMIN/PENGURUS yang boleh).
+// ============================================================
+let emergencyNeedTerakhir_ = null;
+
+function loadEmergencyNeedKeuangan() {
+  const el = document.getElementById("emergencyNeedCard");
+  const elIsi = document.getElementById("emergencyNeedIsi");
+  if (!el || !elIsi) return;
+
+  // Tampilkan data terakhir dulu (instan), lalu segarkan di background.
+  if (emergencyNeedTerakhir_) {
+    el.style.display = "block";
+    renderEmergencyNeedKeuangan_(emergencyNeedTerakhir_, elIsi);
+  }
+
+  return callGASWithRetry_("getSaldoEmergencyNeed", [authToken], { maxAttempts: 2 })
+    .then(function (hasil) {
+      emergencyNeedTerakhir_ = hasil;
+      el.style.display = "block";
+      renderEmergencyNeedKeuangan_(hasil, elIsi);
+    })
+    .catch(function () {
+      if (!emergencyNeedTerakhir_) el.style.display = "none";
+    });
+}
+
+function renderEmergencyNeedKeuangan_(h, elIsi) {
+  if (!elIsi || !h) return;
+  const saldo = Number(h.saldo) || 0;
+  const warnaSaldo = saldo < 0 ? "#F43F5E" : "#22C55E";
+
+  const barisProgram = (h.perProgram || []).map(function (p) {
+    const warna = WARNA_PROGRAM_TERSALURKAN_[p.key] || "#94A3B8";
+    return `
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 0; border-top: 1px solid var(--glass-border);">
+        <div style="display: flex; align-items: center; gap: 7px; min-width: 0;">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: ${warna}; flex-shrink: 0;"></span>
+          <span style="font-size: 11.5px; font-weight: 700;">${escapeHtmlHub(p.label)}</span>
+          <span style="font-size: 9.5px; color: var(--text-muted);">${Number(p.penerima) || 0} penerima</span>
+        </div>
+        <span style="font-size: 11.5px; font-weight: 700; color: ${warna}; white-space: nowrap;">${formatRupiahHub(p.tersalur)}</span>
+      </div>`;
+  }).join("");
+
+  const biayaOps = Number(h.totalBiayaOperasionalBaso) || 0;
+  const barisOps = biayaOps > 0 ? `
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 0; border-top: 1px solid var(--glass-border);">
+        <div style="display: flex; align-items: center; gap: 7px; min-width: 0;">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #94A3B8; flex-shrink: 0;"></span>
+          <span style="font-size: 11.5px; font-weight: 700;">Biaya Operasional BASO</span>
+        </div>
+        <span style="font-size: 11.5px; font-weight: 700; color: #94A3B8; white-space: nowrap;">${formatRupiahHub(biayaOps)}</span>
+      </div>` : "";
+
+  const peringatan = !h.adaDataMasuk
+    ? `<div style="font-size: 10.5px; color: #F59E0B; background: rgba(245,158,11,0.12); border-radius: 10px; padding: 8px 10px; margin-bottom: 10px;">Belum ada pemasukan tercatat. Isi sheet <b>Emergency_Need</b> (Bulan, Tahun, JumlahMasuk) supaya saldo akurat.</div>`
+    : (saldo < 0
+      ? `<div style="font-size: 10.5px; color: #F43F5E; background: rgba(244,63,94,0.12); border-radius: 10px; padding: 8px 10px; margin-bottom: 10px;">Saldo minus: dana keluar (bantuan + biaya operasional) sudah melebihi pemasukan Emergency Need yang tercatat.</div>`
+      : "");
+
+  elIsi.innerHTML = `
+    ${peringatan}
+    <div style="text-align: center; padding: 6px 0 12px;">
+      <div style="font-size: 10px; color: var(--text-secondary); letter-spacing: 0.4px;">SISA SALDO</div>
+      <div style="font-size: 24px; font-weight: 800; color: ${warnaSaldo}; margin-top: 2px;">${formatRupiahHub(saldo)}</div>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+      <div style="background: rgba(34,197,94,0.10); border-radius: 12px; padding: 10px;">
+        <div style="font-size: 9.5px; color: var(--text-secondary);">Total Masuk</div>
+        <div style="font-size: 12.5px; font-weight: 700; margin-top: 2px;">${formatRupiahHub(h.totalMasuk)}</div>
+        <div style="font-size: 9px; color: var(--text-muted); margin-top: 2px;">${h.tahun || ""}: ${formatRupiahHub(h.masukTahunIni)}</div>
+      </div>
+      <div style="background: rgba(245,158,11,0.10); border-radius: 12px; padding: 10px;">
+        <div style="font-size: 9.5px; color: var(--text-secondary);">Total Keluar</div>
+        <div style="font-size: 12.5px; font-weight: 700; margin-top: 2px;">${formatRupiahHub(h.totalKeluar)}</div>
+        <div style="font-size: 9px; color: var(--text-muted); margin-top: 2px;">${h.tahun || ""}: ${formatRupiahHub(h.keluarTahunIni)}</div>
+      </div>
+    </div>
+    ${barisProgram}
+    ${barisOps}
+  `;
+}
+
 // Escape teks bebas (mis. nama wilayah) sebelum dipasang lewat innerHTML,
 // biar aman dari karakter HTML aneh (bukan proteksi XSS penuh, cukup buat
 // data internal spreadsheet Bendahara yang formatnya udah lumayan terjaga).
@@ -8473,6 +8559,25 @@ function renderContent() {
         </div>
       </div>
 
+      <!-- 🆘 SALDO EMERGENCY NEED -- sumber dana BERSAMA program BADIK/BATAN/
+           BASO. Masuk = sheet Emergency_Need (diisi Bendahara), Tersalur =
+           total ketiga log bantuan, Saldo = Masuk - Tersalur (kumulatif).
+           NASIONAL (gak ikut filter wilayah). Tersembunyi default; baru
+           tampil kalau backend getSaldoEmergencyNeed sukses (role
+           SUPERADMIN/ADMIN/PENGURUS) -- lihat loadEmergencyNeedKeuangan(). -->
+      <div id="emergencyNeedCard" style="display: none; background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-bottom: 18px; border: 1px solid var(--glass-border);">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 2px;">
+          <div style="width: 36px; height: 36px; border-radius: 11px; background: rgba(245,158,11,0.15); color: #F59E0B; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <span class="material-symbols-outlined" style="font-size: 19px;">emergency</span>
+          </div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 13.5px; font-weight: 800; color: var(--text-primary);">Saldo Emergency Need</div>
+            <div style="font-size: 10.5px; color: var(--text-muted);">Sumber dana BADIK, BATAN &amp; BASO &bull; Nasional, semua waktu</div>
+          </div>
+        </div>
+        <div id="emergencyNeedIsi" style="margin-top: 12px;"></div>
+      </div>
+
       <!-- 📄 TOMBOL CETAK LAPORAN GABUNGAN 6 PROGRAM (PDF) -->
       <div style="background: linear-gradient(135deg, rgba(34,197,94,0.18), rgba(15,23,42,0.6)); border: 1.5px solid rgba(34,197,94,0.35); border-radius: 20px; padding: 16px; margin-bottom: 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.25);">
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
@@ -8576,6 +8681,7 @@ function renderContent() {
     el.innerHTML = html;
     loadKeuanganStats();
     loadRekapTersalurKeuangan();
+    loadEmergencyNeedKeuangan();
     return;
   }
 
