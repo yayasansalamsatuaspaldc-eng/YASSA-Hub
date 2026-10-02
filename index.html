@@ -7529,6 +7529,8 @@ function loadEmergencyNeedKeuangan() {
     .catch(function () {
       if (!emergencyNeedTerakhir_) {
         elIsi.innerHTML = '<div style="font-size: 11px; color: var(--text-muted); text-align: center; padding: 8px 0;">Saldo Emergency Need belum bisa dimuat.</div>';
+        const elRingkasGagal = document.getElementById("saldoRingkas_emergency");
+        if (elRingkasGagal) elRingkasGagal.textContent = "-";
         perbaruiTotalSaldoProgram_();
       }
     });
@@ -7655,8 +7657,9 @@ function renderSaldoProgramPanel_(key) {
   const tahun = new Date().getFullYear();
   const badgeDummy = SALDO_PROGRAM_DUMMY_AKTIF_
     ? '<span style="font-size: 8.5px; font-weight: 800; color: #F59E0B; background: rgba(245,158,11,0.15); border-radius: 99px; padding: 2px 7px; letter-spacing: 0.4px;">DUMMY</span>' : "";
+  const buka = !!saldoPanelBuka_[key];
   el.innerHTML = `
-    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 2px;">
+    <button type="button" id="saldoHeader_${key}" aria-expanded="${buka}" onclick="toggleSaldoPanel_('${key}')" style="width: 100%; display: flex; align-items: center; gap: 10px; background: transparent; border: none; padding: 0; cursor: pointer; color: inherit; font-family: inherit; text-align: left;">
       <div style="width: 36px; height: 36px; border-radius: 11px; background: ${meta.warna}26; color: ${meta.warna}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
         <span class="material-symbols-outlined" style="font-size: 19px;">${meta.icon}</span>
       </div>
@@ -7664,23 +7667,27 @@ function renderSaldoProgramPanel_(key) {
         <div style="display: flex; align-items: center; gap: 6px;">
           <span style="font-size: 13.5px; font-weight: 800; color: var(--text-primary);">${meta.label}</span>${badgeDummy}
         </div>
+        <div id="saldoRingkas_${key}" style="font-size: 14px; font-weight: 800; color: ${warnaSaldo}; margin-top: 1px; display: ${buka ? "none" : "block"};">${formatRupiahHub(saldo)}</div>
         <div style="font-size: 10.5px; color: var(--text-muted);">${meta.sub} &bull; Nasional, semua waktu</div>
       </div>
-    </div>
-    <div style="text-align: center; padding: 12px 0;">
-      <div style="font-size: 10px; color: var(--text-secondary); letter-spacing: 0.4px;">SISA SALDO</div>
-      <div style="font-size: 24px; font-weight: 800; color: ${warnaSaldo}; margin-top: 2px;">${formatRupiahHub(saldo)}</div>
-    </div>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-      <div style="background: rgba(34,197,94,0.10); border-radius: 12px; padding: 10px;">
-        <div style="font-size: 9.5px; color: var(--text-secondary);">Total Masuk</div>
-        <div style="font-size: 12.5px; font-weight: 700; margin-top: 2px;">${formatRupiahHub(d.totalMasuk)}</div>
-        <div style="font-size: 9px; color: var(--text-muted); margin-top: 2px;">${tahun}: ${formatRupiahHub(d.masukTahunIni)}</div>
+      <span class="material-symbols-outlined" id="saldoChevron_${key}" style="font-size: 22px; color: var(--text-muted); transition: transform 0.2s; transform: rotate(${buka ? 180 : 0}deg);">expand_more</span>
+    </button>
+    <div id="saldoDetail_${key}" style="display: ${buka ? "block" : "none"}; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08);">
+      <div style="text-align: center; padding: 6px 0 12px;">
+        <div style="font-size: 10px; color: var(--text-secondary); letter-spacing: 0.4px;">SISA SALDO</div>
+        <div style="font-size: 24px; font-weight: 800; color: ${warnaSaldo}; margin-top: 2px;">${formatRupiahHub(saldo)}</div>
       </div>
-      <div style="background: rgba(245,158,11,0.10); border-radius: 12px; padding: 10px;">
-        <div style="font-size: 9.5px; color: var(--text-secondary);">Total Keluar</div>
-        <div style="font-size: 12.5px; font-weight: 700; margin-top: 2px;">${formatRupiahHub(d.totalKeluar)}</div>
-        <div style="font-size: 9px; color: var(--text-muted); margin-top: 2px;">${tahun}: ${formatRupiahHub(d.keluarTahunIni)}</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div style="background: rgba(34,197,94,0.10); border-radius: 12px; padding: 10px;">
+          <div style="font-size: 9.5px; color: var(--text-secondary);">Total Masuk</div>
+          <div style="font-size: 12.5px; font-weight: 700; margin-top: 2px;">${formatRupiahHub(d.totalMasuk)}</div>
+          <div style="font-size: 9px; color: var(--text-muted); margin-top: 2px;">${tahun}: ${formatRupiahHub(d.masukTahunIni)}</div>
+        </div>
+        <div style="background: rgba(245,158,11,0.10); border-radius: 12px; padding: 10px;">
+          <div style="font-size: 9.5px; color: var(--text-secondary);">Total Keluar</div>
+          <div style="font-size: 12.5px; font-weight: 700; margin-top: 2px;">${formatRupiahHub(d.totalKeluar)}</div>
+          <div style="font-size: 9px; color: var(--text-muted); margin-top: 2px;">${tahun}: ${formatRupiahHub(d.keluarTahunIni)}</div>
+        </div>
       </div>
     </div>`;
 }
@@ -7693,6 +7700,12 @@ function perbaruiTotalSaldoProgram_() {
   const p = saldoProgramLainTerakhir_.pedas;
   const e = emergencyNeedTerakhir_;
   if (!g && !p && !e) { el.innerHTML = '<span class="kv-loading">...</span>'; return; }
+  const elRingkasEm = document.getElementById("saldoRingkas_emergency");
+  if (elRingkasEm && e) {
+    const sEm = Number(e.saldo) || 0;
+    elRingkasEm.textContent = formatRupiahHub(sEm);
+    elRingkasEm.style.color = sEm < 0 ? "#F43F5E" : "#818CF8";
+  }
   const total = (g ? Number(g.saldo) || 0 : 0) + (p ? Number(p.saldo) || 0 : 0) + (e ? Number(e.saldo) || 0 : 0);
   el.style.color = total < 0 ? "#F43F5E" : "var(--text-primary)";
   el.textContent = formatRupiahHub(total);
@@ -7720,6 +7733,24 @@ function toggleProgramYassaKeuangan() {
   detail.style.display = buka ? "block" : "none";
   if (chevron) chevron.style.transform = buka ? "rotate(180deg)" : "rotate(0deg)";
   if (header) header.setAttribute("aria-expanded", buka ? "true" : "false");
+}
+
+// Status buka/tutup tiap panel saldo di dalam kartu "Saldo Program" (default TERTUTUP).
+// Disimpan di variabel supaya tidak ikut menutup sendiri kalau panel di-render ulang.
+const saldoPanelBuka_ = { gopay: false, pedas: false, emergency: false };
+
+function toggleSaldoPanel_(key) {
+  saldoPanelBuka_[key] = !saldoPanelBuka_[key];
+  const buka = saldoPanelBuka_[key];
+  const detail = document.getElementById("saldoDetail_" + key);
+  const chevron = document.getElementById("saldoChevron_" + key);
+  const header = document.getElementById("saldoHeader_" + key);
+  const ringkas = document.getElementById("saldoRingkas_" + key);
+  if (detail) detail.style.display = buka ? "block" : "none";
+  if (chevron) chevron.style.transform = buka ? "rotate(180deg)" : "rotate(0deg)";
+  if (header) header.setAttribute("aria-expanded", buka ? "true" : "false");
+  // Saldo ringkas di header disembunyikan saat panel terbuka (angka besarnya sudah ada di dalam).
+  if (ringkas) ringkas.style.display = buka ? "none" : "block";
 }
 
 function toggleSaldoProgram() {
@@ -8758,16 +8789,20 @@ function renderContent() {
                total ketiga log bantuan, Saldo = Masuk - Tersalur (kumulatif).
                NASIONAL (gak ikut filter wilayah). Diisi loadEmergencyNeedKeuangan(). -->
           <div id="emergencyNeedCard" style="background: rgba(129,140,248,0.09); border: 1px solid rgba(129,140,248,0.35); border-radius: 16px; padding: 14px;">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 2px;">
+            <button type="button" id="saldoHeader_emergency" aria-expanded="false" onclick="toggleSaldoPanel_('emergency')" style="width: 100%; display: flex; align-items: center; gap: 10px; background: transparent; border: none; padding: 0; cursor: pointer; color: inherit; font-family: inherit; text-align: left;">
               <div style="width: 36px; height: 36px; border-radius: 11px; background: rgba(129,140,248,0.18); color: #818CF8; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                 <span class="material-symbols-outlined" style="font-size: 19px;">emergency</span>
               </div>
               <div style="flex: 1; min-width: 0;">
                 <div style="font-size: 13.5px; font-weight: 800; color: var(--text-primary);">Saldo Emergency Need</div>
+                <div id="saldoRingkas_emergency" style="font-size: 14px; font-weight: 800; color: var(--text-primary); margin-top: 1px;"><span class="kv-loading">...</span></div>
                 <div style="font-size: 10.5px; color: var(--text-muted);">Sumber dana BADIK, BATAN &amp; BASO &bull; Nasional, semua waktu</div>
               </div>
+              <span class="material-symbols-outlined" id="saldoChevron_emergency" style="font-size: 22px; color: var(--text-muted); transition: transform 0.2s;">expand_more</span>
+            </button>
+            <div id="saldoDetail_emergency" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08);">
+              <div id="emergencyNeedIsi"><span class="kv-loading">Memuat...</span></div>
             </div>
-            <div id="emergencyNeedIsi" style="margin-top: 12px;"><span class="kv-loading">Memuat...</span></div>
           </div>
         </div>
       </div>
