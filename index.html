@@ -7501,9 +7501,9 @@ function renderRekapTersalurKeuangan_(hasil, elKet, elGrid) {
 }
 
 // ============================================================
-// 🆘 SALDO EMERGENCY NEED (kartu di tab Keuangan, di bawah Rekap Tersalur).
-// Backend: getSaldoEmergencyNeed (Code.gs). Kartu tersembunyi kalau fetch
-// gagal/role gak punya akses (cuma SUPERADMIN/ADMIN/PENGURUS yang boleh).
+// 🆘 SALDO EMERGENCY NEED (panel di dalam kartu "Saldo Program", tab Keuangan).
+// Backend: getSaldoEmergencyNeed (Code.gs) -- terbuka untuk SEMUA role yang login
+// (transparansi dana). Kalau fetch gagal, panel menampilkan pesan "belum bisa dimuat".
 // ============================================================
 let emergencyNeedTerakhir_ = null;
 
@@ -7619,9 +7619,10 @@ function ambilSaldoProgramLain_(key) {
 function loadSaldoProgramKeuangan() {
   const card = document.getElementById("saldoProgramCard");
   if (!card) return;
-  const boleh = currentUser && ["SUPERADMIN", "ADMIN", "PENGURUS"].indexOf(currentUser.role) !== -1;
-  card.style.display = boleh ? "block" : "none";
-  if (!boleh) return;
+  // Kartu "Saldo Program" (GOPAY, PEDAS, Emergency Need) tampil untuk SEMUA role
+  // demi transparansi dana. getSaldoEmergencyNeed di backend juga sudah dibuka
+  // untuk semua role yang login.
+  card.style.display = "block";
 
   const catatan = document.getElementById("saldoProgramCatatanDummy");
   if (catatan) catatan.style.display = SALDO_PROGRAM_DUMMY_AKTIF_ ? "block" : "none";
@@ -8763,8 +8764,8 @@ function renderContent() {
              tinggal ganti ambilSaldoProgramLain_() ke backend kalau sudah ada.
            - Emergency Need: data ASLI dari getSaldoEmergencyNeed (panel
              #emergencyNeedCard / #emergencyNeedIsi, render lama tidak berubah).
-           Kartu cuma tampil buat SUPERADMIN/ADMIN/PENGURUS (sama dengan hak
-           akses Emergency Need sebelumnya) -- lihat loadSaldoProgramKeuangan(). -->
+           Kartu tampil untuk SEMUA role (transparansi dana) -- lihat
+           loadSaldoProgramKeuangan(). -->
       <div id="saldoProgramCard" style="display: none; background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-bottom: 18px; border: 1px solid var(--glass-border);">
         <button type="button" id="saldoProgramHeader" aria-expanded="false" onclick="toggleSaldoProgram()" style="width: 100%; display: flex; align-items: center; gap: 10px; background: transparent; border: none; padding: 0; cursor: pointer; color: inherit; font-family: inherit; text-align: left;">
           <div style="width: 36px; height: 36px; border-radius: 11px; background: rgba(56,189,248,0.15); color: #38BDF8; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
