@@ -14438,7 +14438,7 @@ function handleUserMenuClick(action) {
   }
 }
 
-function showProfileQR() {
+async function showProfileQR() {
   try {
     const nama = currentUser.nama || "Pengurus";
     const telp = currentUser.username || ""; 
@@ -14449,10 +14449,11 @@ function showProfileQR() {
     
     // Format vCard standar. Ditambahkan parameter NOTE (Catatan) berisi Jabatan & Wilayah
     // agar data tersebut PASTI muncul di layar semua jenis scanner (termasuk Google Lens)
-    const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${nama}\nTITLE:${jabatan}\nORG:YASSA GOPAY\nTEL;TYPE=CELL:${telp}\nNOTE:Jabatan: ${jabatan} | Wilayah: ${wilayah}\nEND:VCARD`;
+    const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${nama} (${jabatan} YASSA)\nN:;${nama} (${jabatan} YASSA);;;\nTITLE:${jabatan}\nORG:YASSA GOPAY\nTEL;TYPE=CELL:${telp}\nNOTE:Jabatan: ${jabatan} | Wilayah: ${wilayah}\nEND:VCARD`;
     
     // Menggunakan QuickChart API untuk render QR (stabil dan aman tanpa library tambahan)
-    const qrUrl = "https://quickchart.io/qr?size=250&margin=2&text=" + encodeURIComponent(vcard);
+    const teksQr = await ambilTeksQrKartu_(vcard);
+    const qrUrl = "https://quickchart.io/qr?size=250&margin=2&ecLevel=M&text=" + encodeURIComponent(teksQr);
     const fotoProfil = currentUser.fotoUrl ? currentUser.fotoUrl : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
     
     const modalHtml = `
@@ -14466,7 +14467,7 @@ function showProfileQR() {
           <img src="${qrUrl}" alt="QR Code" style="width:180px; height:180px; display:block; border-radius:8px;">
         </div>
         <div style="font-size:11.5px; color:var(--text-secondary); text-align:center; line-height:1.4;">
-          <b>Tunjukkan QR ini</b><br>Bisa di-scan oleh donatur atau pengurus untuk menyimpan kontak Anda secara otomatis.
+          <b>Tunjukkan QR ini</b><br>Saat di-scan, tampil halaman verifikasi resmi YASSA GOPAY (nama, jabatan, wilayah, status aktif) lengkap dengan tombol simpan kontak.
         </div>
       </div>
     `;
@@ -14650,6 +14651,19 @@ async function muatFotoProfilKartu_() {
   return muatGambarKartu_(url);
 }
 
+// Teks yang dimasukkan ke QR: LINK halaman verifikasi resmi (ditandatangani
+// server). Kalau server belum di-deploy ulang / gagal, jatuh balik ke vCard
+// supaya QR tetap bisa dipakai.
+let kartuVerifUrlCache_ = "";
+async function ambilTeksQrKartu_(vcardFallback) {
+  if (kartuVerifUrlCache_) return kartuVerifUrlCache_;
+  try {
+    const res = await callGAS("getKartuVerifUrl", [authToken]);
+    if (res && res.url) { kartuVerifUrlCache_ = res.url; return res.url; }
+  } catch (e) { /* pakai vCard */ }
+  return vcardFallback;
+}
+
 async function gambarKartuAnggota_() {
   const canvas = document.getElementById("kartuAnggotaCanvas");
   if (!canvas) return;
@@ -14659,8 +14673,9 @@ async function gambarKartuAnggota_() {
   const jabatan = String(currentUser.jabatan || "-");
   const telp = String(currentUser.username || "");
   const wilayah = String(currentUser.wilayahAkses || "").toUpperCase() === "ALL" ? "Semua Wilayah" : (currentUser.wilayahAkses || "-");
-  const vcard = "BEGIN:VCARD\nVERSION:3.0\nFN:" + nama + "\nTITLE:" + jabatan + "\nORG:YASSA GOPAY\nTEL;TYPE=CELL:" + telp + "\nNOTE:Jabatan: " + jabatan + " | Wilayah: " + wilayah + "\nEND:VCARD";
-  const qrUrl = "https://quickchart.io/qr?size=300&margin=1&text=" + encodeURIComponent(vcard);
+  const vcard = "BEGIN:VCARD\nVERSION:3.0\nFN:" + nama + " (" + jabatan + " YASSA)\nN:;" + nama + " (" + jabatan + " YASSA);;;\nTITLE:" + jabatan + "\nORG:YASSA GOPAY\nTEL;TYPE=CELL:" + telp + "\nNOTE:Jabatan: " + jabatan + " | Wilayah: " + wilayah + "\nEND:VCARD";
+  const teksQr = await ambilTeksQrKartu_(vcard);
+  const qrUrl = "https://quickchart.io/qr?size=300&margin=1&ecLevel=M&text=" + encodeURIComponent(teksQr);
 
   const hasilMuat = await Promise.all([
     muatFotoProfilKartu_(),
@@ -14749,7 +14764,7 @@ async function gambarKartuAnggota_() {
   const bln = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
   ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.font = "500 20px " + FONT;
   ctx.fillText("Dicetak " + tgl.getDate() + " " + bln[tgl.getMonth()] + " " + tgl.getFullYear(), 56, H - 56);
-  ctx.fillText("Scan QR untuk simpan kontak", 56, H - 86);
+  ctx.fillText("Scan QR untuk verifikasi kartu", 56, H - 86);
 
   const ket = document.getElementById("kartuAnggotaKet");
   if (ket && !foto && currentUser.fotoUrl) ket.textContent = "Foto tidak bisa dimuat ke kartu, jadi diganti inisial.";
