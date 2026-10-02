@@ -7502,19 +7502,24 @@ function loadEmergencyNeedKeuangan() {
   if (!el || !elIsi) return;
 
   // Tampilkan data terakhir dulu (instan), lalu segarkan di background.
+  // (Visibilitas kartu induk "Saldo Program" diatur loadSaldoProgramKeuangan(),
+  // panel ini selalu ikut tampil di dalamnya.)
   if (emergencyNeedTerakhir_) {
-    el.style.display = "block";
     renderEmergencyNeedKeuangan_(emergencyNeedTerakhir_, elIsi);
+    perbaruiTotalSaldoProgram_();
   }
 
   return callGASWithRetry_("getSaldoEmergencyNeed", [authToken], { maxAttempts: 2 })
     .then(function (hasil) {
       emergencyNeedTerakhir_ = hasil;
-      el.style.display = "block";
       renderEmergencyNeedKeuangan_(hasil, elIsi);
+      perbaruiTotalSaldoProgram_();
     })
     .catch(function () {
-      if (!emergencyNeedTerakhir_) el.style.display = "none";
+      if (!emergencyNeedTerakhir_) {
+        elIsi.innerHTML = '<div style="font-size: 11px; color: var(--text-muted); text-align: center; padding: 8px 0;">Saldo Emergency Need belum bisa dimuat.</div>';
+        perbaruiTotalSaldoProgram_();
+      }
     });
 }
 
@@ -7573,6 +7578,124 @@ function renderEmergencyNeedKeuangan_(h, elIsi) {
     ${barisProgram}
     ${barisOps}
   `;
+}
+
+// ============================================================
+// 💰 SALDO PROGRAM (kartu induk di tab Keuangan) -- klik -> tampil saldo
+// GOPAY, PEDAS, & Emergency Need.
+//   - Emergency Need : data ASLI (loadEmergencyNeedKeuangan di atas).
+//   - GOPAY & PEDAS  : DUMMY dulu. Kalau backend-nya sudah ada, cukup ganti
+//     isi ambilSaldoProgramLain_() jadi panggilan GAS, mis.
+//       return callGASWithRetry_("getSaldoGopay", [authToken], { maxAttempts: 2 });
+//       return callGASWithRetry_("getSaldoPedas", [authToken], { maxAttempts: 2 });
+//     dengan bentuk balikan { saldo, totalMasuk, totalKeluar, masukTahunIni,
+//     keluarTahunIni } (SAMA seperti SALDO_PROGRAM_DUMMY_ di bawah).
+// ============================================================
+const SALDO_PROGRAM_DUMMY_ = {
+  gopay: { saldo: 18750000, totalMasuk: 125000000, totalKeluar: 106250000, masukTahunIni: 84000000, keluarTahunIni: 72500000 },
+  pedas: { saldo: 7400000, totalMasuk: 40000000, totalKeluar: 32600000, masukTahunIni: 26000000, keluarTahunIni: 21800000 },
+};
+const SALDO_PROGRAM_DUMMY_AKTIF_ = true; // set false setelah GOPAY & PEDAS tersambung backend
+let saldoProgramLainTerakhir_ = { gopay: null, pedas: null };
+
+function ambilSaldoProgramLain_(key) {
+  // TODO: ganti ke backend asli (lihat komentar di atas).
+  return Promise.resolve(SALDO_PROGRAM_DUMMY_[key] || null);
+}
+
+function loadSaldoProgramKeuangan() {
+  const card = document.getElementById("saldoProgramCard");
+  if (!card) return;
+  const boleh = currentUser && ["SUPERADMIN", "ADMIN", "PENGURUS"].indexOf(currentUser.role) !== -1;
+  card.style.display = boleh ? "block" : "none";
+  if (!boleh) return;
+
+  const catatan = document.getElementById("saldoProgramCatatanDummy");
+  if (catatan) catatan.style.display = SALDO_PROGRAM_DUMMY_AKTIF_ ? "block" : "none";
+
+  // Tampilkan cache dulu (instan), lalu segarkan.
+  renderSaldoProgramPanel_("gopay");
+  renderSaldoProgramPanel_("pedas");
+  perbaruiTotalSaldoProgram_();
+
+  ["gopay", "pedas"].forEach(function (key) {
+    ambilSaldoProgramLain_(key).then(function (d) {
+      saldoProgramLainTerakhir_[key] = d;
+      renderSaldoProgramPanel_(key);
+      perbaruiTotalSaldoProgram_();
+    }).catch(function () { renderSaldoProgramPanel_(key); });
+  });
+}
+
+function renderSaldoProgramPanel_(key) {
+  const meta = {
+    gopay: { elId: "saldoGopayPanel", label: "Saldo GOPAY", sub: "Santunan anak yatim, yatim piatu & disabilitas", icon: "volunteer_activism", warna: "#22C55E" },
+    pedas: { elId: "saldoPedasPanel", label: "Saldo PEDAS", sub: "Program PEDAS", icon: "local_fire_department", warna: "#F97316" },
+  }[key];
+  const el = document.getElementById(meta.elId);
+  if (!el) return;
+  const d = saldoProgramLainTerakhir_[key];
+  if (!d) {
+    el.innerHTML = '<div style="font-size: 11px; color: var(--text-muted); text-align: center; padding: 8px 0;"><span class="kv-loading">Memuat saldo ' + meta.label.replace("Saldo ", "") + '...</span></div>';
+    return;
+  }
+  const saldo = Number(d.saldo) || 0;
+  const warnaSaldo = saldo < 0 ? "#F43F5E" : meta.warna;
+  const tahun = new Date().getFullYear();
+  const badgeDummy = SALDO_PROGRAM_DUMMY_AKTIF_
+    ? '<span style="font-size: 8.5px; font-weight: 800; color: #F59E0B; background: rgba(245,158,11,0.15); border-radius: 99px; padding: 2px 7px; letter-spacing: 0.4px;">DUMMY</span>' : "";
+  el.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 2px;">
+      <div style="width: 36px; height: 36px; border-radius: 11px; background: ${meta.warna}26; color: ${meta.warna}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <span class="material-symbols-outlined" style="font-size: 19px;">${meta.icon}</span>
+      </div>
+      <div style="flex: 1; min-width: 0;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="font-size: 13.5px; font-weight: 800; color: var(--text-primary);">${meta.label}</span>${badgeDummy}
+        </div>
+        <div style="font-size: 10.5px; color: var(--text-muted);">${meta.sub} &bull; Nasional, semua waktu</div>
+      </div>
+    </div>
+    <div style="text-align: center; padding: 12px 0;">
+      <div style="font-size: 10px; color: var(--text-secondary); letter-spacing: 0.4px;">SISA SALDO</div>
+      <div style="font-size: 24px; font-weight: 800; color: ${warnaSaldo}; margin-top: 2px;">${formatRupiahHub(saldo)}</div>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <div style="background: rgba(34,197,94,0.10); border-radius: 12px; padding: 10px;">
+        <div style="font-size: 9.5px; color: var(--text-secondary);">Total Masuk</div>
+        <div style="font-size: 12.5px; font-weight: 700; margin-top: 2px;">${formatRupiahHub(d.totalMasuk)}</div>
+        <div style="font-size: 9px; color: var(--text-muted); margin-top: 2px;">${tahun}: ${formatRupiahHub(d.masukTahunIni)}</div>
+      </div>
+      <div style="background: rgba(245,158,11,0.10); border-radius: 12px; padding: 10px;">
+        <div style="font-size: 9.5px; color: var(--text-secondary);">Total Keluar</div>
+        <div style="font-size: 12.5px; font-weight: 700; margin-top: 2px;">${formatRupiahHub(d.totalKeluar)}</div>
+        <div style="font-size: 9px; color: var(--text-muted); margin-top: 2px;">${tahun}: ${formatRupiahHub(d.keluarTahunIni)}</div>
+      </div>
+    </div>`;
+}
+
+// Total di header kartu = GOPAY + PEDAS + Emergency Need (yang sudah termuat).
+function perbaruiTotalSaldoProgram_() {
+  const el = document.getElementById("saldoProgramTotal");
+  if (!el) return;
+  const g = saldoProgramLainTerakhir_.gopay;
+  const p = saldoProgramLainTerakhir_.pedas;
+  const e = emergencyNeedTerakhir_;
+  if (!g && !p && !e) { el.innerHTML = '<span class="kv-loading">...</span>'; return; }
+  const total = (g ? Number(g.saldo) || 0 : 0) + (p ? Number(p.saldo) || 0 : 0) + (e ? Number(e.saldo) || 0 : 0);
+  el.style.color = total < 0 ? "#F43F5E" : "var(--text-primary)";
+  el.textContent = formatRupiahHub(total);
+}
+
+function toggleSaldoProgram() {
+  const detail = document.getElementById("saldoProgramDetail");
+  const chevron = document.getElementById("saldoProgramChevron");
+  const header = document.getElementById("saldoProgramHeader");
+  if (!detail) return;
+  const buka = detail.style.display === "none";
+  detail.style.display = buka ? "block" : "none";
+  if (chevron) chevron.style.transform = buka ? "rotate(180deg)" : "rotate(0deg)";
+  if (header) header.setAttribute("aria-expanded", buka ? "true" : "false");
 }
 
 // Escape teks bebas (mis. nama wilayah) sebelum dipasang lewat innerHTML,
@@ -8562,23 +8685,50 @@ function renderContent() {
         </div>
       </div>
 
-      <!-- 🆘 SALDO EMERGENCY NEED -- sumber dana BERSAMA program BADIK/BATAN/
-           BASO. Masuk = sheet Emergency_Need (diisi Bendahara), Tersalur =
-           total ketiga log bantuan, Saldo = Masuk - Tersalur (kumulatif).
-           NASIONAL (gak ikut filter wilayah). Tersembunyi default; baru
-           tampil kalau backend getSaldoEmergencyNeed sukses (role
-           SUPERADMIN/ADMIN/PENGURUS) -- lihat loadEmergencyNeedKeuangan(). -->
-      <div id="emergencyNeedCard" style="display: none; background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-bottom: 18px; border: 1px solid var(--glass-border);">
-        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 2px;">
-          <div style="width: 36px; height: 36px; border-radius: 11px; background: rgba(245,158,11,0.15); color: #F59E0B; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-            <span class="material-symbols-outlined" style="font-size: 19px;">emergency</span>
+      <!-- 💰 SALDO PROGRAM -- kartu induk yang bisa diklik (accordion). Pas
+           dibuka menampilkan 3 saldo: GOPAY, PEDAS, & Emergency Need.
+           - GOPAY & PEDAS: SEMENTARA DUMMY (lihat SALDO_PROGRAM_DUMMY_ di JS),
+             tinggal ganti ambilSaldoProgramLain_() ke backend kalau sudah ada.
+           - Emergency Need: data ASLI dari getSaldoEmergencyNeed (panel
+             #emergencyNeedCard / #emergencyNeedIsi, render lama tidak berubah).
+           Kartu cuma tampil buat SUPERADMIN/ADMIN/PENGURUS (sama dengan hak
+           akses Emergency Need sebelumnya) -- lihat loadSaldoProgramKeuangan(). -->
+      <div id="saldoProgramCard" style="display: none; background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-bottom: 18px; border: 1px solid var(--glass-border);">
+        <button type="button" id="saldoProgramHeader" aria-expanded="false" onclick="toggleSaldoProgram()" style="width: 100%; display: flex; align-items: center; gap: 10px; background: transparent; border: none; padding: 0; cursor: pointer; color: inherit; font-family: inherit; text-align: left;">
+          <div style="width: 36px; height: 36px; border-radius: 11px; background: rgba(56,189,248,0.15); color: #38BDF8; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <span class="material-symbols-outlined" style="font-size: 19px;">savings</span>
           </div>
           <div style="flex: 1; min-width: 0;">
-            <div style="font-size: 13.5px; font-weight: 800; color: var(--text-primary);">Saldo Emergency Need</div>
-            <div style="font-size: 10.5px; color: var(--text-muted);">Sumber dana BADIK, BATAN &amp; BASO &bull; Nasional, semua waktu</div>
+            <div style="font-size: 13.5px; font-weight: 800; color: var(--text-primary);">Saldo Program</div>
+            <div id="saldoProgramTotal" style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin-top: 1px;"><span class="kv-loading">...</span></div>
+            <div style="font-size: 10px; color: var(--text-muted);">GOPAY &bull; PEDAS &bull; Emergency Need &mdash; ketuk untuk lihat rinciannya</div>
+          </div>
+          <span class="material-symbols-outlined" id="saldoProgramChevron" style="font-size: 22px; color: var(--text-muted); transition: transform 0.2s;">expand_more</span>
+        </button>
+
+        <div id="saldoProgramDetail" style="display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--glass-border);">
+          <div id="saldoProgramCatatanDummy" style="font-size: 10px; color: #F59E0B; background: rgba(245,158,11,0.12); border-radius: 10px; padding: 8px 10px; margin-bottom: 12px;">Saldo GOPAY &amp; PEDAS masih <b>data contoh (dummy)</b> &mdash; belum tersambung ke sumber data. Saldo Emergency Need sudah data asli.</div>
+
+          <div id="saldoGopayPanel" style="background: rgba(34,197,94,0.07); border: 1px solid rgba(34,197,94,0.25); border-radius: 16px; padding: 14px; margin-bottom: 12px;"></div>
+          <div id="saldoPedasPanel" style="background: rgba(249,115,22,0.07); border: 1px solid rgba(249,115,22,0.25); border-radius: 16px; padding: 14px; margin-bottom: 12px;"></div>
+
+          <!-- 🆘 SALDO EMERGENCY NEED -- sumber dana BERSAMA program BADIK/BATAN/
+               BASO. Masuk = sheet Emergency_Need (diisi Bendahara), Tersalur =
+               total ketiga log bantuan, Saldo = Masuk - Tersalur (kumulatif).
+               NASIONAL (gak ikut filter wilayah). Diisi loadEmergencyNeedKeuangan(). -->
+          <div id="emergencyNeedCard" style="background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.25); border-radius: 16px; padding: 14px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 2px;">
+              <div style="width: 36px; height: 36px; border-radius: 11px; background: rgba(245,158,11,0.15); color: #F59E0B; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <span class="material-symbols-outlined" style="font-size: 19px;">emergency</span>
+              </div>
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-size: 13.5px; font-weight: 800; color: var(--text-primary);">Saldo Emergency Need</div>
+                <div style="font-size: 10.5px; color: var(--text-muted);">Sumber dana BADIK, BATAN &amp; BASO &bull; Nasional, semua waktu</div>
+              </div>
+            </div>
+            <div id="emergencyNeedIsi" style="margin-top: 12px;"><span class="kv-loading">Memuat...</span></div>
           </div>
         </div>
-        <div id="emergencyNeedIsi" style="margin-top: 12px;"></div>
       </div>
 
       <!-- 📄 TOMBOL CETAK LAPORAN GABUNGAN 6 PROGRAM (PDF) -->
@@ -8684,6 +8834,7 @@ function renderContent() {
     el.innerHTML = html;
     loadKeuanganStats();
     loadRekapTersalurKeuangan();
+    loadSaldoProgramKeuangan();
     loadEmergencyNeedKeuangan();
     return;
   }
