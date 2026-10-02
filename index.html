@@ -2704,6 +2704,16 @@
     background: var(--glass); border: 1px solid var(--glass-border); color: var(--text-primary);
     white-space: nowrap;
   }
+  /* 🆕 Chip cakupan data ("Nasional" / "Wilayah: Depok") + tombol pilihan
+     dua sisi (Wilayah | Nasional) di kartu Rekap Tersalur Tahun Ini. */
+  .kfin-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; padding: 3px 9px 3px 7px; border-radius: 99px; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+  .kfin-chip .material-symbols-outlined { font-size: 12px; }
+  .kfin-chip-nas { background: rgba(56,189,248,0.14); color: #38BDF8; border: 1px solid rgba(56,189,248,0.32); }
+  .kfin-chip-wil { background: rgba(var(--bento-primary-rgb),0.14); color: var(--bento-primary); border: 1px solid rgba(var(--bento-primary-rgb),0.32); }
+  .kfin-seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: 99px; background: var(--glass); border: 1px solid var(--glass-border); max-width: 100%; }
+  .kfin-seg button { font-family: inherit; font-size: 11px; font-weight: 700; min-height: 28px; padding: 0 12px; border-radius: 99px; border: none; background: transparent; color: var(--text-secondary); cursor: pointer; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: background 0.15s, color 0.15s; }
+  .kfin-seg button[aria-pressed="true"] { background: var(--bento-primary); color: #062B17; }
+  .kfin-seg button:focus-visible { outline: 2px solid var(--bento-primary); outline-offset: 2px; }
   /* 🆕 Dropdown pemilih wilayah di header tab Keuangan -- cuma muncul buat
      user yang akses > 1 wilayah (mis. Super Admin/"ALL"). Dibungkus select
      native (bukan panel custom) biar ringan & tetap gampang dipakai di HP,
@@ -6650,6 +6660,9 @@ function gantiWilayahKeuangan(wilayahBaru) {
   const nilaiBaru = String(wilayahBaru || "ALL").trim().toUpperCase() === "ALL" ? "ALL" : wilayahBaru;
   if (nilaiBaru === kfinWilayahPilihan) return;
   kfinWilayahPilihan = nilaiBaru;
+  // Pilih wilayah spesifik -> kartu Rekap ikut ke sisi "Wilayah"; kembali ke
+  // "Semua Wilayah" -> default sesuai role lagi.
+  rekapCakupanPilihan = nilaiBaru === "ALL" ? null : "WILAYAH";
   renderContent();
 }
 
@@ -7398,8 +7411,60 @@ function saveRekapTersalurCacheHub() {
   } catch (e) {}
 }
 
-function rekapTersalurCacheKey_(wilayah) {
-  return String(wilayah || "ALL").toUpperCase();
+// 🆕 CAKUPAN kartu Rekap Tersalur: tombol dua sisi "Wilayah | Nasional".
+// Kiri = wilayah sesuai akun (atau wilayah yang dipilih di dropdown tab
+// Keuangan), kanan = total nasional untuk semua role. null = default
+// sesuai role: SUPERADMIN/ADMIN -> Nasional, role lain -> Wilayah.
+let rekapCakupanPilihan = null;
+
+function rekapWilayahKiri_() {
+  const wa = String((currentUser && currentUser.wilayahAkses) || "ALL").trim();
+  const waUp = wa.toUpperCase();
+  const userAll = waUp === "ALL" || waUp === "";
+  if (kfinWilayahPilihan !== "ALL") return { semua: false, nama: kfinWilayahPilihan, teks: kfinWilayahPilihan };
+  if (userAll) return { semua: true, nama: null, teks: "Semua Wilayah" };
+  const daftar = wa.split(",").map(function (w) { return w.trim(); }).filter(Boolean);
+  return { semua: false, nama: daftar.length === 1 ? daftar[0] : null, teks: daftar.join(", ") };
+}
+
+function rekapCakupanDipilih_() {
+  if (rekapCakupanPilihan) return rekapCakupanPilihan;
+  const role = currentUser && currentUser.role;
+  return (role === "SUPERADMIN" || role === "ADMIN") ? "NASIONAL" : "WILAYAH";
+}
+
+// Data yang diambil nasional kalau sisi kanan aktif, ATAU sisi kiri memang
+// sama dengan nasional (akses ALL + dropdown "Semua Wilayah").
+function rekapNasionalEfektif_() {
+  return rekapCakupanDipilih_() === "NASIONAL" || rekapWilayahKiri_().semua;
+}
+
+function rekapTersalurCacheKey_() {
+  return rekapNasionalEfektif_() ? "NASIONAL" : "WILAYAH|" + String(kfinWilayahPilihan || "ALL").toUpperCase();
+}
+
+function renderRekapCakupanUI_() {
+  const elChip = document.getElementById("rekapTersalurChip");
+  const elSeg = document.getElementById("rekapTersalurSeg");
+  const kiri = rekapWilayahKiri_();
+  if (elChip) {
+    elChip.innerHTML = rekapNasionalEfektif_()
+      ? '<span class="kfin-chip kfin-chip-nas"><span class="material-symbols-outlined">public</span>Nasional</span>'
+      : '<span class="kfin-chip kfin-chip-wil"><span class="material-symbols-outlined">location_on</span>Wilayah: ' + escapeHtmlHub(kiri.teks) + '</span>';
+  }
+  if (elSeg) {
+    const dipilih = rekapCakupanDipilih_();
+    elSeg.innerHTML =
+      '<button type="button" aria-pressed="' + (dipilih === "WILAYAH") + '" onclick="gantiCakupanRekap(\'WILAYAH\')">' + escapeHtmlHub(kiri.nama || "Wilayah") + '</button>' +
+      '<button type="button" aria-pressed="' + (dipilih === "NASIONAL") + '" onclick="gantiCakupanRekap(\'NASIONAL\')">Nasional</button>';
+  }
+}
+
+function gantiCakupanRekap(nilai) {
+  const baru = nilai === "NASIONAL" ? "NASIONAL" : "WILAYAH";
+  if (baru === rekapCakupanDipilih_()) return;
+  rekapCakupanPilihan = baru;
+  loadRekapTersalurKeuangan();
 }
 
 function loadRekapTersalurKeuangan() {
@@ -7407,40 +7472,37 @@ function loadRekapTersalurKeuangan() {
   const elGrid = document.getElementById("rekapTersalurGrid");
   if (!elGrid) return;
 
-  // 🆕 Ikut wilayah yang LAGI DIPILIH di dropdown filter tab Keuangan
-  // (kfinWilayahPilihan -- sama variabel yang dipakai Kartu 1 Anak Yatim &
-  // Santunan lewat loadKeuanganStats()/gantiWilayahKeuangan()). Jadi kalau
-  // ADMIN/SUPERADMIN pilih 1 wilayah spesifik, kartu "Rekap Tersalur Tahun
-  // Ini" ini otomatis ikut kefilter ke wilayah itu doang -- gak perlu lagi
-  // buka popup "Rincian per Wilayah" buat lihat angka 1 wilayah.
-  const wilayahDiminta = kfinWilayahPilihan;
-  const cacheKeyDiminta = rekapTersalurCacheKey_(wilayahDiminta);
+  renderRekapCakupanUI_();
 
-  // 🩹 FIX: kalau wilayah ini udah pernah sukses ke-fetch sebelumnya di sesi
-  // ini, langsung tampilin data lama dari cache duluan -- instan, gak lagi
-  // keliatan "Memuat data..." tiap pindah-pindah tab. Tetap lanjut fetch ke
-  // server di background biar datanya tetap ke-update.
+  // Cache dipisah per cakupan: "NASIONAL" atau "WILAYAH|<wilayah>", jadi
+  // pindah sisi tombol/dropdown instan dan tidak pernah menampilkan angka
+  // cakupan lain.
+  const nasionalDiminta = rekapNasionalEfektif_();
+  const wilayahDiminta = nasionalDiminta ? "ALL" : kfinWilayahPilihan;
+  const cakupanDiminta = nasionalDiminta ? "NASIONAL" : "WILAYAH";
+  const cacheKeyDiminta = rekapTersalurCacheKey_();
+
   const dariCache = !!rekapTersalurCache[cacheKeyDiminta];
   if (dariCache) {
     renderRekapTersalurKeuangan_(rekapTersalurCache[cacheKeyDiminta], elKet, elGrid);
+  } else {
+    // Cache kosong: kosongkan angka cakupan sebelumnya supaya tidak salah baca.
+    if (elKet) elKet.textContent = "Memuat data...";
+    elGrid.innerHTML = "";
+    const elTotalLoading = document.getElementById("rekapTersalurTotal");
+    if (elTotalLoading) elTotalLoading.innerHTML = '<span class="kv-loading">...</span>';
   }
 
-  return callGASWithRetry_("getProgramTersalurkanProfil", [authToken, wilayahDiminta])
+  return callGASWithRetry_("getProgramTersalurkanProfil", [authToken, wilayahDiminta, cakupanDiminta])
     .then(function (hasil) {
-      // Kalau user udah ganti wilayah lagi SEBELUM fetch ini selesai,
-      // buang hasilnya -- biarin fetch yang lebih baru (dipicu render ulang
-      // dari gantiWilayahKeuangan()) yang menang, biar gak sekilas nampilin
-      // angka wilayah yang salah.
-      if (kfinWilayahPilihan !== wilayahDiminta) return;
+      // Buang hasil kalau user sudah pindah cakupan/wilayah sebelum fetch selesai.
+      if (rekapTersalurCacheKey_() !== cacheKeyDiminta) return;
       rekapTersalurCache[cacheKeyDiminta] = hasil;
-      saveRekapTersalurCacheHub(); // <-- SIMPAN KE OFFLINE CACHE
+      saveRekapTersalurCacheHub();
       renderRekapTersalurKeuangan_(hasil, elKet, elGrid);
     })
     .catch(function () {
-      if (kfinWilayahPilihan !== wilayahDiminta) return;
-      // 🩹 FIX: kalau fetch gagal TAPI sebelumnya udah ada cache yang sukses,
-      // biarin angka lama itu tetap tampil (lebih baik daripada direset ke
-      // pesan error cuma gara-gara 1x gangguan jaringan).
+      if (rekapTersalurCacheKey_() !== cacheKeyDiminta) return;
       if (dariCache) return;
       if (elKet) elKet.textContent = "Gagal memuat data program.";
       if (elGrid) elGrid.innerHTML = "";
@@ -7454,8 +7516,7 @@ function renderRekapTersalurKeuangan_(hasil, elKet, elGrid) {
 
   if (elKet) {
     const periode = "Januari\u2013" + (hasil.namaBulanIni || "") + " " + (hasil.tahun || "");
-    const wilayahTxt = hasil.semuaWilayah ? "Semua Wilayah" : (hasil.wilayahTampil || "-");
-    elKet.textContent = periode + " \u2022 " + wilayahTxt;
+    elKet.textContent = periode;
   }
 
   // Total dana tersalur semua program -> tampil di header kartu (default tertutup,
@@ -8739,6 +8800,10 @@ function renderContent() {
            kartu mini program. Diisi lewat loadRekapTersalurKeuangan(), dipanggil
            bareng loadKeuanganStats() tiap tab Keuangan dibuka. -->
       <div style="background: var(--glass-strong); border-radius: 20px; padding: 16px; margin: 0 0 18px; border: 1px solid var(--glass-border);">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+          <span id="rekapTersalurChip"></span>
+          <div id="rekapTersalurSeg" class="kfin-seg" role="group" aria-label="Cakupan rekap tersalur"></div>
+        </div>
         <button type="button" id="rekapTersalurHeader" aria-expanded="false" onclick="toggleRekapTersalurKeuangan()" style="width: 100%; display: flex; align-items: center; gap: 10px; background: transparent; border: none; padding: 0; cursor: pointer; color: inherit; font-family: inherit; text-align: left;">
           <div style="width: 36px; height: 36px; border-radius: 11px; background: rgba(34,197,94,0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
             <span class="material-symbols-outlined" style="font-size: 19px;">insights</span>
@@ -8795,9 +8860,9 @@ function renderContent() {
                 <span class="material-symbols-outlined" style="font-size: 19px;">emergency</span>
               </div>
               <div style="flex: 1; min-width: 0;">
-                <div style="font-size: 13.5px; font-weight: 800; color: var(--text-primary);">Saldo Emergency Need</div>
+                <div style="font-size: 13.5px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">Saldo Emergency Need <span class="kfin-chip kfin-chip-nas"><span class="material-symbols-outlined">public</span>Nasional</span></div>
                 <div id="saldoRingkas_emergency" style="font-size: 14px; font-weight: 800; color: var(--text-primary); margin-top: 1px;"><span class="kv-loading">...</span></div>
-                <div style="font-size: 10.5px; color: var(--text-muted);">Sumber dana BADIK, BATAN &amp; BASO &bull; Nasional, semua waktu</div>
+                <div style="font-size: 10.5px; color: var(--text-muted);">Sumber dana BADIK, BATAN &amp; BASO &bull; semua waktu</div>
               </div>
               <span class="material-symbols-outlined" id="saldoChevron_emergency" style="font-size: 22px; color: var(--text-muted); transition: transform 0.2s;">expand_more</span>
             </button>
@@ -8834,7 +8899,7 @@ function renderContent() {
           <span class="material-symbols-outlined" style="font-size: 22px;">volunteer_activism</span>
         </div>
         <div style="flex: 1;">
-          <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Program GOPAY</div>
+          <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">Program GOPAY <span class="kfin-chip kfin-chip-nas"><span class="material-symbols-outlined">public</span>Nasional</span></div>
           <div style="font-size: 11px; color: var(--text-secondary);">Gojek Peduli Anak Yatim</div>
         </div>
         <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
@@ -8849,7 +8914,7 @@ function renderContent() {
           <span class="material-symbols-outlined" style="font-size: 22px;">diversity_1</span>
         </div>
         <div style="flex: 1;">
-          <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Program SAPA</div>
+          <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">Program SAPA <span class="kfin-chip kfin-chip-nas"><span class="material-symbols-outlined">public</span>Nasional</span></div>
           <div style="font-size: 11px; color: var(--text-secondary);">Sahabat Peduli Anak</div>
         </div>
         <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
