@@ -7329,6 +7329,61 @@ function renderProfilPerforma_(hasil) {
       elDonasiKet.textContent = formatRupiahHub(donasi.realisasiDonasi || 0) + " / " + formatRupiahHub(donasi.kebutuhanDonasi || 0) + " (Jan\u2013bulan ini)";
     }
   }
+  renderProfilLencana_(hasil);
+}
+
+// 🆕 LENCANA (di bawah Dedikasi, tab Profil) -- murni frontend, dihitung dari
+// data getPerformaProfil yang sudah ada (tanpa perubahan backend). Lencana
+// yang belum diraih tetap tampil redup + ikon gembok dan menjelaskan syaratnya
+// saat diketuk, supaya jadi target yang jelas.
+function hitungLencanaProfil_(hasil) {
+  const k = (hasil && hasil.kehadiran) || {};
+  const d = (hasil && hasil.donasi) || {};
+  const totalKeg = Number(k.totalKegiatan || 0);
+  const hadir = Number(k.jumlahHadir || 0);
+  const persenHadir = Number(k.persenKehadiran || 0);
+  const donasiAda = !!d.ditemukan;
+  const persenDonasi = Number(d.persenTercapai || 0);
+  return [
+    { ikon: "flag", warna: "#22D3EE", judul: "Pertama Hadir",
+      syarat: "Hadir minimal 1 pertemuan sejak 5 September 2026",
+      diraih: hadir >= 1 },
+    { ikon: "thumb_up", warna: "#60A5FA", judul: "Rajin Hadir",
+      syarat: "Kehadiran minimal 80% dari seluruh pertemuan",
+      diraih: totalKeg > 0 && persenHadir >= 80 },
+    { ikon: "workspace_premium", warna: "#FCD34D", judul: "Kehadiran Penuh",
+      syarat: "Hadir di 100% pertemuan",
+      diraih: totalKeg > 0 && persenHadir >= 100 },
+    { ikon: "volunteer_activism", warna: "#4ADE80", judul: "Donasi Tercapai",
+      syarat: "Pencapaian donasi wilayah mencapai 100%",
+      diraih: donasiAda && persenDonasi >= 100 },
+  ];
+}
+
+function renderProfilLencana_(hasil) {
+  const grid = document.getElementById("profilLencanaGrid");
+  if (!grid) return;
+  const daftar = hitungLencanaProfil_(hasil);
+  const jumlah = daftar.filter(function (b) { return b.diraih; }).length;
+  grid.innerHTML = daftar.map(function (b, i) {
+    const warnaTeks = b.diraih ? "var(--text-primary)" : "var(--text-muted)";
+    const latar = b.diraih ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.02)";
+    const garis = b.diraih ? b.warna : "var(--glass-border)";
+    return '<button type="button" onclick="infoLencanaProfil_(' + i + ')" style="display:flex; align-items:center; gap:9px; text-align:left; padding:10px; border-radius:14px; background:' + latar + '; border:1px solid ' + garis + '; cursor:pointer; color:inherit; font:inherit; -webkit-tap-highlight-color:transparent; ' + (b.diraih ? '' : 'opacity:0.65;') + '">' +
+      '<span style="width:32px; height:32px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:' + (b.diraih ? b.warna : 'var(--glass-border-strong)') + '; color:' + (b.diraih ? '#0B1220' : 'var(--text-muted)') + ';">' +
+        '<span class="material-symbols-outlined" style="font-size:18px; font-variation-settings:\'FILL\' 1;">' + (b.diraih ? b.ikon : 'lock') + '</span>' +
+      '</span>' +
+      '<span style="font-size:11.5px; font-weight:700; line-height:1.25; color:' + warnaTeks + ';">' + b.judul + '</span>' +
+    '</button>';
+  }).join("");
+  grid.setAttribute("data-diraih", String(jumlah));
+  window._lencanaProfilTerakhir = daftar;
+}
+
+function infoLencanaProfil_(i) {
+  const b = (window._lencanaProfilTerakhir || [])[i];
+  if (!b || typeof showHubToast !== "function") return;
+  showHubToast(b.judul + (b.diraih ? " – sudah diraih. " : " – belum diraih. ") + b.syarat + ".", b.diraih ? "success" : "info", 4000);
 }
 
 // Ambil & tampilkan 2 metrik Performa di tab Profil: Kehadiran Absen
@@ -9068,10 +9123,21 @@ function renderContent() {
            kelihatan sebagai kategori terpisah dari kartu-kartu Aplikasi,
            bukan tercampur di tab Profile. Jangan tambahkan lagi di sini. -->
 
+      <button onclick="showKartuAnggotaDigital()" style="width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; background: var(--glass-strong); border-radius: 20px; padding: 14px 16px; margin: -8px 0 24px; border: 1px solid var(--glass-border); border-left: 4px solid #16A34A; cursor: pointer; color: inherit; font: inherit;">
+        <div style="width: 34px; height: 34px; border-radius: 11px; background: rgba(34,197,94,0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <span class="material-symbols-outlined" style="font-size: 19px;">badge</span>
+        </div>
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-size: 12.5px; font-weight: 600;">Kartu Anggota Digital</div>
+          <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">Lihat &amp; unduh kartu pengenal pengurus</div>
+        </div>
+        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
+      </button>
+
       <div class="profil-dedikasi-section">
       <h3 style="font-weight: 600; font-size: 14px; margin-bottom: 12px; padding: 0 4px;">Dedikasi</h3>
       <div id="profilDedikasiTourTarget" style="background: var(--glass-strong); border-radius: 20px; padding: 18px; margin-bottom: 24px; border: 1px solid var(--glass-border); border-left: 4px solid #F97316; display: flex; flex-direction: column; gap: 20px;">
-        <div>
+        <div id="profilKehadiranTap" role="button" tabindex="0" onclick="showDetailKehadiran()" style="cursor: pointer; -webkit-tap-highlight-color: transparent;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <div style="display: flex; align-items: center; gap: 10px;">
               <div style="width: 30px; height: 30px; border-radius: 10px; background: rgba(34,211,238,0.15); color: var(--neon-cyan); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
@@ -9086,6 +9152,7 @@ function renderContent() {
             <div id="profilPerformaKehadiranBar" class="profil-dedikasi-bar" style="height: 100%; width: 0%; border-radius: 6px; background: linear-gradient(90deg, #0891B2, #22D3EE); transition: width .7s cubic-bezier(0.22, 1, 0.36, 1);"></div>
           </div>
           <div id="profilPerformaKehadiranKeterangan" style="font-size: 10.5px; color: var(--text-muted); margin-top: 6px;">Memuat data kehadiran...</div>
+          <div style="display: flex; align-items: center; gap: 2px; font-size: 10.5px; font-weight: 600; color: var(--neon-cyan); margin-top: 8px;">Lihat detail kegiatan <span class="material-symbols-outlined" style="font-size: 14px;">chevron_right</span></div>
         </div>
         <div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -9102,6 +9169,16 @@ function renderContent() {
             <div id="profilPerformaDonasiBar" class="profil-dedikasi-bar" style="height: 100%; width: 0%; border-radius: 6px; background: linear-gradient(90deg, #15803D, #4ADE80); transition: width .7s cubic-bezier(0.22, 1, 0.36, 1);"></div>
           </div>
           <div id="profilPerformaDonasiKeterangan" style="font-size: 10.5px; color: var(--text-muted); margin-top: 6px;">Memuat data donasi...</div>
+        </div>
+        <div id="profilLencanaWrap">
+          <div style="height: 1px; background: var(--glass-border); margin: 0 0 16px;"></div>
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+            <div style="width: 30px; height: 30px; border-radius: 10px; background: rgba(251,191,36,0.15); color: #FCD34D; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <span class="material-symbols-outlined" style="font-size: 16px;">military_tech</span>
+            </div>
+            <span style="font-size: 12.5px; font-weight: 600;">Lencana</span>
+          </div>
+          <div id="profilLencanaGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;"></div>
         </div>
       </div>
       </div>
@@ -14399,6 +14476,271 @@ function showProfileQR() {
     console.error("Gagal memuat QR:", error);
     showModal("Error", "Gagal memuat QR Code profil.");
   }
+}
+
+// ============================================================
+// 🆕 DETAIL KEHADIRAN -- dibuka dengan mengetuk bagian Kehadiran di kartu
+// Dedikasi (tab Profil). Backend: getDetailKehadiran (Code_Hub.gs).
+// ============================================================
+let detailKehadiranCache = null;
+
+function formatTanggalIndo_(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ""));
+  if (!m) return String(iso || "");
+  const bln = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+  return Number(m[3]) + " " + bln[Number(m[2]) - 1] + " " + m[1];
+}
+
+function renderDetailKehadiranHtml_(d) {
+  const kegiatan = (d && d.kegiatan) || [];
+  const total = Number((d && d.totalKegiatan) || 0);
+  const hadir = Number((d && d.jumlahHadir) || 0);
+  const persen = Math.max(0, Number((d && d.persenKehadiran) || 0));
+  if (total === 0) {
+    return '<div style="text-align:center; padding:18px 6px; font-size:12.5px; color:var(--text-secondary); line-height:1.5;">Belum ada kegiatan selesai sejak ' +
+      escapeHtmlHub(formatTanggalIndo_(d && d.mulai)) + '.</div>';
+  }
+  const baris = kegiatan.map(function (k) {
+    const warna = k.hadir ? "#4ADE80" : "#F87171";
+    const ikon = k.hadir ? "check_circle" : "cancel";
+    return '<div style="display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--glass-border);">' +
+      '<span class="material-symbols-outlined" style="font-size:20px; color:' + warna + '; flex-shrink:0; font-variation-settings:\'FILL\' 1;">' + ikon + '</span>' +
+      '<div style="flex:1; min-width:0;">' +
+        '<div style="font-size:12.5px; font-weight:600; color:var(--text-primary); line-height:1.3;">' + escapeHtmlHub(k.nama) + '</div>' +
+        '<div style="font-size:10.5px; color:var(--text-muted); margin-top:2px;">' + escapeHtmlHub(formatTanggalIndo_(k.tanggal)) + '</div>' +
+      '</div>' +
+      '<span style="font-size:10.5px; font-weight:700; color:' + warna + '; flex-shrink:0;">' + (k.hadir ? "Hadir" : "Tidak hadir") + '</span>' +
+    '</div>';
+  }).join("");
+  return '<div style="text-align:left;">' +
+    '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">' +
+      '<span style="font-size:12.5px; color:var(--text-secondary);">Hadir ' + hadir + ' dari ' + total + ' pertemuan</span>' +
+      '<span style="font-size:16px; font-weight:700; color:var(--neon-cyan);">' + persen + '%</span>' +
+    '</div>' +
+    '<div style="height:8px; border-radius:6px; background:var(--glass-border-strong); overflow:hidden; margin-bottom:6px;">' +
+      '<div style="height:100%; width:' + Math.min(100, persen) + '%; border-radius:6px; background:linear-gradient(90deg,#0891B2,#22D3EE);"></div>' +
+    '</div>' +
+    '<div style="font-size:10.5px; color:var(--text-muted); margin-bottom:6px;">Dihitung sejak ' + escapeHtmlHub(formatTanggalIndo_(d.mulai)) + ', hanya kegiatan berstatus Selesai.</div>' +
+    '<div style="max-height:46vh; overflow-y:auto; -webkit-overflow-scrolling:touch;">' + baris + '</div>' +
+  '</div>';
+}
+
+function showDetailKehadiran() {
+  const JUDUL = "Detail Kehadiran";
+  const perbarui = function (htmlBaru) {
+    const overlay = document.getElementById("customModalOverlay");
+    const judul = document.getElementById("customModalTitle");
+    const isi = document.getElementById("customModalMessage");
+    // hanya timpa kalau modal ini masih yang terbuka (user belum menutup / membuka modal lain)
+    if (overlay && overlay.classList.contains("open") && judul && judul.textContent === JUDUL && isi) {
+      isi.innerHTML = htmlBaru;
+    }
+  };
+  if (detailKehadiranCache) {
+    showModal(JUDUL, renderDetailKehadiranHtml_(detailKehadiranCache), false, null, "Tutup");
+  } else {
+    showModal(JUDUL, '<div style="text-align:center; padding:18px 6px; font-size:12.5px; color:var(--text-secondary);">Memuat daftar kegiatan...</div>', false, null, "Tutup");
+  }
+  return callGASWithRetry_("getDetailKehadiran", [authToken])
+    .then(function (hasil) {
+      detailKehadiranCache = hasil;
+      perbarui(renderDetailKehadiranHtml_(hasil));
+    })
+    .catch(function () {
+      if (detailKehadiranCache) return; // biarkan data lama tetap tampil
+      perbarui('<div style="text-align:center; padding:18px 6px; font-size:12.5px; color:var(--text-secondary);">Gagal memuat detail kehadiran. Coba lagi sebentar lagi.</div>');
+    });
+}
+
+// ============================================================
+// 🆕 KARTU ANGGOTA DIGITAL -- kartu pengenal pengurus yang digambar di
+// <canvas> (foto, nama, jabatan, wilayah, kontak, QR vCard yang sama
+// dengan showProfileQR) lalu bisa diunduh/dibagikan sebagai gambar PNG.
+// Foto & QR dimuat dengan crossOrigin="anonymous"; kalau server gambarnya
+// menolak (CORS), foto diganti inisial dan QR dilewati, supaya canvas tetap
+// bersih dan tombol Unduh tetap bisa dipakai.
+// ============================================================
+function muatGambarKartu_(url, timeoutMs) {
+  return new Promise(function (resolve) {
+    if (!url) return resolve(null);
+    const img = new Image();
+    let selesai = false;
+    const akhir = function (v) { if (!selesai) { selesai = true; resolve(v); } };
+    img.crossOrigin = "anonymous";
+    img.onload = function () { akhir(img); };
+    img.onerror = function () { akhir(null); };
+    setTimeout(function () { akhir(null); }, timeoutMs || 7000);
+    img.src = url;
+  });
+}
+
+function pathRoundRect_(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function potongTeksKartu_(ctx, teks, lebarMaks) {
+  let t = String(teks || "");
+  if (ctx.measureText(t).width <= lebarMaks) return t;
+  while (t.length > 1 && ctx.measureText(t + "…").width > lebarMaks) t = t.slice(0, -1);
+  return t + "…";
+}
+
+async function gambarKartuAnggota_() {
+  const canvas = document.getElementById("kartuAnggotaCanvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  const nama = String(currentUser.nama || "Pengurus");
+  const jabatan = String(currentUser.jabatan || "-");
+  const telp = String(currentUser.username || "");
+  const wilayah = String(currentUser.wilayahAkses || "").toUpperCase() === "ALL" ? "Semua Wilayah" : (currentUser.wilayahAkses || "-");
+  const vcard = "BEGIN:VCARD\nVERSION:3.0\nFN:" + nama + "\nTITLE:" + jabatan + "\nORG:YASSA GOPAY\nTEL;TYPE=CELL:" + telp + "\nNOTE:Jabatan: " + jabatan + " | Wilayah: " + wilayah + "\nEND:VCARD";
+  const qrUrl = "https://quickchart.io/qr?size=300&margin=1&text=" + encodeURIComponent(vcard);
+
+  const hasilMuat = await Promise.all([
+    muatGambarKartu_(currentUser.fotoUrl),
+    muatGambarKartu_(qrUrl),
+  ]);
+  const foto = hasilMuat[0], qr = hasilMuat[1];
+  if (!document.getElementById("kartuAnggotaCanvas")) return; // modal sudah ditutup
+
+  const FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
+
+  // Latar
+  ctx.clearRect(0, 0, W, H);
+  pathRoundRect_(ctx, 0, 0, W, H, 44);
+  ctx.save(); ctx.clip();
+  const g = ctx.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, "#16A34A"); g.addColorStop(0.55, "#15803D"); g.addColorStop(1, "#0F5132");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = "rgba(255,255,255,0.08)";
+  ctx.beginPath(); ctx.arc(W - 40, -10, 230, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,0.06)";
+  ctx.beginPath(); ctx.arc(60, H + 40, 190, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  // Header
+  ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
+  ctx.fillStyle = "#FFFFFF"; ctx.font = "800 40px " + FONT;
+  ctx.fillText("YASSA GOPAY", 56, 80);
+  ctx.fillStyle = "rgba(255,255,255,0.78)"; ctx.font = "600 22px " + FONT;
+  ctx.fillText("KARTU ANGGOTA PENGURUS", 56, 114);
+  ctx.fillStyle = "rgba(255,255,255,0.25)"; ctx.fillRect(56, 138, W - 112, 2);
+
+  // Foto (kiri)
+  const fx = 56, fy = 176, fs = 220;
+  ctx.save();
+  pathRoundRect_(ctx, fx, fy, fs, fs, 36); ctx.clip();
+  if (foto) {
+    const sk = Math.max(fs / foto.width, fs / foto.height);
+    const dw = foto.width * sk, dh = foto.height * sk;
+    ctx.drawImage(foto, fx + (fs - dw) / 2, fy + (fs - dh) / 2, dw, dh);
+  } else {
+    ctx.fillStyle = "rgba(255,255,255,0.18)"; ctx.fillRect(fx, fy, fs, fs);
+    ctx.fillStyle = "#FFFFFF"; ctx.font = "800 96px " + FONT;
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText((nama.trim().charAt(0) || "?").toUpperCase(), fx + fs / 2, fy + fs / 2 + 4);
+    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+  }
+  ctx.restore();
+  pathRoundRect_(ctx, fx, fy, fs, fs, 36);
+  ctx.strokeStyle = "rgba(255,255,255,0.9)"; ctx.lineWidth = 5; ctx.stroke();
+
+  // Teks identitas (tengah)
+  const tx = fx + fs + 36;
+  const qrBox = 220;
+  const lebarTeks = W - 56 - qrBox - 30 - tx; // sisakan ruang untuk QR di kanan
+  ctx.fillStyle = "#FFFFFF"; ctx.font = "800 44px " + FONT;
+  ctx.fillText(potongTeksKartu_(ctx, nama, lebarTeks), tx, fy + 52);
+  ctx.fillStyle = "#FDE68A"; ctx.font = "700 28px " + FONT;
+  ctx.fillText(potongTeksKartu_(ctx, jabatan, lebarTeks), tx, fy + 94);
+  ctx.fillStyle = "rgba(255,255,255,0.88)"; ctx.font = "500 26px " + FONT;
+  ctx.fillText(potongTeksKartu_(ctx, "Wilayah: " + wilayah, lebarTeks), tx, fy + 146);
+  if (telp) ctx.fillText(potongTeksKartu_(ctx, "Kontak: " + telp, lebarTeks), tx, fy + 186);
+
+  // QR (kanan bawah)
+  const qx = W - 56 - qrBox, qy = H - 56 - qrBox;
+  ctx.fillStyle = "#FFFFFF"; pathRoundRect_(ctx, qx, qy, qrBox, qrBox, 28); ctx.fill();
+  if (qr) {
+    ctx.drawImage(qr, qx + 14, qy + 14, qrBox - 28, qrBox - 28);
+  } else {
+    ctx.fillStyle = "#6B7280"; ctx.font = "600 20px " + FONT; ctx.textAlign = "center";
+    ctx.fillText("QR tidak tersedia", qx + qrBox / 2, qy + qrBox / 2 + 6);
+    ctx.textAlign = "left";
+  }
+
+  // Footer
+  const tgl = new Date();
+  const bln = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+  ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.font = "500 20px " + FONT;
+  ctx.fillText("Dicetak " + tgl.getDate() + " " + bln[tgl.getMonth()] + " " + tgl.getFullYear(), 56, H - 56);
+  ctx.fillText("Scan QR untuk simpan kontak", 56, H - 86);
+
+  const ket = document.getElementById("kartuAnggotaKet");
+  if (ket && !foto && currentUser.fotoUrl) ket.textContent = "Foto tidak bisa dimuat ke kartu, jadi diganti inisial.";
+  const tombol = document.querySelectorAll(".kartu-anggota-aksi");
+  tombol.forEach(function (b) { b.disabled = false; b.style.opacity = "1"; });
+}
+
+function showKartuAnggotaDigital() {
+  const tombolStyle = "flex:1; border:none; border-radius:14px; padding:12px 10px; font-size:12.5px; font-weight:700; color:#fff; background:var(--grad-primary); cursor:pointer; opacity:0.5; display:flex; align-items:center; justify-content:center; gap:6px;";
+  const bisaBagikan = !!(navigator.share && navigator.canShare);
+  const html = '<div style="display:flex; flex-direction:column; align-items:center; gap:12px;">' +
+    '<canvas id="kartuAnggotaCanvas" width="1012" height="638" style="width:100%; max-width:340px; aspect-ratio:1012/638; border-radius:16px; background:rgba(255,255,255,0.05); box-shadow:0 8px 24px rgba(0,0,0,0.35);"></canvas>' +
+    '<div id="kartuAnggotaKet" style="font-size:10.5px; color:var(--text-muted); text-align:center; min-height:14px;">Menyiapkan kartu...</div>' +
+    '<div style="display:flex; gap:8px; width:100%; max-width:340px;">' +
+      '<button class="kartu-anggota-aksi" disabled onclick="unduhKartuAnggota()" style="' + tombolStyle + '"><span class="material-symbols-outlined" style="font-size:17px;">download</span>Unduh</button>' +
+      (bisaBagikan ? '<button class="kartu-anggota-aksi" disabled onclick="bagikanKartuAnggota()" style="' + tombolStyle + '"><span class="material-symbols-outlined" style="font-size:17px;">share</span>Bagikan</button>' : '') +
+    '</div>' +
+  '</div>';
+  showModal("Kartu Anggota Digital", html, false, null, "Tutup");
+  setTimeout(gambarKartuAnggota_, 30);
+}
+
+function kartuAnggotaBlob_() {
+  return new Promise(function (resolve, reject) {
+    const canvas = document.getElementById("kartuAnggotaCanvas");
+    if (!canvas) return reject(new Error("canvas tidak ada"));
+    try {
+      canvas.toBlob(function (b) { b ? resolve(b) : reject(new Error("blob kosong")); }, "image/png");
+    } catch (e) { reject(e); }
+  });
+}
+
+function namaFileKartu_() {
+  return "Kartu-Anggota-" + String(currentUser.nama || "Pengurus").trim().replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "") + ".png";
+}
+
+function unduhKartuAnggota() {
+  kartuAnggotaBlob_().then(function (blob) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = namaFileKartu_();
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+    if (typeof showHubToast === "function") showHubToast("Kartu anggota diunduh", "success");
+  }).catch(function () {
+    if (typeof showHubToast === "function") showHubToast("Gagal membuat gambar kartu", "error");
+  });
+}
+
+function bagikanKartuAnggota() {
+  kartuAnggotaBlob_().then(function (blob) {
+    const file = new File([blob], namaFileKartu_(), { type: "image/png" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      return navigator.share({ files: [file], title: "Kartu Anggota Yassa GoPay" });
+    }
+    unduhKartuAnggota();
+  }).catch(function (e) {
+    if (e && e.name === "AbortError") return; // user membatalkan
+    if (typeof showHubToast === "function") showHubToast("Gagal membagikan kartu", "error");
+  });
 }
 
 // QR Code Donasi (Aksi Cepat Beranda) -- gambar statis dari Google Drive
