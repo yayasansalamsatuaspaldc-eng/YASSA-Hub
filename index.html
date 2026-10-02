@@ -14591,6 +14591,65 @@ function potongTeksKartu_(ctx, teks, lebarMaks) {
   return t + "…";
 }
 
+// Logo YASSA (sama dengan logo di halaman login), diberi data-URL supaya bisa
+// digambar ke canvas tanpa masalah CORS. Teks "YASSA" pakai font sistem karena
+// font web tidak ikut termuat di dalam SVG yang dipakai sebagai gambar.
+const LOGO_YASSA_DATA_URL_ = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 100 100">' +
+  '<circle cx="28" cy="38" r="6" fill="#22C55E"/>' +
+  '<path d="M13 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>' +
+  '<circle cx="72" cy="38" r="6" fill="#22C55E"/>' +
+  '<path d="M57 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>' +
+  '<circle cx="50" cy="28" r="7.5" fill="#22C55E"/>' +
+  '<path d="M30 53 a 20 20 0 0 1 40 0" fill="none" stroke="#22C55E" stroke-width="6.5" stroke-linecap="round"/>' +
+  '<text x="50" y="76" font-family="Inter, Roboto, Arial, sans-serif" font-weight="900" font-size="24" text-anchor="middle" letter-spacing="-0.5">' +
+  '<tspan fill="#ffffff">YAS</tspan><tspan fill="#22C55E">SA</tspan></text></svg>'
+);
+
+// Logo YASSA digambar LANGSUNG di canvas (tanpa memuat gambar), jadi tidak
+// bisa gagal gara-gara CORS / SVG data-URL di browser tertentu.
+function gambarLogoYassa_(ctx, ox, oy, size) {
+  const k = size / 100;
+  const hijau = "#22C55E";
+  ctx.save();
+  ctx.translate(ox, oy); ctx.scale(k, k);
+  ctx.fillStyle = hijau; ctx.strokeStyle = hijau; ctx.lineCap = "round";
+  const titik = function (x, y, r) { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); };
+  const busur = function (cx, cy, r, lw) { ctx.lineWidth = lw; ctx.beginPath(); ctx.arc(cx, cy, r, Math.PI, Math.PI * 2); ctx.stroke(); };
+  titik(28, 38, 6);  busur(28, 56, 15, 5);
+  titik(72, 38, 6);  busur(72, 56, 15, 5);
+  titik(50, 28, 7.5); busur(50, 53, 20, 6.5);
+  ctx.font = "900 24px system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif";
+  ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
+  const w1 = ctx.measureText("YAS").width, w2 = ctx.measureText("SA").width;
+  const x0 = 50 - (w1 + w2) / 2;
+  ctx.fillStyle = "#FFFFFF"; ctx.fillText("YAS", x0, 76);
+  ctx.fillStyle = hijau;     ctx.fillText("SA", x0 + w1, 76);
+  ctx.restore();
+}
+
+// Foto profil disimpan di Google Drive (drive.google.com/uc?...) yang TIDAK
+// mengirim header CORS, jadi kalau dimuat langsung ke canvas selalu gagal.
+// Urutan: (1) lh3.googleusercontent.com (CORS terbuka), (2) minta server
+// kirim fotonya sebagai data-URL, (3) URL asli (untuk host selain Drive).
+async function muatFotoProfilKartu_() {
+  const url = String(currentUser.fotoUrl || "").trim();
+  if (!url) return null;
+  const m = url.match(/[?&]id=([\w-]+)/) || url.match(/\/d\/([\w-]+)/);
+  if (m) {
+    const a = await muatGambarKartu_("https://lh3.googleusercontent.com/d/" + m[1] + "=s600", 6000);
+    if (a) return a;
+    try {
+      const res = await callGAS("getProfilePhotoData", [authToken]);
+      if (res && res.dataUrl) {
+        const b = await muatGambarKartu_(res.dataUrl, 10000);
+        if (b) return b;
+      }
+    } catch (e) { /* lanjut ke fallback */ }
+  }
+  return muatGambarKartu_(url);
+}
+
 async function gambarKartuAnggota_() {
   const canvas = document.getElementById("kartuAnggotaCanvas");
   if (!canvas) return;
@@ -14604,7 +14663,7 @@ async function gambarKartuAnggota_() {
   const qrUrl = "https://quickchart.io/qr?size=300&margin=1&text=" + encodeURIComponent(vcard);
 
   const hasilMuat = await Promise.all([
-    muatGambarKartu_(currentUser.fotoUrl),
+    muatFotoProfilKartu_(),
     muatGambarKartu_(qrUrl),
   ]);
   const foto = hasilMuat[0], qr = hasilMuat[1];
@@ -14625,12 +14684,22 @@ async function gambarKartuAnggota_() {
   ctx.beginPath(); ctx.arc(60, H + 40, 190, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 
-  // Header
+  // Header (logo YASSA dalam lingkaran gelap, seperti di halaman login)
+  let hx = 56;
+  {
+    const lr = 46, lcx = 56 + lr, lcy = 82;
+    ctx.fillStyle = "#0B101E";
+    ctx.beginPath(); ctx.arc(lcx, lcy, lr, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.9)"; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(lcx, lcy, lr, 0, Math.PI * 2); ctx.stroke();
+    gambarLogoYassa_(ctx, lcx - lr * 0.85, lcy - lr * 0.85, lr * 1.7);
+    hx = lcx + lr + 24;
+  }
   ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
   ctx.fillStyle = "#FFFFFF"; ctx.font = "800 40px " + FONT;
-  ctx.fillText("YASSA GOPAY", 56, 80);
+  ctx.fillText("YASSA GOPAY", hx, 80);
   ctx.fillStyle = "rgba(255,255,255,0.78)"; ctx.font = "600 22px " + FONT;
-  ctx.fillText("KARTU ANGGOTA PENGURUS", 56, 114);
+  ctx.fillText("KARTU ANGGOTA PENGURUS", hx, 114);
   ctx.fillStyle = "rgba(255,255,255,0.25)"; ctx.fillRect(56, 138, W - 112, 2);
 
   // Foto (kiri)
