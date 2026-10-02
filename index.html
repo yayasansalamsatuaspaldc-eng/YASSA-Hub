@@ -7969,7 +7969,16 @@ function htmlTombolUnduhPdfProgram_(programKey, mode, bulan, tahun, wilayah, war
 // ============================================================
 let cspModeAktif = "bulanan";
 
+// 🔒 Cetak PDF Laporan Gabungan 6 Program HANYA untuk SUPERADMIN, ADMIN,
+// PENGURUS, dan KORWIL. Role lain (WAKORWIL, TIM_KERJA, RELAWAN) tidak
+// melihat kartunya, dan fungsi pembuka/pemroses modal juga menolak.
+const ROLE_BOLEH_CETAK_GABUNGAN_ = ["SUPERADMIN", "ADMIN", "PENGURUS", "KORWIL"];
+function bolehCetakLaporanGabungan_() {
+  return !!(currentUser && ROLE_BOLEH_CETAK_GABUNGAN_.indexOf(String(currentUser.role || "").toUpperCase()) !== -1);
+}
+
 function bukaModalCetakSemuaProgram() {
+  if (!bolehCetakLaporanGabungan_()) { showModal("Tidak Diizinkan", "Cetak Laporan Gabungan hanya untuk Superadmin, Admin, Pengurus, dan Korwil."); return; }
   cspModeAktif = "bulanan";
   cspSetTabStyle_();
   document.getElementById("cspBulanWrap").style.display = "";
@@ -8019,6 +8028,7 @@ function cspSetTabStyle_() {
 }
 
 function prosesCetakSemuaProgram() {
+  if (!bolehCetakLaporanGabungan_()) { showModal("Tidak Diizinkan", "Cetak Laporan Gabungan hanya untuk Superadmin, Admin, Pengurus, dan Korwil."); return; }
   const tahun = Number(document.getElementById("cspTahun").value);
   const bulan = cspModeAktif === "bulanan" ? Number(document.getElementById("cspBulan").value) : null;
   const wilayah = document.getElementById("cspWilayah").value || "ALL";
@@ -9025,6 +9035,7 @@ function renderContent() {
       </div>
 
 
+      ${bolehCetakLaporanGabungan_() ? `
       <!-- 📄 TOMBOL CETAK LAPORAN GABUNGAN 6 PROGRAM (PDF) -- dipindah ke PALING BAWAH tab Keuangan -->
       <div style="background: linear-gradient(135deg, rgba(34,197,94,0.18), rgba(15,23,42,0.6)); border: 1.5px solid rgba(34,197,94,0.35); border-radius: 20px; padding: 16px; margin-bottom: 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.25);">
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
@@ -9040,6 +9051,7 @@ function renderContent() {
           <span class="material-symbols-outlined" style="font-size: 18px;">print</span> Cetak Laporan PDF (Bulanan / Tahunan)
         </button>
       </div>
+      ` : ""}
 
       <!-- 3. Donasi Kitabisa.com & 4. Donasi Online/Midtrans DIHAPUS sebagai
            kartu TERPISAH dari sini (2026) -- tapi totalnya (Realisasi
