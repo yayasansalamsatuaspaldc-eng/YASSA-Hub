@@ -7444,6 +7444,8 @@ function loadRekapTersalurKeuangan() {
       if (dariCache) return;
       if (elKet) elKet.textContent = "Gagal memuat data program.";
       if (elGrid) elGrid.innerHTML = "";
+      const elTotalGagal = document.getElementById("programYassaTotal");
+      if (elTotalGagal) elTotalGagal.textContent = "-";
     });
 }
 
@@ -7454,6 +7456,15 @@ function renderRekapTersalurKeuangan_(hasil, elKet, elGrid) {
     const periode = "Januari\u2013" + (hasil.namaBulanIni || "") + " " + (hasil.tahun || "");
     const wilayahTxt = hasil.semuaWilayah ? "Semua Wilayah" : (hasil.wilayahTampil || "-");
     elKet.textContent = periode + " \u2022 " + wilayahTxt;
+  }
+
+  // Total dana tersalur semua program -> ditampilkan di header kartu "Program YASSA"
+  // (kartu default tertutup, jadi angka ini yang kelihatan pertama).
+  const elTotalProg = document.getElementById("programYassaTotal");
+  if (elTotalProg) {
+    elTotalProg.textContent = daftar.length
+      ? formatRupiahHub(daftar.reduce(function (t, p) { return t + (Number(p.dana) || 0); }, 0)) + " tersalur"
+      : "-";
   }
 
   if (!elGrid) return;
@@ -7685,6 +7696,18 @@ function perbaruiTotalSaldoProgram_() {
   const total = (g ? Number(g.saldo) || 0 : 0) + (p ? Number(p.saldo) || 0 : 0) + (e ? Number(e.saldo) || 0 : 0);
   el.style.color = total < 0 ? "#F43F5E" : "var(--text-primary)";
   el.textContent = formatRupiahHub(total);
+}
+
+// Buka/tutup kartu "Program YASSA" (6 program) di tab Keuangan.
+function toggleProgramYassaKeuangan() {
+  const detail = document.getElementById("programYassaDetail");
+  const chevron = document.getElementById("programYassaChevron");
+  const header = document.getElementById("programYassaHeader");
+  if (!detail) return;
+  const buka = detail.style.display === "none";
+  detail.style.display = buka ? "block" : "none";
+  if (chevron) chevron.style.transform = buka ? "rotate(180deg)" : "rotate(0deg)";
+  if (header) header.setAttribute("aria-expanded", buka ? "true" : "false");
 }
 
 function toggleSaldoProgram() {
@@ -8651,37 +8674,34 @@ function renderContent() {
            wilayah, biar Pengurus/Korwil/Tim Kerja/Relawan semua lihat angka
            yang sama pas ditanya-tanya donatur. Ditaruh di BAWAH Kartu 2
            (Realisasi Lapangan) sesuai permintaan Heru. -->
-      <!-- 🆕 Section "Program YASSA" -- judul tunggal menaungi keenam
-           program (GOPAY/SAPA/PEDAS/BASO/BADIK/BATAN), ditempatkan
-           persis di bawah Kartu 2 "Kebutuhan dan Kekurangan". Urutan &
-           subjudul mengikuti PROGRAM_META di JS atas (lihat const
-           PROGRAM_META). -->
-      <div style="display:flex; align-items:center; gap:10px; margin: 22px 0 14px;">
-        <div style="flex:1; height:1px; background: var(--glass-border);"></div>
-        <span style="font-size: 10.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Program YASSA</span>
-        <div style="flex:1; height:1px; background: var(--glass-border);"></div>
-      </div>
-
-      <!-- 🆕 "Rekap Tersalur Tahun Ini" -- ringkasan 6 program (GOPAY/SAPA/
-           PEDAS/BASO/BADIK/BATAN) dari Januari s/d bulan berjalan, OTOMATIS
-           difilter sesuai wilayah akses akun yang login (SUPERADMIN/ADMIN
-           "ALL" lihat nasional, KORWIL cuma wilayahnya sendiri). Ditaruh di
-           tab Keuangan (bukan Profil) biar satu konteks dengan section
-           "Program YASSA" & Kartu 2 "Kebutuhan dan Kekurangan" di atasnya.
-           Diisi lewat loadRekapTersalurKeuangan(), dipanggil bareng
-           loadKeuanganStats() tiap tab Keuangan dibuka. -->
-      <div style="background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-bottom: 18px; border: 1px solid var(--glass-border);">
-        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 2px;">
+      <!-- 🆕 Kartu "Program YASSA" -- AKORDEON yang menyatukan keenam program
+           (GOPAY/SAPA/PEDAS/BASO/BADIK/BATAN) supaya tab Keuangan lebih ringkas.
+           Default TERTUTUP: header menampilkan total dana tersalur semua program;
+           klik -> tampil 6 kartu mini program (Rekap Tersalur Tahun Ini, Januari s/d
+           bulan berjalan, OTOMATIS difilter sesuai wilayah akses akun yang login:
+           SUPERADMIN/ADMIN "ALL" lihat nasional, KORWIL cuma wilayahnya sendiri).
+           Gantinya divider teks "Program YASSA" + kartu "Rekap Tersalur Tahun Ini"
+           yang dulu terpisah. Diisi lewat loadRekapTersalurKeuangan(), dipanggil
+           bareng loadKeuanganStats() tiap tab Keuangan dibuka. ID elemen
+           (rekapTersalurPeriodeKet & rekapTersalurGrid) SENGAJA dipertahankan. -->
+      <div style="background: var(--glass-strong); border-radius: 20px; padding: 16px; margin: 22px 0 18px; border: 1px solid var(--glass-border);">
+        <button type="button" id="programYassaHeader" aria-expanded="false" onclick="toggleProgramYassaKeuangan()" style="width: 100%; display: flex; align-items: center; gap: 10px; background: transparent; border: none; padding: 0; cursor: pointer; color: inherit; font-family: inherit; text-align: left;">
           <div style="width: 36px; height: 36px; border-radius: 11px; background: rgba(34,197,94,0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
             <span class="material-symbols-outlined" style="font-size: 19px;">insights</span>
           </div>
           <div style="flex: 1; min-width: 0;">
-            <div style="font-size: 13.5px; font-weight: 800; color: var(--text-primary);">Rekap Tersalur Tahun Ini</div>
+            <div style="font-size: 13.5px; font-weight: 800; color: var(--text-primary);">Program YASSA</div>
+            <div id="programYassaTotal" style="font-size: 15px; font-weight: 800; color: var(--bento-primary); margin-top: 1px;"><span class="kv-loading">...</span></div>
             <div id="rekapTersalurPeriodeKet" style="font-size: 10.5px; color: var(--text-muted);">Memuat data...</div>
+            <div style="font-size: 10px; color: var(--text-muted);">GOPAY &bull; SAPA &bull; PEDAS &bull; BASO &bull; BADIK &bull; BATAN &mdash; ketuk untuk lihat</div>
           </div>
-        </div>
-        <div id="rekapTersalurGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
-          <!-- 6 kartu mini program diisi JS (renderRekapTersalurKeuangan_) -->
+          <span class="material-symbols-outlined" id="programYassaChevron" style="font-size: 22px; color: var(--text-muted); transition: transform 0.2s;">expand_more</span>
+        </button>
+        <div id="programYassaDetail" style="display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--glass-border);">
+          <div style="font-size: 10.5px; font-weight: 700; color: var(--text-secondary); margin-bottom: 2px;">Rekap Tersalur Tahun Ini</div>
+          <div id="rekapTersalurGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
+            <!-- 6 kartu mini program diisi JS (renderRekapTersalurKeuangan_) -->
+          </div>
         </div>
       </div>
 
@@ -8716,9 +8736,9 @@ function renderContent() {
                BASO. Masuk = sheet Emergency_Need (diisi Bendahara), Tersalur =
                total ketiga log bantuan, Saldo = Masuk - Tersalur (kumulatif).
                NASIONAL (gak ikut filter wilayah). Diisi loadEmergencyNeedKeuangan(). -->
-          <div id="emergencyNeedCard" style="background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.25); border-radius: 16px; padding: 14px;">
+          <div id="emergencyNeedCard" style="background: rgba(129,140,248,0.09); border: 1px solid rgba(129,140,248,0.35); border-radius: 16px; padding: 14px;">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 2px;">
-              <div style="width: 36px; height: 36px; border-radius: 11px; background: rgba(245,158,11,0.15); color: #F59E0B; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <div style="width: 36px; height: 36px; border-radius: 11px; background: rgba(129,140,248,0.18); color: #818CF8; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                 <span class="material-symbols-outlined" style="font-size: 19px;">emergency</span>
               </div>
               <div style="flex: 1; min-width: 0;">
@@ -8729,22 +8749,6 @@ function renderContent() {
             <div id="emergencyNeedIsi" style="margin-top: 12px;"><span class="kv-loading">Memuat...</span></div>
           </div>
         </div>
-      </div>
-
-      <!-- 📄 TOMBOL CETAK LAPORAN GABUNGAN 6 PROGRAM (PDF) -->
-      <div style="background: linear-gradient(135deg, rgba(34,197,94,0.18), rgba(15,23,42,0.6)); border: 1.5px solid rgba(34,197,94,0.35); border-radius: 20px; padding: 16px; margin-bottom: 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.25);">
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-          <div style="width: 44px; height: 44px; border-radius: 14px; background: linear-gradient(135deg, #22C55E, #16A34A); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 14px rgba(34,197,94,0.35);">
-            <span class="material-symbols-outlined" style="font-size: 24px;">picture_as_pdf</span>
-          </div>
-          <div style="flex: 1; min-width: 0;">
-            <div style="font-size: 14px; font-weight: 800; color: var(--text-primary);">Laporan Gabungan 6 Program YASSA</div>
-            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Cetak rekapitulasi penyaluran seluruh santunan ke dalam satu file PDF resmi</div>
-          </div>
-        </div>
-        <button type="button" onclick="bukaModalCetakSemuaProgram()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12.5px; font-weight: 700; padding: 12px 16px; border-radius: 12px; background: var(--grad-primary); border: none; color: #042f15; cursor: pointer; box-shadow: 0 4px 14px rgba(34,197,94,0.3);">
-          <span class="material-symbols-outlined" style="font-size: 18px;">print</span> Cetak Laporan PDF (Bulanan / Tahunan)
-        </button>
       </div>
 
       <button onclick="openLaporanBulanan()" class="kfin-cta" style="margin-bottom: 12px;">
@@ -8819,6 +8823,22 @@ function renderContent() {
         </div>
         <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
       </button>
+
+      <!-- 📄 TOMBOL CETAK LAPORAN GABUNGAN 6 PROGRAM (PDF) -- dipindah ke PALING BAWAH tab Keuangan -->
+      <div style="background: linear-gradient(135deg, rgba(34,197,94,0.18), rgba(15,23,42,0.6)); border: 1.5px solid rgba(34,197,94,0.35); border-radius: 20px; padding: 16px; margin-bottom: 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.25);">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+          <div style="width: 44px; height: 44px; border-radius: 14px; background: linear-gradient(135deg, #22C55E, #16A34A); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 14px rgba(34,197,94,0.35);">
+            <span class="material-symbols-outlined" style="font-size: 24px;">picture_as_pdf</span>
+          </div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 14px; font-weight: 800; color: var(--text-primary);">Laporan Gabungan 6 Program YASSA</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Cetak rekapitulasi penyaluran seluruh santunan ke dalam satu file PDF resmi</div>
+          </div>
+        </div>
+        <button type="button" onclick="bukaModalCetakSemuaProgram()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12.5px; font-weight: 700; padding: 12px 16px; border-radius: 12px; background: var(--grad-primary); border: none; color: #042f15; cursor: pointer; box-shadow: 0 4px 14px rgba(34,197,94,0.3);">
+          <span class="material-symbols-outlined" style="font-size: 18px;">print</span> Cetak Laporan PDF (Bulanan / Tahunan)
+        </button>
+      </div>
 
       <!-- 3. Donasi Kitabisa.com & 4. Donasi Online/Midtrans DIHAPUS sebagai
            kartu TERPISAH dari sini (2026) -- tapi totalnya (Realisasi
