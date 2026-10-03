@@ -14461,7 +14461,7 @@ async function showProfileQR() {
     
     // Format vCard standar. Ditambahkan parameter NOTE (Catatan) berisi Jabatan & Wilayah
     // agar data tersebut PASTI muncul di layar semua jenis scanner (termasuk Google Lens)
-    const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${nama} (${jabatan} YASSA)\nN:;${nama} (${jabatan} YASSA);;;\nTITLE:${jabatan}\nORG:Yayasan Salam Satu Aspal (YASSA GOPAY)\nTEL;TYPE=CELL:${telp}\nNOTE:Jabatan: ${jabatan} | Wilayah: ${wilayah}\nEND:VCARD`;
+    const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${nama} (${jabatan} YASSA)\nN:;${nama} (${jabatan} YASSA);;;\nTITLE:${jabatan}\nORG:Yayasan Salam Satu Aspal (YASSA)\nTEL;TYPE=CELL:${telp}\nNOTE:Jabatan: ${jabatan} | Wilayah: ${wilayah}\nEND:VCARD`;
     
     // Menggunakan QuickChart API untuk render QR (stabil dan aman tanpa library tambahan)
     const teksQr = await ambilTeksQrKartu_(vcard);
@@ -14686,7 +14686,7 @@ async function gambarKartuAnggota_() {
   const telp = String(currentUser.username || "");
   const emailKartu = String(currentUser.email || "").trim();
   const wilayah = String(currentUser.wilayahAkses || "").toUpperCase() === "ALL" ? "Semua Wilayah" : (currentUser.wilayahAkses || "-");
-  const vcard = "BEGIN:VCARD\nVERSION:3.0\nFN:" + nama + " (" + jabatan + " YASSA)\nN:;" + nama + " (" + jabatan + " YASSA);;;\nTITLE:" + jabatan + "\nORG:Yayasan Salam Satu Aspal (YASSA GOPAY)\nTEL;TYPE=CELL:" + telp + (emailKartu ? "\nEMAIL:" + emailKartu : "") + "\nNOTE:Jabatan: " + jabatan + " | Wilayah: " + wilayah + "\nEND:VCARD";
+  const vcard = "BEGIN:VCARD\nVERSION:3.0\nFN:" + nama + " (" + jabatan + " YASSA)\nN:;" + nama + " (" + jabatan + " YASSA);;;\nTITLE:" + jabatan + "\nORG:Yayasan Salam Satu Aspal (YASSA)\nTEL;TYPE=CELL:" + telp + (emailKartu ? "\nEMAIL:" + emailKartu : "") + "\nNOTE:Jabatan: " + jabatan + " | Wilayah: " + wilayah + "\nEND:VCARD";
   const teksQr = await ambilTeksQrKartu_(vcard);
   const qrUrl = "https://quickchart.io/qr?size=300&margin=1&ecLevel=M&text=" + encodeURIComponent(teksQr);
 
@@ -14737,7 +14737,7 @@ async function gambarKartuAnggota_() {
   ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
   ctx.shadowColor = "rgba(0,0,0,0.55)"; ctx.shadowBlur = 6; ctx.shadowOffsetY = 3;
   ctx.fillStyle = "#FFFFFF"; ctx.font = "800 38px " + FONT;
-  ctx.fillText("YASSA GOPAY", hx, 62);
+  ctx.fillText("YASSA", hx, 62);
   ctx.fillStyle = "#F39C12"; ctx.font = "700 22px " + FONT;
   ctx.fillText("YAYASAN SALAM SATU ASPAL", hx, 92);
   ctx.fillStyle = "#A0A0A0"; ctx.font = "600 19px " + FONT;
@@ -14865,7 +14865,7 @@ function gambarBelakangKartu_(canvas) {
   ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
   ctx.shadowColor = "rgba(0,0,0,0.55)"; ctx.shadowBlur = 6; ctx.shadowOffsetY = 3;
   ctx.fillStyle = "#FFFFFF"; ctx.font = "800 44px " + FONT;
-  ctx.fillText("YASSA GOPAY", W / 2, 394);
+  ctx.fillText("YASSA", W / 2, 394);
   ctx.fillStyle = "#F39C12"; ctx.font = "700 26px " + FONT;
   ctx.fillText("YAYASAN SALAM SATU ASPAL", W / 2, 436);
   ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
