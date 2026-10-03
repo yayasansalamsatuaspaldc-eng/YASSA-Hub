@@ -14704,21 +14704,22 @@ async function gambarKartuAnggota_() {
   pathRoundRect_(ctx, 0, 0, W, H, 44);
   ctx.save(); ctx.clip();
   const g = ctx.createLinearGradient(0, 0, W, H);
-  g.addColorStop(0, "#16A34A"); g.addColorStop(0.55, "#15803D"); g.addColorStop(1, "#0F5132");
+  g.addColorStop(0, "#2B2B2B"); g.addColorStop(1, "#1A1A1A");
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = "rgba(255,255,255,0.08)";
-  ctx.beginPath(); ctx.arc(W - 40, -10, 230, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = "rgba(255,255,255,0.06)";
-  ctx.beginPath(); ctx.arc(60, H + 40, 190, 0, Math.PI * 2); ctx.fill();
+  const glow = ctx.createRadialGradient(W * 0.25, H * 0.15, 0, W * 0.25, H * 0.15, 560);
+  glow.addColorStop(0, "rgba(243,156,18,0.12)"); glow.addColorStop(1, "rgba(243,156,18,0)");
+  ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = "rgba(255,255,255,0.04)"; ctx.fillRect(0, 0, W, 2); // kilau tipis di tepi atas
+  ctx.fillStyle = "#F39C12"; ctx.fillRect(0, H - 12, W, 12); // aksen marka jalan di bawah
   ctx.restore();
 
   // Header (logo YASSA dalam lingkaran gelap, seperti di halaman login)
   let hx = 56;
   {
     const lr = 46, lcx = 56 + lr, lcy = 82;
-    ctx.fillStyle = "#0B101E";
+    ctx.fillStyle = "#111111";
     ctx.beginPath(); ctx.arc(lcx, lcy, lr, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = "rgba(255,255,255,0.9)"; ctx.lineWidth = 4;
+    ctx.strokeStyle = "#F39C12"; ctx.lineWidth = 4;
     ctx.beginPath(); ctx.arc(lcx, lcy, lr, 0, Math.PI * 2); ctx.stroke();
     gambarLogoYassa_(ctx, lcx - lr * 0.85, lcy - lr * 0.85, lr * 1.7);
     hx = lcx + lr + 24;
@@ -14726,11 +14727,15 @@ async function gambarKartuAnggota_() {
   ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
   ctx.fillStyle = "#FFFFFF"; ctx.font = "800 38px " + FONT;
   ctx.fillText("YASSA GOPAY", hx, 62);
-  ctx.fillStyle = "#FDE68A"; ctx.font = "700 22px " + FONT;
+  ctx.fillStyle = "#F39C12"; ctx.font = "700 22px " + FONT;
   ctx.fillText("YAYASAN SALAM SATU ASPAL", hx, 92);
-  ctx.fillStyle = "rgba(255,255,255,0.78)"; ctx.font = "600 19px " + FONT;
+  ctx.fillStyle = "#A0A0A0"; ctx.font = "600 19px " + FONT;
   ctx.fillText("KARTU ANGGOTA PENGURUS", hx, 120);
-  ctx.fillStyle = "rgba(255,255,255,0.25)"; ctx.fillRect(56, 138, W - 112, 2);
+  // Garis putus-putus ala marka jalan
+  ctx.save();
+  ctx.strokeStyle = "rgba(243,156,18,0.6)"; ctx.lineWidth = 3; ctx.setLineDash([22, 14]);
+  ctx.beginPath(); ctx.moveTo(56, 139); ctx.lineTo(W - 56, 139); ctx.stroke();
+  ctx.restore();
 
   // Foto (kiri)
   const fx = 56, fy = 176, fs = 220;
@@ -14749,27 +14754,36 @@ async function gambarKartuAnggota_() {
   }
   ctx.restore();
   pathRoundRect_(ctx, fx, fy, fs, fs, 36);
-  ctx.strokeStyle = "rgba(255,255,255,0.9)"; ctx.lineWidth = 5; ctx.stroke();
+  ctx.strokeStyle = "#F39C12"; ctx.lineWidth = 5; ctx.stroke();
 
   // Teks identitas (tengah)
   const tx = fx + fs + 36;
   const qrBox = 220;
   const lebarTeks = W - 56 - qrBox - 30 - tx; // sisakan ruang untuk QR di kanan
   ctx.fillStyle = "#FFFFFF"; ctx.font = "800 44px " + FONT;
-  ctx.fillText(potongTeksKartu_(ctx, nama, lebarTeks), tx, fy + 52);
-  ctx.fillStyle = "#FDE68A"; ctx.font = "700 28px " + FONT;
-  ctx.fillText(potongTeksKartu_(ctx, jabatan, lebarTeks), tx, fy + 94);
+  ctx.fillText(potongTeksKartu_(ctx, nama, lebarTeks), tx, fy + 46);
+  ctx.fillStyle = "#F39C12"; ctx.font = "700 28px " + FONT;
+  ctx.fillText(potongTeksKartu_(ctx, jabatan, lebarTeks), tx, fy + 82);
   ctx.fillStyle = "rgba(255,255,255,0.88)"; ctx.font = "500 26px " + FONT;
-  ctx.fillText(potongTeksKartu_(ctx, "Wilayah: " + wilayah, lebarTeks), tx, fy + 146);
-  if (telp) ctx.fillText(potongTeksKartu_(ctx, "Kontak: " + telp, lebarTeks), tx, fy + 186);
+  ctx.fillText(potongTeksKartu_(ctx, "Wilayah: " + wilayah, lebarTeks), tx, fy + 118);
+  if (telp) ctx.fillText(potongTeksKartu_(ctx, "Kontak: " + telp, lebarTeks), tx, fy + 152);
   if (emailKartu) {
-    ctx.font = "500 24px " + FONT;
-    ctx.fillText(potongTeksKartu_(ctx, "Email: " + emailKartu, lebarTeks), tx, fy + 226);
+    // Email diletakkan di atas kotak QR (bukan di sampingnya), jadi bisa memakai lebar penuh sampai margin kanan.
+    const lebarEmail = W - 56 - tx;
+    const teksEmail = "Email: " + emailKartu;
+    let ukEmail = 24;
+    ctx.font = "500 " + ukEmail + "px " + FONT;
+    while (ukEmail > 16 && ctx.measureText(teksEmail).width > lebarEmail) {
+      ukEmail -= 1;
+      ctx.font = "500 " + ukEmail + "px " + FONT;
+    }
+    ctx.fillText(potongTeksKartu_(ctx, teksEmail, lebarEmail), tx, fy + 180);
   }
 
   // QR (kanan bawah)
   const qx = W - 56 - qrBox, qy = H - 56 - qrBox;
   ctx.fillStyle = "#FFFFFF"; pathRoundRect_(ctx, qx, qy, qrBox, qrBox, 28); ctx.fill();
+  pathRoundRect_(ctx, qx, qy, qrBox, qrBox, 28); ctx.strokeStyle = "#F39C12"; ctx.lineWidth = 4; ctx.stroke();
   if (qr) {
     ctx.drawImage(qr, qx + 14, qy + 14, qrBox - 28, qrBox - 28);
   } else {
@@ -14781,7 +14795,7 @@ async function gambarKartuAnggota_() {
   // Footer
   const tgl = new Date();
   const bln = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
-  ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.font = "500 20px " + FONT;
+  ctx.fillStyle = "#A0A0A0"; ctx.font = "500 20px " + FONT;
   ctx.fillText("Dicetak " + tgl.getDate() + " " + bln[tgl.getMonth()] + " " + tgl.getFullYear(), 56, H - 56);
   ctx.fillText("Scan QR untuk verifikasi kartu", 56, H - 86);
 
