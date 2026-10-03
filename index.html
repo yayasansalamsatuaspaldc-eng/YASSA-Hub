@@ -14709,28 +14709,40 @@ async function gambarKartuAnggota_() {
   const glow = ctx.createRadialGradient(W * 0.25, H * 0.15, 0, W * 0.25, H * 0.15, 560);
   glow.addColorStop(0, "rgba(243,156,18,0.12)"); glow.addColorStop(1, "rgba(243,156,18,0)");
   ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = "rgba(255,255,255,0.04)"; ctx.fillRect(0, 0, W, 2); // kilau tipis di tepi atas
-  ctx.fillStyle = "#F39C12"; ctx.fillRect(0, H - 12, W, 12); // aksen marka jalan di bawah
+  const kilau = ctx.createLinearGradient(0, 0, W * 0.75, H * 0.75);
+  kilau.addColorStop(0, "rgba(255,255,255,0.13)"); kilau.addColorStop(0.4, "rgba(255,255,255,0.04)"); kilau.addColorStop(0.41, "rgba(255,255,255,0)");
+  ctx.fillStyle = kilau; ctx.fillRect(0, 0, W, H); // kilau diagonal ala permukaan mengilap
+  const strip = ctx.createLinearGradient(0, H - 14, 0, H);
+  strip.addColorStop(0, "#FFC04D"); strip.addColorStop(0.5, "#F39C12"); strip.addColorStop(1, "#B86E00");
+  ctx.fillStyle = strip; ctx.fillRect(0, H - 14, W, 14); // aksen marka jalan (timbul)
   ctx.restore();
+  // Bevel tepi kartu: terang di kiri-atas, gelap di kanan-bawah
+  const bevel = ctx.createLinearGradient(0, 0, W, H);
+  bevel.addColorStop(0, "rgba(255,255,255,0.45)"); bevel.addColorStop(0.5, "rgba(255,255,255,0.03)"); bevel.addColorStop(1, "rgba(0,0,0,0.6)");
+  pathRoundRect_(ctx, 2, 2, W - 4, H - 4, 42); ctx.strokeStyle = bevel; ctx.lineWidth = 4; ctx.stroke();
 
   // Header (logo YASSA dalam lingkaran gelap, seperti di halaman login)
   let hx = 56;
   {
     const lr = 46, lcx = 56 + lr, lcy = 82;
+    ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 14; ctx.shadowOffsetY = 6;
     ctx.fillStyle = "#111111";
     ctx.beginPath(); ctx.arc(lcx, lcy, lr, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
     ctx.strokeStyle = "#F39C12"; ctx.lineWidth = 4;
     ctx.beginPath(); ctx.arc(lcx, lcy, lr, 0, Math.PI * 2); ctx.stroke();
     gambarLogoYassa_(ctx, lcx - lr * 0.85, lcy - lr * 0.85, lr * 1.7);
     hx = lcx + lr + 24;
   }
   ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
+  ctx.shadowColor = "rgba(0,0,0,0.55)"; ctx.shadowBlur = 6; ctx.shadowOffsetY = 3;
   ctx.fillStyle = "#FFFFFF"; ctx.font = "800 38px " + FONT;
   ctx.fillText("YASSA GOPAY", hx, 62);
   ctx.fillStyle = "#F39C12"; ctx.font = "700 22px " + FONT;
   ctx.fillText("YAYASAN SALAM SATU ASPAL", hx, 92);
   ctx.fillStyle = "#A0A0A0"; ctx.font = "600 19px " + FONT;
   ctx.fillText("KARTU ANGGOTA PENGURUS", hx, 120);
+  ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
   // Garis putus-putus ala marka jalan
   ctx.save();
   ctx.strokeStyle = "rgba(243,156,18,0.6)"; ctx.lineWidth = 3; ctx.setLineDash([22, 14]);
@@ -14739,6 +14751,10 @@ async function gambarKartuAnggota_() {
 
   // Foto (kiri)
   const fx = 56, fy = 176, fs = 220;
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.65)"; ctx.shadowBlur = 26; ctx.shadowOffsetY = 12;
+  ctx.fillStyle = "#111111"; pathRoundRect_(ctx, fx, fy, fs, fs, 36); ctx.fill();
+  ctx.restore();
   ctx.save();
   pathRoundRect_(ctx, fx, fy, fs, fs, 36); ctx.clip();
   if (foto) {
@@ -14754,12 +14770,15 @@ async function gambarKartuAnggota_() {
   }
   ctx.restore();
   pathRoundRect_(ctx, fx, fy, fs, fs, 36);
-  ctx.strokeStyle = "#F39C12"; ctx.lineWidth = 5; ctx.stroke();
+  const bingkai = ctx.createLinearGradient(fx, fy, fx + fs, fy + fs);
+  bingkai.addColorStop(0, "#FFD27A"); bingkai.addColorStop(0.5, "#F39C12"); bingkai.addColorStop(1, "#B86E00");
+  ctx.strokeStyle = bingkai; ctx.lineWidth = 6; ctx.stroke();
 
   // Teks identitas (tengah)
   const tx = fx + fs + 36;
   const qrBox = 220;
   const lebarTeks = W - 56 - qrBox - 30 - tx; // sisakan ruang untuk QR di kanan
+  ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 5; ctx.shadowOffsetY = 3;
   ctx.fillStyle = "#FFFFFF"; ctx.font = "800 44px " + FONT;
   ctx.fillText(potongTeksKartu_(ctx, nama, lebarTeks), tx, fy + 46);
   ctx.fillStyle = "#F39C12"; ctx.font = "700 28px " + FONT;
@@ -14779,10 +14798,13 @@ async function gambarKartuAnggota_() {
     }
     ctx.fillText(potongTeksKartu_(ctx, teksEmail, lebarEmail), tx, fy + 180);
   }
+  ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
   // QR (kanan bawah)
-  const qx = W - 56 - qrBox, qy = H - 56 - qrBox;
+  const qx = W - 56 - qrBox, qy = H - 34 - qrBox; // diturunkan agar tidak menempel dengan baris email
+  ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 24; ctx.shadowOffsetY = 10;
   ctx.fillStyle = "#FFFFFF"; pathRoundRect_(ctx, qx, qy, qrBox, qrBox, 28); ctx.fill();
+  ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
   pathRoundRect_(ctx, qx, qy, qrBox, qrBox, 28); ctx.strokeStyle = "#F39C12"; ctx.lineWidth = 4; ctx.stroke();
   if (qr) {
     ctx.drawImage(qr, qx + 14, qy + 14, qrBox - 28, qrBox - 28);
@@ -14805,19 +14827,150 @@ async function gambarKartuAnggota_() {
   tombol.forEach(function (b) { b.disabled = false; b.style.opacity = "1"; });
 }
 
+function gambarBelakangKartu_(canvas) {
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  const FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
+  ctx.clearRect(0, 0, W, H);
+  pathRoundRect_(ctx, 0, 0, W, H, 44);
+  ctx.save(); ctx.clip();
+  const g = ctx.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, "#2B2B2B"); g.addColorStop(1, "#1A1A1A");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  const glow = ctx.createRadialGradient(W * 0.5, H * 0.4, 0, W * 0.5, H * 0.4, 520);
+  glow.addColorStop(0, "rgba(243,156,18,0.14)"); glow.addColorStop(1, "rgba(243,156,18,0)");
+  ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+  const kilau = ctx.createLinearGradient(0, 0, W * 0.75, H * 0.75);
+  kilau.addColorStop(0, "rgba(255,255,255,0.12)"); kilau.addColorStop(0.4, "rgba(255,255,255,0.03)"); kilau.addColorStop(0.41, "rgba(255,255,255,0)");
+  ctx.fillStyle = kilau; ctx.fillRect(0, 0, W, H);
+  const strip = ctx.createLinearGradient(0, H - 14, 0, H);
+  strip.addColorStop(0, "#FFC04D"); strip.addColorStop(0.5, "#F39C12"); strip.addColorStop(1, "#B86E00");
+  ctx.fillStyle = strip; ctx.fillRect(0, H - 14, W, 14);
+  ctx.fillRect(0, 0, 0, 0);
+  ctx.strokeStyle = "rgba(243,156,18,0.6)"; ctx.lineWidth = 3; ctx.setLineDash([22, 14]);
+  ctx.beginPath(); ctx.moveTo(56, 70); ctx.lineTo(W - 56, 70); ctx.moveTo(56, H - 70); ctx.lineTo(W - 56, H - 70); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+  const bevel = ctx.createLinearGradient(0, 0, W, H);
+  bevel.addColorStop(0, "rgba(255,255,255,0.45)"); bevel.addColorStop(0.5, "rgba(255,255,255,0.03)"); bevel.addColorStop(1, "rgba(0,0,0,0.6)");
+  pathRoundRect_(ctx, 2, 2, W - 4, H - 4, 42); ctx.strokeStyle = bevel; ctx.lineWidth = 4; ctx.stroke();
+  // Logo besar di tengah
+  const lr = 92, lcx = W / 2, lcy = 232;
+  ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 20; ctx.shadowOffsetY = 10;
+  ctx.fillStyle = "#111111"; ctx.beginPath(); ctx.arc(lcx, lcy, lr, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+  ctx.strokeStyle = "#F39C12"; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(lcx, lcy, lr, 0, Math.PI * 2); ctx.stroke();
+  gambarLogoYassa_(ctx, lcx - lr * 0.85, lcy - lr * 0.85, lr * 1.7);
+  // Teks
+  ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+  ctx.shadowColor = "rgba(0,0,0,0.55)"; ctx.shadowBlur = 6; ctx.shadowOffsetY = 3;
+  ctx.fillStyle = "#FFFFFF"; ctx.font = "800 44px " + FONT;
+  ctx.fillText("YASSA GOPAY", W / 2, 394);
+  ctx.fillStyle = "#F39C12"; ctx.font = "700 26px " + FONT;
+  ctx.fillText("YAYASAN SALAM SATU ASPAL", W / 2, 436);
+  ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+  ctx.fillStyle = "#A0A0A0"; ctx.font = "600 21px " + FONT;
+  ctx.fillText("BROTHERHOOD OF THE ROAD", W / 2, 474);
+  ctx.textAlign = "left";
+}
+
+// Efek 3D di layar saja (tidak ikut ke file PNG): kartu miring mengikuti jari/kursor + kilau, dan mengayun pelan saat idle.
+function pasang3dKartu_() {
+  const wrap = document.getElementById("kartu3dWrap");
+  const kartu = document.getElementById("kartu3d");
+  const glare = document.getElementById("kartu3dGlare");
+  if (!wrap || !kartu) return;
+  const kurangGerak = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!document.getElementById("kartuSwayStyle")) {
+    const st = document.createElement("style");
+    st.id = "kartuSwayStyle";
+    st.textContent = "@keyframes kartuSway{0%,50%,100%{transform:rotateY(0deg) rotateX(0deg)}25%{transform:rotateY(10deg) rotateX(-3deg)}75%{transform:rotateY(-10deg) rotateX(3deg)}}";
+    document.head.appendChild(st);
+  }
+  let timerLanjut = null;
+  function ayun() {
+    if (kurangGerak) return;
+    kartu.style.transition = "none";
+    kartu.style.transform = "";
+    kartu.style.animation = "kartuSway 7s ease-in-out infinite";
+  }
+  function miring(e) {
+    const r = wrap.getBoundingClientRect();
+    const px = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+    const py = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
+    clearTimeout(timerLanjut);
+    kartu.style.animation = "none";
+    kartu.style.transition = "transform 0.12s ease-out";
+    kartu.style.transform = "rotateY(" + ((px - 0.5) * 28).toFixed(2) + "deg) rotateX(" + ((0.5 - py) * 20).toFixed(2) + "deg) scale3d(1.03,1.03,1.03)";
+    if (glare) {
+      glare.style.opacity = "1";
+      glare.style.background = "radial-gradient(circle at " + (px * 100).toFixed(1) + "% " + (py * 100).toFixed(1) + "%, rgba(255,255,255,0.28), rgba(255,255,255,0) 55%)";
+    }
+  }
+  function lepas() {
+    kartu.style.animation = "none";
+    kartu.style.transition = "transform 0.4s ease-out";
+    kartu.style.transform = "rotateY(0deg) rotateX(0deg)";
+    if (glare) glare.style.opacity = "0";
+    clearTimeout(timerLanjut);
+    timerLanjut = setTimeout(ayun, 1200);
+  }
+  // Ketebalan kartu: tumpukan lapisan tipis di belakang sisi depan, kelihatan sebagai tepi saat kartu miring
+  const flip = document.getElementById("kartuFlip");
+  const depan = document.getElementById("kartuAnggotaCanvas");
+  const TEBAL = 10;
+  if (flip && depan) {
+    for (let i = 1; i <= TEBAL; i++) {
+      const l = document.createElement("div");
+      l.style.cssText = "position:absolute; inset:0; border-radius:16px; pointer-events:none; background:" + (i % 2 ? "#8A5A00" : "#5E3C00") + "; transform:translateZ(-" + i + "px);";
+      flip.insertBefore(l, depan);
+    }
+    // Sisi belakang kartu
+    const bel = document.createElement("canvas");
+    bel.width = 1012; bel.height = 638;
+    bel.style.cssText = "position:absolute; inset:0; width:100%; height:100%; border-radius:16px; backface-visibility:hidden; -webkit-backface-visibility:hidden; transform:translateZ(-" + (TEBAL + 1) + "px) rotateY(180deg);";
+    flip.appendChild(bel);
+    gambarBelakangKartu_(bel);
+    let terbalik = false;
+    const balik = function () {
+      terbalik = !terbalik;
+      flip.style.transition = "transform 0.8s cubic-bezier(0.4, 0.1, 0.2, 1)";
+      flip.style.transform = terbalik ? "rotateY(180deg)" : "rotateY(0deg)";
+    };
+    const tb = document.getElementById("kartuBalikBtn");
+    if (tb) tb.addEventListener("click", balik);
+    wrap.addEventListener("dblclick", balik);
+  }
+  wrap.addEventListener("pointerdown", miring);
+  wrap.addEventListener("pointermove", miring);
+  wrap.addEventListener("pointerup", lepas);
+  wrap.addEventListener("pointerleave", lepas);
+  wrap.addEventListener("pointercancel", lepas);
+  ayun();
+}
+
 function showKartuAnggotaDigital() {
   const tombolStyle = "flex:1; border:none; border-radius:14px; padding:12px 10px; font-size:12.5px; font-weight:700; color:#fff; background:var(--grad-primary); cursor:pointer; opacity:0.5; display:flex; align-items:center; justify-content:center; gap:6px;";
   const bisaBagikan = !!(navigator.share && navigator.canShare);
   const html = '<div style="display:flex; flex-direction:column; align-items:center; gap:12px;">' +
-    '<canvas id="kartuAnggotaCanvas" width="1012" height="638" style="width:100%; max-width:340px; aspect-ratio:1012/638; border-radius:16px; background:rgba(255,255,255,0.05); box-shadow:0 8px 24px rgba(0,0,0,0.35);"></canvas>' +
+    '<div id="kartu3dWrap" style="width:100%; max-width:340px; perspective:800px; touch-action:none; padding:8px 0 14px;">' +
+      '<div id="kartu3d" style="position:relative; transform-style:preserve-3d; will-change:transform;">' +
+        '<div id="kartuFlip" style="position:relative; transform-style:preserve-3d;">' +
+          '<canvas id="kartuAnggotaCanvas" width="1012" height="638" style="display:block; width:100%; aspect-ratio:1012/638; border-radius:16px; backface-visibility:hidden; -webkit-backface-visibility:hidden;"></canvas>' +
+          '<div id="kartu3dGlare" style="position:absolute; inset:0; border-radius:16px; pointer-events:none; opacity:0; transition:opacity 0.2s; transform:translateZ(1px); backface-visibility:hidden; -webkit-backface-visibility:hidden;"></div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
     '<div id="kartuAnggotaKet" style="font-size:10.5px; color:var(--text-muted); text-align:center; min-height:14px;">Menyiapkan kartu...</div>' +
     '<div style="display:flex; gap:8px; width:100%; max-width:340px;">' +
       '<button class="kartu-anggota-aksi" disabled onclick="unduhKartuAnggota()" style="' + tombolStyle + '"><span class="material-symbols-outlined" style="font-size:17px;">download</span>Unduh</button>' +
       (bisaBagikan ? '<button class="kartu-anggota-aksi" disabled onclick="bagikanKartuAnggota()" style="' + tombolStyle + '"><span class="material-symbols-outlined" style="font-size:17px;">share</span>Bagikan</button>' : '') +
+      '<button type="button" id="kartuBalikBtn" style="' + tombolStyle.replace("opacity:0.5;", "opacity:1;") + '"><span class="material-symbols-outlined" style="font-size:17px;">360</span>Balik</button>' +
     '</div>' +
   '</div>';
   showModal("Kartu Anggota Digital", html, false, null, "Tutup");
   setTimeout(gambarKartuAnggota_, 30);
+  setTimeout(pasang3dKartu_, 50);
 }
 
 function kartuAnggotaBlob_() {
