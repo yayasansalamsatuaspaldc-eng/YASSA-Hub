@@ -5257,7 +5257,7 @@ function showApp() {
 function updateHeaderAvatar() {
   const img = document.getElementById("headerAvatarImg");
   const svg = document.getElementById("headerLogoSvg");
-  const foto = currentUser && currentUser.fotoUrl ? String(currentUser.fotoUrl).trim() : "";
+  const foto = fotoProfilSrc_(currentUser && currentUser.fotoUrl);
 
   if (!foto) {
     img.style.display = "none";
@@ -5266,15 +5266,52 @@ function updateHeaderAvatar() {
     return;
   }
 
+  delete img.dataset.fbTried;
   img.onerror = function () {
-    img.style.display = "none";
-    svg.style.display = "block";
+    // Link utama gagal dimuat -> coba ambil fotonya lewat server (data-URL).
+    // Kalau itu juga gagal, baru balik ke logo YASSA.
+    fotoProfilFallbackSelf_(img, function () {
+      img.style.display = "none";
+      svg.style.display = "block";
+    });
   };
   img.onload = function () {
     img.style.display = "block";
     svg.style.display = "none";
   };
   img.src = foto;
+}
+
+// Foto profil disimpan di Google Drive dengan link "drive.google.com/uc?export=view&id=..."
+// -- link ini sering GAGAL tampil di <img> (terutama di WebView HP) karena Drive
+// memblokir hotlink / minta cookie. Makanya fotonya di tab Profil & header "hilang"
+// padahal sudah tersimpan. Kartu Anggota Digital tampil karena dia pakai host
+// lh3.googleusercontent.com, jadi semua tampilan foto sekarang disamakan lewat sini.
+// Link non-Drive (mis. foto default) dikembalikan apa adanya; kosong -> "".
+function fotoProfilSrc_(url) {
+  const u = String(url || "").trim();
+  if (!u) return "";
+  const m = u.match(/[?&]id=([\w-]+)/) || u.match(/\/d\/([\w-]+)/);
+  if (m && /drive\.google\.com|docs\.google\.com/i.test(u)) {
+    return "https://lh3.googleusercontent.com/d/" + m[1] + "=s400";
+  }
+  return u;
+}
+
+// Cadangan kalau link foto tetap gagal dimuat: minta server kirim foto user yang
+// lagi login sebagai data-URL (getProfilePhotoData). Dicoba SEKALI per gambar;
+// kalau masih gagal, panggil onFail (default: ganti ke foto kosong bawaan).
+function fotoProfilFallbackSelf_(img, onFail) {
+  const gagal = function () {
+    if (typeof onFail === "function") { onFail(); return; }
+    img.onerror = null;
+    img.src = FOTO_DEFAULT;
+  };
+  if (!img || img.dataset.fbTried) { gagal(); return; }
+  img.dataset.fbTried = "1";
+  callGAS("getProfilePhotoData", [authToken]).then(function (res) {
+    if (res && res.dataUrl) img.src = res.dataUrl; else gagal();
+  }).catch(gagal);
 }
 
 function roleLabel(role) {
@@ -9073,7 +9110,7 @@ function renderContent() {
   }
 
  if (active === "profil") {
-    const fotoProfil = currentUser.fotoUrl ? currentUser.fotoUrl : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
+    const fotoProfil = fotoProfilSrc_(currentUser.fotoUrl) || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
     const wilayahTxt = String(currentUser.wilayahAkses || "").toUpperCase() === "ALL"
       ? "Semua Wilayah"
       : (currentUser.wilayahAkses || "-");
@@ -9090,7 +9127,7 @@ function renderContent() {
           <div style="position: relative; flex-shrink: 0;">
             <div class="profil-avatar-ring" style="width: 74px; height: 74px; border-radius: 18px; padding: 3px; background: linear-gradient(135deg, #FFD27A, #F39C12 55%, #B86E00); box-shadow: 0 8px 16px rgba(0,0,0,0.5); position: relative;">
               <div style="width: 100%; height: 100%; border-radius: 15px; overflow: hidden; border: 2px solid #1A1A1A; background: rgba(255,255,255,0.1);">
-                <img id="profilTabAvatarImg" src="${fotoProfil}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="showProfileQR()">
+                <img id="profilTabAvatarImg" src="${fotoProfil}" alt="Profile" onerror="fotoProfilFallbackSelf_(this)" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="showProfileQR()">
               </div>
               <label for="inputFotoProfileTab" id="labelUploadFotoTab" style="position: absolute; bottom: -4px; right: -4px; width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, #FFC04D, #F39C12); display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #1A1A1A; box-shadow: 0 2px 6px rgba(0,0,0,0.4);">
                 ${iconSvg("edit", "#fff", 11)}
@@ -14467,11 +14504,11 @@ async function showProfileQR() {
     // Menggunakan QuickChart API untuk render QR (stabil dan aman tanpa library tambahan)
     const teksQr = await ambilTeksQrKartu_(vcard);
     const qrUrl = "https://quickchart.io/qr?size=250&margin=2&ecLevel=M&text=" + encodeURIComponent(teksQr);
-    const fotoProfil = currentUser.fotoUrl ? currentUser.fotoUrl : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
+    const fotoProfil = fotoProfilSrc_(currentUser.fotoUrl) || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
     
     const modalHtml = `
       <div style="display:flex; flex-direction:column; align-items:center; gap:16px;">
-        <img src="${fotoProfil}" style="width:110px; height:110px; border-radius:50%; object-fit:cover; border:3px solid var(--neon-cyan); box-shadow:0 0 20px rgba(34,211,238,0.3);">
+        <img src="${fotoProfil}" onerror="fotoProfilFallbackSelf_(this)" style="width:110px; height:110px; border-radius:50%; object-fit:cover; border:3px solid var(--neon-cyan); box-shadow:0 0 20px rgba(34,211,238,0.3);">
         <div style="text-align:center;">
           <div style="font-size:18px; font-weight:700; color:var(--text-primary); margin-bottom:4px;">${escapeHtmlHub(nama)}</div>
           <div style="font-size:12px; color:var(--bento-primary); font-weight:600;">${escapeHtmlHub(jabatan)}</div>
@@ -15160,7 +15197,7 @@ function waLinkPengurus(username) {
 }
 
 function pengurusCardHtml(u) {
-  const foto = u.fotoUrl ? u.fotoUrl : FOTO_DEFAULT;
+  const foto = fotoProfilSrc_(u.fotoUrl) || FOTO_DEFAULT;
   const waUrl = waLinkPengurus(u.username);
   const badgeWilayah = String(u.wilayahAkses || "").trim().toUpperCase() === "ALL"
     ? "SEMUA"
@@ -15354,7 +15391,7 @@ function normalizeJabatan(str) {
 }
 
 function orgCardHtml(jabatanLabel, u) {
-  const foto = u && u.fotoUrl ? u.fotoUrl : FOTO_DEFAULT;
+  const foto = fotoProfilSrc_(u && u.fotoUrl) || FOTO_DEFAULT;
   if (!u) {
     return '<div class="orgchart-card">' +
       '<img class="orgchart-photo" src="' + FOTO_DEFAULT + '" alt="">' +
@@ -16176,10 +16213,11 @@ function uploadFoto(input) {
         localStorage.setItem("yassa_user", JSON.stringify(currentUser));
 
         // Update semua tempat foto profil ditampilkan biar langsung sinkron.
+        const srcBaru = fotoProfilSrc_(res.fotoUrl);
         const avatarImg = document.querySelector("#akunContent .profile-avatar");
-        if (avatarImg) avatarImg.src = res.fotoUrl;
+        if (avatarImg) { delete avatarImg.dataset.fbTried; avatarImg.onerror = function () { fotoProfilFallbackSelf_(avatarImg); }; avatarImg.src = srcBaru; }
         const tabAvatarImg = document.getElementById("profilTabAvatarImg");
-        if (tabAvatarImg) tabAvatarImg.src = res.fotoUrl;
+        if (tabAvatarImg) { delete tabAvatarImg.dataset.fbTried; tabAvatarImg.onerror = function () { fotoProfilFallbackSelf_(tabAvatarImg); }; tabAvatarImg.src = srcBaru; }
         updateHeaderAvatar();
 
         if (activeLabel) {
