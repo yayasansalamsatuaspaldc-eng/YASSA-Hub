@@ -1243,6 +1243,14 @@
   .doc-pdf-page { display: block; width: 100%; height: auto; margin: 0 0 8px; background: #fff; }
   .doc-pdf-msg { display: none; position: absolute; inset: 0; align-items: center; justify-content: center; color: var(--text-muted); font-size: 13px; font-weight: 600; pointer-events: none; }
   .doc-pdf-msg.show { display: flex; }
+  .doc-mode-pill {
+    display: none; position: absolute; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+    z-index: 5; padding: 10px 18px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+    background: #2E7D32; color: #fff; border: 1px solid rgba(255,255,255,0.25);
+    font-size: 13px; font-weight: 700; box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  }
+  .doc-mode-pill.show { display: block; }
+  .doc-mode-pill:active { filter: brightness(0.9); }
   .akun-content { flex: 1; overflow-y: auto; padding: 20px; background: var(--bg-navy); }
   .akun-card { background: var(--glass-strong); backdrop-filter: blur(18px); border-radius: 18px; padding: 20px; box-shadow: 0 4px 24px rgba(0,0,0,0.35); border: 1px solid var(--glass-border); }
 
@@ -3396,6 +3404,7 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
       <div id="docPdfStage"><div id="docPdfPages"></div></div>
       <div class="doc-pdf-msg" id="docPdfMsg">Memuat dokumen…</div>
     </div>
+    <button type="button" class="doc-mode-pill" id="docModePill">Aktifkan cubit 2 jari</button>
   </div>
 
   <!-- Halaman Penuh: Akun -->
@@ -14333,14 +14342,39 @@ function setDocZoom(level, cx, cy) {
   document.getElementById("docZoomLabel").textContent = Math.round(level * 100) + "%";
 }
 
-function docResetViewer_() {
-  docOpenSeq++;
+var docDataCache = {}, docCurrentId = "";
+
+function getDocData_(fileId) {
+  if (!docDataCache[fileId]) {
+    docDataCache[fileId] = callGAS("getDokumenYayasanData", [authToken, fileId])
+      .then(function (res) {
+        if (!res || !res.base64) throw new Error("Data dokumen kosong");
+        return res.base64;
+      })
+      .catch(function (err) { delete docDataCache[fileId]; throw err; });
+  }
+  return docDataCache[fileId];
+}
+
+function docPill_(show, label) {
+  var el = document.getElementById("docModePill");
+  if (label) el.textContent = label;
+  el.classList.toggle("show", !!show);
+}
+
+function docExitPdf_() {
   if (docPdfDoc) { try { docPdfDoc.destroy(); } catch (e) {} docPdfDoc = null; }
   docPdfMode = false;
   document.getElementById("docViewerScroll").classList.remove("pdf-mode");
   document.getElementById("docPdfPages").innerHTML = "";
   document.getElementById("docPdfPages").style.width = "100%";
   document.getElementById("docPdfMsg").classList.remove("show");
+}
+
+function docResetViewer_() {
+  docOpenSeq++;
+  docExitPdf_();
+  docPill_(false);
   document.getElementById("docViewerFrame").src = "about:blank";
   setDocZoom(1);
 }
@@ -14350,7 +14384,7 @@ async function renderDocPdf_(pdf, seq) {
   var pagesEl = document.getElementById("docPdfPages");
   var targetPx = Math.min(1400, Math.max(800, stage.clientWidth * 2));
   for (var n = 1; n <= pdf.numPages; n++) {
-    if (seq !== docOpenSeq) return;
+    if (seq !== docOpenSeq || !docPdfMode) return;
     var page = await pdf.getPage(n);
     var base = page.getViewport({ scale: 1 });
     var vp = page.getViewport({ scale: targetPx / base.width });
@@ -14363,40 +14397,55 @@ async function renderDocPdf_(pdf, seq) {
   }
 }
 
+// Dokumen LANGSUNG tampil lewat preview Drive (cepat, seperti semula). Di belakang layar
+// isi PDF + PDF.js disiapkan; kalau sudah siap, muncul tombol untuk pindah ke mode cubit 2 jari.
 function openDocViewer(fileId, title) {
   closeUserMenu();
   document.getElementById("docViewerTitle").textContent = title;
   docResetViewer_();
   var seq = docOpenSeq;
-  docPdfMode = true;
-  document.getElementById("docViewerScroll").classList.add("pdf-mode");
-  document.getElementById("docPdfMsg").classList.add("show");
+  docCurrentId = fileId;
+  document.getElementById("docViewerFrame").src = "https://drive.google.com/file/d/" + fileId + "/preview";
   document.getElementById("docViewerOverlay").classList.add("open");
 
-  callGAS("getDokumenYayasanData", [authToken, fileId])
-    .then(function (res) {
-      if (seq !== docOpenSeq) return;
-      if (!res || !res.base64) throw new Error("Data dokumen kosong");
-      return loadPdfJs_()
-        .then(function (lib) { return lib.getDocument({ data: b64ToBytes_(res.base64) }).promise; })
-        .then(function (pdf) {
-          if (seq !== docOpenSeq) { pdf.destroy(); return; }
-          docPdfDoc = pdf;
-          return renderDocPdf_(pdf, seq);
-        });
-    })
-    .catch(function (err) {
-      if (seq !== docOpenSeq) return;
-      console.warn("Viewer PDF gagal, pakai preview Drive:", err);
-      // Cadangan: preview Google Drive (tombol +/- tetap jalan, cubit dua jari tidak).
-      docPdfMode = false;
-      document.getElementById("docViewerScroll").classList.remove("pdf-mode");
-      document.getElementById("docPdfPages").innerHTML = "";
-      document.getElementById("docPdfMsg").classList.remove("show");
-      setDocZoom(1);
-      document.getElementById("docViewerFrame").src = "https://drive.google.com/file/d/" + fileId + "/preview";
-    });
+  Promise.all([getDocData_(fileId), loadPdfJs_()])
+    .then(function () { if (seq === docOpenSeq) docPill_(true, "Aktifkan cubit 2 jari"); })
+    .catch(function (err) { console.warn("Mode cubit 2 jari tidak tersedia:", err); });
 }
+
+async function docEnterPdf_() {
+  var seq = docOpenSeq, fileId = docCurrentId;
+  docPill_(false);
+  docPdfMode = true;
+  setDocZoom(1);
+  document.getElementById("docViewerScroll").classList.add("pdf-mode");
+  document.getElementById("docPdfMsg").classList.add("show");
+  try {
+    var b64 = await getDocData_(fileId);
+    var lib = await loadPdfJs_();
+    var pdf = await lib.getDocument({ data: b64ToBytes_(b64) }).promise;
+    if (seq !== docOpenSeq || !docPdfMode) { pdf.destroy(); return; }
+    docPdfDoc = pdf;
+    docPill_(true, "Kembali ke mode cepat");
+    await renderDocPdf_(pdf, seq);
+  } catch (err) {
+    if (seq !== docOpenSeq) return;
+    console.warn("Viewer PDF gagal, kembali ke preview Drive:", err);
+    docExitPdf_();
+    setDocZoom(1);
+    docPill_(false);
+  }
+}
+
+document.getElementById("docModePill").addEventListener("click", function () {
+  if (docPdfMode) {
+    docExitPdf_();
+    setDocZoom(1);
+    docPill_(true, "Aktifkan cubit 2 jari");
+  } else {
+    docEnterPdf_();
+  }
+});
 
 function closeDocViewer() {
   document.getElementById("docViewerOverlay").classList.remove("open");
