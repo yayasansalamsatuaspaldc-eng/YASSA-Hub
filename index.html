@@ -8682,8 +8682,9 @@ function renderContent() {
     // sama seperti sebelumnya: SUPERADMIN/ADMIN/KORWIL saja.
     if (["SUPERADMIN", "ADMIN", "KORWIL"].indexOf(currentUser.role) !== -1) {
       html += `
-        <div style="grid-column: 1 / -1; margin-top: 30px;">
-          <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+        <div style="grid-column: 1 / -1; margin-top: 40px;">
+          <div style="height:1px; background:linear-gradient(90deg, var(--glass-border-strong), transparent); margin: 0 0 26px;"></div>
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
             <div style="width:34px; height:34px; border-radius:10px; background:rgba(249,115,22,0.15); color:#F97316; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
               <span class="material-symbols-outlined" style="font-size:18px;">description</span>
             </div>
