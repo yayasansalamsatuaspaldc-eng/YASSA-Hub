@@ -3251,6 +3251,7 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
       <div class="summary-sub-icon" style="background: rgba(var(--bento-primary-rgb),0.18); color: var(--bento-primary);"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">account_balance_wallet</span></div>
       <div class="summary-sub-text">
         <div class="summary-sub-label" id="summaryLabelDonasi">Total Donasi</div>
+        <div id="summaryDonasiSyncText" style="font-size:10.5px; color:rgba(255,255,255,0.55); margin-top:1px;"></div>
         <div class="summary-sub-value" id="summaryTotalDonasi" style="color: var(--bento-primary);"><span class="kv-loading">...</span></div>
       </div>
     </div>
@@ -5667,6 +5668,7 @@ function renderSummaryCardBeranda_() {
   // ikut nampilin placeholder yang sama, konsisten sama panel bawah,
   // bukan nyisain angka program lain yang menyesatkan.
   const programAktif = YASSA_PROGRAMS.find(function (p) { return p.key === activeProgram; });
+  if (activeProgram !== "gopay") updateHubSyncBadges();
   if (programAktif && !programAktif.ready) {
     if (elLabel) elLabel.textContent = "Total Santunan Diperlukan PROGRAM " + programAktif.label;
     if (elSubKekurangan) elSubKekurangan.style.display = "none";
@@ -5743,6 +5745,7 @@ function renderSummaryCardBeranda_() {
   const elProgressSisa = document.getElementById("summaryProgressSisa");
 
   const d = berandaStatsCache.donasi;
+  updateHubSyncBadges();
   if (!d) {
     if (elValue) elValue.textContent = "...";
     if (elProgressWrap) elProgressWrap.style.display = "none";
@@ -6143,6 +6146,9 @@ function loadBerandaStats() {
           // periode kartu ringkasan (lihat renderSummaryCardBeranda_()).
           periodeBulan: Number(r.bulan || 0),
           periodeTahun: Number(r.tahun || 0),
+          // Waktu input data terakhir (epoch ms; 0 = belum tercatat) -- bukan waktu app disegarkan.
+          inputSantunanTerakhir: Number(r.inputSantunanTerakhir || 0),
+          inputDonasiTerakhir: Number(r.inputDonasiTerakhir || 0),
         };
         renderSummaryCardBeranda_();
       } else if (!berandaStatsCache.donasi && activeProgram === "gopay") {
@@ -17505,7 +17511,29 @@ function updateHubSyncBadges() {
   const elK = document.getElementById("keuanganSyncText");
   if (elK) elK.textContent = getHubSyncText_("keuangan");
   const elB = document.getElementById("berandaSyncText");
-  if (elB) elB.textContent = getHubSyncText_("beranda");
+  const elD = document.getElementById("summaryDonasiSyncText");
+  const dd = (typeof berandaStatsCache !== "undefined" && berandaStatsCache) ? berandaStatsCache.donasi : null;
+  if (typeof activeProgram !== "undefined" && activeProgram === "gopay" && dd) {
+    // GOPAY: tampilkan waktu INPUT DATA terakhir, bukan waktu app disegarkan.
+    if (elB) elB.textContent = "Data santunan: " + formatWaktuInputHub_(dd.inputSantunanTerakhir);
+    if (elD) elD.textContent = "Input donasi terakhir: " + formatWaktuInputHub_(dd.inputDonasiTerakhir);
+  } else {
+    if (elB) elB.textContent = getHubSyncText_("beranda");
+    if (elD) elD.textContent = "";
+  }
+}
+
+function formatWaktuInputHub_(ms) {
+  if (!ms) return "belum tercatat";
+  try {
+    const tz = "Asia/Jakarta";
+    const hari = function (t) { return new Date(t).toLocaleDateString("en-CA", { timeZone: tz }); };
+    const jam = new Date(ms).toLocaleTimeString("id-ID", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false }).replace(".", ":");
+    if (hari(ms) === hari(Date.now())) return "Hari ini, " + jam + " WIB";
+    if (hari(ms) === hari(Date.now() - 86400000)) return "Kemarin, " + jam + " WIB";
+    const tgl = new Date(ms).toLocaleDateString("id-ID", { timeZone: tz, day: "numeric", month: "short", year: "numeric" });
+    return tgl + ", " + jam + " WIB";
+  } catch (e) { return "belum tercatat"; }
 }
 
 // ============================================================
