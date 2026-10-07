@@ -1223,6 +1223,17 @@
   .overlay-close svg { width: 18px; height: 18px; }
   .overlay-close:active { background: rgba(255,255,255,0.15); }
   .overlay iframe { flex: 1; width: 100%; border: none; background: #121A2F; }
+  /* Viewer dokumen: tombol zoom + area geser horizontal */
+  .doc-zoom { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+  .doc-zoom button {
+    min-width: 34px; height: 34px; padding: 0 8px; border-radius: 10px; cursor: pointer;
+    background: var(--glass-strong); border: 1px solid var(--glass-border-strong);
+    color: var(--text-primary); font-size: 18px; font-weight: 700; line-height: 1;
+  }
+  .doc-zoom button:active { background: rgba(255,255,255,0.15); }
+  .doc-zoom #docZoomLabel { font-size: 12px; min-width: 52px; }
+  .doc-scroll { flex: 1; min-height: 0; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; background: #121A2F; }
+  .overlay .doc-scroll iframe { flex: none; height: 100%; width: 100%; display: block; }
   .akun-content { flex: 1; overflow-y: auto; padding: 20px; background: var(--bg-navy); }
   .akun-card { background: var(--glass-strong); backdrop-filter: blur(18px); border-radius: 18px; padding: 20px; box-shadow: 0 4px 24px rgba(0,0,0,0.35); border: 1px solid var(--glass-border); }
 
@@ -3365,8 +3376,15 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E2E8F0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
       </button>
       <span class="overlay-title" id="docViewerTitle">Dokumen</span>
+      <div class="doc-zoom">
+        <button type="button" id="docZoomOut" aria-label="Perkecil">&minus;</button>
+        <button type="button" id="docZoomLabel" aria-label="Ukuran asli">100%</button>
+        <button type="button" id="docZoomIn" aria-label="Perbesar">+</button>
+      </div>
     </div>
-    <iframe id="docViewerFrame" src="about:blank"></iframe>
+    <div class="doc-scroll" id="docViewerScroll">
+      <iframe id="docViewerFrame" src="about:blank"></iframe>
+    </div>
   </div>
 
   <!-- Halaman Penuh: Akun -->
@@ -14254,18 +14272,33 @@ function submitMidtransDonation() {
 // LANGSUNG di dalam Hub lewat iframe preview Google Drive -- bukan
 // window.open ke tab baru, dan bukan link download. fileId diambil dari
 // bagian ".../file/d/FILE_ID/view..." di link share Drive-nya.
+var docZoomLevel = 1;
+function setDocZoom(level) {
+  docZoomLevel = Math.min(3, Math.max(1, Math.round(level * 100) / 100));
+  var frame = document.getElementById("docViewerFrame");
+  // Zoom = melebarkan iframe; viewer Drive otomatis menyesuaikan lebar halaman,
+  // jadi tulisan membesar sungguhan. Area luar bisa digeser ke samping.
+  frame.style.width = (docZoomLevel * 100) + "%";
+  document.getElementById("docZoomLabel").textContent = Math.round(docZoomLevel * 100) + "%";
+}
 function openDocViewer(fileId, title) {
   closeUserMenu();
   document.getElementById("docViewerTitle").textContent = title;
+  setDocZoom(1);
+  document.getElementById("docViewerScroll").scrollLeft = 0;
   document.getElementById("docViewerFrame").src =
     "https://drive.google.com/file/d/" + fileId + "/preview";
   document.getElementById("docViewerOverlay").classList.add("open");
 }
-
-document.getElementById("docViewerClose").addEventListener("click", function () {
+function closeDocViewer() {
   document.getElementById("docViewerOverlay").classList.remove("open");
   document.getElementById("docViewerFrame").src = "about:blank"; // reset biar gak nyangkut di background
-});
+  setDocZoom(1);
+}
+document.getElementById("docZoomIn").addEventListener("click", function () { setDocZoom(docZoomLevel + 0.25); });
+document.getElementById("docZoomOut").addEventListener("click", function () { setDocZoom(docZoomLevel - 0.25); });
+document.getElementById("docZoomLabel").addEventListener("click", function () { setDocZoom(1); });
+document.getElementById("docViewerClose").addEventListener("click", closeDocViewer);
 
 function openAppUrl(url) {
   // Selalu TUTUP sheet "Input Data" (bukan toggle), soalnya fungsi ini juga
