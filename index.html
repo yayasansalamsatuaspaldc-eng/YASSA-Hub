@@ -2742,6 +2742,8 @@
   .kfin-seg button { font-family: inherit; font-size: 11px; font-weight: 700; min-height: 28px; padding: 0 12px; border-radius: 99px; border: none; background: transparent; color: var(--text-secondary); cursor: pointer; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: background 0.15s, color 0.15s; }
   .kfin-seg button[aria-pressed="true"] { background: var(--bento-primary); color: #062B17; }
   .kfin-seg button:focus-visible { outline: 2px solid var(--bento-primary); outline-offset: 2px; }
+  .kfin-seg-hint { display: flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600; color: var(--text-muted); line-height: 1.3; }
+  .kfin-seg-hint .material-symbols-outlined { font-size: 14px; color: var(--bento-primary); }
   /* 🆕 Dropdown pemilih wilayah di header tab Keuangan -- cuma muncul buat
      user yang akses > 1 wilayah (mis. Super Admin/"ALL"). Dibungkus select
      native (bukan panel custom) biar ringan & tetap gampang dipakai di HP,
@@ -8953,7 +8955,10 @@ function renderContent() {
       <div style="background: var(--glass-strong); border-radius: 20px; padding: 16px; margin: 0 0 18px; border: 1px solid var(--glass-border);">
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
           <span id="rekapTersalurChip"></span>
-          <div id="rekapTersalurSeg" class="kfin-seg" role="group" aria-label="Cakupan rekap tersalur"></div>
+          <div class="kfin-wilayah-col">
+            <div class="kfin-seg-hint"><span class="material-symbols-outlined">touch_app</span>Ketuk untuk pilih data wilayah atau nasional</div>
+            <div id="rekapTersalurSeg" class="kfin-seg" role="group" aria-label="Cakupan rekap tersalur"></div>
+          </div>
         </div>
         <button type="button" id="rekapTersalurHeader" aria-expanded="false" onclick="toggleRekapTersalurKeuangan()" style="width: 100%; display: flex; align-items: center; gap: 10px; background: transparent; border: none; padding: 0; cursor: pointer; color: inherit; font-family: inherit; text-align: left;">
           <div style="width: 36px; height: 36px; border-radius: 11px; background: rgba(34,197,94,0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
