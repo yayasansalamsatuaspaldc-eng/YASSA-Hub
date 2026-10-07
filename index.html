@@ -1234,6 +1234,15 @@
   .doc-zoom #docZoomLabel { font-size: 12px; min-width: 52px; }
   .doc-scroll { flex: 1; min-height: 0; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; background: #121A2F; }
   .overlay .doc-scroll iframe { flex: none; height: 100%; width: 100%; display: block; }
+  .doc-scroll { position: relative; }
+  .doc-scroll.pdf-mode { overflow: hidden; }
+  .doc-scroll.pdf-mode iframe { display: none !important; }
+  #docPdfStage { display: none; position: absolute; inset: 0; overflow: auto; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; }
+  .doc-scroll.pdf-mode #docPdfStage { display: block; }
+  #docPdfPages { width: 100%; }
+  .doc-pdf-page { display: block; width: 100%; height: auto; margin: 0 0 8px; background: #fff; }
+  .doc-pdf-msg { display: none; position: absolute; inset: 0; align-items: center; justify-content: center; color: var(--text-muted); font-size: 13px; font-weight: 600; pointer-events: none; }
+  .doc-pdf-msg.show { display: flex; }
   .akun-content { flex: 1; overflow-y: auto; padding: 20px; background: var(--bg-navy); }
   .akun-card { background: var(--glass-strong); backdrop-filter: blur(18px); border-radius: 18px; padding: 20px; box-shadow: 0 4px 24px rgba(0,0,0,0.35); border: 1px solid var(--glass-border); }
 
@@ -3384,6 +3393,8 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
     </div>
     <div class="doc-scroll" id="docViewerScroll">
       <iframe id="docViewerFrame" src="about:blank"></iframe>
+      <div id="docPdfStage"><div id="docPdfPages"></div></div>
+      <div class="doc-pdf-msg" id="docPdfMsg">Memuat dokumen…</div>
     </div>
   </div>
 
@@ -14272,33 +14283,153 @@ function submitMidtransDonation() {
 // LANGSUNG di dalam Hub lewat iframe preview Google Drive -- bukan
 // window.open ke tab baru, dan bukan link download. fileId diambil dari
 // bagian ".../file/d/FILE_ID/view..." di link share Drive-nya.
-var docZoomLevel = 1;
-function setDocZoom(level) {
-  docZoomLevel = Math.min(3, Math.max(1, Math.round(level * 100) / 100));
-  var frame = document.getElementById("docViewerFrame");
-  // Zoom = melebarkan iframe; viewer Drive otomatis menyesuaikan lebar halaman,
-  // jadi tulisan membesar sungguhan. Area luar bisa digeser ke samping.
-  frame.style.width = (docZoomLevel * 100) + "%";
-  document.getElementById("docZoomLabel").textContent = Math.round(docZoomLevel * 100) + "%";
+var docZoomLevel = 1, docPdfMode = false, docPdfDoc = null, docOpenSeq = 0, docPinch = null;
+var PDFJS_BASE = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/";
+var pdfjsReady = null;
+
+function loadPdfJs_() {
+  if (pdfjsReady) return pdfjsReady;
+  pdfjsReady = new Promise(function (res, rej) {
+    if (window.pdfjsLib) { res(window.pdfjsLib); return; }
+    var sc = document.createElement("script");
+    sc.src = PDFJS_BASE + "pdf.min.js";
+    sc.onload = function () {
+      try {
+        // Worker lintas-domain tidak boleh dipanggil langsung: dibungkus blob + importScripts.
+        var blob = new Blob(['importScripts("' + PDFJS_BASE + 'pdf.worker.min.js");'], { type: "application/javascript" });
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(blob);
+      } catch (e) {}
+      res(window.pdfjsLib);
+    };
+    sc.onerror = function () { pdfjsReady = null; rej(new Error("pdf.js gagal dimuat")); };
+    document.head.appendChild(sc);
+  });
+  return pdfjsReady;
 }
+
+function b64ToBytes_(b64) {
+  var bin = atob(b64), n = bin.length, u = new Uint8Array(n);
+  for (var i = 0; i < n; i++) u[i] = bin.charCodeAt(i);
+  return u;
+}
+
+// Zoom: mode PDF = melebarkan kontainer halaman (canvas ikut membesar, scroll dijaga
+// supaya titik di antara dua jari tetap di tempatnya). Mode cadangan = melebarkan iframe Drive.
+function setDocZoom(level, cx, cy) {
+  level = Math.min(4, Math.max(1, Math.round(level * 100) / 100));
+  if (docPdfMode) {
+    var stage = document.getElementById("docPdfStage");
+    var pages = document.getElementById("docPdfPages");
+    var oldW = pages.offsetWidth || 1, oldH = pages.offsetHeight || 1;
+    if (cx == null) { cx = stage.clientWidth / 2; cy = stage.clientHeight / 2; }
+    var rx = (stage.scrollLeft + cx) / oldW, ry = (stage.scrollTop + cy) / oldH;
+    pages.style.width = level === 1 ? "100%" : (stage.clientWidth * level) + "px";
+    stage.scrollLeft = rx * pages.offsetWidth - cx;
+    stage.scrollTop = ry * pages.offsetHeight - cy;
+  } else {
+    document.getElementById("docViewerFrame").style.width = (level * 100) + "%";
+  }
+  docZoomLevel = level;
+  document.getElementById("docZoomLabel").textContent = Math.round(level * 100) + "%";
+}
+
+function docResetViewer_() {
+  docOpenSeq++;
+  if (docPdfDoc) { try { docPdfDoc.destroy(); } catch (e) {} docPdfDoc = null; }
+  docPdfMode = false;
+  document.getElementById("docViewerScroll").classList.remove("pdf-mode");
+  document.getElementById("docPdfPages").innerHTML = "";
+  document.getElementById("docPdfPages").style.width = "100%";
+  document.getElementById("docPdfMsg").classList.remove("show");
+  document.getElementById("docViewerFrame").src = "about:blank";
+  setDocZoom(1);
+}
+
+async function renderDocPdf_(pdf, seq) {
+  var stage = document.getElementById("docPdfStage");
+  var pagesEl = document.getElementById("docPdfPages");
+  var targetPx = Math.min(1400, Math.max(800, stage.clientWidth * 2));
+  for (var n = 1; n <= pdf.numPages; n++) {
+    if (seq !== docOpenSeq) return;
+    var page = await pdf.getPage(n);
+    var base = page.getViewport({ scale: 1 });
+    var vp = page.getViewport({ scale: targetPx / base.width });
+    var cv = document.createElement("canvas");
+    cv.className = "doc-pdf-page";
+    cv.width = vp.width; cv.height = vp.height;
+    pagesEl.appendChild(cv);
+    await page.render({ canvasContext: cv.getContext("2d"), viewport: vp }).promise;
+    if (n === 1) document.getElementById("docPdfMsg").classList.remove("show");
+  }
+}
+
 function openDocViewer(fileId, title) {
   closeUserMenu();
   document.getElementById("docViewerTitle").textContent = title;
-  setDocZoom(1);
-  document.getElementById("docViewerScroll").scrollLeft = 0;
-  document.getElementById("docViewerFrame").src =
-    "https://drive.google.com/file/d/" + fileId + "/preview";
+  docResetViewer_();
+  var seq = docOpenSeq;
+  docPdfMode = true;
+  document.getElementById("docViewerScroll").classList.add("pdf-mode");
+  document.getElementById("docPdfMsg").classList.add("show");
   document.getElementById("docViewerOverlay").classList.add("open");
+
+  callGAS("getDokumenYayasanData", [authToken, fileId])
+    .then(function (res) {
+      if (seq !== docOpenSeq) return;
+      if (!res || !res.base64) throw new Error("Data dokumen kosong");
+      return loadPdfJs_()
+        .then(function (lib) { return lib.getDocument({ data: b64ToBytes_(res.base64) }).promise; })
+        .then(function (pdf) {
+          if (seq !== docOpenSeq) { pdf.destroy(); return; }
+          docPdfDoc = pdf;
+          return renderDocPdf_(pdf, seq);
+        });
+    })
+    .catch(function (err) {
+      if (seq !== docOpenSeq) return;
+      console.warn("Viewer PDF gagal, pakai preview Drive:", err);
+      // Cadangan: preview Google Drive (tombol +/- tetap jalan, cubit dua jari tidak).
+      docPdfMode = false;
+      document.getElementById("docViewerScroll").classList.remove("pdf-mode");
+      document.getElementById("docPdfPages").innerHTML = "";
+      document.getElementById("docPdfMsg").classList.remove("show");
+      setDocZoom(1);
+      document.getElementById("docViewerFrame").src = "https://drive.google.com/file/d/" + fileId + "/preview";
+    });
 }
+
 function closeDocViewer() {
   document.getElementById("docViewerOverlay").classList.remove("open");
-  document.getElementById("docViewerFrame").src = "about:blank"; // reset biar gak nyangkut di background
-  setDocZoom(1);
+  docResetViewer_();
 }
+
 document.getElementById("docZoomIn").addEventListener("click", function () { setDocZoom(docZoomLevel + 0.25); });
 document.getElementById("docZoomOut").addEventListener("click", function () { setDocZoom(docZoomLevel - 0.25); });
 document.getElementById("docZoomLabel").addEventListener("click", function () { setDocZoom(1); });
 document.getElementById("docViewerClose").addEventListener("click", closeDocViewer);
+
+// Cubit dua jari (hanya mode PDF)
+(function () {
+  var stage = document.getElementById("docPdfStage");
+  function dist(e) {
+    var a = e.touches[0], b = e.touches[1];
+    return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+  }
+  stage.addEventListener("touchstart", function (e) {
+    if (docPdfMode && e.touches.length === 2) docPinch = { d: dist(e), z: docZoomLevel };
+  }, { passive: true });
+  stage.addEventListener("touchmove", function (e) {
+    if (!docPinch || e.touches.length !== 2) return;
+    e.preventDefault();
+    var r = stage.getBoundingClientRect();
+    var cx = (e.touches[0].clientX + e.touches[1].clientX) / 2 - r.left;
+    var cy = (e.touches[0].clientY + e.touches[1].clientY) / 2 - r.top;
+    setDocZoom(docPinch.z * dist(e) / docPinch.d, cx, cy);
+  }, { passive: false });
+  function endPinch(e) { if (e.touches.length < 2) docPinch = null; }
+  stage.addEventListener("touchend", endPinch, { passive: true });
+  stage.addEventListener("touchcancel", endPinch, { passive: true });
+})();
 
 function openAppUrl(url) {
   // Selalu TUTUP sheet "Input Data" (bukan toggle), soalnya fungsi ini juga
