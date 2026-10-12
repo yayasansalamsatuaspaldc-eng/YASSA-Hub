@@ -2401,6 +2401,7 @@
   .aksi-cepat-icon .material-symbols-outlined { font-size: 24px; font-variation-settings: 'FILL' 1; }
   .aksi-kotak-icon { background: linear-gradient(135deg, #FFD166 0%, #FBBF24 55%, #F59E0B 100%); }
   .aksi-donasi-icon { background: linear-gradient(135deg, #D8B4FE 0%, #C084FC 55%, #A855F7 100%); }
+  .aksi-rumah-icon { background: linear-gradient(135deg, #6EE7B7 0%, #34D399 55%, #10B981 100%); }
   .aksi-online-icon { background: linear-gradient(135deg, #93C5FD 0%, #60A5FA 55%, #3B82F6 100%); }
 
   /* Aksi Cepat: Donasi Online -- dinaikkan level mencoloknya, mirip
@@ -2472,6 +2473,7 @@
   .aksi-kitabisa-icon::after { animation-delay: 0.4s; }
   .aksi-kotak-icon::after { animation-delay: 1.4s; }
   .aksi-donasi-icon::after { animation-delay: 2.4s; }
+  .aksi-rumah-icon::after { animation-delay: 1.4s; }
   .aksi-online-icon::after { animation-delay: 3.4s; }
   .aksi-qr-icon::after { animation-delay: 0.9s; }
   @keyframes aksiCepatSheen {
@@ -8211,7 +8213,12 @@ function showDaftarLoginHariIni() {
   const isiHtml = daftar
     .map(function (p) {
       const ket = p.waktu ? p.waktu : "";
-      return "<div style=\"padding: 6px 0; border-bottom: 1px solid var(--glass-border);\">" + p.nama + (ket ? " <span style=\"color: var(--text-muted); font-size: 11px;\">(" + ket + ")</span>" : "") + "</div>";
+      // Wilayah: "ALL" ditampilkan sebagai "Semua Wilayah"; kalau lebih dari
+      // satu (dipisah koma) dirapikan jadi "A, B, C".
+      let wil = String(p.wilayah || "").trim();
+      if (wil.toUpperCase() === "ALL") wil = "Semua Wilayah";
+      else wil = wil.split(",").map(function (w) { return w.trim(); }).filter(Boolean).join(", ");
+      return "<div style=\"padding: 6px 0; border-bottom: 1px solid var(--glass-border);\">" + p.nama + (ket ? " <span style=\"color: var(--text-muted); font-size: 11px;\">(" + ket + ")</span>" : "") + (wil ? "<div style=\"color: var(--text-muted); font-size: 11px; margin-top: 2px;\">📍 " + wil + "</div>" : "") + "</div>";
     })
     .join("");
   showModal("Login Hari Ini", isiHtml);
@@ -8475,13 +8482,9 @@ function renderContent() {
           <div class="aksi-kitabisa-icon"><span class="material-symbols-outlined">volunteer_activism</span></div>
           <span class="aksi-kitabisa-label">Donasi<br>Kitabisa.com</span>
         </div>
-        <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="openAppUrl('https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/?embed=1&tab=input-kotak')">
-          <div class="aksi-cepat-icon aksi-kotak-icon"><span class="material-symbols-outlined">inventory_2</span></div>
-          <span style="font-size: 10.5px; color: var(--text-secondary);">Kotak Gopay</span>
-        </div>
-        <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="openAppUrl('https://yayasansalamsatuaspaldc-eng.github.io/Kotak-dan-Donasi/?embed=1&tab=input-donasi')">
-          <div class="aksi-cepat-icon aksi-donasi-icon"><span class="material-symbols-outlined">add_box</span></div>
-          <span style="font-size: 10.5px; color: var(--text-secondary);">Donasi</span>
+        <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="window.open('https://kitabisa.com/campaign/patunganrumahkebaikan', '_blank')">
+          <div class="aksi-cepat-icon aksi-rumah-icon"><span class="material-symbols-outlined">home_health</span></div>
+          <span style="font-size: 10.5px; color: var(--text-secondary); text-align: center; line-height: 1.2;">Rumah<br>Kebaikan</span>
         </div>
         <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="toggleMidtransForm()">
           <div class="aksi-cepat-icon aksi-online-icon"><span class="material-symbols-outlined">credit_card</span></div>
@@ -8956,7 +8959,7 @@ function renderContent() {
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
           <span id="rekapTersalurChip"></span>
           <div class="kfin-wilayah-col">
-            <div class="kfin-seg-hint"><span class="material-symbols-outlined">touch_app</span>Ketuk untuk pilih data wilayah atau nasional</div>
+            <div class="kfin-seg-hint"><span class="material-symbols-outlined">touch_app</span>Pilihan wilayah/nasional ini hanya untuk Rekap Tersalur</div>
             <div id="rekapTersalurSeg" class="kfin-seg" role="group" aria-label="Cakupan rekap tersalur"></div>
           </div>
         </div>
@@ -8993,9 +8996,9 @@ function renderContent() {
             <span class="material-symbols-outlined" style="font-size: 19px;">savings</span>
           </div>
           <div style="flex: 1; min-width: 0;">
-            <div style="font-size: 13.5px; font-weight: 800; color: var(--text-primary);">Saldo Program</div>
+            <div style="font-size: 13.5px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">Saldo Program <span class="kfin-chip kfin-chip-nas"><span class="material-symbols-outlined">public</span>Nasional</span></div>
             <div id="saldoProgramTotal" style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin-top: 1px;"><span class="kv-loading">...</span></div>
-            <div style="font-size: 10px; color: var(--text-muted);">GOPAY &bull; PEDAS &bull; Emergency Need &mdash; ketuk untuk lihat rinciannya</div>
+            <div style="font-size: 10px; color: var(--text-muted);">GOPAY &bull; PEDAS &bull; Emergency Need &bull; semua waktu, tidak mengikuti pilihan wilayah &mdash; ketuk untuk lihat rinciannya</div>
           </div>
           <span class="material-symbols-outlined" id="saldoProgramChevron" style="font-size: 22px; color: var(--text-muted); transition: transform 0.2s;">expand_more</span>
         </button>
