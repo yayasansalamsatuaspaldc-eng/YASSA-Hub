@@ -3259,18 +3259,6 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
         <div class="summary-sub-value" id="summaryTotalDonasi" style="color: var(--bento-primary);"><span class="kv-loading">...</span></div>
       </div>
     </div>
-
-    <!-- Sub-row 3: Target Matching YGMP (MOE: YGMP menyamai nominal yang YASSA
-         setor ke Midtrans). Target = 50% kebutuhan santunan. Progres dihitung
-         dari DONASI BARU saja (tanpa saldo bawaan bulan lalu). -->
-    <div class="summary-sub-row" id="summarySubRowMatching">
-      <div class="summary-sub-icon" style="background: rgba(255,193,7,0.18); color: #ffc107;"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">volunteer_activism</span></div>
-      <div class="summary-sub-text">
-        <div class="summary-sub-label">Target Matching YGMP <span id="summaryMatchingPct" style="opacity:.7;"></span></div>
-        <div id="summaryMatchingRincian" style="font-size:10.5px; color:rgba(255,255,255,0.55); margin-top:1px;"></div>
-        <div class="summary-sub-value" id="summaryMatchingKurang" style="color:#ffc107;"><span class="kv-loading">...</span></div>
-      </div>
-    </div>
   </div>
 
 
@@ -5688,7 +5676,7 @@ function renderSummaryCardBeranda_() {
   if (programAktif && !programAktif.ready) {
     if (elLabel) elLabel.textContent = "Total Santunan Diperlukan PROGRAM " + programAktif.label;
     if (elSubKekurangan) elSubKekurangan.style.display = "none";
-    if (elSubDonasi) elSubDonasi.style.display = "none"; { const m = document.getElementById("summarySubRowMatching"); if (m) m.style.display = "none"; }
+    if (elSubDonasi) elSubDonasi.style.display = "none";
     if (elProgressWrap) elProgressWrap.style.display = "none";
     if (elValue) {
       elValue.removeAttribute("data-raw-value");
@@ -5701,7 +5689,7 @@ function renderSummaryCardBeranda_() {
   if (activeProgram === "sapa") {
     if (elLabel) elLabel.textContent = "Total Santunan Diperlukan PROGRAM SAPA";
     if (elSubKekurangan) elSubKekurangan.style.display = "none";
-    if (elSubDonasi) elSubDonasi.style.display = "none"; { const m = document.getElementById("summarySubRowMatching"); if (m) m.style.display = "none"; }
+    if (elSubDonasi) elSubDonasi.style.display = "none";
     if (elProgressWrap) elProgressWrap.style.display = "none";
     const d = berandaStatsCache.santunanSapa;
     if (elValue) {
@@ -5716,7 +5704,7 @@ function renderSummaryCardBeranda_() {
     const tahunLabel = d && d.tahun ? d.tahun : new Date().getFullYear();
     if (elLabel) elLabel.textContent = "Total Dana yang Disalurkan Program BASO Tahun " + tahunLabel;
     if (elSubKekurangan) elSubKekurangan.style.display = "none";
-    if (elSubDonasi) elSubDonasi.style.display = "none"; { const m = document.getElementById("summarySubRowMatching"); if (m) m.style.display = "none"; }
+    if (elSubDonasi) elSubDonasi.style.display = "none";
     if (elProgressWrap) elProgressWrap.style.display = "none";
     if (elValue) {
       if (d) animateRupiahValue_(elValue, d.totalDisalurkan);
@@ -5730,7 +5718,7 @@ function renderSummaryCardBeranda_() {
     const tahunLabel = d && d.tahun ? d.tahun : new Date().getFullYear();
     if (elLabel) elLabel.textContent = "Total Bantuan Disabilitas Tersalur PROGRAM PEDAS Tahun " + tahunLabel;
     if (elSubKekurangan) elSubKekurangan.style.display = "none";
-    if (elSubDonasi) elSubDonasi.style.display = "none"; { const m = document.getElementById("summarySubRowMatching"); if (m) m.style.display = "none"; }
+    if (elSubDonasi) elSubDonasi.style.display = "none";
     if (elProgressWrap) elProgressWrap.style.display = "none";
     if (elValue) {
       if (d) animateRupiahValue_(elValue, d.totalDisalurkan);
@@ -5742,7 +5730,7 @@ function renderSummaryCardBeranda_() {
   // Default / activeProgram === "gopay"
   if (elLabel) elLabel.textContent = "Total Santunan Diperlukan PROGRAM GOPAY";
   if (elSubKekurangan) elSubKekurangan.style.display = "";
-  if (elSubDonasi) elSubDonasi.style.display = ""; { const m = document.getElementById("summarySubRowMatching"); if (m) m.style.display = ""; }
+  if (elSubDonasi) elSubDonasi.style.display = "";
 
   const elLabelKekurangan = document.getElementById("summaryLabelKekurangan");
   const elLabelDonasi = document.getElementById("summaryLabelDonasi");
@@ -5809,27 +5797,8 @@ function renderSummaryCardBeranda_() {
   }
 
   if (elTotalDonasi) animateRupiahValue_(elTotalDonasi, d.totalDonasi);
-  const elSyncDonasi = document.getElementById("summaryDonasiSyncText");
-  if (elSyncDonasi && d.donasiBaru !== undefined) {
-    elSyncDonasi.textContent = "Donasi baru " + formatRupiahHub(d.donasiBaru) + " + saldo bawaan " + formatRupiahHub(d.saldoBawaan);
-  }
-  const elMKurang = document.getElementById("summaryMatchingKurang");
-  const elMRincian = document.getElementById("summaryMatchingRincian");
-  const elMPct = document.getElementById("summaryMatchingPct");
-  if (elMKurang) {
-    if (!d.santunanDitemukan || !d.targetMatching) {
-      elMKurang.textContent = "Belum ada target";
-      if (elMRincian) elMRincian.textContent = "";
-      if (elMPct) elMPct.textContent = "";
-    } else {
-      const kurangM = Math.max(0, d.targetMatching - d.donasiBaru);
-      const pctM = Math.min(100, Math.round((d.donasiBaru / d.targetMatching) * 100));
-      if (elMPct) elMPct.textContent = "(" + pctM + "%)";
-      if (elMRincian) elMRincian.textContent = "Target " + formatRupiahHub(d.targetMatching) + " (50% kebutuhan) \u2022 dari donasi baru, saldo bawaan tidak dihitung";
-      if (kurangM > 0) { elMKurang.removeAttribute("data-raw-value"); elMKurang.textContent = "Kurang " + formatRupiahHub(kurangM); }
-      else { elMKurang.removeAttribute("data-raw-value"); elMKurang.textContent = "Target tercapai \ud83c\udf89"; }
-    }
-  }
+
+
 
   // 📊 Progress bar "Terkumpul X% dari kebutuhan" -- ringkasan visual
   // satu baris pengganti "baca 3 angka & itung sendiri persentasenya".
@@ -6167,22 +6136,17 @@ function loadBerandaStats() {
         const realisasiDonasiGopay = Number((kitabisa && kitabisa.totalRealisasi) || 0);
         const realisasiMidtrans = Number((midtrans && midtrans.totalRealisasi) || 0);
         const saldoSebelumBulanIni = Number(r.saldoSebelumBulanIni || 0);
-        const donasiBaru = realisasiLapangan + realisasiDonasiGopay + realisasiMidtrans; // TANPA saldo bawaan -- dasar matching YGMP
-        const totalDonasi = donasiBaru + saldoSebelumBulanIni;
+        // Total Donasi = donasi baru bulan ini SAJA (saldo bulan-bulan sebelumnya TIDAK dihitung & TIDAK ditampilkan).
+        const totalDonasi = realisasiLapangan + realisasiDonasiGopay + realisasiMidtrans;
 
         const totalSantunanDiperlukan = santunan.ditemukan ? Number(santunan.totalPenyaluran || 0) : 0;
         const kekuranganSantunan = santunan.ditemukan ? Math.max(0, totalSantunanDiperlukan - totalDonasi) : 0;
-        // Matching YGMP (MOE): YASSA kumpulkan 50% kebutuhan, YGMP menyamai nominalnya.
-        const targetMatching = Math.ceil(totalSantunanDiperlukan / 2);
 
         berandaStatsCache.donasi = {
           totalSantunanDiperlukan: totalSantunanDiperlukan,
           kekuranganSantunan: kekuranganSantunan,
           santunanDitemukan: santunan.ditemukan,
           totalDonasi: totalDonasi,
-          donasiBaru: donasiBaru,
-          saldoBawaan: saldoSebelumBulanIni,
-          targetMatching: targetMatching,
           // 🆕 periode aktif (bulan/tahun) yang BENERAN dipakai buat hitung
           // angka-angka di atas -- dikirim backend lewat r.bulan/r.tahun
           // (lihat getRingkasanKeuangan di Code_Hub.gs), dipakai buat chip
@@ -7856,7 +7820,9 @@ const SALDO_PROGRAM_DUMMY_AKTIF_ = true; // set false setelah GOPAY & PEDAS ters
 let saldoProgramLainTerakhir_ = { gopay: null, pedas: null };
 
 function ambilSaldoProgramLain_(key) {
-  // TODO: ganti ke backend asli (lihat komentar di atas).
+  // GOPAY = saldo ASLI di Midtrans (diinput Bendahara, sheet "Saldo_Midtrans_GOPAY").
+  if (key === "gopay") return callGASWithRetry_("getSaldoGopay", [authToken], { maxAttempts: 2 });
+  // PEDAS masih dummy.
   return Promise.resolve(SALDO_PROGRAM_DUMMY_[key] || null);
 }
 
@@ -7900,8 +7866,46 @@ function renderSaldoProgramPanel_(key) {
   const saldo = Number(d.saldo) || 0;
   const warnaSaldo = saldo < 0 ? "#F43F5E" : meta.warna;
   const tahun = new Date().getFullYear();
-  const badgeDummy = SALDO_PROGRAM_DUMMY_AKTIF_
+  const badgeDummy = (SALDO_PROGRAM_DUMMY_AKTIF_ && key !== "gopay")
     ? '<span style="font-size: 8.5px; font-weight: 800; color: #F59E0B; background: rgba(245,158,11,0.15); border-radius: 99px; padding: 2px 7px; letter-spacing: 0.4px;">DUMMY</span>' : "";
+  let gopayRiwayatHtml = "";
+  if (key === "gopay") {
+    const esc = function (t) { return String(t || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); };
+    const fmtTgl = function (ms) { return ms ? new Date(ms).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "-"; };
+    const daftar = d.riwayat || [];
+    let baris = "";
+    if (!d.ditemukan || !daftar.length) {
+      baris = '<div style="font-size: 11px; color: var(--text-muted); text-align: center; padding: 10px 0;">Belum ada catatan. Bendahara mengisi sheet Riwayat_Saldo_GOPAY.</div>';
+    } else {
+      daftar.forEach(function (e) {
+        const awal = e.jenis === "SALDO_AWAL", masuk = e.jenis === "MASUK", pindah = e.jenis === "PINDAH";
+        const warna = (awal || pindah) ? "#60A5FA" : (masuk ? "#22C55E" : "#F43F5E");
+        const tanda = (awal || pindah) ? "" : (masuk ? "+" : "\u2212");
+        const dasar = awal ? "Saldo awal" : (pindah ? "Pindah" : (masuk ? "Masuk" : "Keluar"));
+        const label = (esc(e.kategori) || dasar) + ' <span style="font-weight: 600; font-size: 9.5px; color: var(--text-muted);">' + esc(e.lokasi) + '</span>';
+        baris += '<div style="display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-top: 1px solid rgba(255,255,255,0.06);">' +
+          '<div style="flex: 1; min-width: 0;">' +
+            '<div style="font-size: 12px; font-weight: 700; color: var(--text-primary);">' + label + '</div>' +
+            '<div style="font-size: 10px; color: var(--text-muted);">' + fmtTgl(e.tanggalMs) + (e.catatan ? " &bull; " + esc(e.catatan) : "") + '</div>' +
+          '</div>' +
+          '<div style="text-align: right; flex-shrink: 0;">' +
+            '<div style="font-size: 12.5px; font-weight: 800; color: ' + warna + ';">' + tanda + formatRupiahHub(e.jumlah) + '</div>' +
+            '<div style="font-size: 9px; color: var(--text-muted);">Saldo ' + formatRupiahHub(e.saldoSetelah) + '</div>' +
+          '</div></div>';
+      });
+    }
+    const nonSantunan = Number(d.keluarNonSantunan) || 0;
+    gopayRiwayatHtml =
+      (nonSantunan > 0 ? '<div style="margin-top: 10px; font-size: 10.5px; color: #F59E0B; background: rgba(245,158,11,0.10); border-radius: 10px; padding: 7px 10px;">Terpakai di luar santunan: <b>' + formatRupiahHub(nonSantunan) + '</b></div>' : '') +
+      '<div style="margin-top: 12px; font-size: 10px; font-weight: 800; letter-spacing: 0.4px; color: var(--text-secondary);">RIWAYAT SALDO' + (d.mulaiMs ? ' (sejak ' + fmtTgl(d.mulaiMs) + ')' : '') + '</div>' + baris;
+  }
+  let gopayLokasiHtml = "";
+  if (key === "gopay") {
+    const chip = function (nama, v) {
+      return '<div style="flex: 1; background: rgba(255,255,255,0.05); border-radius: 10px; padding: 6px 8px;"><div style="font-size: 9px; color: var(--text-muted);">' + nama + '</div><div style="font-size: 12px; font-weight: 800; color: var(--text-primary);">' + formatRupiahHub(Number(v) || 0) + '</div></div>';
+    };
+    gopayLokasiHtml = '<div style="display: flex; gap: 8px; margin-top: 10px;">' + chip("Di Midtrans", d.saldoMidtrans) + chip("Di Bendahara", d.saldoBendahara) + '</div>';
+  }
   const buka = !!saldoPanelBuka_[key];
   el.innerHTML = `
     <button type="button" id="saldoHeader_${key}" aria-expanded="${buka}" onclick="toggleSaldoPanel_('${key}')" style="width: 100%; display: flex; align-items: center; gap: 10px; background: transparent; border: none; padding: 0; cursor: pointer; color: inherit; font-family: inherit; text-align: left;">
@@ -7913,14 +7917,14 @@ function renderSaldoProgramPanel_(key) {
           <span style="font-size: 13.5px; font-weight: 800; color: var(--text-primary);">${meta.label}</span>${badgeDummy}
         </div>
         <div id="saldoRingkas_${key}" style="font-size: 14px; font-weight: 800; color: ${warnaSaldo}; margin-top: 1px; display: ${buka ? "none" : "block"};">${formatRupiahHub(saldo)}</div>
-        <div style="font-size: 10.5px; color: var(--text-muted);">${meta.sub} &bull; Nasional, semua waktu</div>
+        <div style="font-size: 10.5px; color: var(--text-muted);">${meta.sub} &bull; ${key === "gopay" ? "Sisa saldo di Midtrans" : "Nasional, semua waktu"}</div>
       </div>
       <span class="material-symbols-outlined" id="saldoChevron_${key}" style="font-size: 22px; color: var(--text-muted); transition: transform 0.2s; transform: rotate(${buka ? 180 : 0}deg);">expand_more</span>
     </button>
     <div id="saldoDetail_${key}" style="display: ${buka ? "block" : "none"}; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08);">
       <div style="text-align: center; padding: 6px 0 12px;">
         <div style="font-size: 10px; color: var(--text-secondary); letter-spacing: 0.4px;">SISA SALDO</div>
-        <div style="font-size: 24px; font-weight: 800; color: ${warnaSaldo}; margin-top: 2px;">${formatRupiahHub(saldo)}</div>
+        <div style="font-size: 24px; font-weight: 800; color: ${warnaSaldo}; margin-top: 2px;">${formatRupiahHub(saldo)}</div>${gopayLokasiHtml}
       </div>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
         <div style="background: rgba(34,197,94,0.10); border-radius: 12px; padding: 10px;">
@@ -7933,7 +7937,7 @@ function renderSaldoProgramPanel_(key) {
           <div style="font-size: 12.5px; font-weight: 700; margin-top: 2px;">${formatRupiahHub(d.totalKeluar)}</div>
           <div style="font-size: 9px; color: var(--text-muted); margin-top: 2px;">${tahun}: ${formatRupiahHub(d.keluarTahunIni)}</div>
         </div>
-      </div>
+      </div>      ${gopayRiwayatHtml}
     </div>`;
 }
 
@@ -9043,7 +9047,7 @@ function renderContent() {
         </button>
 
         <div id="saldoProgramDetail" style="display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--glass-border);">
-          <div id="saldoProgramCatatanDummy" style="font-size: 10px; color: #F59E0B; background: rgba(245,158,11,0.12); border-radius: 10px; padding: 8px 10px; margin-bottom: 12px;">Saldo GOPAY &amp; PEDAS masih <b>data contoh (dummy)</b> &mdash; belum tersambung ke sumber data. Saldo Emergency Need sudah data asli.</div>
+          <div id="saldoProgramCatatanDummy" style="font-size: 10px; color: #F59E0B; background: rgba(245,158,11,0.12); border-radius: 10px; padding: 8px 10px; margin-bottom: 12px;">Saldo PEDAS masih <b>data contoh (dummy)</b> &mdash; belum tersambung ke sumber data. Saldo GOPAY (sisa saldo Midtrans) &amp; Emergency Need sudah data asli.</div>
 
           <div id="saldoGopayPanel" style="background: rgba(34,197,94,0.07); border: 1px solid rgba(34,197,94,0.25); border-radius: 16px; padding: 14px; margin-bottom: 12px;"></div>
           <div id="saldoPedasPanel" style="background: rgba(249,115,22,0.07); border: 1px solid rgba(249,115,22,0.25); border-radius: 16px; padding: 14px; margin-bottom: 12px;"></div>
