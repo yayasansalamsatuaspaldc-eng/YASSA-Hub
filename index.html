@@ -1563,6 +1563,11 @@
   }
 
   .app-splash-logo { width: 62px; height: 62px; }
+  .app-splash-title {
+    font-size: 15px; font-weight: 700; letter-spacing: 2.5px;
+    color: rgba(255,255,255,0.88); text-align: center;
+  }
+  html[data-theme="light"] .app-splash-title { color: rgba(15,23,42,0.85); }
   .app-splash-spinner {
     width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
     border: 3px solid rgba(34,211,238,0.18); border-top-color: var(--neon-cyan); border-right-color: var(--neon-purple);
@@ -3001,6 +3006,9 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
       </text>
     </svg>
   </div>
+  <!-- Nama app digambar oleh app sendiri, supaya SELALU tampil di semua HP
+       (layar pembuka bawaan sistem/WebAPK beda-beda tergantung ROM). -->
+  <div class="app-splash-title">YASSA GOPAY</div>
   <div class="app-splash-spinner"></div>
   <div class="app-splash-status" id="appSplashStatus">Menyiapkan aplikasi...</div>
 </div>
