@@ -4736,8 +4736,8 @@ const YASSA_PROGRAMS = [
   { key: "sapa", label: "SAPA", sub: "Sahabat Peduli Anak", icon: "diversity_1", color: "#EC4899", bg: "rgba(236,72,153,0.15)", ready: true },
   { key: "baso", label: "BASO", sub: "Bantuan Sembako", icon: "shopping_bag", color: "#F59E0B", bg: "rgba(245,158,11,0.15)", ready: true },
   { key: "pedas", label: "PEDAS", sub: "Peduli Disabilitas", icon: "accessible", color: "#A855F7", bg: "rgba(168,85,247,0.15)", ready: true },
-  { key: "badik", label: "BADIK", sub: "Bantuan Pendidikan", icon: "school", color: "#3B82F6", bg: "rgba(59,130,246,0.15)", ready: false },
-  { key: "batan", label: "BATAN", sub: "Bantuan Kesehatan", icon: "favorite", color: "#14B8A6", bg: "rgba(20,184,166,0.15)", ready: false },
+  { key: "badik", label: "BADIK", sub: "Bantuan Pendidikan", icon: "school", color: "#3B82F6", bg: "rgba(59,130,246,0.15)", ready: true },
+  { key: "batan", label: "BATAN", sub: "Bantuan Kesehatan", icon: "favorite", color: "#14B8A6", bg: "rgba(20,184,166,0.15)", ready: true },
 ];
 let activeProgram = "gopay";
 
@@ -5643,6 +5643,8 @@ let berandaStatsCache = (function() {
     santunanSapa: null, // { totalSantunanDiperlukan, jumlahAnak } -- PROGRAM SAPA (lihat getTotalSantunanSapa di Code.gs)
     santunanBaso: null, // { tahun, totalDisalurkan, jumlahAnak } -- PROGRAM BASO (lihat getTotalSantunanBaso di Code.gs)
     santunanPedas: null, // { tahun, totalDisalurkan, jumlahPenerima } -- PROGRAM PEDAS (lihat getTotalSantunanPedas di Code.gs, sumber SAMA dengan Laporan PEDAS)
+    santunanBadik: null, // { tahun, totalDisalurkan, jumlahPenerima, jumlahWilayah, rincianWilayah } -- PROGRAM BADIK (getTotalSantunanBadik di Code.gs)
+    santunanBatan: null, // idem -- PROGRAM BATAN (getTotalSantunanBatan di Code.gs)
     dashboard: null,
     verifikasi: null,
     aktivitas: null, // array log aktivitas terbaru (Donasi/Absensi/AWG/PM)
@@ -5712,6 +5714,23 @@ function renderSummaryCardBeranda_() {
     const d = berandaStatsCache.santunanBaso;
     const tahunLabel = d && d.tahun ? d.tahun : new Date().getFullYear();
     if (elLabel) elLabel.textContent = "Total Dana yang Disalurkan Program BASO Tahun " + tahunLabel;
+    if (elSubKekurangan) elSubKekurangan.style.display = "none";
+    if (elSubDonasi) elSubDonasi.style.display = "none";
+    if (elProgressWrap) elProgressWrap.style.display = "none";
+    if (elValue) {
+      if (d) animateRupiahValue_(elValue, d.totalDisalurkan);
+      else elValue.textContent = "...";
+    }
+    return;
+  }
+
+  if (activeProgram === "badik" || activeProgram === "batan") {
+    const d = activeProgram === "badik" ? berandaStatsCache.santunanBadik : berandaStatsCache.santunanBatan;
+    const tahunLabel = d && d.tahun ? d.tahun : new Date().getFullYear();
+    const labelLain = activeProgram === "badik"
+      ? "Total Bantuan Pendidikan Tersalur PROGRAM BADIK Tahun "
+      : "Total Bantuan Kesehatan Tersalur PROGRAM BATAN Tahun ";
+    if (elLabel) elLabel.textContent = labelLain + tahunLabel;
     if (elSubKekurangan) elSubKekurangan.style.display = "none";
     if (elSubDonasi) elSubDonasi.style.display = "none";
     if (elProgressWrap) elProgressWrap.style.display = "none";
@@ -5946,6 +5965,123 @@ function tutupDetailWilayahPedas() {
   document.getElementById("pedasWilayahOverlay").classList.remove("open");
 }
 
+// ============================================================
+// Panel "Program BADIK" & "Program BATAN" di Beranda -- data LIVE dari
+// getTotalSantunanBadik / getTotalSantunanBatan (Code.gs), pola SAMA dengan
+// panel BASO/PEDAS: jumlah penerima, jumlah wilayah, & total bantuan
+// tersalur TAHUN BERJALAN. Kartu "Wilayah Tersalur" bisa diklik buat
+// lihat rincian per wilayah (bukaDetailWilayahLain_).
+// ============================================================
+const PROGRAM_LAIN_BERANDA_ = {
+  badik: { Cap: "Badik", statsKey: "santunanBadik", sub: "Bantuan Pendidikan" },
+  batan: { Cap: "Batan", statsKey: "santunanBatan", sub: "Bantuan Kesehatan" },
+};
+
+function renderProgramPanelLainHtml_(p) {
+  const cfg = PROGRAM_LAIN_BERANDA_[p.key];
+  if (!cfg) return "";
+  const C = cfg.Cap;
+  const kotak = 'flex:1; background: ' + p.bg + '; border: 1px solid ' + p.color + '33; border-radius: 12px; padding: 9px 6px; text-align:center;';
+  const angka = 'font-weight:800; color:' + p.color + ';';
+  return (
+    '<div class="program-panel" id="programPanel-' + p.key + '" style="display:none;">' +
+      '<div style="background: var(--glass-strong); border-radius: 20px; padding: 18px 18px 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid ' + p.color + ';">' +
+        '<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">' +
+          '<div style="width: 40px; height: 40px; border-radius: 12px; background: ' + p.bg + '; color: ' + p.color + '; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">' +
+            '<span class="material-symbols-outlined" style="font-size: 21px; font-variation-settings: \'FILL\' 1;">' + p.icon + '</span>' +
+          '</div>' +
+          '<div style="flex: 1; min-width: 0;">' +
+            '<h3 style="font-size: 14px; font-weight: 700; margin: 0;">Program ' + p.label + '</h3>' +
+            '<div style="font-size: 10.5px; color: var(--text-secondary); margin-top: 1px;" id="beranda' + C + 'Subjudul">' + cfg.sub + ' &middot; Semua Wilayah</div>' +
+          '</div>' +
+        '</div>' +
+        '<div style="display:flex; gap:8px;">' +
+          '<div style="' + kotak + '">' +
+            '<div style="font-size:15px; ' + angka + '" id="beranda' + C + 'JumlahPenerima"><span class="kv-loading">...</span></div>' +
+            '<div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Penerima Tersalur</div>' +
+          '</div>' +
+          '<div style="' + kotak + ' flex:1.3;">' +
+            '<div style="font-size:13px; ' + angka + '" id="beranda' + C + 'TotalDisalurkan"><span class="kv-loading">...</span></div>' +
+            '<div style="font-size:9px; color: var(--text-muted); margin-top:2px;">Total Bantuan Tersalur</div>' +
+          '</div>' +
+          '<div onclick="bukaDetailWilayahLain_(\'' + p.key + '\')" style="' + kotak + ' cursor:pointer;">' +
+            '<div style="font-size:15px; ' + angka + '" id="beranda' + C + 'JumlahWilayah"><span class="kv-loading">...</span></div>' +
+            '<div style="font-size:9px; color: var(--text-muted); margin-top:2px; display:flex; align-items:center; justify-content:center; gap:1px;">Wilayah Tersalur <span class="material-symbols-outlined" style="font-size:11px;">chevron_right</span></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="custom-modal-overlay" id="' + p.key + 'WilayahOverlay">' +
+      '<div class="custom-modal" style="max-width:400px; text-align:left; max-height:80vh; overflow-y:auto;">' +
+        '<div class="custom-modal-title" style="text-align:center; margin-bottom: 4px;" id="' + p.key + 'WilayahTitle">Wilayah Tersalur Program ' + p.label + '</div>' +
+        '<div style="font-size:10.5px; color:var(--text-secondary); text-align:center; margin-bottom:14px;">Nama wilayah, jumlah penerima & total bantuan</div>' +
+        '<div id="' + p.key + 'WilayahList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;"></div>' +
+        '<div class="custom-modal-actions">' +
+          '<button type="button" class="btn-modal btn-cancel" style="width:100%;" onclick="tutupDetailWilayahLain_(\'' + p.key + '\')">Tutup</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function renderProgramPanelLain_(key, data, gagal) {
+  const cfg = PROGRAM_LAIN_BERANDA_[key];
+  if (!cfg) return;
+  const C = cfg.Cap;
+  const elPenerima = document.getElementById("beranda" + C + "JumlahPenerima");
+  const elTotal = document.getElementById("beranda" + C + "TotalDisalurkan");
+  const elWilayah = document.getElementById("beranda" + C + "JumlahWilayah");
+  const elSub = document.getElementById("beranda" + C + "Subjudul");
+  if (!elPenerima || !elTotal) return;
+
+  if (data) {
+    elPenerima.textContent = data.jumlahPenerima || 0;
+    elTotal.textContent = formatRupiahHub(data.totalDisalurkan || 0);
+    if (elWilayah) elWilayah.textContent = data.jumlahWilayah || 0;
+    if (elSub) elSub.textContent = cfg.sub + " \u00b7 Tahun " + (data.tahun || new Date().getFullYear());
+  } else if (gagal) {
+    elPenerima.textContent = "-";
+    elTotal.textContent = "-";
+    if (elWilayah) elWilayah.textContent = "-";
+  }
+}
+
+function bukaDetailWilayahLain_(key) {
+  const cfg = PROGRAM_LAIN_BERANDA_[key];
+  const p = YASSA_PROGRAMS.find(function (x) { return x.key === key; });
+  if (!cfg || !p) return;
+  const data = berandaStatsCache[cfg.statsKey];
+  const elTitle = document.getElementById(key + "WilayahTitle");
+  const elList = document.getElementById(key + "WilayahList");
+  if (!elList) return;
+
+  const tahunLabel = data && data.tahun ? data.tahun : new Date().getFullYear();
+  if (elTitle) elTitle.textContent = "Wilayah Tersalur Program " + p.label + " " + tahunLabel;
+
+  const rincian = (data && data.rincianWilayah) || [];
+  if (!rincian.length) {
+    elList.innerHTML = '<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:14px 4px;">Belum ada wilayah yang tersalur tahun ini.</div>';
+  } else {
+    elList.innerHTML = rincian.map(function (w) {
+      return (
+        '<div style="background: ' + p.bg + '; border: 1px solid ' + p.color + '33; border-radius: 12px; padding: 10px 12px;">' +
+          '<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:3px;">' +
+            '<div style="font-size:12.5px; font-weight:700; color: var(--text-primary);">' + escapeHtmlHub(w.wilayah || "-") + '</div>' +
+            '<div style="font-size:11px; color: var(--text-secondary); white-space:nowrap;">' + formatRupiahHub(w.nilai || 0) + '</div>' +
+          '</div>' +
+          '<div style="font-size:10.5px; color: var(--text-secondary);">' + (Number(w.penerima) || 0) + ' penerima &middot; ' + escapeHtmlHub(w.bulanLabel || "-") + '</div>' +
+        '</div>'
+      );
+    }).join("");
+  }
+  document.getElementById(key + "WilayahOverlay").classList.add("open");
+}
+
+function tutupDetailWilayahLain_(key) {
+  const el = document.getElementById(key + "WilayahOverlay");
+  if (el) el.classList.remove("open");
+}
+
 // Fungsi bantuan (Helper) untuk menyimpan ke memori HP
 function saveBerandaCacheHub() {
   try {
@@ -6102,6 +6238,10 @@ function loadBerandaStats() {
   // Panel "Program PEDAS" -- sama pola kayak panel BASO di atas.
   if (berandaStatsCache.santunanPedas) renderProgramPanelPedas_(berandaStatsCache.santunanPedas);
 
+  // Panel "Program BADIK" & "Program BATAN" -- sama pola.
+  if (berandaStatsCache.santunanBadik) renderProgramPanelLain_("badik", berandaStatsCache.santunanBadik);
+  if (berandaStatsCache.santunanBatan) renderProgramPanelLain_("batan", berandaStatsCache.santunanBatan);
+
   // ============================================================
   // SATU permintaan gabungan ke server Hub (getBerandaBundle)
   // ------------------------------------------------------------
@@ -6227,6 +6367,24 @@ function loadBerandaStats() {
         renderProgramPanelPedas_(null, true);
       }
 
+      // 1e) Program BADIK & BATAN -> kartu ringkasan Beranda + panel
+      // masing-masing (lihat renderProgramPanelLain_()). Sumbernya
+      // getTotalSantunanBadik / getTotalSantunanBatan di Code.gs.
+      [["badik", "santunanBadik"], ["batan", "santunanBatan"]].forEach(function (pr) {
+        const kunci = pr[0], statsKey = pr[1];
+        if (bundle[statsKey]) {
+          berandaStatsCache[statsKey] = bundle[statsKey];
+          renderSummaryCardBeranda_();
+          renderProgramPanelLain_(kunci, bundle[statsKey]);
+        } else if (!berandaStatsCache[statsKey]) {
+          if (activeProgram === kunci) {
+            const elTSDl = document.getElementById("summaryTotalSantunanDiperlukan");
+            if (elTSDl) elTSDl.textContent = "-";
+          }
+          renderProgramPanelLain_(kunci, null, true);
+        }
+      });
+
       // 2) Dashboard Stats -> kartu Total Wilayah & Total Pengurus
       if (bundle.dashboardStats) {
         berandaStatsCache.dashboard = bundle.dashboardStats;
@@ -6295,6 +6453,8 @@ function loadBerandaStats() {
         }
         renderProgramPanelPedas_(null, true);
       }
+      if (!berandaStatsCache.santunanBadik) renderProgramPanelLain_("badik", null, true);
+      if (!berandaStatsCache.santunanBatan) renderProgramPanelLain_("batan", null, true);
       if (!berandaStatsCache.dashboard) {
         const elW = document.getElementById("statTotalWilayah");
         const elP = document.getElementById("statTotalPengurus");
@@ -8517,6 +8677,9 @@ function renderContent() {
            (BADIK, BATAN) -- disembunyikan default, tinggal disambung ke
            sumber data masing-masing pas sudah tersedia (lihat
            YASSA_PROGRAMS di atas). -->
+      ${YASSA_PROGRAMS.filter(function (p) { return p.key === "badik" || p.key === "batan"; })
+        .map(function (p) { return renderProgramPanelLainHtml_(p); })
+        .join("")}
       ${YASSA_PROGRAMS.filter(function (p) { return !p.ready; })
         .map(function (p) {
           return '<div class="program-panel" id="programPanel-' + p.key + '" style="display:none;">' + renderProgramComingSoonHtml_(p) + '</div>';
