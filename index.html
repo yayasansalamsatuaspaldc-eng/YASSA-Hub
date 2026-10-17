@@ -3259,6 +3259,18 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
         <div class="summary-sub-value" id="summaryTotalDonasi" style="color: var(--bento-primary);"><span class="kv-loading">...</span></div>
       </div>
     </div>
+
+    <!-- Sub-row 3: Target Matching YGMP (MOE: YGMP menyamai nominal yang YASSA
+         setor ke Midtrans). Target = 50% kebutuhan santunan. Progres dihitung
+         dari DONASI BARU saja (tanpa saldo bawaan bulan lalu). -->
+    <div class="summary-sub-row" id="summarySubRowMatching">
+      <div class="summary-sub-icon" style="background: rgba(255,193,7,0.18); color: #ffc107;"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">volunteer_activism</span></div>
+      <div class="summary-sub-text">
+        <div class="summary-sub-label">Target Matching YGMP <span id="summaryMatchingPct" style="opacity:.7;"></span></div>
+        <div id="summaryMatchingRincian" style="font-size:10.5px; color:rgba(255,255,255,0.55); margin-top:1px;"></div>
+        <div class="summary-sub-value" id="summaryMatchingKurang" style="color:#ffc107;"><span class="kv-loading">...</span></div>
+      </div>
+    </div>
   </div>
 
 
@@ -5676,7 +5688,7 @@ function renderSummaryCardBeranda_() {
   if (programAktif && !programAktif.ready) {
     if (elLabel) elLabel.textContent = "Total Santunan Diperlukan PROGRAM " + programAktif.label;
     if (elSubKekurangan) elSubKekurangan.style.display = "none";
-    if (elSubDonasi) elSubDonasi.style.display = "none";
+    if (elSubDonasi) elSubDonasi.style.display = "none"; { const m = document.getElementById("summarySubRowMatching"); if (m) m.style.display = "none"; }
     if (elProgressWrap) elProgressWrap.style.display = "none";
     if (elValue) {
       elValue.removeAttribute("data-raw-value");
@@ -5689,7 +5701,7 @@ function renderSummaryCardBeranda_() {
   if (activeProgram === "sapa") {
     if (elLabel) elLabel.textContent = "Total Santunan Diperlukan PROGRAM SAPA";
     if (elSubKekurangan) elSubKekurangan.style.display = "none";
-    if (elSubDonasi) elSubDonasi.style.display = "none";
+    if (elSubDonasi) elSubDonasi.style.display = "none"; { const m = document.getElementById("summarySubRowMatching"); if (m) m.style.display = "none"; }
     if (elProgressWrap) elProgressWrap.style.display = "none";
     const d = berandaStatsCache.santunanSapa;
     if (elValue) {
@@ -5704,7 +5716,7 @@ function renderSummaryCardBeranda_() {
     const tahunLabel = d && d.tahun ? d.tahun : new Date().getFullYear();
     if (elLabel) elLabel.textContent = "Total Dana yang Disalurkan Program BASO Tahun " + tahunLabel;
     if (elSubKekurangan) elSubKekurangan.style.display = "none";
-    if (elSubDonasi) elSubDonasi.style.display = "none";
+    if (elSubDonasi) elSubDonasi.style.display = "none"; { const m = document.getElementById("summarySubRowMatching"); if (m) m.style.display = "none"; }
     if (elProgressWrap) elProgressWrap.style.display = "none";
     if (elValue) {
       if (d) animateRupiahValue_(elValue, d.totalDisalurkan);
@@ -5718,7 +5730,7 @@ function renderSummaryCardBeranda_() {
     const tahunLabel = d && d.tahun ? d.tahun : new Date().getFullYear();
     if (elLabel) elLabel.textContent = "Total Bantuan Disabilitas Tersalur PROGRAM PEDAS Tahun " + tahunLabel;
     if (elSubKekurangan) elSubKekurangan.style.display = "none";
-    if (elSubDonasi) elSubDonasi.style.display = "none";
+    if (elSubDonasi) elSubDonasi.style.display = "none"; { const m = document.getElementById("summarySubRowMatching"); if (m) m.style.display = "none"; }
     if (elProgressWrap) elProgressWrap.style.display = "none";
     if (elValue) {
       if (d) animateRupiahValue_(elValue, d.totalDisalurkan);
@@ -5730,7 +5742,7 @@ function renderSummaryCardBeranda_() {
   // Default / activeProgram === "gopay"
   if (elLabel) elLabel.textContent = "Total Santunan Diperlukan PROGRAM GOPAY";
   if (elSubKekurangan) elSubKekurangan.style.display = "";
-  if (elSubDonasi) elSubDonasi.style.display = "";
+  if (elSubDonasi) elSubDonasi.style.display = ""; { const m = document.getElementById("summarySubRowMatching"); if (m) m.style.display = ""; }
 
   const elLabelKekurangan = document.getElementById("summaryLabelKekurangan");
   const elLabelDonasi = document.getElementById("summaryLabelDonasi");
@@ -5797,6 +5809,27 @@ function renderSummaryCardBeranda_() {
   }
 
   if (elTotalDonasi) animateRupiahValue_(elTotalDonasi, d.totalDonasi);
+  const elSyncDonasi = document.getElementById("summaryDonasiSyncText");
+  if (elSyncDonasi && d.donasiBaru !== undefined) {
+    elSyncDonasi.textContent = "Donasi baru " + formatRupiahHub(d.donasiBaru) + " + saldo bawaan " + formatRupiahHub(d.saldoBawaan);
+  }
+  const elMKurang = document.getElementById("summaryMatchingKurang");
+  const elMRincian = document.getElementById("summaryMatchingRincian");
+  const elMPct = document.getElementById("summaryMatchingPct");
+  if (elMKurang) {
+    if (!d.santunanDitemukan || !d.targetMatching) {
+      elMKurang.textContent = "Belum ada target";
+      if (elMRincian) elMRincian.textContent = "";
+      if (elMPct) elMPct.textContent = "";
+    } else {
+      const kurangM = Math.max(0, d.targetMatching - d.donasiBaru);
+      const pctM = Math.min(100, Math.round((d.donasiBaru / d.targetMatching) * 100));
+      if (elMPct) elMPct.textContent = "(" + pctM + "%)";
+      if (elMRincian) elMRincian.textContent = "Target " + formatRupiahHub(d.targetMatching) + " (50% kebutuhan) \u2022 dari donasi baru, saldo bawaan tidak dihitung";
+      if (kurangM > 0) { elMKurang.removeAttribute("data-raw-value"); elMKurang.textContent = "Kurang " + formatRupiahHub(kurangM); }
+      else { elMKurang.removeAttribute("data-raw-value"); elMKurang.textContent = "Target tercapai \ud83c\udf89"; }
+    }
+  }
 
   // 📊 Progress bar "Terkumpul X% dari kebutuhan" -- ringkasan visual
   // satu baris pengganti "baca 3 angka & itung sendiri persentasenya".
@@ -6134,16 +6167,22 @@ function loadBerandaStats() {
         const realisasiDonasiGopay = Number((kitabisa && kitabisa.totalRealisasi) || 0);
         const realisasiMidtrans = Number((midtrans && midtrans.totalRealisasi) || 0);
         const saldoSebelumBulanIni = Number(r.saldoSebelumBulanIni || 0);
-        const totalDonasi = realisasiLapangan + realisasiDonasiGopay + realisasiMidtrans + saldoSebelumBulanIni;
+        const donasiBaru = realisasiLapangan + realisasiDonasiGopay + realisasiMidtrans; // TANPA saldo bawaan -- dasar matching YGMP
+        const totalDonasi = donasiBaru + saldoSebelumBulanIni;
 
         const totalSantunanDiperlukan = santunan.ditemukan ? Number(santunan.totalPenyaluran || 0) : 0;
         const kekuranganSantunan = santunan.ditemukan ? Math.max(0, totalSantunanDiperlukan - totalDonasi) : 0;
+        // Matching YGMP (MOE): YASSA kumpulkan 50% kebutuhan, YGMP menyamai nominalnya.
+        const targetMatching = Math.ceil(totalSantunanDiperlukan / 2);
 
         berandaStatsCache.donasi = {
           totalSantunanDiperlukan: totalSantunanDiperlukan,
           kekuranganSantunan: kekuranganSantunan,
           santunanDitemukan: santunan.ditemukan,
           totalDonasi: totalDonasi,
+          donasiBaru: donasiBaru,
+          saldoBawaan: saldoSebelumBulanIni,
+          targetMatching: targetMatching,
           // 🆕 periode aktif (bulan/tahun) yang BENERAN dipakai buat hitung
           // angka-angka di atas -- dikirim backend lewat r.bulan/r.tahun
           // (lihat getRingkasanKeuangan di Code_Hub.gs), dipakai buat chip
