@@ -4812,7 +4812,7 @@ function selectProgramTab(key) {
 //
 // AKSES_LOG_CLIENT_KEY harus PERSIS SAMA dengan yang di Code.gs.
 // ============================================================
-const AKSES_LOG_CLIENT_KEY = "yassa-hub-akses-3f7Qz9mN2rL8vXeK";
+// (AKSES_LOG_CLIENT_KEY dihapus -- tidak lagi dipakai)
 
 // Deteksi tipe perangkat (HP/Tablet/Laptop), OS, browser, & tebakan merek
 // dari User-Agent. Untuk iPhone/iPad, Apple SENGAJA gak nyimpen nama model
@@ -4932,11 +4932,14 @@ function getLokasiPengguna_() {
 // Fungsi utama: panggil ini di titik BUKA_APP / LOGIN_SUKSES / LOGIN_GAGAL.
 // extra = { username, nama, role } opsional sesuai tipeEvent-nya.
 function logAksesEvent_(tipeEvent, extra) {
+  // 🔒 Server sekarang hanya menerima BUKA_APP/LOGIN_SUKSES dari sesi yang sah;
+  // LOGIN_GAGAL dicatat oleh server sendiri di login(). Tanpa token -> tidak dikirim.
+  if (tipeEvent === "LOGIN_GAGAL" || typeof authToken === "undefined" || !authToken) return;
   try {
     const device = detectDeviceInfo_();
     getLokasiPengguna_().then(function (lokasiInfo) {
       const payload = Object.assign({}, device, lokasiInfo, extra || {});
-      callGAS("catatAksesApp", [AKSES_LOG_CLIENT_KEY, tipeEvent, payload]).catch(function () {});
+      callGAS("catatAksesApp", [authToken, tipeEvent, payload]).catch(function () {});
     });
   } catch (e) {
     // Monitoring gak boleh sampai bikin app utama error -- diamkan aja.
@@ -8185,12 +8188,29 @@ function toggleSaldoProgram() {
 // Escape teks bebas (mis. nama wilayah) sebelum dipasang lewat innerHTML,
 // biar aman dari karakter HTML aneh (bukan proteksi XSS penuh, cukup buat
 // data internal spreadsheet Bendahara yang formatnya udah lumayan terjaga).
+// 🔒 KEAMANAN: SATU-SATUNYA escape HTML (escape juga tanda kutip tunggal & ganda).
 function escapeHtmlHub(teks) {
-  return String(teks)
+  return String(teks == null ? "" : teks)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+// 🔒 KEAMANAN: tautan dari server HANYA boleh https ke host Google (Drive/Docs/foto).
+// Memblokir "javascript:" dan "data:". Tambahkan host lain di daftar kalau memang dipakai.
+const URL_AMAN_HOST_HUB_ = ["drive.google.com", "docs.google.com", "lh3.googleusercontent.com", "drive.usercontent.google.com"];
+function urlAmanHub_(u) {
+  try {
+    const x = new URL(String(u || ""), location.href);
+    if (x.protocol !== "https:") return "#";
+    const host = x.hostname.toLowerCase();
+    const ok = URL_AMAN_HOST_HUB_.some(function (h) { return host === h || host.endsWith("." + h); });
+    return ok ? x.href : "#";
+  } catch (e) {
+    return "#";
+  }
 }
 
 // Format angka jadi "RpX.XXX.XXX" ala Indonesia (dipakai di tab Keuangan).
@@ -8406,7 +8426,7 @@ function showDaftarPengurusBelumLoginLama() {
   const isiHtml = daftar
     .map(function (p) {
       const ket = p.hariBerlalu === null ? "belum pernah login" : (p.hariBerlalu + " hari lalu");
-      return "<div style=\"padding: 6px 0; border-bottom: 1px solid var(--glass-border);\">" + p.nama + " <span style=\"color: var(--text-muted); font-size: 11px;\">(" + ket + ")</span></div>";
+      return "<div style=\"padding: 6px 0; border-bottom: 1px solid var(--glass-border);\">" + escapeHtmlHub(p.nama) + " <span style=\"color: var(--text-muted); font-size: 11px;\">(" + ket + ")</span></div>";
     })
     .join("");
   showModal("Pengurus Belum Login Lama", isiHtml);
@@ -8430,7 +8450,7 @@ function showDaftarLoginHariIni() {
       let wil = String(p.wilayah || "").trim();
       if (wil.toUpperCase() === "ALL") wil = "Semua Wilayah";
       else wil = wil.split(",").map(function (w) { return w.trim(); }).filter(Boolean).join(", ");
-      return "<div style=\"padding: 6px 0; border-bottom: 1px solid var(--glass-border);\">" + p.nama + (ket ? " <span style=\"color: var(--text-muted); font-size: 11px;\">(" + ket + ")</span>" : "") + (wil ? "<div style=\"color: var(--text-muted); font-size: 11px; margin-top: 2px;\">📍 " + wil + "</div>" : "") + "</div>";
+      return "<div style=\"padding: 6px 0; border-bottom: 1px solid var(--glass-border);\">" + escapeHtmlHub(p.nama) + (ket ? " <span style=\"color: var(--text-muted); font-size: 11px;\">(" + ket + ")</span>" : "") + (wil ? "<div style=\"color: var(--text-muted); font-size: 11px; margin-top: 2px;\">📍 " + escapeHtmlHub(wil) + "</div>" : "") + "</div>";
     })
     .join("");
   showModal("Login Hari Ini", isiHtml);
@@ -10326,7 +10346,7 @@ function renderLaporanBulananList(data) {
             <span class="material-symbols-outlined" style="font-size: 15px;">visibility</span> Lihat PDF
           </button>
           ${laporanBulananBisaUnduh ? `
-          <a href="${escapeHtmlHub(b.linkUnduhPdf)}" target="_blank" rel="noopener" style="flex:1; display:flex; align-items:center; justify-content:center; gap: 6px; font-size: 11px; font-weight: 700; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-primary); text-decoration:none;">
+          <a href="${escapeHtmlHub(urlAmanHub_(b.linkUnduhPdf))}" target="_blank" rel="noopener" style="flex:1; display:flex; align-items:center; justify-content:center; gap: 6px; font-size: 11px; font-weight: 700; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-primary); text-decoration:none;">
             <span class="material-symbols-outlined" style="font-size: 15px;">download</span> Unduh
           </a>` : ''}
           <button type="button" onclick="event.stopPropagation(); bukaLaporanWilayahUpload(${b.bulan}, ${b.tahun}, '', 'nasional')" style="flex-shrink:0; display:flex; align-items:center; justify-content:center; width:38px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-secondary); cursor:pointer;">
@@ -11487,7 +11507,7 @@ function renderRekapPedas(data) {
         </div>
         <div style="text-align:right;">
           <div style="font-size:12.5px; font-weight:700; color: var(--text-primary); white-space:nowrap;">${formatRupiahHub(b.nilai)}</div>
-          ${b.linkFoto ? `<a href="${escapeHtmlHub(b.linkFoto)}" target="_blank" rel="noopener" style="margin-top:6px; text-decoration:none; color:#93C5FD; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px;"><span class="material-symbols-outlined" style="font-size:14px;">photo</span> Lihat Foto</a>` : ""}
+          ${b.linkFoto ? `<a href="${escapeHtmlHub(urlAmanHub_(b.linkFoto))}" target="_blank" rel="noopener" style="margin-top:6px; text-decoration:none; color:#93C5FD; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px;"><span class="material-symbols-outlined" style="font-size:14px;">photo</span> Lihat Foto</a>` : ""}
           ${(bisaEdit && b.editable) ? `<button onclick="fotoBantuanUploadClick('pedas', '${b.id}', loadRekapPedas)" style="margin-top:6px; background:transparent; border:none; color:#67E8F9; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px; font-family:inherit; width:100%;"><span class="material-symbols-outlined" style="font-size:14px;">add_a_photo</span> ${b.linkFoto ? "Ganti Foto" : "Upload Foto"}</button>` : ""}
           ${(bisaEdit && b.editable) ? `<button onclick="hapusBantuanPedasClick('${b.id}')" style="margin-top:6px; background:transparent; border:none; color:#FCA5A5; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px; font-family:inherit; width:100%;"><span class="material-symbols-outlined" style="font-size:14px;">delete</span> Hapus</button>` : ""}
         </div>
@@ -11972,7 +11992,7 @@ function renderSejarahPerjalanan() {
         </div>
         <div style="font-size:13.5px; font-weight:700; color:var(--text-primary); margin: 4px 0 6px;">${escapeHtmlHub(m.judul)}</div>
         ${m.deskripsi ? `<div style="font-size:11.5px; color:var(--text-secondary); line-height:1.5; margin-bottom: ${m.linkFoto ? "10px" : "2px"};">${escapeHtmlHub(m.deskripsi)}</div>` : ""}
-        ${m.linkFoto ? `<img src="${escapeHtmlHub(m.linkFoto)}" onclick="sejarahLihatFotoBesar('${escapeHtmlHub(m.linkFoto)}')" style="width:100%; max-height:220px; object-fit:cover; border-radius:12px; cursor:pointer; display:block;" loading="lazy">` : ""}
+        ${m.linkFoto ? `<img src="${escapeHtmlHub(urlAmanHub_(m.linkFoto))}" onclick="sejarahLihatFotoBesar(${escapeHtmlHub(JSON.stringify(urlAmanHub_(m.linkFoto)))})" style="width:100%; max-height:220px; object-fit:cover; border-radius:12px; cursor:pointer; display:block;" loading="lazy">` : ""}
         ${(bisaKelola && !m.linkFoto) ? `<button type="button" onclick="sejarahUploadFotoClick('${m.id}')" style="margin-top:6px; background:transparent; border:none; color:#FBBF24; cursor:pointer; font-size:10.5px; display:flex; align-items:center; gap:3px; font-family:inherit; padding:0;"><span class="material-symbols-outlined" style="font-size:14px;">add_a_photo</span> Tambah Foto</button>` : ""}
       </div>
     </div>`;
@@ -12285,13 +12305,13 @@ function renderRekapProgramLain(data) {
                Penyaluran) -- BUKAN 1 link generik kayak BADIK/BATAN di
                bawah. linkFoto (generik) lama tetap ditampilkan kalau ada
                isinya, buat kompatibilitas data lama sebelum fitur ini. -->
-          ${b.linkFoto ? `<a href="${escapeHtmlHub(b.linkFoto)}" target="_blank" rel="noopener" style="margin-top:6px; text-decoration:none; color:#93C5FD; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px;"><span class="material-symbols-outlined" style="font-size:14px;">photo</span> Lihat Foto (Lama)</a>` : ""}
-          ${b.linkFotoNota ? `<a href="${escapeHtmlHub(b.linkFotoNota)}" target="_blank" rel="noopener" style="margin-top:6px; text-decoration:none; color:#93C5FD; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px;"><span class="material-symbols-outlined" style="font-size:14px;">receipt_long</span> Lihat Nota</a>` : ""}
+          ${b.linkFoto ? `<a href="${escapeHtmlHub(urlAmanHub_(b.linkFoto))}" target="_blank" rel="noopener" style="margin-top:6px; text-decoration:none; color:#93C5FD; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px;"><span class="material-symbols-outlined" style="font-size:14px;">photo</span> Lihat Foto (Lama)</a>` : ""}
+          ${b.linkFotoNota ? `<a href="${escapeHtmlHub(urlAmanHub_(b.linkFotoNota))}" target="_blank" rel="noopener" style="margin-top:6px; text-decoration:none; color:#93C5FD; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px;"><span class="material-symbols-outlined" style="font-size:14px;">receipt_long</span> Lihat Nota</a>` : ""}
           ${(bisaEdit && b.editable) ? `<button onclick="fotoBantuanUploadClick('baso', '${b.id}', loadRekapProgramLain, 'nota')" style="margin-top:6px; background:transparent; border:none; color:#67E8F9; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px; font-family:inherit; width:100%;"><span class="material-symbols-outlined" style="font-size:14px;">add_a_photo</span> ${b.linkFotoNota ? "Ganti Nota" : "Upload Nota"}</button>` : ""}
-          ${b.linkFotoBuktiPenyaluran ? `<a href="${escapeHtmlHub(b.linkFotoBuktiPenyaluran)}" target="_blank" rel="noopener" style="margin-top:6px; text-decoration:none; color:#93C5FD; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px;"><span class="material-symbols-outlined" style="font-size:14px;">volunteer_activism</span> Lihat Bukti Penyaluran</a>` : ""}
+          ${b.linkFotoBuktiPenyaluran ? `<a href="${escapeHtmlHub(urlAmanHub_(b.linkFotoBuktiPenyaluran))}" target="_blank" rel="noopener" style="margin-top:6px; text-decoration:none; color:#93C5FD; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px;"><span class="material-symbols-outlined" style="font-size:14px;">volunteer_activism</span> Lihat Bukti Penyaluran</a>` : ""}
           ${(bisaEdit && b.editable) ? `<button onclick="fotoBantuanUploadClick('baso', '${b.id}', loadRekapProgramLain, 'bukti')" style="margin-top:6px; background:transparent; border:none; color:#67E8F9; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px; font-family:inherit; width:100%;"><span class="material-symbols-outlined" style="font-size:14px;">add_a_photo</span> ${b.linkFotoBuktiPenyaluran ? "Ganti Bukti Penyaluran" : "Upload Bukti Penyaluran"}</button>` : ""}
           ` : `
-          ${b.linkFoto ? `<a href="${escapeHtmlHub(b.linkFoto)}" target="_blank" rel="noopener" style="margin-top:6px; text-decoration:none; color:#93C5FD; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px;"><span class="material-symbols-outlined" style="font-size:14px;">photo</span> Lihat Foto</a>` : ""}
+          ${b.linkFoto ? `<a href="${escapeHtmlHub(urlAmanHub_(b.linkFoto))}" target="_blank" rel="noopener" style="margin-top:6px; text-decoration:none; color:#93C5FD; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px;"><span class="material-symbols-outlined" style="font-size:14px;">photo</span> Lihat Foto</a>` : ""}
           ${(bisaEdit && b.editable) ? `<button onclick="fotoBantuanUploadClick('${programLainAktif}', '${b.id}', loadRekapProgramLain)" style="margin-top:6px; background:transparent; border:none; color:#67E8F9; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px; font-family:inherit; width:100%;"><span class="material-symbols-outlined" style="font-size:14px;">add_a_photo</span> ${b.linkFoto ? "Ganti Foto" : "Upload Foto"}</button>` : ""}
           `}
           ${(bisaEdit && b.editable) ? `<button onclick="hapusBantuanProgramLainClick('${b.id}')" style="margin-top:6px; background:transparent; border:none; color:#FCA5A5; cursor:pointer; font-size:10.5px; display:flex; align-items:center; justify-content:flex-end; gap:3px; font-family:inherit; width:100%;"><span class="material-symbols-outlined" style="font-size:14px;">delete</span> Hapus</button>` : ""}
@@ -12652,7 +12672,7 @@ function renderLaporanBulananListSapa(data) {
             <span class="material-symbols-outlined" style="font-size: 15px;">visibility</span> Lihat PDF
           </button>
           ${laporanBulananSapaBisaUnduh ? `
-          <a href="${escapeHtmlHub(b.linkUnduhPdf)}" target="_blank" rel="noopener" style="flex:1; display:flex; align-items:center; justify-content:center; gap: 6px; font-size: 11px; font-weight: 700; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-primary); text-decoration:none;">
+          <a href="${escapeHtmlHub(urlAmanHub_(b.linkUnduhPdf))}" target="_blank" rel="noopener" style="flex:1; display:flex; align-items:center; justify-content:center; gap: 6px; font-size: 11px; font-weight: 700; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-primary); text-decoration:none;">
             <span class="material-symbols-outlined" style="font-size: 15px;">download</span> Unduh
           </a>` : ''}
           <button type="button" onclick="event.stopPropagation(); bukaLaporanWilayahUpload(${b.bulan}, ${b.tahun}, '', 'sapa-nasional')" style="flex-shrink:0; display:flex; align-items:center; justify-content:center; width:38px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-secondary); cursor:pointer;">
@@ -14322,7 +14342,7 @@ function fdbPilihFoto(input, opts) {
     // kadang butuh beberapa detik + backend punya retry sendiri kalau
     // server AI lagi sibuk, jadi 1 kali panggilan bisa makan waktu lebih
     // dari 8 detik walau prosesnya normal & bakal berhasil.
-    callGASWithRetry_("cekKualitasFotoAI", [base64Data, opts.jenis || ""], { timeoutMs: 25000 })
+    callGASWithRetry_("cekKualitasFotoAI", [authToken, base64Data, opts.jenis || ""], { timeoutMs: 25000 })
       .then(function (hasilAI) {
         if (!hasilAI || hasilAI.status !== "SUKSES") {
           const pesan = (hasilAI && hasilAI.pesan) || "Foto ditolak sistem, silakan foto ulang.";
@@ -16120,9 +16140,7 @@ function loadUserListIntoPanel() {
     });
 }
 
-function escapeHtmlHub(str) {
-  return String(str == null ? "" : str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
+// (definisi ganda escapeHtmlHub dihapus -- hanya ada 1 versi kanonik di dekat formatRupiah)
 
 // ============================================================
 // PANEL "MONITOR AKSES" -- siapa buka Hub, dari device/lokasi mana, &
@@ -16266,11 +16284,11 @@ function monitorAksesRow_(l) {
   const meta = MONITOR_AKSES_META[l.tipeEvent] || { label: l.tipeEvent, color: "#94A3B8", bg: "rgba(148,163,184,0.14)", icon: "help" };
   const waktu = formatWaktuMonitorAkses_(l.timestamp);
   const siapa = l.nama
-    ? escapeHtmlHub(l.nama) + (l.role ? " (" + roleLabel(l.role) + ")" : "")
+    ? escapeHtmlHub(l.nama) + (l.role ? " (" + escapeHtmlHub(roleLabel(l.role)) + ")" : "")
     : (l.username ? "Percobaan: " + escapeHtmlHub(l.username) : "Belum login");
   const deviceIcon = l.tipeDevice === "HP" ? "smartphone" : (l.tipeDevice === "Tablet" ? "tablet_mac" : "laptop_mac");
   const deviceText = [l.merek, l.os, l.browser].filter(function (v) { return v && v !== "-"; }).map(escapeHtmlHub).join(" &middot; ");
-  const lokasiText = l.lokasi ? escapeHtmlHub(l.lokasi) + (l.sumberLokasi ? " (" + l.sumberLokasi + ")" : "") : "Lokasi tidak diketahui";
+  const lokasiText = l.lokasi ? escapeHtmlHub(l.lokasi) + (l.sumberLokasi ? " (" + escapeHtmlHub(l.sumberLokasi) + ")" : "") : "Lokasi tidak diketahui";
 
   return '<div style="background:var(--glass-strong);border:1px solid var(--glass-border);border-left:3px solid ' + meta.color + ';border-radius:14px;padding:12px 14px;margin-bottom:10px;">' +
     '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;">' +
