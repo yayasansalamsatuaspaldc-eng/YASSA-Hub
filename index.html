@@ -5231,6 +5231,15 @@ function initAuth() {
 
     callGASWithRetry_("checkSession", [authToken])
       .then(function (session) {
+        if (session && session.mustChangePassword) {
+          // 🔒 sesi ini belum ganti password -> tidak boleh masuk app; minta login ulang
+          localStorage.removeItem("yassa_token");
+          localStorage.removeItem("yassa_user");
+          authToken = null;
+          showLoginScreen();
+          showLoginError("Akunmu wajib ganti password. Silakan masuk kembali untuk menggantinya.");
+          return;
+        }
         currentUser = session;
         localStorage.setItem("yassa_user", JSON.stringify(currentUser));
         showApp();
@@ -5499,6 +5508,14 @@ function onLoginSuccess(res) {
   localStorage.setItem("yassa_user", JSON.stringify(currentUser));
   document.getElementById("loginForm").reset();
 
+  // 🔒 Akun wajib ganti password: server menolak semua aksi lain sampai password diganti,
+  // jadi JANGAN buka app/splash dulu. Cukup tampilkan modal ganti password; setelah sukses halaman dimuat ulang.
+  if (res.mustChangePassword) {
+    document.getElementById("loginError").style.display = "none";
+    openForceChangePasswordModal();
+    return;
+  }
+
   // 🚀 PERBAIKAN (fix "Koneksi lambat" saat login): titip sesi ke SSO
   // Broker SEKARANG ditembak dari sini, DI LATAR BELAKANG, bukan lagi
   // ditunggu di dalam login() sisi server (lihat catatan di finalizeLogin,
@@ -5558,8 +5575,8 @@ function submitForceChangePassword(event) {
   const newPassword = document.getElementById("fpNewPassword").value;
   const confirmPassword = document.getElementById("fpConfirmPassword").value;
 
-  if (newPassword.length < 6) {
-    errEl.textContent = "Password baru minimal 6 karakter.";
+  if (newPassword.length < 10) {
+    errEl.textContent = "Password baru minimal 10 karakter.";
     errEl.style.display = "block";
     return;
   }
@@ -5577,7 +5594,8 @@ function submitForceChangePassword(event) {
     .then(function () {
       pendingOldPassword = null;
       document.getElementById("forcePwOverlay").classList.remove("open");
-      showModal("Sukses", "Password berhasil diganti. Ingat-ingat password barumu ya.");
+      showModal("Sukses", "Password berhasil diganti. Aplikasi akan dimuat ulang...");
+      setTimeout(function () { location.reload(); }, 1500);
     })
     .catch(function (err) {
       errEl.textContent = err.message;
@@ -14821,8 +14839,8 @@ function submitChangePassword(event) {
   const newPassword = document.getElementById("cpNewPassword").value;
   const confirmPassword = document.getElementById("cpConfirmPassword").value;
 
-  if (newPassword.length < 6) {
-    errEl.textContent = "Password baru minimal 6 karakter.";
+  if (newPassword.length < 10) {
+    errEl.textContent = "Password baru minimal 10 karakter.";
     errEl.style.display = "block";
     return;
   }
@@ -16608,15 +16626,15 @@ function submitUserForm(event) {
 function resetUserPassword() {
   const inputId = "resetPasswordInputField";
   const messageHtml =
-    "Masukkan password baru buat <b>" + editingUserKey + "</b> (minimal 6 karakter):" +
+    "Masukkan password baru buat <b>" + editingUserKey + "</b> (minimal 10 karakter):" +
     '<br><input type="text" id="' + inputId + '" autocapitalize="off" autocorrect="off" spellcheck="false" ' +
     'style="width:100%;margin-top:10px;padding:10px;border-radius:6px;border:1px solid #ccc;box-sizing:border-box;" placeholder="Password baru">';
 
   showModal("Reset Password", messageHtml, true, function () {
     const inputEl = document.getElementById(inputId);
     const newPassword = inputEl ? inputEl.value : "";
-    if (!newPassword || newPassword.length < 6) {
-      showModal("Gagal", "Password minimal 6 karakter.");
+    if (!newPassword || newPassword.length < 10) {
+      showModal("Gagal", "Password minimal 10 karakter.");
       return;
     }
     callGASWithRetry_("resetPassword", [authToken, editingUserKey, newPassword])
