@@ -6910,7 +6910,7 @@ function kfinCacheKey_(bulan, tahun, wilayah) {
 function kfinInfoFilterWilayah_() {
   const wa = String((currentUser && currentUser.wilayahAkses) || "ALL").trim().toUpperCase();
   if (wa === "ALL" || wa === "") {
-    return { bisaPilih: true, mode: "ALL", daftar: wilayahListCache || [] };
+    return { bisaPilih: true, mode: "ALL", daftar: wilayahAktifCache || wilayahListCache || [] };
   }
   const daftar = wa.split(",").map(function (w) { return w.trim(); }).filter(Boolean);
   return { bisaPilih: daftar.length > 1, mode: "MULTI", daftar: daftar };
@@ -8977,8 +8977,8 @@ function renderContent() {
     // begitu selesai (wilayahListCache jadi array, walau kosong, jadi gak
     // akan nge-loop terus).
     const kfinInfoFilter_ = kfinInfoFilterWilayah_();
-    if (kfinInfoFilter_.mode === "ALL" && !wilayahListCache) {
-      loadWilayahListIfNeeded().then(function () { if (active === "keuangan") renderContent(); });
+    if (kfinInfoFilter_.mode === "ALL" && !wilayahAktifCache) {
+      loadWilayahAktifIfNeeded().then(function () { if (active === "keuangan") renderContent(); });
     }
     const wilayahText = kfinWilayahPilihan === "ALL"
       ? (currentUser.wilayahAkses === "ALL" ? "Semua Wilayah" : (currentUser.wilayahAkses || "-"))
@@ -10961,7 +10961,7 @@ function bukaCatatPenyaluran(bulan, tahun, namaBulanEncoded) {
 
   const sel = document.getElementById("psInputWilayah");
   sel.innerHTML = `<option value="">Memuat wilayah...</option>`;
-  loadWilayahListIfNeeded().then(function (list) {
+  loadWilayahAktifIfNeeded().then(function (list) {
     sel.innerHTML = (list && list.length)
       ? list.map(function (w) { return `<option value="${escapeHtmlHub(w)}">${escapeHtmlHub(w)}</option>`; }).join("")
       : `<option value="">(Belum ada data wilayah)</option>`;
@@ -11425,7 +11425,7 @@ function tutupRekapPedas() {
 function isiSelectWilayahPedas() {
   const sel = document.getElementById("pedasWilayahSelect");
   sel.innerHTML = `<option value="">Memuat wilayah...</option>`;
-  loadWilayahListIfNeeded().then(function (list) {
+  loadWilayahAktifIfNeeded().then(function (list) {
     let html = `<option value="ALL">Semua Wilayah (Nasional)</option>`;
     html += (list && list.length)
       ? list.map(function (w) { return `<option value="${escapeHtmlHub(w)}">${escapeHtmlHub(w)}</option>`; }).join("")
@@ -11664,7 +11664,7 @@ function bukaTambahBantuanPedas() {
 
   const sel = document.getElementById("pedasAddWilayah");
   sel.innerHTML = `<option value="">Memuat wilayah...</option>`;
-  loadWilayahListIfNeeded().then(function (list) {
+  loadWilayahAktifIfNeeded().then(function (list) {
     sel.innerHTML = (list && list.length)
       ? list.map(function (w) { return `<option value="${escapeHtmlHub(w)}">${escapeHtmlHub(w)}</option>`; }).join("")
       : `<option value="">(Belum ada data wilayah)</option>`;
@@ -12207,7 +12207,7 @@ function programLainMuatSesuaiMode_() {
 function isiSelectWilayahProgramLain() {
   const sel = document.getElementById("programLainWilayahSelect");
   sel.innerHTML = `<option value="">Memuat wilayah...</option>`;
-  loadWilayahListIfNeeded().then(function (list) {
+  loadWilayahAktifIfNeeded().then(function (list) {
     let html = `<option value="ALL">Semua Wilayah (Nasional)</option>`;
     html += (list && list.length)
       ? list.map(function (w) { return `<option value="${escapeHtmlHub(w)}">${escapeHtmlHub(w)}</option>`; }).join("")
@@ -12469,7 +12469,7 @@ function bukaTambahBantuanProgramLain() {
 
   const selWilayah = document.getElementById("programLainAddWilayah");
   selWilayah.innerHTML = `<option value="">Memuat wilayah...</option>`;
-  loadWilayahListIfNeeded().then(function (list) {
+  loadWilayahAktifIfNeeded().then(function (list) {
     selWilayah.innerHTML = (list && list.length)
       ? list.map(function (w) { return `<option value="${escapeHtmlHub(w)}">${escapeHtmlHub(w)}</option>`; }).join("")
       : `<option value="">(Belum ada data wilayah)</option>`;
@@ -14275,13 +14275,19 @@ function fdbUbahJumlahAnak(val) {
 function fdbMuatWilayah(wilayahSaya) {
   const sel = document.getElementById("fdbWilayah");
   if (wilayahSaya) {
-    // KORWIL cuma pegang 1 wilayah -- langsung kunci ke wilayahnya sendiri,
-    // gak perlu mancing daftar wilayah lain ke server.
+    // KORWIL cuma pegang 1 wilayah -- langsung kunci ke wilayahnya sendiri.
     sel.innerHTML = `<option value="${escapeHtmlHub(wilayahSaya)}">${escapeHtmlHub(wilayahSaya)}</option>`;
     sel.disabled = true;
+    // Kalau wilayahnya sedang NONAKTIF, kasih tahu (server juga menolak saat kirim).
+    loadWilayahAktifIfNeeded().then(function (aktif) {
+      const ada = (aktif || []).some(function (w) { return String(w).toUpperCase() === String(wilayahSaya).toUpperCase(); });
+      if (!ada && aktif && aktif.length) {
+        sel.innerHTML = `<option value="">Wilayah ${escapeHtmlHub(wilayahSaya)} sedang dinonaktifkan</option>`;
+      }
+    });
     return;
   }
-  callGAS("getWilayahList", [])
+  loadWilayahAktifIfNeeded()
     .then(function (list) {
       fdbWilayahList = list || [];
       sel.innerHTML = `<option value="">-- Pilih Wilayah --</option>` +
@@ -14959,6 +14965,10 @@ function handleUserMenuClick(action) {
               .catch(function () {});
           })
           .then(function () {
+            return Promise.all([loadWilayahListIfNeeded(), loadWilayahAktifIfNeeded()]).catch(function () {});
+          })
+          .then(function () {
+            hitungOrgWilayahNonaktif_();
             document.getElementById("akunContent").innerHTML = buildPengurusPanelHtml();
           })
           .catch(function (err) {
@@ -15891,7 +15901,19 @@ function orgCardHtml(jabatanLabel, u) {
     '</div>';
 }
 
+let orgWilayahNonaktif = []; // nama wilayah nonaktif (huruf kecil), diisi saat Struktur Pengurus dibuka
+
+function hitungOrgWilayahNonaktif_() {
+  orgWilayahNonaktif = [];
+  if (!wilayahListCache || !wilayahAktifCache) return;
+  wilayahListCache.forEach(function (w) {
+    if (wilayahAktifCache.indexOf(w) === -1) orgWilayahNonaktif.push(String(w).toLowerCase());
+  });
+}
+
 function renderOrgNode(node, list) {
+  // Node korwil (tanpa anak) dari wilayah nonaktif tidak ditampilkan sama sekali.
+  if ((!node.children || !node.children.length) && orgWilayahNonaktif.some(function (w) { return node.aliases.indexOf("korwil " + w) !== -1; })) return '';
   const members = list.filter(function (u) {
     return node.aliases.indexOf(normalizeJabatan(u.jabatan)) !== -1;
   });
@@ -16097,6 +16119,7 @@ function renderPengaturanPanel(el) {
     '<button onclick="setPengaturanSubTab(\'user\')" style="flex:1;min-width:100px;padding:10px 6px;border-radius:12px;border:1px solid var(--glass-border);cursor:pointer;font-size:12px;font-weight:700;background:' + (pengaturanSubTab === "user" ? "var(--bento-primary);color:#0B1220;" : "var(--glass-strong);color:var(--text-secondary);") + '">Manajemen User</button>' +
     '<button onclick="setPengaturanSubTab(\'aksesMenu\')" style="flex:1;min-width:100px;padding:10px 6px;border-radius:12px;border:1px solid var(--glass-border);cursor:pointer;font-size:12px;font-weight:700;background:' + (pengaturanSubTab === "aksesMenu" ? "var(--bento-primary);color:#0B1220;" : "var(--glass-strong);color:var(--text-secondary);") + '">Akses Menu</button>' +
     '<button onclick="setPengaturanSubTab(\'monitorAkses\')" style="flex:1;min-width:100px;padding:10px 6px;border-radius:12px;border:1px solid var(--glass-border);cursor:pointer;font-size:12px;font-weight:700;background:' + (pengaturanSubTab === "monitorAkses" ? "var(--bento-primary);color:#0B1220;" : "var(--glass-strong);color:var(--text-secondary);") + '">Monitor Akses</button>' +
+    '<button onclick="setPengaturanSubTab(\'wilayah\')" style="flex:1;min-width:100px;padding:10px 6px;border-radius:12px;border:1px solid var(--glass-border);cursor:pointer;font-size:12px;font-weight:700;background:' + (pengaturanSubTab === "wilayah" ? "var(--bento-primary);color:#0B1220;" : "var(--glass-strong);color:var(--text-secondary);") + '">Wilayah</button>' +
     '</div>' +
     '<div id="pengaturanSubContent"></div>';
 
@@ -16104,9 +16127,96 @@ function renderPengaturanPanel(el) {
     renderAksesMenuPanel();
   } else if (pengaturanSubTab === "monitorAkses") {
     renderMonitorAksesPanel();
+  } else if (pengaturanSubTab === "wilayah") {
+    renderWilayahPanel();
   } else {
     renderUserManagementPanel();
   }
+}
+
+
+// ============================================================
+// PANEL "WILAYAH" (Pengaturan, SUPERADMIN) -- aktif/nonaktifkan wilayah.
+// Nonaktif = disembunyikan dari dropdown & TIDAK ikut hitungan santunan/jumlah
+// anak/Formulir Data Baru. Data TIDAK dihapus; aktifkan lagi kapan saja.
+// ============================================================
+let wilayahAktifCache = null; // daftar wilayah AKTIF saja (dropdown santunan & Data Baru)
+
+function loadWilayahAktifIfNeeded() {
+  if (wilayahAktifCache) return Promise.resolve(wilayahAktifCache);
+  return callGASWithRetry_("getWilayahAktifList", [])
+    .then(function (list) { wilayahAktifCache = Array.isArray(list) ? list : []; return wilayahAktifCache; })
+    .catch(function () { return loadWilayahListIfNeeded(); }); // gagal -> pakai daftar lengkap, server tetap menolak yang nonaktif
+}
+
+let pengaturanWilayahData = [];
+const NAMA_BULAN_PENDEK_ = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+
+function renderWilayahPanel() {
+  const sub = document.getElementById("pengaturanSubContent");
+  if (!sub) return;
+  sub.innerHTML = '<div style="padding:20px;text-align:center;color:#94A3B8;font-size:13px;">Memuat wilayah...</div>';
+  callGASWithRetry_("getPengaturanWilayah", [authToken])
+    .then(function (list) { pengaturanWilayahData = list || []; wilayahRenderList_(); })
+    .catch(function (err) {
+      sub.innerHTML = '<div style="padding:20px;text-align:center;color:#F87171;font-size:13px;">' + escapeHtmlHub(err.message) + '</div>';
+    });
+}
+
+function wilayahRenderList_() {
+  const sub = document.getElementById("pengaturanSubContent");
+  if (!sub) return;
+  const nonaktif = pengaturanWilayahData.filter(function (w) { return !w.aktif; }).length;
+  sub.innerHTML =
+    '<div style="font-size:12.5px;color:#94A3B8;margin-bottom:6px;">Wilayah nonaktif punya tanggal mulai. Laporan keuangan SEBELUM bulan itu tetap lengkap (aman untuk laporan donatur); mulai bulan itu wilayah tidak muncul di dropdown dan tidak ikut hitungan. Data tidak dihapus.</div>' +
+    '<div style="font-size:12.5px;font-weight:700;margin-bottom:12px;color:var(--text-primary);">' + (pengaturanWilayahData.length - nonaktif) + ' aktif &middot; ' + nonaktif + ' nonaktif</div>' +
+    pengaturanWilayahData.map(function (w, i) {
+      let label = 'Aktif', warna = '#34D399';
+      if (!w.aktif) {
+        const periode = NAMA_BULAN_PENDEK_[w.mulaiBulan - 1] + ' ' + w.mulaiTahun;
+        label = w.nonaktifSekarang ? 'Nonaktif sejak ' + periode : 'Nonaktif mulai ' + periode;
+        warna = '#F87171';
+      }
+      return '<label class="user-row" style="display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;">' +
+        '<span style="font-size:14px;font-weight:700;' + (w.nonaktifSekarang ? 'opacity:.55;' : '') + '">' + escapeHtmlHub(w.wilayah) + '</span>' +
+        '<span style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:' + warna + ';">' +
+        label +
+        '<input type="checkbox" ' + (w.aktif ? 'checked' : '') + ' style="width:20px;height:20px;" onchange="toggleWilayahAktif(' + i + ', this)">' +
+        '</span></label>';
+    }).join("");
+}
+
+function toggleWilayahAktif(i, cb) {
+  const w = pengaturanWilayahData[i];
+  if (!w) return;
+  const aktifBaru = cb.checked;
+  let bulanMulai = null, tahunMulai = null;
+  if (!aktifBaru) {
+    const now = new Date();
+    const def = (now.getMonth() + 1) + '-' + now.getFullYear();
+    const jawab = prompt('Nonaktifkan ' + w.wilayah + ' MULAI periode (bulan-tahun), contoh 10-2026.\n\nLaporan bulan SEBELUM periode ini tetap lengkap.\nMulai periode ini wilayah tidak muncul dan tidak ikut hitungan.', def);
+    const m = jawab && String(jawab).trim().match(/^(\d{1,2})\s*[-\/]\s*(\d{4})$/);
+    if (!m || Number(m[1]) < 1 || Number(m[1]) > 12) {
+      cb.checked = true;
+      if (jawab !== null) showHubToast("Format periode salah. Contoh: 10-2026", "error");
+      return;
+    }
+    bulanMulai = Number(m[1]); tahunMulai = Number(m[2]);
+  }
+  cb.disabled = true;
+  callGASWithRetry_("setStatusWilayah", [authToken, w.wilayah, aktifBaru, bulanMulai, tahunMulai])
+    .then(function () {
+      wilayahAktifCache = null;
+      dataAnakYatimCache = null; dataAnakAsuhCache = null;
+      try { localStorage.removeItem("yassa_hub_anak_yatim_cache"); localStorage.removeItem("yassa_hub_anak_asuh_cache"); } catch (e) {}
+      try { keuanganStatsCache = {}; } catch (e) {}
+      showHubToast(w.wilayah + (aktifBaru ? " diaktifkan." : " dinonaktifkan mulai " + NAMA_BULAN_PENDEK_[bulanMulai - 1] + " " + tahunMulai + "."), "success");
+      renderWilayahPanel();
+    })
+    .catch(function (err) {
+      cb.checked = !aktifBaru; cb.disabled = false;
+      showHubToast(err.message || "Gagal menyimpan.", "error");
+    });
 }
 
 function setPengaturanSubTab(tab) {
@@ -16486,7 +16596,11 @@ function renderWilayahOptions(selectedValue) {
 
   if (wilayahListCache.length) {
     html += '<div class="wilayah-option-divider"></div>';
-    html += wilayahListCache.map(function (w) {
+    // Wilayah nonaktif disembunyikan, kecuali memang sudah terpilih di akun ini.
+    const daftarTampil = wilayahListCache.filter(function (w) {
+      return !wilayahAktifCache || wilayahAktifCache.indexOf(w) !== -1 || selectedList.indexOf(w) !== -1;
+    });
+    html += daftarTampil.map(function (w) {
       const checked = selectedList.indexOf(w) !== -1;
       return '<label class="wilayah-option">' +
         '<input type="checkbox" class="ufWilayahItem" value="' + escapeHtmlHub(w) + '"' +
@@ -16558,7 +16672,7 @@ function openUserForm(indexOrNull) {
   document.getElementById("ufPassword").required = false;
   document.getElementById("ufRole").value = isEdit ? user.role : "PENGURUS";
   document.getElementById("ufPrint").checked = isEdit ? String(user.bolehPrint).toUpperCase() === "TRUE" : false;
-  loadWilayahListIfNeeded().then(function () {
+  Promise.all([loadWilayahListIfNeeded(), loadWilayahAktifIfNeeded()]).then(function () {
     renderWilayahOptions(isEdit ? user.wilayahAkses : "ALL");
   });
 
