@@ -3015,40 +3015,15 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
 
   @media (min-width: 1280px) {
     /* Kartu ringkasan Beranda: sebelumnya melebihi lebar layar (teks "Kurang Rp..."
-       dan chip bulan terpotong di kanan) dan memakan ~240px tinggi layar. Dibuat
-       muat lebar, lalu 3 kolom: [Total Santunan + progres] | Kekurangan | Total Donasi. */
+       dan chip bulan terpotong di kanan). Susunan bertumpuk tetap dipertahankan. */
     .summary-card {
       box-sizing: border-box;
       width: calc(100% - 40px);
-      display: grid;
-      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr);
-      grid-template-areas:
-        "top   sub1 sub2"
-        "value sub1 sub2"
-        "prog  sub1 sub2";
-      grid-template-rows: auto auto 1fr;
-      column-gap: 28px;
-      align-items: start;
     }
-    .summary-card > .summary-sheen { position: absolute; }
-    .summary-card > .summary-top { grid-area: top; }
-    .summary-card > .summary-value { grid-area: value; }
-    .summary-card > .summary-progress { grid-area: prog; }
-    .summary-card > #summarySubRowKekurangan { grid-area: sub1; }
-    .summary-card > #summarySubRowDonasi { grid-area: sub2; }
-    .summary-card > .summary-sub-row {
-      margin-top: 0 !important;
-      border-top: 0 !important;
-      padding: 4px 0 4px 24px !important;
-      border-left: 1px solid rgba(255,255,255,0.12);
-      align-self: stretch;
-    }
-    /* Program selain GOPAY (sub-row disembunyikan): kembali 1 kolom penuh */
-    .summary-card:has(#summarySubRowKekurangan[style*="display: none"]) {
-      grid-template-columns: minmax(0, 1fr);
-      grid-template-areas: "top" "value" "prog";
-      grid-template-rows: auto;
-    }
+
+    /* Teks versi di bawah Beranda: sebelumnya hanya menempati kolom pertama grid
+       (jadi "center" di kolom kiri). Dibuat selebar penuh supaya benar-benar di tengah. */
+    .app-version-footer { grid-column: 1 / -1; }
 
     /* Ruang bawah konten lebih lega supaya kartu terakhir tidak tertutup dock navigasi */
     .content { padding-bottom: 140px; }
