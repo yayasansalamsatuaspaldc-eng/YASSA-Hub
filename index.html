@@ -2982,6 +2982,36 @@ html.lite-mode .keuangan-progress-fill::before {
 /* gtap-ripple (efek sentuh) dipersingkat drastis, bukan dimatikan
    total, biar user tetap dapat feedback visual pas nge-tap */
 html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
+
+  /* ============================================================
+     ✨ POLESAN TAMPILAN LAPTOP (untuk presentasi) -- ditaruh PALING AKHIR
+     supaya menang atas aturan dasar di atas. Hanya aktif di layar lebar;
+     tampilan HP/tablet tidak berubah.
+     ============================================================ */
+  @media (min-width: 1024px) {
+    /* Login: panel hijau kiri sebelumnya hanya setengah tinggi (aturan dasar
+       height:35% menimpa aturan desktop), sisanya kosong. Dibuat setinggi kartu. */
+    .login-card { align-items: stretch; }
+    .login-header-bg {
+      height: auto !important;
+      min-height: 100% !important;
+      align-self: stretch;
+      padding-bottom: 0 !important;
+    }
+  }
+  @media (min-width: 1280px) {
+    /* Navigasi bawah: di HP sengaja selebar layar, tapi di laptop 5 tombolnya
+       tersebar sepanjang 1350px. Dirapatkan jadi "dock" di tengah. */
+    .bottom-nav {
+      left: 50%; right: auto;
+      width: min(760px, calc(100% - 48px));
+      transform: translateX(-50%);
+      bottom: 14px;
+      border: 1px solid var(--glass-border-strong);
+      border-radius: 26px;
+      padding-bottom: 10px;
+    }
+  }
 </style>
 </head>
 <body>
