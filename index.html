@@ -3021,6 +3021,14 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
       width: calc(100% - 40px);
     }
 
+    /* Scrollbar: di Windows tampil putih terang dan mencolok di tema gelap. Dibuat tipis
+       dan senada. Tema terang tidak berubah. */
+    html:not([data-theme="light"]) .content {
+      color-scheme: dark;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(148,163,184,0.45) transparent;
+    }
+
     /* Teks versi di bawah Beranda: sebelumnya hanya menempati kolom pertama grid
        (jadi "center" di kolom kiri). Dibuat selebar penuh supaya benar-benar di tengah. */
     .app-version-footer { grid-column: 1 / -1; }
