@@ -3012,6 +3012,64 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
       padding-bottom: 10px;
     }
   }
+
+  @media (min-width: 1280px) {
+    /* Kartu ringkasan Beranda: sebelumnya melebihi lebar layar (teks "Kurang Rp..."
+       dan chip bulan terpotong di kanan) dan memakan ~240px tinggi layar. Dibuat
+       muat lebar, lalu 3 kolom: [Total Santunan + progres] | Kekurangan | Total Donasi. */
+    .summary-card {
+      box-sizing: border-box;
+      width: calc(100% - 40px);
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-areas:
+        "top   sub1 sub2"
+        "value sub1 sub2"
+        "prog  sub1 sub2";
+      grid-template-rows: auto auto 1fr;
+      column-gap: 28px;
+      align-items: start;
+    }
+    .summary-card > .summary-sheen { position: absolute; }
+    .summary-card > .summary-top { grid-area: top; }
+    .summary-card > .summary-value { grid-area: value; }
+    .summary-card > .summary-progress { grid-area: prog; }
+    .summary-card > #summarySubRowKekurangan { grid-area: sub1; }
+    .summary-card > #summarySubRowDonasi { grid-area: sub2; }
+    .summary-card > .summary-sub-row {
+      margin-top: 0 !important;
+      border-top: 0 !important;
+      padding: 4px 0 4px 24px !important;
+      border-left: 1px solid rgba(255,255,255,0.12);
+      align-self: stretch;
+    }
+    /* Program selain GOPAY (sub-row disembunyikan): kembali 1 kolom penuh */
+    .summary-card:has(#summarySubRowKekurangan[style*="display: none"]) {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas: "top" "value" "prog";
+      grid-template-rows: auto;
+    }
+
+    /* Ruang bawah konten lebih lega supaya kartu terakhir tidak tertutup dock navigasi */
+    .content { padding-bottom: 140px; }
+
+    /* Selector program: 6 kartu tidak lagi menumpuk di kiri dengan ruang kosong di kanan */
+    .program-select-scroll { justify-content: center; }
+    .program-select-card { flex: 1 1 0; width: auto; min-width: 92px; max-width: 170px; }
+
+    /* Aksi Cepat Donasi: 4 ikon dirapatkan di tengah (sebelumnya tersebar di ujung layar) */
+    .aksi-cepat-row { justify-content: center !important; gap: 72px; }
+
+    /* Aktivitas Hari Ini / Agenda Mendatang / Aktivitas Terbaru: sebelumnya menumpuk
+       di 1 kolom kiri dengan 2/3 layar kosong. Disejajarkan 3 kolom. */
+    #berandaAktivitasWrap {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 20px;
+      align-items: start;
+    }
+  }
 </style>
 </head>
 <body>
@@ -13718,7 +13776,7 @@ function renderKalenderAgendaList(data) {
         <div style="flex:1; min-width:0;">
           <div style="color:var(--text-primary); font-size:12.5px; font-weight:600;">${escapeHtmlHub(k.judul)}</div>
           <div style="color:var(--text-secondary); font-size:11px; margin-top:3px; display:flex; align-items:center; gap:4px;">
-            <span class="material-symbols-outlined" style="font-size:12px;">schedule</span>${escapeHtmlHub(k.jam || "-")}
+            <span class="material-symbols-outlined" style="font-size:12px;">schedule</span>${escapeHtmlHub(jamKegiatanRapi_(k.jam) || "-")}
             <span style="opacity:0.5;">&middot;</span>
             <span class="material-symbols-outlined" style="font-size:12px;">location_on</span>${escapeHtmlHub(k.lokasi || "-")}
           </div>
@@ -13758,7 +13816,7 @@ function loadAgendaMendatangBeranda() {
             </div>
             <div style="flex:1; min-width:0;">
               <div style="color:var(--text-primary); font-size:11.5px; font-weight:600;">${escapeHtmlHub(k.judul)}</div>
-              <div style="color:var(--text-secondary); font-size:10px; margin-top:1px;">${escapeHtmlHub(k.jam || "-")} &middot; ${escapeHtmlHub(k.lokasi || "-")}</div>
+              <div style="color:var(--text-secondary); font-size:10px; margin-top:1px;">${escapeHtmlHub(jamKegiatanRapi_(k.jam) || "-")} &middot; ${escapeHtmlHub(k.lokasi || "-")}</div>
             </div>
             <span class="material-symbols-outlined agenda-chevron" style="font-size:16px; color:var(--text-muted); flex-shrink:0;">chevron_right</span>
           </div>`;
@@ -13772,6 +13830,18 @@ function loadAgendaMendatangBeranda() {
 // Detail kegiatan -- dibuka via showModal (reuse modal generik yang
 // sudah ada) supaya gak perlu bikin overlay baru lagi. Kalau role
 // SUPERADMIN/ADMIN, ditambahin tombol Edit & Hapus di dalam pesan modal.
+// Jam kegiatan dari sel "waktu" Google Sheets kadang terkirim sebagai teks ISO
+// "1899-12-30T02:52:48.000Z" (zona Jakarta tahun 1899 = +07:07:12). Ubah jadi "HH:mm".
+function jamKegiatanRapi_(jam) {
+  const s = String(jam || "");
+  const m = s.match(/^1899-12-30T(\d{2}):(\d{2}):(\d{2})/);
+  if (!m) return s;
+  const detik = (Number(m[1]) * 3600 + Number(m[2]) * 60 + Number(m[3]) + 7 * 3600 + 7 * 60 + 12) % 86400;
+  const hh = String(Math.floor(detik / 3600)).padStart(2, "0");
+  const mm = String(Math.floor((detik % 3600) / 60)).padStart(2, "0");
+  return hh + ":" + mm;
+}
+
 function openKegiatanDetail(id) {
   const k = kalenderBulanCache.find(function (x) { return x.id === id; });
   if (!k) return;
@@ -13782,7 +13852,7 @@ function openKegiatanDetail(id) {
   let html = `
     <div style="text-align:left; font-size:13px; line-height:1.7;">
       <div><b>Jenis:</b> ${escapeHtmlHub(meta.label)}</div>
-      <div><b>Tanggal:</b> ${tglText}${k.jam ? " &middot; " + escapeHtmlHub(k.jam) : ""}</div>
+      <div><b>Tanggal:</b> ${tglText}${k.jam ? " &middot; " + escapeHtmlHub(jamKegiatanRapi_(k.jam)) : ""}</div>
       <div><b>Lokasi:</b> ${escapeHtmlHub(k.lokasi || "-")}</div>
       <div><b>Wilayah:</b> ${escapeHtmlHub(String(k.wilayah || "ALL").toUpperCase() === "ALL" ? "Semua Wilayah" : k.wilayah)}</div>
       ${k.deskripsi ? `<div style="margin-top:6px;">${escapeHtmlHub(k.deskripsi)}</div>` : ""}
@@ -13833,7 +13903,7 @@ function openKegiatanForm(idOrNull, tanggalPrefill) {
   } else {
     document.getElementById("kfTanggal").value = "";
   }
-  document.getElementById("kfJam").value = isEdit ? (k.jam || "") : "";
+  document.getElementById("kfJam").value = isEdit ? (jamKegiatanRapi_(k.jam) || "") : "";
   document.getElementById("kfLokasi").value = isEdit ? (k.lokasi || "") : "";
   document.getElementById("kfDeskripsi").value = isEdit ? (k.deskripsi || "") : "";
 
