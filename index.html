@@ -3029,6 +3029,32 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
       scrollbar-color: rgba(148,163,184,0.45) transparent;
     }
 
+    /* Menu "Input Data": di HP berupa panel sempit dari bawah. Di laptop panelnya jadi
+       dialog di tengah, tombol program disusun 2 kolom supaya semua pilihan terlihat
+       tanpa scroll (sebelumnya terpotong di bawah dan harus digulir). */
+    #inputOverlay { align-items: center !important; }
+    #inputOverlay .user-form-sheet {
+      max-width: 800px;
+      border-radius: 24px !important;
+      border: 1px solid var(--glass-border-strong);
+      padding: 22px 24px 24px !important;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 16px;
+      align-content: start;
+    }
+    #inputOverlay .user-form-sheet > div:first-child,
+    #inputOverlay .user-form-sheet > h3,
+    #inputOverlay .user-form-sheet > button:last-child { grid-column: 1 / -1; }
+    #inputOverlay .user-form-sheet > h3 { margin-bottom: 4px !important; }
+    #inputOverlay .user-form-sheet > button { margin: 0 !important; }
+    /* Scrollbar di dalam dialog juga disamakan dengan tema gelap */
+    html:not([data-theme="light"]) .user-form-sheet {
+      color-scheme: dark;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(148,163,184,0.45) transparent;
+    }
+
     /* Teks versi di bawah Beranda: sebelumnya hanya menempati kolom pertama grid
        (jadi "center" di kolom kiri). Dibuat selebar penuh supaya benar-benar di tengah. */
     .app-version-footer { grid-column: 1 / -1; }
