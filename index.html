@@ -3059,7 +3059,22 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
        (kolom terpanjang), jadi bagian bawahnya kosong. Sekarang tinggi mengikuti isi,
        dan Dedikasi menjangkau 2 baris supaya "Tim & Organisasi" naik ke bawah kartu profil. */
     .content { align-items: start; }
-    .profil-dedikasi-section { grid-row: span 2; }
+    /* Susunan 2 kolom: kiri = kartu profil, Kartu Anggota Digital, Tim & Organisasi,
+       Keluar Akun (bertumpuk rapat); kanan = Dedikasi setinggi kolom kiri. Sebelumnya
+       3 kolom dengan kolom tengah hampir kosong. */
+    .content:has(.profil-dedikasi-section) {
+      grid-template-columns: minmax(0, 520px) minmax(0, 1fr);
+      column-gap: 28px;
+      justify-content: center;
+      max-width: 1180px;
+      margin-left: auto;
+      margin-right: auto;
+      width: 100%;
+    }
+    .content:has(.profil-dedikasi-section) .profil-dedikasi-section {
+      grid-column: 2;
+      grid-row: 1 / span 4;
+    }
 
     /* Menu samping (foto profil): scrollbar putih terang disamakan dengan tema gelap. */
     html:not([data-theme="light"]) .user-menu {
