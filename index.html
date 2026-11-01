@@ -3055,6 +3055,43 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
       scrollbar-color: rgba(148,163,184,0.45) transparent;
     }
 
+    /* Tab Profil: kartu profil dan "Kartu Anggota Digital" ditarik setinggi kartu Dedikasi
+       (kolom terpanjang), jadi bagian bawahnya kosong. Sekarang tinggi mengikuti isi,
+       dan Dedikasi menjangkau 2 baris supaya "Tim & Organisasi" naik ke bawah kartu profil. */
+    .content { align-items: start; }
+    .profil-dedikasi-section { grid-row: span 2; }
+
+    /* Menu samping (foto profil): scrollbar putih terang disamakan dengan tema gelap. */
+    html:not([data-theme="light"]) .user-menu {
+      color-scheme: dark;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(148,163,184,0.45) transparent;
+    }
+
+    /* Halaman "Profile YASSA": kartu 1 kolom selebar layar dengan separuh bawah kosong.
+       Dirapatkan di tengah dan info disusun 2 kolom (alamat tetap selebar penuh). */
+    #akunPage .akun-card:has(> .profile-info-list) {
+      max-width: 1000px;
+      margin: 20px auto;
+      padding: 28px 36px;
+    }
+    #akunPage .akun-card > .profile-info-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px 40px;
+    }
+    #akunPage .akun-card > .profile-info-list > .profile-info-row:first-child { grid-column: 1 / -1; }
+    #akunPage .akun-card > .profile-info-list .profile-info-text { font-size: 15px; }
+    #akunPage .akun-card > .profile-info-list .profile-info-label { font-size: 11.5px; }
+
+    /* Scrollbar di SEMUA halaman penuh (Perjalanan, Sejarah, Daftar Pengurus, dll) ikut
+       tema gelap -- sebelumnya hanya .content dan menu yang diubah. */
+    html:not([data-theme="light"]) {
+      color-scheme: dark;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(148,163,184,0.45) transparent;
+    }
+
     /* Teks versi di bawah Beranda: sebelumnya hanya menempati kolom pertama grid
        (jadi "center" di kolom kiri). Dibuat selebar penuh supaya benar-benar di tengah. */
     .app-version-footer { grid-column: 1 / -1; }
@@ -3078,6 +3115,27 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
       gap: 20px;
       align-items: start;
     }
+  }
+
+  @media (min-width: 1280px) and (max-height: 780px) {
+    .user-menu-item { padding-top: 6px; padding-bottom: 6px; }
+    .user-menu-section-label { padding-top: 6px; padding-bottom: 3px; }
+  }
+
+  /* Struktur Pengurus: lencana wilayah panjang ("Kabupaten Bekasi", "Tangerang Selatan")
+     melebar ke kiri dan tertimpa foto. Dibatasi lebarnya dan boleh 2 baris. */
+  .pengurus-badge-wilayah {
+    max-width: 38%;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.2;
+    border-radius: 10px !important;
+  }
+
+  /* Penampil dokumen: tombol "Aktifkan cubit 2 jari" hanya berguna di layar sentuh.
+     Di laptop dengan mouse tombol itu membingungkan, jadi disembunyikan. */
+  @media (hover: hover) and (pointer: fine) {
+    .doc-mode-pill { display: none !important; }
   }
 </style>
 </head>
@@ -7298,7 +7356,7 @@ function terapkanKeuanganStats(hasil) {
         : kfinWilayahPilihan;
       if (!manual.ditemukan) {
         // Bendahara belum isi baris bulan ini -- jangan tampilkan Rp0 yang menyesatkan.
-        if (elCatatan) elCatatan.textContent = "Kebutuhan Donasi Wilayah " + kfinWilayahText;
+        if (elCatatan) elCatatan.textContent = "Kebutuhan Donasi " + frasaWilayahKfin_(kfinWilayahText);
         if (elKebutuhan) elKebutuhan.textContent = "Belum diisi";
         if (elBelumDiisi) elBelumDiisi.style.display = "flex";
         if (elProgresWrap) elProgresWrap.style.display = "none";
@@ -7310,7 +7368,7 @@ function terapkanKeuanganStats(hasil) {
       if (elBelumDiisi) elBelumDiisi.style.display = "none";
       if (elProgresWrap) elProgresWrap.style.display = "block";
       if (elStatusBanner) elStatusBanner.style.display = "flex";
-      if (elCatatan) elCatatan.textContent = manual.catatan || ("Kebutuhan Donasi Wilayah " + kfinWilayahText);
+      if (elCatatan) elCatatan.textContent = manual.catatan || ("Kebutuhan Donasi " + frasaWilayahKfin_(kfinWilayahText));
 
       const kebutuhan = Number(manual.kebutuhanDonasi || 0);
       // 🆕 Realisasi SEKARANG gabungan Keuangan Bulanan GOPAY (per wilayah)
@@ -9176,7 +9234,7 @@ function renderContent() {
         </div>
 
         <div class="kfin-number" id="keuanganJumlahYatim"><span class="kv-loading">...</span></div>
-        <div class="kfin-caption" style="margin: 4px 0 18px;">Anak &middot; Wilayah ${escapeHtmlHub(wilayahText)} &middot; ${kfinLabelPeriode}</div>
+        <div class="kfin-caption" style="margin: 4px 0 18px;">Anak &middot; ${escapeHtmlHub(frasaWilayahKfin_(wilayahText))} &middot; ${kfinLabelPeriode}</div>
 
         <div class="kfin-stat-grid" style="margin-bottom: 18px;">
           <div class="keuangan-mini-stat kfin-stat-chip" style="--kfin-chip-rgb: 168,85,247; --kfin-chip-color: #C084FC;">
@@ -9231,7 +9289,7 @@ function renderContent() {
             <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Kebutuhan dan Kekurangan ${badgeWilayah}</div>
           </div>
         </div>
-        <div class="kfin-metric-sub" style="margin-bottom: 8px;" id="keuanganCatatanBendahara">Kebutuhan Donasi Wilayah ${escapeHtmlHub(wilayahText)}</div>
+        <div class="kfin-metric-sub" style="margin-bottom: 8px;" id="keuanganCatatanBendahara">Kebutuhan Donasi ${escapeHtmlHub(frasaWilayahKfin_(wilayahText))}</div>
         <div class="kfin-number" style="margin-bottom: 4px;" id="keuanganKebutuhanNominal"><span class="kv-loading">...</span></div>
         <div style="font-size: 10.5px; color: var(--bento-primary); font-weight: 600; margin-bottom: 18px;">Total kebutuhan donasi</div>
 
@@ -9245,7 +9303,7 @@ function renderContent() {
             <div>
               <div class="kfin-metric-label">Realisasi Donasi Program GOPAY</div>
               <div class="kfin-metric-value" id="keuanganRealisasiNominal"><span class="kv-loading">...</span></div>
-              <div class="kfin-metric-sub">Pencapaian Kotak Gopay dan Donasi Wilayah ${escapeHtmlHub(wilayahText)}</div>
+              <div class="kfin-metric-sub">Pencapaian Kotak Gopay dan Donasi ${escapeHtmlHub(frasaWilayahKfin_(wilayahText))}</div>
             </div>
             <div style="text-align: right;">
               <div style="font-size: 18px; font-weight: 800; color: var(--text-primary);" id="keuanganPersenTercapai"><span class="kv-loading">...</span></div>
@@ -13841,6 +13899,12 @@ function loadAgendaMendatangBeranda() {
 // SUPERADMIN/ADMIN, ditambahin tombol Edit & Hapus di dalam pesan modal.
 // Jam kegiatan dari sel "waktu" Google Sheets kadang terkirim sebagai teks ISO
 // "1899-12-30T02:52:48.000Z" (zona Jakarta tahun 1899 = +07:07:12). Ubah jadi "HH:mm".
+// "Wilayah Semua Wilayah" terdengar janggal: kalau yang dipilih "Semua Wilayah" jangan ditambah kata "Wilayah".
+function frasaWilayahKfin_(teks) {
+  const t = String(teks || "").trim();
+  return /^semua wilayah$/i.test(t) ? "Semua Wilayah" : "Wilayah " + t;
+}
+
 function jamKegiatanRapi_(jam) {
   const s = String(jam || "");
   const m = s.match(/^1899-12-30T(\d{2}):(\d{2}):(\d{2})/);
@@ -15821,7 +15885,7 @@ function pengurusCardHtml(u) {
   return `
     <div style="background: var(--glass-strong); border: 1px solid var(--glass-border); border-radius: 18px; overflow: hidden; display: flex; flex-direction: column; align-items: center;">
       <div style="width: 100%; height: 44px; background: linear-gradient(135deg, var(--bento-primary), #0B7A45); position: relative;">
-        <span style="position: absolute; top: 6px; right: 8px; font-size: 9px; font-weight: 700; letter-spacing: 0.03em; color: #fff; background: rgba(0,0,0,0.25); padding: 3px 8px; border-radius: 999px;">${escapeHtmlHub(badgeWilayah)}</span>
+        <span class="pengurus-badge-wilayah" style="position: absolute; top: 6px; right: 8px; font-size: 9px; font-weight: 700; letter-spacing: 0.03em; color: #fff; background: rgba(0,0,0,0.25); padding: 3px 8px; border-radius: 999px;">${escapeHtmlHub(badgeWilayah)}</span>
       </div>
       <div style="width: 100%; height: 32px; position: relative;">
         <img src="${foto}" alt="" style="position: absolute; top: -32px; left: 50%; transform: translateX(-50%); width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid var(--bg-navy); background: var(--bg-navy); z-index: 2;">
