@@ -3417,29 +3417,6 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
          Total Donasi yang udah terkumpul bulan ini) -- KHUSUS GOPAY, ikut
          disembunyikan otomatis kalau activeProgram = SAPA (belum ada
          sumber "Total Donasi" buat SAPA, lihat renderSummaryCardBeranda_). -->
-    <!-- Sub-row 0: Target santunan PER ANAK -- KHUSUS GOPAY. Diisi di
-         renderSummaryCardBeranda_() dari rate pokok per wilayah (kalau
-         seragam) atau rata-rata Total Santunan / Jumlah Anak. -->
-    <div class="summary-sub-row" id="summarySubRowPerAnak" style="display:none;">
-      <div class="summary-sub-icon" style="background: rgba(var(--bento-primary-rgb),0.18); color: var(--bento-primary);"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">child_care</span></div>
-      <div class="summary-sub-text">
-        <div class="summary-sub-label" id="summaryLabelPerAnak">Target per Anak</div>
-        <div class="summary-sub-value" id="summaryTargetPerAnak" style="color: var(--bento-primary);">-</div>
-      </div>
-    </div>
-
-    <!-- Sub-row 0b: Tingkat santunan per anak yang SUDAH tercapai (donasi +
-         tambahan YGMP). Aturan & daftar tingkat: lihat TINGKAT_SANTUNAN_CFG_
-         di script bawah. KHUSUS GOPAY. -->
-    <div class="summary-sub-row" id="summarySubRowTingkat" style="display:none;">
-      <div class="summary-sub-icon" id="summaryTingkatIconWrap" style="background: rgba(var(--bento-primary-rgb),0.18); color: var(--bento-primary);"><span class="material-symbols-outlined" id="summaryTingkatIcon" style="font-variation-settings:'FILL' 1;">flag</span></div>
-      <div class="summary-sub-text">
-        <div class="summary-sub-label">Tingkat Santunan Tercapai</div>
-        <div class="summary-sub-value" id="summaryTingkatValue" style="color: var(--bento-primary);">-</div>
-        <div id="summaryTingkatDetail" style="font-size:10.5px; color:rgba(255,255,255,0.6); margin-top:2px; line-height:1.4; white-space:normal;"></div>
-      </div>
-    </div>
-
     <div class="summary-sub-row" id="summarySubRowKekurangan">
       <div class="summary-sub-icon" id="summaryKekuranganIconWrap"><span class="material-symbols-outlined" id="summaryKekuranganIcon" style="font-variation-settings:'FILL' 1;">money_off</span></div>
       <div class="summary-sub-text">
@@ -5878,52 +5855,12 @@ let berandaStatsCache = (function() {
 // khusus SAPA (dikonfirmasi Herudin) -- cuma nilai utama "Total Santunan
 // Diperlukan PROGRAM SAPA" yang tampil.
 // ============================================================
-// ============================================================
-// Aturan "Tingkat Santunan" GOPAY (ubah di sini kalau aturan berubah):
-//   - TINGKAT: nominal santunan per anak yang jadi target (urut kecil->besar)
-//   - Dana efektif = donasi tercatat + tambahan YGMP
-//   - Tambahan YGMP = donasi tercatat x RASIO, maksimal BATAS_YGMP
-//     (1:2 -> donasi 41jt, YGMP tambah 41jt, total 82jt; donasi >=70jt,
-//      YGMP tambah mentok 70jt)
-//   - Tingkat tercapai = tingkat tertinggi dgn dana efektif >= tingkat x jumlah anak
-// ============================================================
-const TINGKAT_SANTUNAN_CFG_ = {
-  TINGKAT: [50000, 100000],
-  RASIO_YGMP: 1,
-  BATAS_YGMP: 70000000,
-};
-
-function hitungTingkatSantunan_(totalDonasi, jumlahAnak) {
-  const c = TINGKAT_SANTUNAN_CFG_;
-  const donasi = Math.max(0, Number(totalDonasi) || 0);
-  const ygmp = Math.min(donasi * c.RASIO_YGMP, c.BATAS_YGMP);
-  const efektif = donasi + ygmp;
-  let tercapai = 0, berikutnya = null;
-  for (let i = 0; i < c.TINGKAT.length; i++) {
-    if (efektif >= c.TINGKAT[i] * jumlahAnak) tercapai = c.TINGKAT[i];
-    else if (berikutnya === null) berikutnya = c.TINGKAT[i];
-  }
-  // Donasi (YASSA) yang masih kurang utk tingkat berikutnya
-  let kurangDonasi = 0;
-  if (berikutnya !== null) {
-    const butuh = berikutnya * jumlahAnak;
-    const maksTanpaBatas = c.BATAS_YGMP * (1 + c.RASIO_YGMP);
-    const donasiButuh = butuh <= maksTanpaBatas ? butuh / (1 + c.RASIO_YGMP) : butuh - c.BATAS_YGMP;
-    kurangDonasi = Math.max(0, Math.ceil(donasiButuh - donasi));
-  }
-  return { donasi: donasi, ygmp: ygmp, efektif: efektif, tercapai: tercapai, berikutnya: berikutnya, kurangDonasi: kurangDonasi };
-}
-
 function renderSummaryCardBeranda_() {
   const elLabel = document.getElementById("summaryLabelSantunan");
   const elValue = document.getElementById("summaryTotalSantunanDiperlukan");
   const elSubKekurangan = document.getElementById("summarySubRowKekurangan");
   const elSubDonasi = document.getElementById("summarySubRowDonasi");
   const elProgressWrap = document.getElementById("summaryProgressWrap");
-  const elSubPerAnak = document.getElementById("summarySubRowPerAnak");
-  if (elSubPerAnak) elSubPerAnak.style.display = "none"; // cuma ditampilkan di cabang GOPAY
-  const elSubTingkat = document.getElementById("summarySubRowTingkat");
-  if (elSubTingkat) elSubTingkat.style.display = "none"; // cuma ditampilkan di cabang GOPAY
   // 🆕 Chip periode -- default disembunyikan, cuma dinyalakan lagi khusus
   // di cabang GOPAY paling bawah (satu-satunya program yang sudah punya
   // field bulan/tahun aktif dari getRingkasanKeuangan).
@@ -6038,12 +5975,6 @@ function renderSummaryCardBeranda_() {
     return;
   }
 
-  // 🤝 Kekurangan Santunan & progress bar SEKARANG ikut menghitung tambahan
-  // YGMP (lihat TINGKAT_SANTUNAN_CFG_) -- jadi dana efektif = donasi + YGMP.
-  // "Total Donasi" di bawah tetap menampilkan donasi YASSA saja.
-  const danaEfektif = hitungTingkatSantunan_(d.totalDonasi, 1).efektif;
-  const kekuranganEfektif = d.santunanDitemukan ? Math.max(0, d.totalSantunanDiperlukan - danaEfektif) : 0;
-
   // 🆕 Chip periode (mis. "Oktober 2026") -- d.periodeBulan/periodeTahun
   // diisi dari r.bulan/r.tahun (bundle.ringkasanKeuangan), yaitu bulan
   // AKTIF yang beneran dipakai buat hitung angka kartu ini (auto-advance,
@@ -6069,8 +6000,8 @@ function renderSummaryCardBeranda_() {
       elKekurangan.removeAttribute("data-raw-value");
       elKekurangan.textContent = "Belum diisi Bendahara";
       elKekuranganIcon.textContent = "money_off";
-    } else if (kekuranganEfektif > 0) {
-      animateRupiahValue_(elKekurangan, kekuranganEfektif);
+    } else if (d.kekuranganSantunan > 0) {
+      animateRupiahValue_(elKekurangan, d.kekuranganSantunan);
       elKekurangan.classList.add("value-kekurangan-urgent");
       elKekuranganIconWrap.classList.add("icon-kekurangan-urgent");
       elKekuranganIcon.textContent = "priority_high";
@@ -6086,56 +6017,6 @@ function renderSummaryCardBeranda_() {
 
   if (elTotalDonasi) animateRupiahValue_(elTotalDonasi, d.totalDonasi);
 
-  // 👶 Target per anak -- pakai rate pokok kalau SERAGAM di semua wilayah,
-  // kalau beda-beda tampilkan rata-rata (Total Santunan / Jumlah Anak).
-  const elTargetPerAnak = document.getElementById("summaryTargetPerAnak");
-  const elLabelPerAnak = document.getElementById("summaryLabelPerAnak");
-  if (elSubPerAnak && elTargetPerAnak) {
-    const rates = (d.ratePokokWilayah || []).filter(function (x) { return x > 0; });
-    const seragam = rates.length > 0 && rates.every(function (x) { return x === rates[0]; });
-    let perAnak = 0, rataRata = false;
-    if (seragam) perAnak = rates[0];
-    else if (d.jumlahAnak > 0 && d.totalSantunanDiperlukan > 0) { perAnak = Math.round(d.totalSantunanDiperlukan / d.jumlahAnak); rataRata = true; }
-
-    if (!d.santunanDitemukan || !perAnak) {
-      elSubPerAnak.style.display = "none";
-    } else {
-      elSubPerAnak.style.display = "";
-      if (elLabelPerAnak) elLabelPerAnak.textContent = rataRata ? "Target per Anak (rata-rata)" : "Target per Anak";
-      elTargetPerAnak.textContent = formatRupiahHub(perAnak) + (d.jumlahAnak ? " \u00b7 " + d.jumlahAnak + " anak" : "");
-    }
-  }
-
-  // 🏁 Tingkat santunan tercapai (donasi + tambahan YGMP)
-  const elTingkatVal = document.getElementById("summaryTingkatValue");
-  const elTingkatDetail = document.getElementById("summaryTingkatDetail");
-  const elTingkatIconWrap = document.getElementById("summaryTingkatIconWrap");
-  const elTingkatIcon = document.getElementById("summaryTingkatIcon");
-  if (elSubTingkat && elTingkatVal) {
-    if (!d.santunanDitemukan || !d.jumlahAnak) {
-      elSubTingkat.style.display = "none";
-    } else {
-      const t = hitungTingkatSantunan_(d.totalDonasi, d.jumlahAnak);
-      elSubTingkat.style.display = "";
-      if (t.tercapai > 0) {
-        elTingkatVal.textContent = formatRupiahHub(t.tercapai) + "/anak \u2713 siap disalurkan";
-        elTingkatVal.style.color = "#22C55E";
-        if (elTingkatIcon) elTingkatIcon.textContent = "check_circle";
-        if (elTingkatIconWrap) { elTingkatIconWrap.style.background = "rgba(34,197,94,0.18)"; elTingkatIconWrap.style.color = "#22C55E"; }
-      } else {
-        elTingkatVal.textContent = "Belum ada tingkat tercapai";
-        elTingkatVal.style.color = "var(--bento-amber)";
-        if (elTingkatIcon) elTingkatIcon.textContent = "flag";
-        if (elTingkatIconWrap) { elTingkatIconWrap.style.background = "rgba(var(--bento-primary-rgb),0.18)"; elTingkatIconWrap.style.color = "var(--bento-primary)"; }
-      }
-      if (elTingkatDetail) {
-        let teks = "Donasi " + formatRupiahHub(t.donasi) + " + YGMP " + formatRupiahHub(t.ygmp) + " = " + formatRupiahHub(t.efektif);
-        if (t.berikutnya !== null) teks += " \u00b7 " + formatRupiahHub(t.berikutnya) + "/anak: kurang donasi " + formatRupiahHub(t.kurangDonasi);
-        elTingkatDetail.textContent = teks;
-      }
-    }
-  }
-
 
 
   // 📊 Progress bar "Terkumpul X% dari kebutuhan" -- ringkasan visual
@@ -6146,15 +6027,15 @@ function renderSummaryCardBeranda_() {
       elProgressWrap.style.display = "none";
     } else {
       elProgressWrap.style.display = "";
-      const pct = Math.max(0, Math.min(100, Math.round((danaEfektif / d.totalSantunanDiperlukan) * 100)));
+      const pct = Math.max(0, Math.min(100, Math.round((d.totalDonasi / d.totalSantunanDiperlukan) * 100)));
       if (elProgressFill) {
         elProgressFill.style.width = pct + "%";
         elProgressFill.classList.toggle("progress-urgent-low", pct < 50);
       }
       if (elProgressPct) elProgressPct.textContent = pct + "%";
       if (elProgressSisa) {
-        elProgressSisa.textContent = kekuranganEfektif > 0
-          ? "Kurang " + formatRupiahHub(kekuranganEfektif)
+        elProgressSisa.textContent = d.kekuranganSantunan > 0
+          ? "Kurang " + formatRupiahHub(d.kekuranganSantunan)
           : "Tercapai";
       }
     }
@@ -6605,9 +6486,6 @@ function loadBerandaStats() {
           totalSantunanDiperlukan: totalSantunanDiperlukan,
           kekuranganSantunan: kekuranganSantunan,
           santunanDitemukan: santunan.ditemukan,
-          // 🆕 Target santunan per anak (kartu ringkasan Beranda)
-          jumlahAnak: Number(santunan.jumlahAnakYatim || 0),
-          ratePokokWilayah: (santunan.rincianWilayah || []).map(function (w) { return Number(w.ratePokok || 0); }),
           totalDonasi: totalDonasi,
           // 🆕 periode aktif (bulan/tahun) yang BENERAN dipakai buat hitung
           // angka-angka di atas -- dikirim backend lewat r.bulan/r.tahun
