@@ -3435,6 +3435,7 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
       <div class="summary-sub-text">
         <div class="summary-sub-label" id="summaryLabelDonasi">Total Donasi</div>
         <div id="summaryDonasiSyncText" style="font-size:10.5px; color:rgba(255,255,255,0.55); margin-top:1px;"></div>
+        <div id="summaryDonasiSaldoText" style="display:none; font-size:10.5px; color:rgba(255,255,255,0.55); margin-top:1px;"></div>
         <div class="summary-sub-value" id="summaryTotalDonasi" style="color: var(--bento-primary);"><span class="kv-loading">...</span></div>
       </div>
     </div>
@@ -6017,6 +6018,18 @@ function renderSummaryCardBeranda_() {
 
   if (elTotalDonasi) animateRupiahValue_(elTotalDonasi, d.totalDonasi);
 
+  // Keterangan saldo bawaan (mis. "Termasuk saldo Oktober Rp41.000.000")
+  const elSaldoText = document.getElementById("summaryDonasiSaldoText");
+  if (elSaldoText) {
+    if (d.saldoBawaan > 0) {
+      const bulanLalu = d.periodeBulan > 1 ? d.periodeBulan - 1 : 12;
+      elSaldoText.textContent = "Termasuk saldo " + NAMA_BULAN_ID_JS_[bulanLalu] + " " + formatRupiahHub(d.saldoBawaan);
+      elSaldoText.style.display = "";
+    } else {
+      elSaldoText.style.display = "none";
+    }
+  }
+
 
 
   // 📊 Progress bar "Terkumpul X% dari kebutuhan" -- ringkasan visual
@@ -6476,8 +6489,14 @@ function loadBerandaStats() {
         const realisasiDonasiGopay = Number((kitabisa && kitabisa.totalRealisasi) || 0);
         const realisasiMidtrans = Number((midtrans && midtrans.totalRealisasi) || 0);
         const saldoSebelumBulanIni = Number(r.saldoSebelumBulanIni || 0);
-        // Total Donasi = donasi baru bulan ini SAJA (saldo bulan-bulan sebelumnya TIDAK dihitung & TIDAK ditampilkan).
-        const totalDonasi = realisasiLapangan + realisasiDonasiGopay + realisasiMidtrans;
+        // Total Donasi = donasi baru bulan ini + SISA SALDO bulan-bulan sebelumnya
+        // (carry-over). Saldo = donasi masuk dikurangi santunan yang sudah
+        // disalurkan, jadi kalau bulan lalu tidak ada santunan, seluruh saldonya
+        // ikut tampil di bulan ini; kalau sudah disalurkan, yang terbawa cuma
+        // sisanya. Saldo NEGATIF (defisit) tidak ikut dihitung.
+        const donasiBaruBulanIni = realisasiLapangan + realisasiDonasiGopay + realisasiMidtrans;
+        const saldoBawaan = Math.max(0, saldoSebelumBulanIni);
+        const totalDonasi = donasiBaruBulanIni + saldoBawaan;
 
         const totalSantunanDiperlukan = santunan.ditemukan ? Number(santunan.totalPenyaluran || 0) : 0;
         const kekuranganSantunan = santunan.ditemukan ? Math.max(0, totalSantunanDiperlukan - totalDonasi) : 0;
@@ -6487,6 +6506,8 @@ function loadBerandaStats() {
           kekuranganSantunan: kekuranganSantunan,
           santunanDitemukan: santunan.ditemukan,
           totalDonasi: totalDonasi,
+          donasiBaruBulanIni: donasiBaruBulanIni,
+          saldoBawaan: saldoBawaan,
           // 🆕 periode aktif (bulan/tahun) yang BENERAN dipakai buat hitung
           // angka-angka di atas -- dikirim backend lewat r.bulan/r.tahun
           // (lihat getRingkasanKeuangan di Code_Hub.gs), dipakai buat chip
