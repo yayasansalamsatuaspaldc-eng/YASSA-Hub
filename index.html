@@ -9703,6 +9703,28 @@ function renderContent() {
         <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
       </button>
 
+      <button onclick="bukaKodeAbsen()" style="width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; background: var(--glass-strong); border-radius: 20px; padding: 14px 16px; margin: -12px 0 24px; border: 1px solid var(--glass-border); border-left: 4px solid #22C55E; cursor: pointer; color: inherit; font: inherit;">
+        <div style="width: 34px; height: 34px; border-radius: 11px; background: rgba(34,197,94,0.15); color: #22C55E; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <span class="material-symbols-outlined" style="font-size: 19px;">qr_code_2</span>
+        </div>
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-size: 12.5px; font-weight: 600;">Kode Absen</div>
+          <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">Tunjukkan QR / barcode ke admin saat pertemuan</div>
+        </div>
+        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
+      </button>${(currentUser.role === "SUPERADMIN" || currentUser.role === "ADMIN") ? `
+
+      <button onclick="bukaScanAbsen()" style="width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; background: var(--glass-strong); border-radius: 20px; padding: 14px 16px; margin: -12px 0 24px; border: 1px solid var(--glass-border); border-left: 4px solid #22D3EE; cursor: pointer; color: inherit; font: inherit;">
+        <div style="width: 34px; height: 34px; border-radius: 11px; background: rgba(34,211,238,0.15); color: #22D3EE; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <span class="material-symbols-outlined" style="font-size: 19px;">qr_code_scanner</span>
+        </div>
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-size: 12.5px; font-weight: 600;">Scan Absen</div>
+          <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">Admin: scan QR / barcode pengurus untuk absen</div>
+        </div>
+        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
+      </button>` : ""}
+
       <div class="profil-dedikasi-section">
       <h3 style="font-weight: 600; font-size: 14px; margin-bottom: 12px; padding: 0 4px;">Dedikasi</h3>
       <div id="profilDedikasiTourTarget" style="background: var(--glass-strong); border-radius: 20px; padding: 18px; margin-bottom: 24px; border: 1px solid var(--glass-border); border-left: 4px solid #F97316; display: flex; flex-direction: column; gap: 20px;">
@@ -18586,6 +18608,272 @@ bootApp();
 <!-- ============================================================ -->
 <!-- POPUP GAMBAR PEMBUKA (tampil sekali saja saat pertama buka)  -->
 <!-- ============================================================ -->
+<!-- ============================================================
+     📲 ABSEN LEWAT QR/BARCODE
+     - "Kode Absen"  : semua pengurus yang login -> tampil QR + barcode
+                       berisi kode pendek yang berlaku ±3 menit.
+     - "Scan Absen"  : khusus SUPERADMIN/ADMIN -> kamera membaca QR/barcode
+                       lalu mencatat kehadiran ke sheet ABSENSI.
+     Server: buatKodeAbsen, getKegiatanAktifUntukScan, catatAbsensiDariKode
+     (lihat Code.gs bagian "ABSENSI LEWAT SCAN QR/BARCODE").
+     ============================================================ -->
+<script>
+(function () {
+  // ---------- util ----------
+  function esc_(t) { return (typeof escapeHtmlHub === "function") ? escapeHtmlHub(t) : String(t == null ? "" : t).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
+  function buatOverlay_(id) {
+    const lama = document.getElementById(id); if (lama) lama.remove();
+    const el = document.createElement("div");
+    el.id = id;
+    el.style.cssText = "position:fixed; inset:0; z-index:5000; overflow-y:auto; -webkit-overflow-scrolling:touch; font-family:inherit;";
+    document.body.appendChild(el);
+    return el;
+  }
+  function bunyi_(ok) {
+    try { if (navigator.vibrate) navigator.vibrate(ok ? 80 : [60, 40, 60]); } catch (e) {}
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext; if (!Ctx) return;
+      const c = new Ctx(), o = c.createOscillator(), g = c.createGain();
+      o.type = "sine"; o.frequency.value = ok ? 880 : 300; g.gain.value = 0.08;
+      o.connect(g); g.connect(c.destination); o.start();
+      setTimeout(function () { o.stop(); c.close(); }, ok ? 140 : 260);
+    } catch (e) {}
+  }
+
+  // =====================================================
+  // 1) KODE ABSEN SAYA (semua pengurus)
+  // =====================================================
+  let kodeTimer_ = null, kodeSisa_ = 0;
+
+  window.tutupKodeAbsen = function () {
+    if (kodeTimer_) { clearInterval(kodeTimer_); kodeTimer_ = null; }
+    const el = document.getElementById("absenKodeOverlay"); if (el) el.remove();
+  };
+
+  window.bukaKodeAbsen = function () {
+    const el = buatOverlay_("absenKodeOverlay");
+    el.style.background = "linear-gradient(180deg,#16A34A,#0F5132)";
+    el.innerHTML =
+      '<div style="max-width:440px; margin:0 auto; padding:calc(env(safe-area-inset-top,0px) + 16px) 18px 28px;">' +
+        '<button onclick="tutupKodeAbsen()" aria-label="Tutup" style="background:rgba(255,255,255,.18); border:none; color:#fff; width:40px; height:40px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;"><span class="material-symbols-outlined">close</span></button>' +
+        '<p style="color:#fff; font-weight:700; font-size:14.5px; line-height:1.45; text-align:center; margin:18px 8px 16px;">Tunjukkan salah satu kode di bawah ini ke admin untuk mencatat kehadiran Anda.</p>' +
+        '<div style="background:#fff; border-radius:18px; padding:18px 16px 16px; color:#111827; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,.25);">' +
+          '<div style="font-size:15px; font-weight:800;">' + esc_(currentUser.nama || "") + '</div>' +
+          '<div style="font-size:11.5px; color:#6B7280; margin:2px 0 14px;">' + esc_(currentUser.jabatan || "") + '</div>' +
+          '<div id="absenKodeBarcodeBox" style="min-height:70px; display:flex; align-items:center; justify-content:center;"></div>' +
+          '<div style="border-top:1.5px dashed #D1D5DB; margin:14px 0;"></div>' +
+          '<div id="absenKodeQrBox" style="min-height:240px; display:flex; align-items:center; justify-content:center;"><span style="color:#6B7280; font-size:13px;">Menyiapkan kode…</span></div>' +
+          '<div id="absenKodeTeks" style="font-size:22px; font-weight:800; letter-spacing:3px; margin-top:10px; font-family:ui-monospace,Menlo,monospace;">&nbsp;</div>' +
+          '<div id="absenKodeSisa" style="font-size:12px; color:#6B7280; margin-top:4px;">&nbsp;</div>' +
+        '</div>' +
+        '<button onclick="muatKodeAbsen_()" style="margin:16px auto 0; display:flex; align-items:center; gap:6px; background:rgba(255,255,255,.18); color:#fff; border:none; border-radius:12px; padding:10px 18px; font-weight:700; font-size:13px; cursor:pointer;"><span class="material-symbols-outlined" style="font-size:18px;">refresh</span>Perbarui kode</button>' +
+        '<p style="color:rgba(255,255,255,.8); font-size:11.5px; text-align:center; margin:14px 10px 0; line-height:1.4;">Kode berganti otomatis tiap beberapa menit, jadi tangkapan layar lama tidak berlaku. Pastikan layar HP cukup terang.</p>' +
+      '</div>';
+    window.muatKodeAbsen_();
+  };
+
+  window.muatKodeAbsen_ = function () {
+    if (!document.getElementById("absenKodeOverlay")) return;
+    const teksEl = document.getElementById("absenKodeTeks");
+    callGAS("buatKodeAbsen", [authToken]).then(function (res) {
+      if (!document.getElementById("absenKodeOverlay")) return;
+      const kode = res.kode;
+      const qrUrl = "https://quickchart.io/qr?size=420&margin=1&ecLevel=M&text=" + encodeURIComponent(res.qrTeks);
+      const bcUrl = "https://quickchart.io/barcode?type=code128&text=" + encodeURIComponent(kode) + "&width=640&height=150&includeText=false";
+      document.getElementById("absenKodeQrBox").innerHTML = '<img src="' + qrUrl + '" alt="QR Absen" style="width:100%; max-width:260px; display:block;">';
+      document.getElementById("absenKodeBarcodeBox").innerHTML = '<img src="' + bcUrl + '" alt="Barcode Absen" style="width:100%; max-width:320px; height:70px; object-fit:fill; display:block;" onerror="this.parentElement.style.display=\'none\'">';
+      teksEl.textContent = kode.slice(0, 5) + " " + kode.slice(5);
+      kodeSisa_ = res.berlakuDetik || 180;
+      if (kodeTimer_) clearInterval(kodeTimer_);
+      kodeTimer_ = setInterval(function () {
+        if (!document.getElementById("absenKodeOverlay")) { clearInterval(kodeTimer_); kodeTimer_ = null; return; }
+        kodeSisa_--;
+        const s = document.getElementById("absenKodeSisa");
+        if (s) s.textContent = "Berlaku " + Math.floor(Math.max(kodeSisa_, 0) / 60) + ":" + ("0" + Math.max(kodeSisa_, 0) % 60).slice(-2);
+        if (kodeSisa_ <= 15) window.muatKodeAbsen_(); // ganti kode sebelum kedaluwarsa
+      }, 1000);
+    }).catch(function (err) {
+      if (teksEl) teksEl.innerHTML = '<span style="color:#B91C1C; font-size:13px; letter-spacing:0; font-family:inherit;">' + esc_(err.message || "Gagal memuat kode") + '</span>';
+      const q = document.getElementById("absenKodeQrBox"); if (q) q.innerHTML = "";
+    });
+  };
+
+  // =====================================================
+  // 2) SCAN ABSEN (khusus SUPERADMIN / ADMIN)
+  // =====================================================
+  const S = { stream: null, detector: null, jsqr: false, loop: null, sibuk: false, lastRaw: "", lastAt: 0, kegiatan: [], jumlah: 0, canvas: null };
+
+  window.tutupScanAbsen = function () {
+    if (S.loop) { clearTimeout(S.loop); S.loop = null; }
+    if (S.stream) { S.stream.getTracks().forEach(function (t) { t.stop(); }); S.stream = null; }
+    S.sibuk = false; S.detector = null;
+    const el = document.getElementById("absenScanOverlay"); if (el) el.remove();
+  };
+
+  function tampilHasil_(tipe, judul, sub) {
+    const box = document.getElementById("absenScanHasil"); if (!box) return;
+    const w = { ok: ["#DCFCE7", "#166534", "check_circle"], dup: ["#FEF3C7", "#92400E", "info"], err: ["#FEE2E2", "#991B1B", "error"] }[tipe];
+    box.innerHTML = '<div style="display:flex; gap:10px; align-items:center; background:' + w[0] + '; color:' + w[1] + '; border-radius:14px; padding:12px 14px;">' +
+      '<span class="material-symbols-outlined" style="font-size:26px;">' + w[2] + '</span>' +
+      '<div style="min-width:0;"><div style="font-weight:800; font-size:14px;">' + esc_(judul) + '</div>' +
+      (sub ? '<div style="font-size:12px; opacity:.9; margin-top:2px;">' + esc_(sub) + '</div>' : '') + '</div></div>';
+  }
+
+  function kegiatanDipilih_() {
+    const sel = document.getElementById("absenScanKegiatan");
+    return sel && sel.value ? sel.value : "";
+  }
+
+  function proses_(raw, dariKamera) {
+    raw = String(raw || "").trim();
+    if (!raw || S.sibuk) return;
+    const now = Date.now();
+    if (dariKamera && raw === S.lastRaw && now - S.lastAt < 6000) return; // kode yang sama masih di depan kamera
+    S.lastRaw = raw; S.lastAt = now; S.sibuk = true;
+    const frame = document.getElementById("absenScanFrame"); if (frame) frame.style.borderColor = "#FACC15";
+    tampilHasil_("dup", "Memproses…", "");
+
+    callGAS("catatAbsensiDariKode", [authToken, raw, kegiatanDipilih_()]).then(function (res) {
+      if (res.status === "OK") {
+        S.jumlah++; bunyi_(true);
+        tampilHasil_("ok", res.nama + " — hadir", (res.jabatan ? res.jabatan + " · " : "") + res.wilayah + " · " + res.jam);
+        tambahRiwayat_(res.nama, res.jam, true);
+        if (frame) frame.style.borderColor = "#22C55E";
+      } else {
+        bunyi_(false);
+        tampilHasil_("dup", res.nama + " sudah tercatat", "Kegiatan: " + res.kegiatan);
+        if (frame) frame.style.borderColor = "#F59E0B";
+      }
+      const c = document.getElementById("absenScanJumlah"); if (c) c.textContent = S.jumlah;
+    }).catch(function (err) {
+      bunyi_(false);
+      tampilHasil_("err", err.message || "Gagal mencatat", "");
+      if (frame) frame.style.borderColor = "#EF4444";
+    }).finally(function () {
+      S.sibuk = false;
+      setTimeout(function () { const f = document.getElementById("absenScanFrame"); if (f) f.style.borderColor = "rgba(255,255,255,.7)"; }, 1500);
+    });
+  }
+
+  function tambahRiwayat_(nama, jam, ok) {
+    const l = document.getElementById("absenScanRiwayat"); if (!l) return;
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex; justify-content:space-between; font-size:12.5px; padding:7px 2px; border-bottom:1px solid rgba(255,255,255,.1);";
+    row.innerHTML = '<span>' + esc_(nama) + '</span><span style="opacity:.7;">' + esc_(jam) + '</span>';
+    l.insertBefore(row, l.firstChild);
+  }
+
+  function muatJsQr_() {
+    return new Promise(function (resolve, reject) {
+      if (window.jsQR) return resolve();
+      const s = document.createElement("script");
+      s.src = "https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js";
+      s.onload = function () { resolve(); };
+      s.onerror = function () { reject(new Error("Pembaca QR tidak bisa dimuat (cek internet).")); };
+      document.head.appendChild(s);
+    });
+  }
+
+  function mulaiLoop_() {
+    const video = document.getElementById("absenScanVideo");
+    function tik() {
+      if (!document.getElementById("absenScanOverlay")) return;
+      S.loop = setTimeout(tik, 220);
+      if (S.sibuk || !video || !video.videoWidth) return;
+      if (S.detector) {
+        S.detector.detect(video).then(function (codes) { if (codes && codes.length) proses_(codes[0].rawValue, true); }).catch(function () {});
+      } else if (S.jsqr && window.jsQR) {
+        const w = Math.min(640, video.videoWidth), h = Math.round(video.videoHeight * (w / video.videoWidth));
+        if (!S.canvas) S.canvas = document.createElement("canvas");
+        S.canvas.width = w; S.canvas.height = h;
+        const ctx = S.canvas.getContext("2d", { willReadFrequently: true });
+        ctx.drawImage(video, 0, 0, w, h);
+        const img = ctx.getImageData(0, 0, w, h);
+        const hasil = window.jsQR(img.data, w, h, { inversionAttempts: "dontInvert" });
+        if (hasil && hasil.data) proses_(hasil.data, true);
+      }
+    }
+    tik();
+  }
+
+  async function mulaiKamera_() {
+    const info = document.getElementById("absenScanInfo");
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error("Browser ini tidak mendukung kamera.");
+      S.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
+      const video = document.getElementById("absenScanVideo");
+      video.srcObject = S.stream; video.setAttribute("playsinline", "true"); video.muted = true;
+      await video.play();
+      if ("BarcodeDetector" in window) {
+        try { S.detector = new BarcodeDetector({ formats: ["qr_code", "code_128"] }); }
+        catch (e) { try { S.detector = new BarcodeDetector({ formats: ["qr_code"] }); } catch (e2) { S.detector = null; } }
+      }
+      if (!S.detector) { await muatJsQr_(); S.jsqr = true; }
+      if (info) info.textContent = "Arahkan kamera ke QR / barcode di HP pengurus.";
+      mulaiLoop_();
+    } catch (err) {
+      if (info) info.innerHTML = '<span style="color:#FCA5A5;">Kamera tidak bisa dipakai: ' + esc_(err.message || err.name) + '. Izinkan akses kamera di browser, atau ketik kodenya manual di bawah.</span>';
+    }
+  }
+
+  window.muatKegiatanScan_ = function () {
+    const slot = document.getElementById("absenScanKegiatanBox"); if (!slot) return;
+    slot.innerHTML = '<span style="opacity:.8; font-size:12.5px;">Memuat kegiatan aktif…</span>';
+    callGAS("getKegiatanAktifUntukScan", [authToken]).then(function (list) {
+      S.kegiatan = list || [];
+      if (!S.kegiatan.length) {
+        slot.innerHTML = '<div style="background:#7F1D1D; color:#FECACA; border-radius:12px; padding:10px 12px; font-size:12.5px;">Belum ada kegiatan berstatus <b>Aktif</b> di sheet KEGIATAN. Aktifkan kegiatannya dulu, lalu <a href="#" onclick="muatKegiatanScan_(); return false;" style="color:#fff; font-weight:700;">muat ulang</a>.</div>';
+      } else if (S.kegiatan.length === 1) {
+        slot.innerHTML = '<div style="font-size:11px; opacity:.7;">Kegiatan</div><div style="font-weight:800; font-size:14.5px;">' + esc_(S.kegiatan[0].nama) + '</div><input type="hidden" id="absenScanKegiatan" value="' + esc_(S.kegiatan[0].nama) + '">';
+      } else {
+        slot.innerHTML = '<div style="font-size:11px; opacity:.7; margin-bottom:4px;">Pilih kegiatan</div><select id="absenScanKegiatan" style="width:100%; padding:10px; border-radius:10px; border:none; font-size:14px; font-weight:700;">' +
+          S.kegiatan.map(function (k) { return '<option value="' + esc_(k.nama) + '">' + esc_(k.nama) + '</option>'; }).join("") + '</select>';
+      }
+    }).catch(function (err) {
+      slot.innerHTML = '<div style="color:#FCA5A5; font-size:12.5px;">' + esc_(err.message || "Gagal memuat kegiatan") + '</div>';
+    });
+  };
+
+  window.catatKodeManual_ = function () {
+    const inp = document.getElementById("absenScanManual"); if (!inp) return;
+    const v = inp.value; inp.value = "";
+    if (!String(v).trim()) return;
+    proses_(v, false);
+  };
+
+  window.bukaScanAbsen = function () {
+    const role = String((currentUser && currentUser.role) || "").toUpperCase();
+    if (role !== "SUPERADMIN" && role !== "ADMIN") { showModal("Tidak diizinkan", "Fitur scan absen hanya untuk Admin."); return; }
+    window.tutupScanAbsen();
+    S.jumlah = 0; S.lastRaw = ""; S.lastAt = 0; S.sibuk = false; S.jsqr = false;
+    const el = buatOverlay_("absenScanOverlay");
+    el.style.background = "#0B101E"; el.style.color = "#fff";
+    el.innerHTML =
+      '<div style="max-width:460px; margin:0 auto; padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 28px;">' +
+        '<div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">' +
+          '<button onclick="tutupScanAbsen()" aria-label="Tutup" style="background:rgba(255,255,255,.12); border:none; color:#fff; width:40px; height:40px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;"><span class="material-symbols-outlined">close</span></button>' +
+          '<div style="flex:1; font-weight:800; font-size:16px;">Scan Absen</div>' +
+          '<div style="text-align:right; font-size:11px; opacity:.8;">Hadir sesi ini<div id="absenScanJumlah" style="font-size:18px; font-weight:800; opacity:1;">0</div></div>' +
+        '</div>' +
+        '<div id="absenScanKegiatanBox" style="background:rgba(255,255,255,.07); border-radius:14px; padding:10px 14px; margin-bottom:12px;"></div>' +
+        '<div id="absenScanFrame" style="position:relative; border:4px solid rgba(255,255,255,.7); border-radius:20px; overflow:hidden; background:#000; aspect-ratio:1/1; transition:border-color .2s;">' +
+          '<video id="absenScanVideo" style="width:100%; height:100%; object-fit:cover; display:block;" muted playsinline></video>' +
+        '</div>' +
+        '<div id="absenScanInfo" style="font-size:12px; opacity:.85; text-align:center; margin:10px 0;">Membuka kamera…</div>' +
+        '<div id="absenScanHasil" style="min-height:58px; margin-bottom:12px;"></div>' +
+        '<div style="display:flex; gap:8px; margin-bottom:14px;">' +
+          '<input id="absenScanManual" type="text" autocapitalize="characters" autocomplete="off" placeholder="Ketik kode (10 karakter)" onkeydown="if(event.key===\'Enter\'){catatKodeManual_();}" style="flex:1; min-width:0; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.08); color:#fff; font-size:14px; letter-spacing:1px; text-transform:uppercase;">' +
+          '<button onclick="catatKodeManual_()" style="background:#22C55E; color:#04210F; border:none; border-radius:12px; padding:0 18px; font-weight:800; cursor:pointer;">Catat</button>' +
+        '</div>' +
+        '<div style="font-size:11px; opacity:.6; margin-bottom:4px;">Tercatat di sesi ini</div>' +
+        '<div id="absenScanRiwayat"></div>' +
+      '</div>';
+    window.muatKegiatanScan_();
+    mulaiKamera_();
+  };
+})();
+</script>
+
 <script src="welcome-popup.js"></script>
 
 </body>
