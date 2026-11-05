@@ -18629,16 +18629,46 @@ bootApp();
     document.body.appendChild(el);
     return el;
   }
-  function bunyi_(ok) {
-    try { if (navigator.vibrate) navigator.vibrate(ok ? 80 : [60, 40, 60]); } catch (e) {}
+  // Audio dibuat SEKALI dari sentuhan user (buka Scan Absen / tekan tombol) -- HP memblokir
+  // suara yang dibuat tanpa sentuhan, makanya bunyi sebelumnya tidak keluar.
+  let audioCtx_ = null;
+  function siapkanAudio_() {
     try {
       const Ctx = window.AudioContext || window.webkitAudioContext; if (!Ctx) return;
-      const c = new Ctx(), o = c.createOscillator(), g = c.createGain();
-      o.type = "sine"; o.frequency.value = ok ? 880 : 300; g.gain.value = 0.08;
-      o.connect(g); g.connect(c.destination); o.start();
-      setTimeout(function () { o.stop(); c.close(); }, ok ? 140 : 260);
+      if (!audioCtx_) audioCtx_ = new Ctx();
+      if (audioCtx_.state === "suspended") audioCtx_.resume();
+      const o = audioCtx_.createOscillator(), g = audioCtx_.createGain();
+      g.gain.value = 0.0001; o.connect(g); g.connect(audioCtx_.destination);
+      o.start(); o.stop(audioCtx_.currentTime + 0.02);
     } catch (e) {}
   }
+  // jenis: "baca" (kode terbaca) | "ok" (hadir tercatat) | "dup" (sudah tercatat) | "err" (gagal)
+  function bunyi_(jenis) {
+    const getar = { baca: 40, ok: [90, 40, 90], dup: [60, 60, 60], err: [180, 70, 180] }[jenis];
+    try { if (navigator.vibrate) navigator.vibrate(getar); } catch (e) {}
+    try {
+      siapkanAudio_();
+      const c = audioCtx_; if (!c) return;
+      const pola = {
+        baca: [[1500, 0, 0.08]],
+        ok:   [[880, 0, 0.12], [1320, 0.15, 0.25]],
+        dup:  [[700, 0, 0.12], [700, 0.2, 0.12]],
+        err:  [[200, 0, 0.4]]
+      }[jenis];
+      const t0 = c.currentTime;
+      pola.forEach(function (n) {
+        const o = c.createOscillator(), g = c.createGain();
+        o.type = jenis === "err" ? "sawtooth" : "triangle";
+        o.frequency.value = n[0];
+        g.gain.setValueAtTime(0.0001, t0 + n[1]);
+        g.gain.exponentialRampToValueAtTime(0.5, t0 + n[1] + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + n[1] + n[2]);
+        o.connect(g); g.connect(c.destination);
+        o.start(t0 + n[1]); o.stop(t0 + n[1] + n[2] + 0.02);
+      });
+    } catch (e) {}
+  }
+  window.tesSuaraScan_ = function () { siapkanAudio_(); bunyi_("ok"); };
 
   // =====================================================
   // 1) KODE ABSEN SAYA (semua pengurus)
@@ -18712,11 +18742,33 @@ bootApp();
 
   function tampilHasil_(tipe, judul, sub) {
     const box = document.getElementById("absenScanHasil"); if (!box) return;
-    const w = { ok: ["#DCFCE7", "#166534", "check_circle"], dup: ["#FEF3C7", "#92400E", "info"], err: ["#FEE2E2", "#991B1B", "error"] }[tipe];
-    box.innerHTML = '<div style="display:flex; gap:10px; align-items:center; background:' + w[0] + '; color:' + w[1] + '; border-radius:14px; padding:12px 14px;">' +
-      '<span class="material-symbols-outlined" style="font-size:26px;">' + w[2] + '</span>' +
+    const w = { load: ["#E0F2FE", "#075985", ""], ok: ["#DCFCE7", "#166534", "check_circle"], dup: ["#FEF3C7", "#92400E", "info"], err: ["#FEE2E2", "#991B1B", "error"] }[tipe];
+    const ikon = tipe === "load" ? '<span class="absen-spin"></span>' : '<span class="material-symbols-outlined" style="font-size:26px;">' + w[2] + '</span>';
+    box.innerHTML = '<div style="display:flex; gap:10px; align-items:center; background:' + w[0] + '; color:' + w[1] + '; border-radius:14px; padding:12px 14px;">' + ikon +
       '<div style="min-width:0;"><div style="font-weight:800; font-size:14px;">' + esc_(judul) + '</div>' +
       (sub ? '<div style="font-size:12px; opacity:.9; margin-top:2px;">' + esc_(sub) + '</div>' : '') + '</div></div>';
+  }
+
+  // Tanda di dalam bingkai kamera: garis pindai, chip status, warna bingkai, kilat hijau saat terbaca.
+  function setFrameState_(state) {
+    const frame = document.getElementById("absenScanFrame"), chip = document.getElementById("absenScanChip"), line = document.getElementById("absenScanLine");
+    if (!frame || !chip) return;
+    const m = {
+      kamera: ["Membuka kamera…", "#94A3B8", "rgba(255,255,255,.7)", false],
+      cari:   ["Mencari kode…", "#22D3EE", "rgba(34,211,238,.9)", true],
+      proses: ["Terbaca — memproses…", "#FACC15", "#FACC15", false],
+      ok:     ["✓ Hadir tercatat", "#22C55E", "#22C55E", false],
+      dup:    ["Sudah tercatat", "#F59E0B", "#F59E0B", false],
+      err:    ["✕ Gagal", "#EF4444", "#EF4444", false],
+      mati:   ["Kamera tidak aktif", "#EF4444", "rgba(239,68,68,.8)", false]
+    }[state];
+    chip.innerHTML = '<span style="width:8px; height:8px; border-radius:50%; background:' + m[1] + ';' + (state === "cari" ? ' animation:absenPulse 1s infinite;' : '') + '"></span>' + m[0];
+    frame.style.borderColor = m[2];
+    if (line) line.style.display = m[3] ? "block" : "none";
+  }
+  function kilat_() {
+    const f = document.getElementById("absenScanFlash"); if (!f) return;
+    f.style.animation = "none"; void f.offsetWidth; f.style.animation = "absenFlash .55s ease-out";
   }
 
   function kegiatanDipilih_() {
@@ -18730,28 +18782,32 @@ bootApp();
     const now = Date.now();
     if (dariKamera && raw === S.lastRaw && now - S.lastAt < 6000) return; // kode yang sama masih di depan kamera
     S.lastRaw = raw; S.lastAt = now; S.sibuk = true;
-    const frame = document.getElementById("absenScanFrame"); if (frame) frame.style.borderColor = "#FACC15";
-    tampilHasil_("dup", "Memproses…", "");
 
-    callGAS("catatAbsensiDariKode", [authToken, raw, kegiatanDipilih_()]).then(function (res) {
+    // Langsung kasih tanda "terbaca": bunyi pendek + getar + kilat hijau + status di bingkai.
+    bunyi_("baca"); kilat_(); setFrameState_("proses");
+    tampilHasil_("load", "Memproses…", "Mencatat kehadiran, mohon tunggu");
+
+    // callGAS tidak punya batas waktu; tanpa ini layar bisa macet di "Memproses…" kalau sinyal jelek.
+    const batas = new Promise(function (_, tolak) {
+      setTimeout(function () { tolak(new Error("Server lambat merespons. Cek sinyal lalu scan ulang (kalau sudah tercatat, akan muncul \"sudah tercatat\").")); }, 25000);
+    });
+
+    Promise.race([callGAS("catatAbsensiDariKode", [authToken, raw, kegiatanDipilih_()]), batas]).then(function (res) {
       if (res.status === "OK") {
-        S.jumlah++; bunyi_(true);
+        S.jumlah++; bunyi_("ok"); kilat_(); setFrameState_("ok");
         tampilHasil_("ok", res.nama + " — hadir", (res.jabatan ? res.jabatan + " · " : "") + res.wilayah + " · " + res.jam);
         tambahRiwayat_(res.nama, res.jam, true);
-        if (frame) frame.style.borderColor = "#22C55E";
       } else {
-        bunyi_(false);
+        bunyi_("dup"); setFrameState_("dup");
         tampilHasil_("dup", res.nama + " sudah tercatat", "Kegiatan: " + res.kegiatan);
-        if (frame) frame.style.borderColor = "#F59E0B";
       }
       const c = document.getElementById("absenScanJumlah"); if (c) c.textContent = S.jumlah;
     }).catch(function (err) {
-      bunyi_(false);
+      bunyi_("err"); setFrameState_("err");
       tampilHasil_("err", err.message || "Gagal mencatat", "");
-      if (frame) frame.style.borderColor = "#EF4444";
     }).finally(function () {
       S.sibuk = false;
-      setTimeout(function () { const f = document.getElementById("absenScanFrame"); if (f) f.style.borderColor = "rgba(255,255,255,.7)"; }, 1500);
+      setTimeout(function () { if (!S.sibuk && document.getElementById("absenScanOverlay") && S.stream) setFrameState_("cari"); }, 1800);
     });
   }
 
@@ -18810,8 +18866,10 @@ bootApp();
       }
       if (!S.detector) { await muatJsQr_(); S.jsqr = true; }
       if (info) info.textContent = "Arahkan kamera ke QR / barcode di HP pengurus.";
+      setFrameState_("cari");
       mulaiLoop_();
     } catch (err) {
+      setFrameState_("mati");
       if (info) info.innerHTML = '<span style="color:#FCA5A5;">Kamera tidak bisa dipakai: ' + esc_(err.message || err.name) + '. Izinkan akses kamera di browser, atau ketik kodenya manual di bawah.</span>';
     }
   }
@@ -18835,6 +18893,7 @@ bootApp();
   };
 
   window.catatKodeManual_ = function () {
+    siapkanAudio_();
     const inp = document.getElementById("absenScanManual"); if (!inp) return;
     const v = inp.value; inp.value = "";
     if (!String(v).trim()) return;
@@ -18846,7 +18905,22 @@ bootApp();
     if (role !== "SUPERADMIN" && role !== "ADMIN") { showModal("Tidak diizinkan", "Fitur scan absen hanya untuk Admin."); return; }
     window.tutupScanAbsen();
     S.jumlah = 0; S.lastRaw = ""; S.lastAt = 0; S.sibuk = false; S.jsqr = false;
+    siapkanAudio_(); // dipanggil dari sentuhan user -> audio boleh bunyi
+    if (!document.getElementById("absenScanStyle")) {
+      const st = document.createElement("style"); st.id = "absenScanStyle";
+      st.textContent =
+        "@keyframes absenLine{0%{top:10%}50%{top:88%}100%{top:10%}}" +
+        "@keyframes absenPulse{0%,100%{opacity:1}50%{opacity:.3}}" +
+        "@keyframes absenFlash{0%{opacity:.7}100%{opacity:0}}" +
+        "@keyframes absenSpin{to{transform:rotate(360deg)}}" +
+        ".absen-line{position:absolute;left:8%;right:8%;height:3px;border-radius:3px;background:linear-gradient(90deg,transparent,#22D3EE,transparent);box-shadow:0 0 14px #22D3EE;animation:absenLine 2.2s ease-in-out infinite;pointer-events:none}" +
+        ".absen-corner{position:absolute;width:34px;height:34px;border:4px solid #22D3EE;pointer-events:none}" +
+        ".absen-flash{position:absolute;inset:0;background:#22C55E;opacity:0;pointer-events:none}" +
+        ".absen-spin{width:24px;height:24px;border:3px solid rgba(7,89,133,.25);border-top-color:#075985;border-radius:50%;animation:absenSpin .8s linear infinite;flex-shrink:0}";
+      document.head.appendChild(st);
+    }
     const el = buatOverlay_("absenScanOverlay");
+    el.addEventListener("click", siapkanAudio_);
     el.style.background = "#0B101E"; el.style.color = "#fff";
     el.innerHTML =
       '<div style="max-width:460px; margin:0 auto; padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 28px;">' +
@@ -18858,8 +18932,16 @@ bootApp();
         '<div id="absenScanKegiatanBox" style="background:rgba(255,255,255,.07); border-radius:14px; padding:10px 14px; margin-bottom:12px;"></div>' +
         '<div id="absenScanFrame" style="position:relative; border:4px solid rgba(255,255,255,.7); border-radius:20px; overflow:hidden; background:#000; aspect-ratio:1/1; transition:border-color .2s;">' +
           '<video id="absenScanVideo" style="width:100%; height:100%; object-fit:cover; display:block;" muted playsinline></video>' +
+          '<div id="absenScanFlash" class="absen-flash"></div>' +
+          '<div class="absen-corner" style="top:12px; left:12px; border-right:none; border-bottom:none; border-top-left-radius:12px;"></div>' +
+          '<div class="absen-corner" style="top:12px; right:12px; border-left:none; border-bottom:none; border-top-right-radius:12px;"></div>' +
+          '<div class="absen-corner" style="bottom:12px; left:12px; border-right:none; border-top:none; border-bottom-left-radius:12px;"></div>' +
+          '<div class="absen-corner" style="bottom:12px; right:12px; border-left:none; border-top:none; border-bottom-right-radius:12px;"></div>' +
+          '<div id="absenScanLine" class="absen-line" style="display:none;"></div>' +
+          '<div id="absenScanChip" style="position:absolute; top:14px; left:50%; transform:translateX(-50%); padding:5px 12px; border-radius:99px; background:rgba(0,0,0,.65); color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; gap:6px; white-space:nowrap;"></div>' +
         '</div>' +
-        '<div id="absenScanInfo" style="font-size:12px; opacity:.85; text-align:center; margin:10px 0;">Membuka kamera…</div>' +
+        '<div style="display:flex; align-items:center; justify-content:center; gap:10px; margin:10px 0;"><div id="absenScanInfo" style="font-size:12px; opacity:.85; text-align:center;">Membuka kamera…</div>' +
+          '<button onclick="tesSuaraScan_()" style="background:rgba(255,255,255,.12); border:none; color:#fff; border-radius:99px; padding:5px 10px; font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px; white-space:nowrap;"><span class="material-symbols-outlined" style="font-size:15px;">volume_up</span>Tes suara</button></div>' +
         '<div id="absenScanHasil" style="min-height:58px; margin-bottom:12px;"></div>' +
         '<div style="display:flex; gap:8px; margin-bottom:14px;">' +
           '<input id="absenScanManual" type="text" autocapitalize="characters" autocomplete="off" placeholder="Ketik kode (10 karakter)" onkeydown="if(event.key===\'Enter\'){catatKodeManual_();}" style="flex:1; min-width:0; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.08); color:#fff; font-size:14px; letter-spacing:1px; text-transform:uppercase;">' +
@@ -18868,6 +18950,7 @@ bootApp();
         '<div style="font-size:11px; opacity:.6; margin-bottom:4px;">Tercatat di sesi ini</div>' +
         '<div id="absenScanRiwayat"></div>' +
       '</div>';
+    setFrameState_("kamera");
     window.muatKegiatanScan_();
     mulaiKamera_();
   };
