@@ -1450,7 +1450,7 @@
   .wilayah-option-divider { height: 1px; background: var(--glass-border-strong); margin: 4px 2px; }
 
   .force-pw-overlay {
-    position: absolute; inset: 0; z-index: 1000; display: none;
+    position: fixed; inset: 0; z-index: 1000; display: none;
     background: rgba(15,23,42,.92); backdrop-filter: blur(8px);
     align-items: center; justify-content: center; padding: 20px;
   }
@@ -3315,6 +3315,47 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
   </div>
 </div>
 
+  <!-- Wajib Ganti Password (muncul kalau login masih pakai password bawaan) -->
+  <div class="force-pw-overlay" id="forcePwOverlay">
+    <div class="force-pw-sheet">
+      <div class="force-pw-title">Ganti Password Dulu, Yuk</div>
+      <div class="force-pw-desc">Akun ini masih pakai password bawaan. Demi keamanan, wajib ganti password dulu sebelum lanjut pakai YASSA GOPAY.</div>
+      <div id="forcePwError" class="login-error" style="display:none;"></div>
+      <form id="forcePwForm" onsubmit="submitForceChangePassword(event)">
+        <div class="user-form-field">
+          <label class="user-form-label">Password Lama (yang dipakai saat login)</label>
+          <div class="password-input-wrap">
+            <input type="password" id="fpOldPassword" class="user-form-input" placeholder="Password saat ini" required autocomplete="current-password">
+            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('fpOldPassword', this)" aria-label="Tampilkan/Sembunyikan Password">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+                <div class="user-form-field">
+          <label class="user-form-label">Password Baru</label>
+          <div class="password-input-wrap">
+            <input type="password" id="fpNewPassword" class="user-form-input" placeholder="Minimal 6 karakter" required autocomplete="new-password">
+            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('fpNewPassword', this)" aria-label="Tampilkan/Sembunyikan Password">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="user-form-field">
+          <label class="user-form-label">Ulangi Password Baru</label>
+          <div class="password-input-wrap">
+            <input type="password" id="fpConfirmPassword" class="user-form-input" placeholder="Ulangi password baru" required autocomplete="new-password">
+            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('fpConfirmPassword', this)" aria-label="Tampilkan/Sembunyikan Password">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="user-form-actions">
+          <button type="submit" class="btn-form-save" id="fpSaveBtn" style="flex:1;">Simpan & Lanjutkan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 <!-- Custom Modal Pengganti Alert/Confirm -- SENGAJA ditaruh di LUAR #app
      (sejajar dengan #loginScreen & #app), bukan di dalam #app seperti
      sebelumnya. Dulu div ini nyempil di dalam #app yang display:none
@@ -4421,37 +4462,6 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
     </div>
   </div>
 
-  <!-- Wajib Ganti Password (muncul kalau login masih pakai password bawaan) -->
-  <div class="force-pw-overlay" id="forcePwOverlay">
-    <div class="force-pw-sheet">
-      <div class="force-pw-title">Ganti Password Dulu, Yuk</div>
-      <div class="force-pw-desc">Akun ini masih pakai password bawaan. Demi keamanan, wajib ganti password dulu sebelum lanjut pakai YASSA GOPAY.</div>
-      <div id="forcePwError" class="login-error" style="display:none;"></div>
-      <form id="forcePwForm" onsubmit="submitForceChangePassword(event)">
-        <div class="user-form-field">
-          <label class="user-form-label">Password Baru</label>
-          <div class="password-input-wrap">
-            <input type="password" id="fpNewPassword" class="user-form-input" placeholder="Minimal 6 karakter" required autocomplete="new-password">
-            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('fpNewPassword', this)" aria-label="Tampilkan/Sembunyikan Password">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
-          </div>
-        </div>
-        <div class="user-form-field">
-          <label class="user-form-label">Ulangi Password Baru</label>
-          <div class="password-input-wrap">
-            <input type="password" id="fpConfirmPassword" class="user-form-input" placeholder="Ulangi password baru" required autocomplete="new-password">
-            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('fpConfirmPassword', this)" aria-label="Tampilkan/Sembunyikan Password">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
-          </div>
-        </div>
-        <div class="user-form-actions">
-          <button type="submit" class="btn-form-save" id="fpSaveBtn" style="flex:1;">Simpan & Lanjutkan</button>
-        </div>
-      </form>
-    </div>
-  </div>
 
   <!-- Input Bottom Sheet (Menu Tengah) -->
   <div class="user-form-overlay" id="inputOverlay" onclick="if(event.target===this) toggleInputSheet()" style="align-items: flex-end;">
@@ -5735,6 +5745,7 @@ function muatDanTampilkanPengumuman_() {
 function openForceChangePasswordModal() {
   document.getElementById("forcePwError").style.display = "none";
   document.getElementById("forcePwForm").reset();
+  document.getElementById("fpOldPassword").value = pendingOldPassword || "";
   document.getElementById("forcePwOverlay").classList.add("open");
 }
 
@@ -5743,11 +5754,18 @@ function submitForceChangePassword(event) {
   const errEl = document.getElementById("forcePwError");
   errEl.style.display = "none";
 
+  const oldPassword = document.getElementById("fpOldPassword").value;
   const newPassword = document.getElementById("fpNewPassword").value;
   const confirmPassword = document.getElementById("fpConfirmPassword").value;
 
-  if (newPassword.length < 10) {
-    errEl.textContent = "Password baru minimal 10 karakter.";
+  if (!oldPassword) {
+    errEl.textContent = "Isi password lama (password yang kamu pakai untuk login tadi).";
+    errEl.style.display = "block";
+    return;
+  }
+
+  if (newPassword.length < 6) {
+    errEl.textContent = "Password baru minimal 6 karakter.";
     errEl.style.display = "block";
     return;
   }
@@ -5761,7 +5779,7 @@ function submitForceChangePassword(event) {
   btn.disabled = true;
   btn.textContent = "Menyimpan...";
 
-  callGAS("changeOwnPassword", [authToken, pendingOldPassword, newPassword])
+  callGAS("changeOwnPassword", [authToken, oldPassword, newPassword])
     .then(function () {
       pendingOldPassword = null;
       document.getElementById("forcePwOverlay").classList.remove("open");
@@ -15054,8 +15072,8 @@ function submitChangePassword(event) {
   const newPassword = document.getElementById("cpNewPassword").value;
   const confirmPassword = document.getElementById("cpConfirmPassword").value;
 
-  if (newPassword.length < 10) {
-    errEl.textContent = "Password baru minimal 10 karakter.";
+  if (newPassword.length < 6) {
+    errEl.textContent = "Password baru minimal 6 karakter.";
     errEl.style.display = "block";
     return;
   }
@@ -16949,15 +16967,15 @@ function submitUserForm(event) {
 function resetUserPassword() {
   const inputId = "resetPasswordInputField";
   const messageHtml =
-    "Masukkan password baru buat <b>" + editingUserKey + "</b> (minimal 10 karakter):" +
+    "Masukkan password baru buat <b>" + editingUserKey + "</b> (minimal 6 karakter):" +
     '<br><input type="text" id="' + inputId + '" autocapitalize="off" autocorrect="off" spellcheck="false" ' +
     'style="width:100%;margin-top:10px;padding:10px;border-radius:6px;border:1px solid #ccc;box-sizing:border-box;" placeholder="Password baru">';
 
   showModal("Reset Password", messageHtml, true, function () {
     const inputEl = document.getElementById(inputId);
     const newPassword = inputEl ? inputEl.value : "";
-    if (!newPassword || newPassword.length < 10) {
-      showModal("Gagal", "Password minimal 10 karakter.");
+    if (!newPassword || newPassword.length < 6) {
+      showModal("Gagal", "Password minimal 6 karakter.");
       return;
     }
     callGASWithRetry_("resetPassword", [authToken, editingUserKey, newPassword])
