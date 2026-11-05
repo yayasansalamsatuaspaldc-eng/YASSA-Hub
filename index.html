@@ -4469,6 +4469,17 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
       <div style="width: 48px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 4px; margin: 0 auto 16px;"></div>
       <h3 style="text-align: center; font-size: 16px; font-weight: 700; margin-bottom: 16px;">Input Data</h3>
 
+      <!-- 📲 Scan Absen (QR/barcode pengurus) -- khusus SUPERADMIN/ADMIN, display diatur di toggleInputSheet(). -->
+      <button id="inputScanAbsenBtn" style="display:none; width: 100%; align-items: center; gap: 16px; background: var(--glass-strong); padding: 16px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 16px; cursor: pointer;" onclick="closeAllInputSheets_(); bukaScanAbsen();">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(34, 211, 238, 0.15); color: #22D3EE; display: flex; align-items: center; justify-content: center;">
+          <span class="material-symbols-outlined">qr_code_scanner</span>
+        </div>
+        <div style="text-align: left;">
+          <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Scan Absen</div>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Scan QR / barcode pengurus untuk kehadiran kegiatan</div>
+        </div>
+      </button>
+
       <!-- 🩹 FIX: jalan pintas "Tambah Bantuan Program BASO" dari sheet Input
            Data -- SEBELUMNYA cuma bisa lewat: Beranda > panel "Program BASO" >
            buka halaman penuh > baru ketemu tombol "Tambah Bantuan BASO", jadi
@@ -9712,18 +9723,7 @@ function renderContent() {
           <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">Tunjukkan QR / barcode ke admin saat pertemuan</div>
         </div>
         <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
-      </button>${(currentUser.role === "SUPERADMIN" || currentUser.role === "ADMIN") ? `
-
-      <button onclick="bukaScanAbsen()" style="width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; background: var(--glass-strong); border-radius: 20px; padding: 14px 16px; margin: -12px 0 24px; border: 1px solid var(--glass-border); border-left: 4px solid #22D3EE; cursor: pointer; color: inherit; font: inherit;">
-        <div style="width: 34px; height: 34px; border-radius: 11px; background: rgba(34,211,238,0.15); color: #22D3EE; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-          <span class="material-symbols-outlined" style="font-size: 19px;">qr_code_scanner</span>
-        </div>
-        <div style="flex: 1; min-width: 0;">
-          <div style="font-size: 12.5px; font-weight: 600;">Scan Absen</div>
-          <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">Admin: scan QR / barcode pengurus untuk absen</div>
-        </div>
-        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
-      </button>` : ""}
+      </button>
 
       <div class="profil-dedikasi-section">
       <h3 style="font-weight: 600; font-size: 14px; margin-bottom: 12px; padding: 0 4px;">Dedikasi</h3>
@@ -10395,7 +10395,7 @@ function toggleInputSheet() {
     // render awal halaman) biar selalu ikut role currentUser yang lagi
     // login.
     const bolehProgramLain = currentUser && ["SUPERADMIN", "ADMIN"].indexOf(currentUser.role) !== -1;
-    ["inputBasoShortcutBtn", "inputBadikShortcutBtn", "inputBatanShortcutBtn", "inputGopayShortcutBtn"].forEach(function (id) {
+    ["inputScanAbsenBtn", "inputBasoShortcutBtn", "inputBadikShortcutBtn", "inputBatanShortcutBtn", "inputGopayShortcutBtn"].forEach(function (id) {
       const btn = document.getElementById(id);
       if (btn) btn.style.display = bolehProgramLain ? "flex" : "none";
     });
@@ -18822,12 +18822,12 @@ bootApp();
     callGAS("getKegiatanAktifUntukScan", [authToken]).then(function (list) {
       S.kegiatan = list || [];
       if (!S.kegiatan.length) {
-        slot.innerHTML = '<div style="background:#7F1D1D; color:#FECACA; border-radius:12px; padding:10px 12px; font-size:12.5px;">Belum ada kegiatan berstatus <b>Aktif</b> di sheet KEGIATAN. Aktifkan kegiatannya dulu, lalu <a href="#" onclick="muatKegiatanScan_(); return false;" style="color:#fff; font-weight:700;">muat ulang</a>.</div>';
+        slot.innerHTML = '<div style="background:#7F1D1D; color:#FECACA; border-radius:12px; padding:10px 12px; font-size:12.5px;">Belum ada kegiatan berstatus <b>Aktif</b>. Aktifkan dulu kegiatannya di halaman Kegiatan (Absensi). Aktifkan kegiatannya dulu, lalu <a href="#" onclick="muatKegiatanScan_(); return false;" style="color:#fff; font-weight:700;">muat ulang</a>.</div>';
       } else if (S.kegiatan.length === 1) {
-        slot.innerHTML = '<div style="font-size:11px; opacity:.7;">Kegiatan</div><div style="font-weight:800; font-size:14.5px;">' + esc_(S.kegiatan[0].nama) + '</div><input type="hidden" id="absenScanKegiatan" value="' + esc_(S.kegiatan[0].nama) + '">';
+        slot.innerHTML = '<div style="font-size:11px; opacity:.7;">Kegiatan</div><div style="font-weight:800; font-size:14.5px;">' + esc_(S.kegiatan[0].nama) + '</div><div style="font-size:11.5px; opacity:.7;">' + esc_(S.kegiatan[0].tanggal || "") + '</div><input type="hidden" id="absenScanKegiatan" value="' + esc_(S.kegiatan[0].nama) + '">';
       } else {
         slot.innerHTML = '<div style="font-size:11px; opacity:.7; margin-bottom:4px;">Pilih kegiatan</div><select id="absenScanKegiatan" style="width:100%; padding:10px; border-radius:10px; border:none; font-size:14px; font-weight:700;">' +
-          S.kegiatan.map(function (k) { return '<option value="' + esc_(k.nama) + '">' + esc_(k.nama) + '</option>'; }).join("") + '</select>';
+          S.kegiatan.map(function (k) { return '<option value="' + esc_(k.nama) + '">' + esc_(k.nama) + (k.tanggal ? ' (' + esc_(k.tanggal.substring(0, 10)) + ')' : '') + '</option>'; }).join("") + '</select>';
       }
     }).catch(function (err) {
       slot.innerHTML = '<div style="color:#FCA5A5; font-size:12.5px;">' + esc_(err.message || "Gagal memuat kegiatan") + '</div>';
