@@ -550,6 +550,25 @@
      dan tilt-nya dibikin SUBTIL (maks ~6deg) supaya angka tetap kebaca
      jelas -- bukan buat pamer, tapi buat kesan premium/"disentuh".
      ============================================================ */
+  /* ===== Kartu ringkasan: tahan layar besar / huruf besar ===== */
+  .summary-label { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  #berandaSyncBadge { max-width: 100%; }
+  #berandaSyncText, #summaryDonasiSyncText, #summaryDonasiSaldoText { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  #berandaSyncBadge #berandaSyncText { display: block; }
+  #summaryDonasiSyncText, #summaryDonasiSaldoText { max-width: 100%; }
+  .summary-kekurangan-badge { font-size: 0 !important; width: 8px; height: 8px; padding: 0 !important; gap: 0; border: none !important; border-radius: 50% !important; background: #EF4444 !important; box-shadow: 0 0 0 3px rgba(239,68,68,0.22); margin-left: 8px; flex-shrink: 0; }
+  .summary-kekurangan-badge .material-symbols-outlined { display: none; }
+  /* Kartu Total Anak YASSA versi ringkas */
+  .total-anak-yassa-card .tay-note { display: none; }
+  .total-anak-yassa-card.tay-open .tay-note { display: block; }
+  /* ⌄ Tombol lipat/buka bagian bawah kartu ringkasan Beranda */
+  .summary-eye-btn { flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.85); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; -webkit-tap-highlight-color: transparent; }
+  .summary-eye-btn:active { transform: scale(0.92); }
+  .summary-eye-btn .material-symbols-outlined { font-size: 18px; }
+  .summary-card.summary-collapsed #summaryProgressWrap,
+  .summary-card.summary-collapsed #summarySubRowKekurangan,
+  .summary-card.summary-collapsed #summarySubRowDonasi { display: none !important; }
+  .summary-eye-btn .material-symbols-outlined { transition: transform .2s ease; }
   .summary-card {
     margin: -30px 20px 0;
     background: linear-gradient(135deg, #1A3B35 0%, #0F2220 100%);
@@ -3428,7 +3447,7 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
     <div class="summary-top">
       <div class="summary-icon"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">volunteer_activism</span></div>
       <div style="flex:1; min-width:0;">
-        <div class="summary-label" id="summaryLabelSantunan">Total Santunan Diperlukan PROGRAM GOPAY</div>
+        <div class="summary-label" id="summaryLabelSantunan">Kebutuhan Santunan GOPAY</div>
         <div id="berandaSyncBadge" onclick="hubTriggerRefreshActiveTab_()" title="Klik untuk segarkan data" style="display:inline-flex; align-items:center; gap:5px; font-size:10.5px; color:var(--text-muted); margin-top:3px; cursor:pointer; user-select:none;">
           <span style="display:inline-block; width:5px; height:5px; border-radius:50%; background:#10B981; box-shadow:0 0 5px #10B981;"></span>
           <span id="berandaSyncText">Diperbarui: Baru saja</span>
@@ -3441,6 +3460,9 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
            sekadar tanggal kalender hari ini). Disembunyikan default,
            ditampilkan lagi khusus di cabang GOPAY renderSummaryCardBeranda_(). -->
       <div class="summary-periode-chip" id="summaryPeriodeChip" style="display:none;"></div>
+      <button type="button" class="summary-eye-btn" id="summaryEyeBtn" onclick="toggleSummaryNominal_(event)" aria-label="Lipat rincian" title="Lipat / buka rincian">
+        <span class="material-symbols-outlined" id="summaryEyeIcon">expand_less</span>
+      </button>
     </div>
     <div class="summary-value" id="summaryTotalSantunanDiperlukan"><span class="kv-loading">...</span></div>
 
@@ -3461,7 +3483,7 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
     <div class="summary-sub-row" id="summarySubRowKekurangan">
       <div class="summary-sub-icon" id="summaryKekuranganIconWrap"><span class="material-symbols-outlined" id="summaryKekuranganIcon" style="font-variation-settings:'FILL' 1;">money_off</span></div>
       <div class="summary-sub-text">
-        <div class="summary-sub-label"><span id="summaryLabelKekurangan">Kekurangan Santunan</span><span class="summary-kekurangan-badge" id="summaryKekuranganBadge" style="display:none;"><span class="material-symbols-outlined" style="font-size:9px;">priority_high</span>Perlu Perhatian</span></div>
+        <div class="summary-sub-label"><span id="summaryLabelKekurangan">Kekurangan Santunan</span><span class="summary-kekurangan-badge" id="summaryKekuranganBadge" title="Perlu perhatian" role="img" aria-label="Perlu perhatian" style="display:none;"><span class="material-symbols-outlined" style="font-size:9px;">priority_high</span>Perlu Perhatian</span></div>
         <div class="summary-sub-value" id="summaryKekuranganDonasi"><span class="kv-loading">...</span></div>
       </div>
     </div>
@@ -3491,7 +3513,7 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
       <span class="user-menu-icon tone-green"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
       Profile YASSA
     </button>
-    <button class="user-menu-item" onclick="openDocViewer('1zzLqjhysg9hxwGF8jLeuMgs5Hz7er39k', 'Sejarah YASSA')">
+    <button class="user-menu-item" onclick="openDocViewer('19eWJh8J6Mx9DrGXKEv3ojKmqw8Cv9pscK', 'Sejarah YASSA')">
       <span class="user-menu-icon tone-purple"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg></span>
       Sejarah YASSA
     </button>
@@ -3523,11 +3545,11 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
       <span class="user-menu-icon tone-purple"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
       Akte Notaris
     </button>
-    <button class="user-menu-item" onclick="openDocViewer('1jbT1PP9teuqJcyezrVMphPpAcSuJRFTR', 'Regulasi YASSA')">
+    <button class="user-menu-item" onclick="openDocViewer('19eWJh8J6Mx9DrGXKEv3ojKmqw8Cv9pscK', 'Regulasi YASSA')">
       <span class="user-menu-icon tone-purple"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
       Regulasi YASSA
     </button>
-    <button class="user-menu-item" onclick="openDocViewer('1yGxdBizhmNWx9shBH96YT3y3E97pR6w2', 'Panduan Santunan YASSA')">
+    <button class="user-menu-item" onclick="openDocViewer('19eWJh8J6Mx9DrGXKEv3ojKmqw8Cv9pscK', 'Panduan Santunan YASSA')">
       <span class="user-menu-icon tone-purple"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
       Panduan Santunan YASSA
     </button>
@@ -4013,7 +4035,7 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
 
       <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Jenis Bantuan</label>
       <select id="programLainAddJenis" onchange="programLainToggleJenisLainnya()" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit;"></select>
-      <input type="text" id="programLainAddJenisLainnya" placeholder="Sebutkan jenis bantuan" style="display:none; width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: -6px 0 12px; font-family:inherit;">
+      <input type="text" id="prpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63" placeholder="Sebutkan jenis bantuan" style="display:none; width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: -6px 0 12px; font-family:inherit;">
 
       <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Nilai Bantuan (Rp)</label>
       <input type="number" id="programLainAddNilai" placeholder="Estimasi nilai/harga" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px solid var(--glass-border); color: var(--text-primary); font-size:12.5px; margin: 6px 0 12px; font-family:inherit;">
@@ -4051,20 +4073,20 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
            Herudin. Wrap disembunyikan default, ditampilkan hanya kalau
            programLainAktif === "baso" (lihat
            bukaTambahBantuanProgramLain()). -->
-      <div id="programLainAddFotoNotaWrap" style="display:none;">
+      <div id="prpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63" style="display:none;">
         <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Foto Nota/Struk Transfer (opsional)</label>
         <div onclick="bukaFotoSumber('programLainAddFotoNotaInput')" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px dashed var(--glass-border); color: var(--text-secondary); font-size:11px; margin: 6px 0 16px; cursor:pointer; display:flex; align-items:center; gap:8px;">
           <span class="material-symbols-outlined" style="font-size:18px; flex-shrink:0;">receipt_long</span>
-          <span id="programLainAddFotoNotaNama">Ketuk buat pilih foto (maks 10MB)</span>
+          <span id="prpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63">Ketuk buat pilih foto (maks 10MB)</span>
         </div>
         <input type="file" id="programLainAddFotoNotaInput" accept="image/*" style="display:none;" onchange="programLainAddFotoPicked(this, 'nota')">
       </div>
 
-      <div id="programLainAddFotoBuktiWrap" style="display:none;">
+      <div id="prpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63" style="display:none;">
         <label style="font-size:10.5px; color:var(--text-muted); font-weight:700;">Foto Bukti Penyaluran (opsional)</label>
         <div onclick="bukaFotoSumber('programLainAddFotoBuktiInput')" style="width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.06); border:1px dashed var(--glass-border); color: var(--text-secondary); font-size:11px; margin: 6px 0 16px; cursor:pointer; display:flex; align-items:center; gap:8px;">
           <span class="material-symbols-outlined" style="font-size:18px; flex-shrink:0;">volunteer_activism</span>
-          <span id="programLainAddFotoBuktiNama">Ketuk buat pilih foto (maks 10MB)</span>
+          <span id="prpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63">Ketuk buat pilih foto (maks 10MB)</span>
         </div>
         <input type="file" id="programLainAddFotoBuktiInput" accept="image/*" style="display:none;" onchange="programLainAddFotoPicked(this, 'bukti')">
       </div>
@@ -4663,7 +4685,7 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js" defer></script>
 
 <script>
-const APP_VERSION = "1.4.1 (Login Redesign)";
+const APP_VERSION = "1.4.2 (Layar Besar)";
 const APP_BUILD_DATE = "2026-08-02";
 
 // =================================================================================
@@ -4674,7 +4696,7 @@ const GAS_AUTH_URL = "https://yassa-gopay-proxye.broad-pine-b0a0.workers.dev/";
 // dipakai buat minta tiket SSO pas buka YASSA Mobile, supaya gak kena cold
 // start file GOPAY yang gede (lihat bukaMobileDenganSso_ di bawah). GANTI
 // dengan URL /exec hasil deploy project broker (lihat code_gs_sso_broker.gs).
-const GAS_SSO_URL = "https://script.google.com/macros/s/AKfycbz85pXQuO6VIfgF5zOuLAqg-biaGrd3xf5WwBA9JTuhvWy9eGBZTCuvazCeCpdjYrnBbw/exec";
+const GAS_SSO_URL = "https://script.google.com/macros/s/AKfycbz85pXQuO6VIfgF5zOuLAqg-bDcJHrrHSgvFpsYxqb6g97uaQTd2kE31rPUeDZTeDsjVq/exec";
 // URL Web App YASSA Mobile -- dipakai buat ambil statistik publik (Total
 // Anak) lewat action 'getPublicStats', TANPA perlu login/token, karena
 // yang diambil cuma 1 angka agregat, bukan data pribadi apapun.
@@ -5446,7 +5468,7 @@ function initAuth() {
         // belakang di sini juga (checkSession dipanggil tiap app dibuka
         // ulang/refresh) -- supaya sesi di broker tetap ter-refresh tanpa
         // bikin user nunggu network call tambahan tiap buka app.
-        callGASWithRetry_("registerBrokerSessionAsync", [authToken], {
+        callGASWithRetry_("rpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63", [authToken], {
           maxAttempts: 1,
           timeoutMs: 20000,
         }).catch(function () {});
@@ -5716,7 +5738,7 @@ function onLoginSuccess(res) {
   // itu gak boleh mengganggu proses login yang sudah selesai duluan.
   // Kalau user kebetulan klik menu Mobile SEBELUM ini selesai, tetap aman:
   // bukaMobileDenganSso_() sudah punya fallback "Coba Lagi/Login Manual".
-  callGASWithRetry_("registerBrokerSessionAsync", [authToken], {
+  callGASWithRetry_("rpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63", [authToken], {
     maxAttempts: 1,
     timeoutMs: 20000,
   }).catch(function () {});
@@ -5906,7 +5928,7 @@ function renderSummaryCardBeranda_() {
   const programAktif = YASSA_PROGRAMS.find(function (p) { return p.key === activeProgram; });
   if (activeProgram !== "gopay") updateHubSyncBadges();
   if (programAktif && !programAktif.ready) {
-    if (elLabel) elLabel.textContent = "Total Santunan Diperlukan PROGRAM " + programAktif.label;
+    if (elLabel) elLabel.textContent = "Kebutuhan Santunan " + programAktif.label;
     if (elSubKekurangan) elSubKekurangan.style.display = "none";
     if (elSubDonasi) elSubDonasi.style.display = "none";
     if (elProgressWrap) elProgressWrap.style.display = "none";
@@ -5919,7 +5941,7 @@ function renderSummaryCardBeranda_() {
   }
 
   if (activeProgram === "sapa") {
-    if (elLabel) elLabel.textContent = "Total Santunan Diperlukan PROGRAM SAPA";
+    if (elLabel) elLabel.textContent = "Kebutuhan Santunan SAPA";
     if (elSubKekurangan) elSubKekurangan.style.display = "none";
     if (elSubDonasi) elSubDonasi.style.display = "none";
     if (elProgressWrap) elProgressWrap.style.display = "none";
@@ -5934,7 +5956,7 @@ function renderSummaryCardBeranda_() {
   if (activeProgram === "baso") {
     const d = berandaStatsCache.santunanBaso;
     const tahunLabel = d && d.tahun ? d.tahun : new Date().getFullYear();
-    if (elLabel) elLabel.textContent = "Total Dana yang Disalurkan Program BASO Tahun " + tahunLabel;
+    if (elLabel) elLabel.textContent = "Dana Tersalur BASO " + tahunLabel;
     if (elSubKekurangan) elSubKekurangan.style.display = "none";
     if (elSubDonasi) elSubDonasi.style.display = "none";
     if (elProgressWrap) elProgressWrap.style.display = "none";
@@ -5949,8 +5971,8 @@ function renderSummaryCardBeranda_() {
     const d = activeProgram === "badik" ? berandaStatsCache.santunanBadik : berandaStatsCache.santunanBatan;
     const tahunLabel = d && d.tahun ? d.tahun : new Date().getFullYear();
     const labelLain = activeProgram === "badik"
-      ? "Total Bantuan Pendidikan Tersalur PROGRAM BADIK Tahun "
-      : "Total Bantuan Kesehatan Tersalur PROGRAM BATAN Tahun ";
+      ? "Bantuan Tersalur BADIK "
+      : "Bantuan Tersalur BATAN ";
     if (elLabel) elLabel.textContent = labelLain + tahunLabel;
     if (elSubKekurangan) elSubKekurangan.style.display = "none";
     if (elSubDonasi) elSubDonasi.style.display = "none";
@@ -5965,7 +5987,7 @@ function renderSummaryCardBeranda_() {
   if (activeProgram === "pedas") {
     const d = berandaStatsCache.santunanPedas;
     const tahunLabel = d && d.tahun ? d.tahun : new Date().getFullYear();
-    if (elLabel) elLabel.textContent = "Total Bantuan Disabilitas Tersalur PROGRAM PEDAS Tahun " + tahunLabel;
+    if (elLabel) elLabel.textContent = "Bantuan Tersalur PEDAS " + tahunLabel;
     if (elSubKekurangan) elSubKekurangan.style.display = "none";
     if (elSubDonasi) elSubDonasi.style.display = "none";
     if (elProgressWrap) elProgressWrap.style.display = "none";
@@ -5977,7 +5999,7 @@ function renderSummaryCardBeranda_() {
   }
 
   // Default / activeProgram === "gopay"
-  if (elLabel) elLabel.textContent = "Total Santunan Diperlukan PROGRAM GOPAY";
+  if (elLabel) elLabel.textContent = "Kebutuhan Santunan GOPAY";
   if (elSubKekurangan) elSubKekurangan.style.display = "";
   if (elSubDonasi) elSubDonasi.style.display = "";
 
@@ -7800,7 +7822,7 @@ function saveProfilPerformaCacheHub() {
 function renderProfilPerforma_(hasil) {
   const elKehadiranPersen = document.getElementById("profilPerformaKehadiranPersen");
   const elKehadiranBar = document.getElementById("profilPerformaKehadiranBar");
-  const elKehadiranKet = document.getElementById("profilPerformaKehadiranKeterangan");
+  const elKehadiranKet = document.getElementById("profilPerpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63");
   const elDonasiPersen = document.getElementById("profilPerformaDonasiPersen");
   const elDonasiBar = document.getElementById("profilPerformaDonasiBar");
   const elDonasiKet = document.getElementById("profilPerformaDonasiKeterangan");
@@ -7903,7 +7925,7 @@ function loadProfilePerforma() {
     renderProfilPerforma_(profilPerformaCache);
   }
 
-  const elKehadiranKet = document.getElementById("profilPerformaKehadiranKeterangan");
+  const elKehadiranKet = document.getElementById("profilPerpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63");
   const elDonasiKet = document.getElementById("profilPerformaDonasiKeterangan");
 
   return callGASWithRetry_("getPerformaProfil", [authToken])
@@ -8134,14 +8156,14 @@ function loadEmergencyNeedKeuangan() {
   // (Visibilitas kartu induk "Saldo Program" diatur loadSaldoProgramKeuangan(),
   // panel ini selalu ikut tampil di dalamnya.)
   if (emergencyNeedTerakhir_) {
-    renderEmergencyNeedKeuangan_(emergencyNeedTerakhir_, elIsi);
+    rpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63_(emergencyNeedTerakhir_, elIsi);
     perbaruiTotalSaldoProgram_();
   }
 
   return callGASWithRetry_("getSaldoEmergencyNeed", [authToken], { maxAttempts: 2 })
     .then(function (hasil) {
       emergencyNeedTerakhir_ = hasil;
-      renderEmergencyNeedKeuangan_(hasil, elIsi);
+      rpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63_(hasil, elIsi);
       perbaruiTotalSaldoProgram_();
     })
     .catch(function () {
@@ -8154,7 +8176,7 @@ function loadEmergencyNeedKeuangan() {
     });
 }
 
-function renderEmergencyNeedKeuangan_(h, elIsi) {
+function rpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63_(h, elIsi) {
   if (!elIsi || !h) return;
   const saldo = Number(h.saldo) || 0;
   const warnaSaldo = saldo < 0 ? "#F43F5E" : "#22C55E";
@@ -8461,7 +8483,7 @@ function formatRupiahHub(angka) {
 // 📄 UNDUH PDF OTOMATIS — LAPORAN SAPA/PEDAS/BASO/BADIK/BATAN. Dipakai
 // bareng oleh kelima halaman laporan (lihat tombol "Unduh PDF" di
 // renderRekapPedas/renderRekapPedasTahunan, renderRekapProgramLain/
-// renderRekapProgramLainTahunan, dan renderLaporanBulananListSapa).
+// rpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63, dan renderLaporanBulananListSapa).
 // Backend: action "generateLaporanProgramPdf" (Code.gs) -- balikin PDF
 // dalam bentuk base64, di sini diubah jadi Blob lalu didownload lewat
 // link sementara (tanpa buka tab baru, langsung ke folder Download).
@@ -8521,7 +8543,7 @@ function htmlTombolUnduhPdfProgram_(programKey, mode, bulan, tahun, wilayah, war
 // 📄 MODAL "Cetak Laporan Gabungan 6 Program (PDF)" -- gabungan GOPAY +
 // SAPA + PEDAS + BASO + BADIK + BATAN jadi 1 file, dibuka dari tombol kartu
 // hijau di atas daftar 6 program (tab Keuangan). Backend: action
-// "generateLaporanSemuaProgramPdf" (Code.gs). Pola toggle mode
+// "generpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63" (Code.gs). Pola toggle mode
 // Bulanan/Tahunan & download blob-nya mirror pedasSetTab/unduhPdfLaporanProgram
 // di atas, sengaja gak dipakai bareng (fungsi beda) biar gak saling ganggu
 // state antar modal.
@@ -8607,7 +8629,7 @@ function prosesCetakSemuaProgram() {
   // memproses request pertama; mengulang 2x lagi hanya melipatgandakan beban server
   // (3 pembuatan PDF berat bersamaan) dan membuat menunggu jauh lebih lama.
   // Angka 90dtk = perkiraan; sesuaikan setelah melihat log "[PDF 6 PROGRAM] ... TOTAL ... ms".
-  callGASWithRetry_("generateLaporanSemuaProgramPdf", [authToken, cspModeAktif, bulan, tahun, wilayah], { timeoutMs: 90000, maxAttempts: 1 })
+  callGASWithRetry_("generpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63", [authToken, cspModeAktif, bulan, tahun, wilayah], { timeoutMs: 90000, maxAttempts: 1 })
     .then(function (res) {
       const byteChars = atob(res.base64);
       const byteNumbers = new Array(byteChars.length);
@@ -8719,6 +8741,7 @@ function renderContent() {
       berandaStatsCache.aktivitas || berandaStatsCache.totalAnak !== null);
     let html = `
       <div class="beranda-top-section" style="grid-column: 1 / -1;">
+      ${renderTotalAnakYassaCardHtml_()}
       ${renderProgramSelectorHtml_()}
 
       <div id="berandaPanelsWrap" class="hub-data-blur ${berandaSudahAdaCache_ ? '' : 'is-blurred'}">
@@ -8728,7 +8751,6 @@ function renderContent() {
            dibungkus jadi panel program supaya bisa disembunyikan pas
            user pindah ke program lain lewat selector di atas. -->
       <div class="program-panel" id="programPanel-gopay">
-      ${renderTotalAnakYassaCardHtml_()}
       <!-- Data Anak Yatim (Program Gopay) -- kartu klik-buat-detail, narik
            LIVE dari YASSA Mobile (action getDataAnakYatim), NASIONAL/semua
            wilayah, khusus Program Gopay (Anak Asuh tidak termasuk).
@@ -8793,7 +8815,6 @@ function renderContent() {
            persis pola panel GO-PAY di atas. Disembunyikan default karena
            GO-PAY yang aktif duluan (lihat activeProgram). -->
       <div class="program-panel" id="programPanel-sapa" style="display:none;">
-        ${renderTotalAnakYassaCardHtml_()}
         <div onclick="openDataAnakAsuh()" class="anak-asuh-preview-card" style="background: var(--glass-strong); border-radius: 20px; padding: 18px 18px 16px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid #EC4899; cursor: pointer;">
           <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
             <div class="anak-asuh-icon-wrap" style="width: 40px; height: 40px; border-radius: 12px; background: rgba(236,72,153,0.15); color: #F9A8D4; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
@@ -9744,7 +9765,7 @@ function renderContent() {
           <div style="height: 8px; border-radius: 6px; background: var(--glass-border-strong); overflow: hidden;">
             <div id="profilPerformaKehadiranBar" class="profil-dedikasi-bar" style="height: 100%; width: 0%; border-radius: 6px; background: linear-gradient(90deg, #0891B2, #22D3EE); transition: width .7s cubic-bezier(0.22, 1, 0.36, 1);"></div>
           </div>
-          <div id="profilPerformaKehadiranKeterangan" style="font-size: 10.5px; color: var(--text-muted); margin-top: 6px;">Memuat data kehadiran...</div>
+          <div id="profilPerpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63" style="font-size: 10.5px; color: var(--text-muted); margin-top: 6px;">Memuat data kehadiran...</div>
           <div style="display: flex; align-items: center; gap: 2px; font-size: 10.5px; font-weight: 600; color: var(--neon-cyan); margin-top: 8px;">Lihat detail kegiatan <span class="material-symbols-outlined" style="font-size: 14px;">chevron_right</span></div>
         </div>
         <div>
@@ -12394,7 +12415,7 @@ function sejarahUploadFotoUntukId_(id, file) {
 let programLainAktif = "baso"; // "baso" | "badik" | "batan"
 let programLainBulanAktif = null, programLainTahunAktif = null, programLainWilayahAktif = "";
 let programLainModeAktif = "bulanan"; // "bulanan" | "tahunan"
-let programLainTahunAktifTahunan = null;
+let prpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63 = null;
 
 function openProgramLain(key) {
   programLainAktif = key;
@@ -12404,7 +12425,7 @@ function openProgramLain(key) {
   const now = new Date();
   programLainBulanAktif = now.getMonth() + 1;
   programLainTahunAktif = now.getFullYear();
-  programLainTahunAktifTahunan = now.getFullYear();
+  prpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63 = now.getFullYear();
   programLainModeAktif = "bulanan";
   programLainSetTabStyle_();
   document.getElementById("programLainPage").classList.add("open");
@@ -12462,7 +12483,7 @@ function gantiBulanProgramLain(delta) {
 }
 
 function gantiTahunProgramLain(delta) {
-  programLainTahunAktifTahunan += delta;
+  prpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63 += delta;
   loadRekapProgramLainTahunan();
 }
 
@@ -12583,8 +12604,8 @@ function loadRekapProgramLainTahunan() {
     </div>`;
 
   const namaFungsi = "getRekap" + capitalizeFirst_(programLainAktif) + "Tahunan";
-  callGASWithRetry_(namaFungsi, [authToken, programLainTahunAktifTahunan, programLainWilayahAktif])
-    .then(function (data) { renderRekapProgramLainTahunan(data); })
+  callGASWithRetry_(namaFungsi, [authToken, prpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63, programLainWilayahAktif])
+    .then(function (data) { rpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63(data); })
     .catch(function (err) {
       el.innerHTML = `
         <div style="padding: 40px 20px; text-align: center; color: var(--text-secondary); font-size: 12.5px;">
@@ -12594,7 +12615,7 @@ function loadRekapProgramLainTahunan() {
     });
 }
 
-function renderRekapProgramLainTahunan(data) {
+function rpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63(data) {
   const el = document.getElementById("programLainContent");
   const meta = PROGRAM_LAIN_META[programLainAktif];
   const namaWilayahTeks = data.global ? "se-Yayasan (Semua Wilayah)" : escapeHtmlHub(data.wilayah);
@@ -12671,8 +12692,8 @@ function bukaTambahBantuanProgramLain() {
   document.getElementById("programLainAddPenerima").value = "";
   document.getElementById("programLainAddNilai").value = "";
   document.getElementById("programLainAddKeterangan").value = "";
-  document.getElementById("programLainAddJenisLainnya").value = "";
-  document.getElementById("programLainAddJenisLainnya").style.display = "none";
+  document.getElementById("prpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63").value = "";
+  document.getElementById("prpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63").style.display = "none";
   programLainAddFotoTerpilih = null;
   document.getElementById("programLainAddFotoInput").value = "";
   document.getElementById("programLainAddFotoNama").textContent = "Ketuk buat pilih foto (maks 10MB)";
@@ -12681,17 +12702,17 @@ function bukaTambahBantuanProgramLain() {
   // Bukti Penyaluran), BADIK/BATAN tetap pakai 1 slot generik di atas.
   const isBaso = (programLainAktif === "baso");
   document.getElementById("programLainAddFotoWrap").style.display = isBaso ? "none" : "block";
-  document.getElementById("programLainAddFotoNotaWrap").style.display = isBaso ? "block" : "none";
-  document.getElementById("programLainAddFotoBuktiWrap").style.display = isBaso ? "block" : "none";
+  document.getElementById("prpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63").style.display = isBaso ? "block" : "none";
+  document.getElementById("prpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63").style.display = isBaso ? "block" : "none";
   programLainAddFotoNotaTerpilih = null;
   document.getElementById("programLainAddFotoNotaInput").value = "";
-  document.getElementById("programLainAddFotoNotaNama").textContent = "Ketuk buat pilih foto (maks 10MB)";
+  document.getElementById("prpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63").textContent = "Ketuk buat pilih foto (maks 10MB)";
   programLainAddFotoBuktiTerpilih = null;
   document.getElementById("programLainAddFotoBuktiInput").value = "";
-  document.getElementById("programLainAddFotoBuktiNama").textContent = "Ketuk buat pilih foto (maks 10MB)";
+  document.getElementById("prpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63").textContent = "Ketuk buat pilih foto (maks 10MB)";
 
   // 🩹 FIX: field "Biaya Operasional" cuma buat BASO (lihat
-  // getOrCreateSheetLogBantuanProgramLain_ di backend).
+  // getOrpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63_ di backend).
   document.getElementById("programLainAddBiayaOps").value = "";
   document.getElementById("programLainAddBiayaOpsWrap").style.display = isBaso ? "block" : "none";
 
@@ -12720,7 +12741,7 @@ function programLainToggleJenisLainnya() {
   const sel = document.getElementById("programLainAddJenis");
   const opt = sel.options[sel.selectedIndex];
   const isLainnya = opt && opt.getAttribute("data-lainnya") === "1";
-  document.getElementById("programLainAddJenisLainnya").style.display = isLainnya ? "block" : "none";
+  document.getElementById("prpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63").style.display = isLainnya ? "block" : "none";
 }
 
 let programLainAddFotoTerpilih = null;
@@ -12731,8 +12752,8 @@ let programLainAddFotoNotaTerpilih = null;
 let programLainAddFotoBuktiTerpilih = null;
 function programLainAddFotoPicked(input, slot) {
   const file = validasiFotoTerpilih_(input);
-  const namaElId = slot === "nota" ? "programLainAddFotoNotaNama"
-    : slot === "bukti" ? "programLainAddFotoBuktiNama"
+  const namaElId = slot === "nota" ? "prpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63"
+    : slot === "bukti" ? "prpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63"
     : "programLainAddFotoNama";
   if (slot === "nota") programLainAddFotoNotaTerpilih = file;
   else if (slot === "bukti") programLainAddFotoBuktiTerpilih = file;
@@ -12747,7 +12768,7 @@ function submitTambahBantuanProgramLain() {
   const selJenis = document.getElementById("programLainAddJenis");
   const optJenis = selJenis.options[selJenis.selectedIndex];
   const isLainnya = optJenis && optJenis.getAttribute("data-lainnya") === "1";
-  const jenisBantuan = isLainnya ? document.getElementById("programLainAddJenisLainnya").value.trim() : selJenis.value;
+  const jenisBantuan = isLainnya ? document.getElementById("prpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63").value.trim() : selJenis.value;
   const nilai = document.getElementById("programLainAddNilai").value;
   // 🩹 FIX: cuma relevan buat BASO -- di luar BASO field-nya disembunyikan
   // & selalu kosong, jadi biayaOps otomatis 0.
@@ -13327,27 +13348,24 @@ function saveDataAnakYatimCacheHub() {
 // menampilkan total yang kurang.
 // ============================================================
 function renderTotalAnakYassaCardHtml_() {
-  function mini(cls, label, bg, border, color) {
-    return '<div style="flex:1; background:' + bg + '; border:1px solid ' + border + '; border-radius:12px; padding:9px 6px; text-align:center;">' +
-      '<div class="' + cls + '" style="font-size:15px; font-weight:800; color:' + color + ';"><span class="kv-loading">...</span></div>' +
-      '<div style="font-size:9px; font-weight:700; color: var(--text-muted); margin-top:2px;">' + label + '</div></div>';
+  function mini(cls, label, color) {
+    return '<div style="flex:1; min-width:0; text-align:center; padding:2px 4px;">' +
+      '<div class="' + cls + '" style="font-size:16px; font-weight:800; line-height:1.15; color:' + color + ';"><span class="kv-loading">...</span></div>' +
+      '<div style="font-size:9.5px; font-weight:700; color: var(--text-muted); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + label + '</div></div>';
   }
-  return '<div class="total-anak-yassa-card" style="background: var(--glass-strong); border-radius: 20px; padding: 16px 18px; margin-bottom: 20px; border: 1px solid var(--glass-border); border-left: 4px solid #22C55E;">' +
-    '<div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">' +
-    '<div style="width:40px; height:40px; border-radius:12px; background:rgba(34,197,94,0.15); color:#86EFAC; display:flex; align-items:center; justify-content:center; flex-shrink:0;">' +
-    '<span class="material-symbols-outlined" style="font-size:21px; font-variation-settings: \'FILL\' 1;">groups</span></div>' +
-    '<div style="flex:1; min-width:0;"><h3 style="font-size:14px; font-weight:700; margin:0;">Total Anak YASSA</h3>' +
-    '<div style="font-size:10.5px; color: var(--text-secondary); margin-top:1px;">Gopay + SAPA &bull; Semua Wilayah</div></div></div>' +
-    '<div style="display:flex; gap:8px; margin-bottom:8px;">' +
-    mini('tay-total', 'Total Anak', 'rgba(34,197,94,0.10)', 'rgba(34,197,94,0.25)', '#86EFAC') +
-    mini('tay-gopay', 'Gopay', 'rgba(59,130,246,0.08)', 'rgba(59,130,246,0.2)', '#93C5FD') +
-    mini('tay-sapa', 'SAPA', 'rgba(236,72,153,0.08)', 'rgba(236,72,153,0.2)', '#F9A8D4') +
+  var sep = '<div style="width:1px; align-self:stretch; background: var(--glass-border); margin:2px 0;"></div>';
+  return '<div class="total-anak-yassa-card" onclick="this.classList.toggle(\'tay-open\')" style="background: var(--glass-strong); border-radius: 16px; padding: 12px 14px; margin-bottom: 14px; border: 1px solid var(--glass-border); border-left: 4px solid #22C55E; cursor:pointer;">' +
+    '<div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">' +
+    '<div style="width:32px; height:32px; border-radius:10px; background:rgba(34,197,94,0.15); color:#86EFAC; display:flex; align-items:center; justify-content:center; flex-shrink:0;">' +
+    '<span class="material-symbols-outlined" style="font-size:18px; font-variation-settings: \'FILL\' 1;">groups</span></div>' +
+    '<div style="flex:1; min-width:0;"><h3 style="font-size:13px; font-weight:700; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Total Anak YASSA</h3>' +
+    '<div style="font-size:10px; color: var(--text-secondary); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Gopay + SAPA &bull; Semua Wilayah</div></div></div>' +
+    '<div style="display:flex; align-items:stretch; gap:4px;">' +
+    mini('tay-total', 'Total Anak', '#86EFAC') + sep +
+    mini('tay-piatu', 'Yatim Piatu', '#D8B4FE') + sep +
+    mini('tay-dsb', 'Disabilitas*', '#FDE68A') +
     '</div>' +
-    '<div style="display:flex; gap:8px;">' +
-    mini('tay-piatu', 'Yatim Piatu', 'rgba(168,85,247,0.08)', 'rgba(168,85,247,0.2)', '#D8B4FE') +
-    mini('tay-dsb', 'Disabilitas*', 'rgba(245,158,11,0.08)', 'rgba(245,158,11,0.2)', '#FDE68A') +
-    '</div>' +
-    '<div style="font-size:8.5px; color: var(--text-muted); margin-top:8px;">*Disabilitas = Anak + Ortu digabung (bisa dobel kalau 1 KK punya anak &amp; ibu sama-sama disabilitas).</div>' +
+    '<div class="tay-note" style="font-size:9px; color: var(--text-muted); margin-top:8px;">*Disabilitas = Anak + Ortu digabung (bisa dobel kalau 1 KK punya anak &amp; ibu sama-sama disabilitas).</div>' +
     '</div>';
 }
 
@@ -15858,7 +15876,7 @@ function bagikanKartuAnggota() {
 // gambarnya, tinggal ganti QR_DONASI_DRIVE_FILE_ID di bawah ini dengan ID
 // file Drive yang baru (ID = bagian di antara "/d/" dan "/view" pada link
 // share Drive-nya).
-const QR_DONASI_DRIVE_FILE_ID = "1C2KR6INrVpeR5cJPxYNubWmyVj27E8k8";
+const QR_DONASI_DRIVE_FILE_ID = "1C2KR6INrpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63";
 function showQrCodeDonasiCepat() {
   const imgUrl = "https://lh3.googleusercontent.com/d/" + QR_DONASI_DRIVE_FILE_ID + "=w800";
   const modalHtml = `
@@ -16647,7 +16665,7 @@ function renderMonitorAksesPanel() {
   callGASWithRetry_("getLogAksesAplikasi", [authToken, monitorAksesTanggalAktif])
     .then(function (logs) {
       monitorAksesCache = logs;
-      renderMonitorAksesSummary_(logs);
+      rpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63_(logs);
       renderMonitorAksesFilterBar_();
       renderMonitorAksesList_(logs);
     })
@@ -16665,7 +16683,7 @@ function monitorAksesSummaryCard_(label, value, icon, color) {
     '</div>';
 }
 
-function renderMonitorAksesSummary_(logs) {
+function rpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63_(logs) {
   const wrap = document.getElementById("monitorAksesSummary");
   if (!wrap) return;
   // `logs` yang masuk ke sini udah difilter server-side cuma buat SATU
@@ -17838,6 +17856,41 @@ function initProgramSelectorCoverflow() {
 // jadi efeknya cuma buat kesan "premium/hidup", bukan bikin pusing.
 // Otomatis nonaktif kalau user set Reduced Motion di HP-nya.
 // ============================================================
+// ===== Lipat / buka rincian kartu ringkasan Beranda =====
+// Yang dilipat: progress bar, Kekurangan Santunan, & Total Donasi. Judul +
+// Total Santunan tetap tampil, jadi kartu jadi ringkas di layar besar.
+// Status disimpan di localStorage (per perangkat).
+function applySummaryCollapsed_(collapsed) {
+  const card = document.getElementById("summaryCard");
+  const icon = document.getElementById("summaryEyeIcon");
+  const btn = document.getElementById("summaryEyeBtn");
+  if (card) card.classList.toggle("summary-collapsed", !!collapsed);
+  if (icon) icon.textContent = collapsed ? "expand_more" : "expand_less";
+  if (btn) btn.setAttribute("aria-label", collapsed ? "Buka rincian" : "Lipat rincian");
+}
+function toggleSummaryNominal_(ev) {
+  if (ev) { ev.stopPropagation(); ev.preventDefault(); }
+  const card = document.getElementById("summaryCard");
+  const collapsed = !(card && card.classList.contains("summary-collapsed"));
+  applySummaryCollapsed_(collapsed);
+  try { localStorage.setItem("yassa_hub_summary_collapsed", collapsed ? "1" : "0"); } catch (e) {}
+}
+(function initSummaryCollapsed_() {
+  // Belum pernah memilih -> otomatis terlipat di layar sempit / tampilan besar
+  // (lebar CSS <= 375px), supaya kartu tidak memenuhi layar.
+  let collapsed = (window.innerWidth || 9999) <= 375;
+  try {
+    const saved = localStorage.getItem("yassa_hub_summary_collapsed");
+    if (saved === "1") collapsed = true;
+    else if (saved === "0") collapsed = false;
+  } catch (e) {}
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", function () { applySummaryCollapsed_(collapsed); });
+  } else {
+    applySummaryCollapsed_(collapsed);
+  }
+})();
+
 function initSummaryCardTilt() {
   const card = document.getElementById("summaryCard");
   if (!card) return;
@@ -18627,7 +18680,7 @@ bootApp();
 
 <!-- 📄 Modal: Cetak Laporan Gabungan 6 Program (PDF) -- dibuka dari tombol
      "Laporan Gabungan 6 Program YASSA" di tab Keuangan. Backend: action
-     "generateLaporanSemuaProgramPdf" (Code.gs), menggabungkan GOPAY +
+     "generpZEAWYtiB6bJ16NuLbGCc6CZ6jJdKfb63" (Code.gs), menggabungkan GOPAY +
      SAPA + PEDAS + BASO + BADIK + BATAN jadi 1 file PDF. -->
 <div class="custom-modal-overlay" id="cetakSemuaProgramOverlay">
   <div class="custom-modal" style="max-width:360px; text-align:left;">
