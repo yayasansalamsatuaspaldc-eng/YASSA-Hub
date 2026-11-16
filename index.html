@@ -10225,23 +10225,29 @@ function openMobileAppForNotif() {
   // fix tampilan gelap+ikon di layar notifOnly bisa gak kelihatan walau
   // source code-nya sudah benar, karena yang tampil masih versi cache lama.
   const notifCacheBust_ = Date.now();
-  const notifTab = window.open(MENUS.mobile.baseUrl + "?notifOnly=1&_cb=" + notifCacheBust_, "_blank");
+  // 🆕 ID percobaan acak 1x pakai -- dibawa ke Mobile (?dev=) supaya Mobile
+  // bisa lapor status lewat server walau tidak ada window.opener (PWA).
+  const attemptId = newNotifAttemptId_();
+  const baseNotifUrl_ = MENUS.mobile.baseUrl + "?notifOnly=1&dev=" + attemptId + "&_cb=" + notifCacheBust_;
+  showModal("Aktifkan Notifikasi", "Menyiapkan tab YASSA Mobile…");
+  // Tiket SSO diminta DULU baru tab dibuka, supaya tab langsung punya sso
+  // di URL-nya. Pada PWA, window.open tidak mengembalikan handle tab, jadi
+  // tidak bisa lagi "menyusulkan" tiket lewat notifTab.location.
   callGASWithRetry_("generateSsoToken", [authToken], { targetUrl: GAS_SSO_URL })
-    .then(function (res) {
-      const ssoToken = res && res.ssoToken;
-      if (ssoToken && notifTab && !notifTab.closed) {
-        notifTab.location = MENUS.mobile.baseUrl + "?sso=" + encodeURIComponent(ssoToken) + "&notifOnly=1&_cb=" + notifCacheBust_;
-      }
-    })
-    .catch(function () {
-      // Tiket SSO gagal didapat -> biarin tab tetap di ?notifOnly=1 tanpa
-      // sso (Mobile bakal minta login manual dulu di tab itu sebelum bisa
-      // minta izin notifikasi -- lebih baik daripada tab nyangkut kosong).
+    .then(function (res) { return res && res.ssoToken ? res.ssoToken : ""; })
+    .catch(function () { return ""; })
+    .then(function (ssoToken) {
+      const url = ssoToken
+        ? MENUS.mobile.baseUrl + "?sso=" + encodeURIComponent(ssoToken) + "&notifOnly=1&dev=" + attemptId + "&_cb=" + notifCacheBust_
+        : baseNotifUrl_;
+      try { window.open(url, "_blank"); } catch (e) {}
+      startMobileNotifPolling_(attemptId);
+      showModal(
+        "Aktifkan Notifikasi",
+        "Tab baru YASSA Mobile dibuka. Di sana tekan tombol \"Izinkan Notifikasi\", lalu pilih \"Izinkan\" saat browser bertanya. Setelah itu kembali ke aplikasi ini.<br><br>" +
+        "<a href=\"" + url + "\" target=\"_blank\" rel=\"noopener\" style=\"display:inline-block; padding:10px 14px; border-radius:12px; background:rgba(11,122,69,0.14); color:#0B7A45; font-weight:700; font-size:12px; text-decoration:none;\">Tab belum terbuka? Ketuk di sini</a>"
+      );
     });
-  showModal(
-    "Aktifkan Notifikasi",
-    "Tab baru YASSA Mobile sudah dibuka. Silakan tekan \"Izinkan\" saat browser minta izin notifikasi. Tab itu HANYA dipakai buat minta izin -- begitu selesai, sesinya otomatis logout & tab boleh ditutup (atau nutup sendiri)."
-  );
 }
 
 // Dengarkan laporan status notifikasi dari tab YASSA Mobile yang dibuka
@@ -10263,10 +10269,10 @@ function openMobileAppForNotif() {
 // nutup modalnya lewat closeModal().
 let pendingNotifStatusTransition = false;
 
-window.addEventListener("message", function (e) {
-  if (!e.data || e.data.type !== "yassa-mobile-notif-status") return;
+function applyMobileNotifStatus_(status) {
+  stopMobileNotifPolling_();
   const sedangDiGateApp = (active === "app"); // gate notifikasi lagi nongol
-  localStorage.setItem("yassa_mobile_notif_status", e.data.status);
+  localStorage.setItem("yassa_mobile_notif_status", status);
   if (sedangDiGateApp) {
     const modalMasihKebuka = document.getElementById('customModalOverlay').classList.contains('open');
     if (modalMasihKebuka) {
@@ -10276,6 +10282,51 @@ window.addEventListener("message", function (e) {
     }
   }
   else if (active === "mobile") render();
+}
+
+window.addEventListener("message", function (e) {
+  if (!e.data || e.data.type !== "yassa-mobile-notif-status") return;
+  applyMobileNotifStatus_(e.data.status);
+});
+
+// 🆕 Jalur cadangan: Hub dibuka sebagai PWA -> tab YASSA Mobile dibuka di
+// Custom Tab TANPA window.opener, jadi postMessage di atas tidak pernah
+// sampai. Mobile lapor status ke GAS (per ID percobaan acak), Hub cek
+// berkala + saat PWA kembali ke layar depan.
+let notifPollTimer_ = null;
+let notifPollTick_ = null;
+
+function newNotifAttemptId_() {
+  const a = new Uint8Array(18);
+  crypto.getRandomValues(a);
+  return Array.from(a).map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+}
+
+function stopMobileNotifPolling_() {
+  if (notifPollTimer_) { clearInterval(notifPollTimer_); notifPollTimer_ = null; }
+  notifPollTick_ = null;
+}
+
+function startMobileNotifPolling_(attemptId) {
+  stopMobileNotifPolling_();
+  const startedAt = Date.now();
+  let busy = false;
+  notifPollTick_ = async function () {
+    if (busy) return;
+    if (Date.now() - startedAt > 180000) { stopMobileNotifPolling_(); return; }
+    busy = true;
+    try {
+      const res = await fetch(GAS_MOBILE_URL + "?action=getNotifStatus&dev=" + attemptId + "&_=" + Date.now());
+      const j = await res.json();
+      if (j && j.status) { applyMobileNotifStatus_(j.status); return; }
+    } catch (e) {}
+    busy = false;
+  };
+  notifPollTimer_ = setInterval(function () { if (notifPollTick_) notifPollTick_(); }, 2500);
+}
+
+document.addEventListener("visibilitychange", function () {
+  if (!document.hidden && notifPollTick_) notifPollTick_();
 });
 
 function renderBottomNav() {
