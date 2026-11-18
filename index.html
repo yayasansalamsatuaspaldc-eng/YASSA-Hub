@@ -6285,7 +6285,7 @@ function renderTierSantunanGopay_(d) {
   if (ok50) {
     if (row50) row50.classList.add("tier-ok");
     if (dot50) dot50.textContent = "\u2713";
-    set("summaryTierStatus50", "Tercapai");
+    set("summaryTierStatus50", donasi > t.target50 ? "Tercapai \u00b7 lebih " + formatRupiahRingkas_(donasi - t.target50) : "Tercapai", formatRupiahHub(Math.max(0, donasi - t.target50)));
   } else {
     if (dot50) dot50.textContent = "1";
     set("summaryTierStatus50", "Kurang " + formatRupiahRingkas_(t.target50 - donasi), formatRupiahHub(t.target50 - donasi));
@@ -6293,7 +6293,7 @@ function renderTierSantunanGopay_(d) {
   if (ok100) {
     if (row100) row100.classList.add("tier-ok");
     if (dot100) dot100.textContent = "\u2713";
-    set("summaryTierStatus100", "Tercapai");
+    set("summaryTierStatus100", donasi > t.target100 ? "Tercapai \u00b7 lebih " + formatRupiahRingkas_(donasi - t.target100) : "Tercapai", formatRupiahHub(Math.max(0, donasi - t.target100)));
   } else {
     if (ok50 && row100) row100.classList.add("tier-kejar");
     if (dot100) dot100.textContent = "2";
