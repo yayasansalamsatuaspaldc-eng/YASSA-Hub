@@ -713,6 +713,14 @@
   .summary-tier-status { flex:0 0 auto; font-weight:700; color: var(--text-secondary); text-align:right; }
   .summary-tier-row.tier-ok .summary-tier-status { color: var(--bento-primary); }
   .summary-tier-row.tier-kejar .summary-tier-status { color:#F59E0B; }
+  /* Ringkas: chip status teks (tidak hanya warna) + sembunyikan duplikat saat panel target aktif */
+  .summary-tier-chip { display:inline-flex; align-items:center; gap:6px; font-size:10px; font-weight:700; padding:3px 10px; border-radius:99px; background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+  .summary-tier-chip::before { content:""; width:6px; height:6px; border-radius:50%; background: currentColor; }
+  .summary-tier-chip.chip-low { background: rgba(248,113,113,0.16); color:#F87171; }
+  .summary-tier-chip.chip-mid { background: rgba(245,158,11,0.16); color:#F59E0B; }
+  .summary-tier-chip.chip-ok  { background: rgba(var(--bento-primary-rgb),0.18); color: var(--bento-primary); }
+  .summary-card.tier-aktif:not(.summary-collapsed) #summarySubRowKekurangan { display:none !important; }
+  .summary-collapsed #summaryTierWrap { display:none !important; }
 
   .summary-sub-row {
     margin-top: 10px; padding-top: 9px;
@@ -3518,7 +3526,7 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
          renderTierSantunanGopay_() -- hanya tampil di program GOPAY. -->
     <div class="summary-tier" id="summaryTierWrap" style="display:none;">
       <div class="summary-tier-head">
-        <span>Terkumpul <b id="summaryTierTerkumpul">Rp0</b></span>
+        <span class="summary-tier-chip" id="summaryTierChip">...</span>
         <span id="summaryTierPct"></span>
       </div>
       <div class="summary-tier-track">
@@ -5984,6 +5992,8 @@ function renderSummaryCardBeranda_() {
   if (elPeriodeChip) elPeriodeChip.style.display = "none";
   const elTierWrapTop = document.getElementById("summaryTierWrap");
   if (elTierWrapTop) elTierWrapTop.style.display = "none"; // dinyalakan lagi di cabang GOPAY
+  const elCardTop = document.getElementById("summaryCard");
+  if (elCardTop) elCardTop.classList.remove("tier-aktif");
 
   // 🩹 FIX: dulu kartu ini DIBIARKAN nampilin data program SEBELUMNYA
   // (mis. masih kelihatan angka SAPA) begitu user pindah ke program yang
@@ -6204,25 +6214,58 @@ function hitungTierSantunanGopay_(santunan) {
   return hasil;
 }
 
+// Format ringkas buat kartu: Rp5,21 jt / Rp1,25 M. Angka lengkap tetap ada di title (tooltip)
+// dan di baris "Total Donasi".
+function formatRupiahRingkas_(n) {
+  n = Math.round(Number(n) || 0);
+  const f = function (v, suf) { return "Rp" + (Math.round(v * 100) / 100).toString().replace(".", ",") + " " + suf; };
+  if (n >= 1e9) return f(n / 1e9, "M");
+  if (n >= 1e6) return f(n / 1e6, "jt");
+  return formatRupiahHub(n);
+}
+
 function renderTierSantunanGopay_(d) {
   const wrap = document.getElementById("summaryTierWrap");
+  const card = document.getElementById("summaryCard");
   const elProgressWrap = document.getElementById("summaryProgressWrap");
   if (!wrap) return;
   const t = d && d.tier;
-  if (!t || !t.ada) { wrap.style.display = "none"; return; }
+  if (!t || !t.ada) { wrap.style.display = "none"; if (card) card.classList.remove("tier-aktif"); return; }
 
   wrap.style.display = "";
+  if (card) card.classList.add("tier-aktif");
   if (elProgressWrap) elProgressWrap.style.display = "none"; // diganti bar bertahap ini
 
   const donasi = Math.max(0, Number(d.totalDonasi || 0));
-  const pct100 = Math.max(0, Math.min(100, Math.round((donasi / t.target100) * 100)));
+  const ok50 = donasi >= t.target50;
+  const ok100 = donasi >= t.target100;
+  const pctBar = Math.max(0, Math.min(100, Math.round((donasi / t.target100) * 100)));
   const posisi50 = Math.max(0, Math.min(100, (t.target50 / t.target100) * 100));
+  const pctTerdekat = ok100 ? 100 : Math.min(100, Math.round((donasi / (ok50 ? t.target100 : t.target50)) * 100));
 
-  const set = function (id, txt) { const el = document.getElementById(id); if (el) el.textContent = txt; };
-  set("summaryTierTerkumpul", formatRupiahHub(donasi));
-  set("summaryTierPct", pct100 + "% dari target Rp100.000");
-  set("summaryTierNeed50", "Butuh " + formatRupiahHub(t.target50) + " (" + t.jumlahAnak + " anak)");
-  set("summaryTierNeed100", "Butuh " + formatRupiahHub(t.target100));
+  // Status ringkas: SELALU berupa teks (bukan hanya warna).
+  let mode, teksStatus;
+  if (ok100) { mode = "ok"; teksStatus = "Semua target tercapai"; }
+  else if (ok50) { mode = "mid"; teksStatus = "Target 1 tercapai"; }
+  else if (pctTerdekat >= 90) { mode = "mid"; teksStatus = "Hampir tercapai"; }
+  else if (pctTerdekat >= 50) { mode = "mid"; teksStatus = "Dalam proses"; }
+  else { mode = "low"; teksStatus = "Perlu dikejar"; }
+
+  const set = function (id, txt, title) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = txt;
+    if (title !== undefined) el.title = title;
+  };
+  const chip = document.getElementById("summaryTierChip");
+  if (chip) {
+    chip.textContent = teksStatus;
+    chip.classList.remove("chip-low", "chip-mid", "chip-ok");
+    chip.classList.add("chip-" + mode);
+  }
+  set("summaryTierPct", ok100 ? "100%" : (pctTerdekat + "% menuju target " + (ok50 ? 2 : 1)));
+  set("summaryTierNeed50", formatRupiahRingkas_(t.target50) + " \u00b7 " + t.jumlahAnak.toLocaleString("id-ID") + " anak", formatRupiahHub(t.target50));
+  set("summaryTierNeed100", formatRupiahRingkas_(t.target100), formatRupiahHub(t.target100));
 
   const fill = document.getElementById("summaryTierFill");
   const mark = document.getElementById("summaryTierMark50");
@@ -6232,31 +6275,29 @@ function renderTierSantunanGopay_(d) {
   const dot100 = document.getElementById("summaryTierDot100");
   if (mark) mark.style.left = posisi50 + "%";
   if (fill) {
-    fill.style.width = pct100 + "%";
+    fill.style.width = pctBar + "%";
     fill.classList.remove("tier-mengejar", "tier-selesai");
-    if (donasi >= t.target100) fill.classList.add("tier-selesai");
-    else if (donasi >= t.target50) fill.classList.add("tier-mengejar");
+    if (mode === "ok") fill.classList.add("tier-selesai");
+    else if (mode === "mid") fill.classList.add("tier-mengejar");
   }
   [row50, row100].forEach(function (r) { if (r) r.classList.remove("tier-ok", "tier-kejar"); });
 
-  const ok50 = donasi >= t.target50;
-  const ok100 = donasi >= t.target100;
   if (ok50) {
     if (row50) row50.classList.add("tier-ok");
     if (dot50) dot50.textContent = "\u2713";
     set("summaryTierStatus50", "Tercapai");
   } else {
     if (dot50) dot50.textContent = "1";
-    set("summaryTierStatus50", "Kurang " + formatRupiahHub(t.target50 - donasi));
+    set("summaryTierStatus50", "Kurang " + formatRupiahRingkas_(t.target50 - donasi), formatRupiahHub(t.target50 - donasi));
   }
   if (ok100) {
     if (row100) row100.classList.add("tier-ok");
     if (dot100) dot100.textContent = "\u2713";
-    set("summaryTierStatus100", "Tercapai \ud83c\udf89");
+    set("summaryTierStatus100", "Tercapai");
   } else {
     if (ok50 && row100) row100.classList.add("tier-kejar");
     if (dot100) dot100.textContent = "2";
-    set("summaryTierStatus100", (ok50 ? "Dikejar \u00b7 " : "") + "Kurang " + formatRupiahHub(t.target100 - donasi));
+    set("summaryTierStatus100", "Kurang " + formatRupiahRingkas_(t.target100 - donasi), formatRupiahHub(t.target100 - donasi));
   }
 }
 
