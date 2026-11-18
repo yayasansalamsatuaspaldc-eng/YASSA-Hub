@@ -692,6 +692,28 @@
   }
   .summary-progress-meta b { color: var(--bento-primary); font-weight: 700; }
 
+  /* ===== Target bertahap GOPAY: Rp50.000/anak (tercapai) -> Rp100.000/anak (dikejar) =====
+     Dihitung dari jumlah anak/yatim piatu/disabilitas di Rate_Santunan_Bulanan, jadi
+     TIDAK perlu Bendahara mengisi rate dulu. Lihat hitungTierSantunanGopay_(). */
+  .summary-tier { margin-top: 10px; position: relative; z-index: 1; }
+  .summary-tier-head { display:flex; justify-content:space-between; gap:8px; font-size:9.5px; font-weight:600; color: var(--text-secondary); margin-bottom:6px; }
+  .summary-tier-head b { color: var(--bento-primary); font-weight:700; }
+  .summary-tier-track { position:relative; height:7px; border-radius:99px; background: rgba(255,255,255,0.10); overflow:visible; }
+  .summary-tier-fill { height:100%; border-radius:99px; background:#F87171; width:0%; transition: width 0.6s cubic-bezier(0.22,1,0.36,1), background 0.3s; }
+  .summary-tier-fill.tier-mengejar { background:#F59E0B; }
+  .summary-tier-fill.tier-selesai { background: var(--bento-primary); }
+  .summary-tier-mark { position:absolute; top:-3px; width:2px; height:13px; border-radius:2px; background: var(--text-secondary); opacity:0.75; transform: translateX(-1px); }
+  .summary-tier-rows { margin-top:9px; display:flex; flex-direction:column; gap:6px; }
+  .summary-tier-row { display:flex; align-items:center; gap:8px; font-size:10.5px; min-width:0; }
+  .summary-tier-dot { width:16px; height:16px; border-radius:50%; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.10); color: var(--text-secondary); font-size:10px; font-weight:800; }
+  .summary-tier-row.tier-ok .summary-tier-dot { background: var(--bento-primary); color:#fff; }
+  .summary-tier-row.tier-kejar .summary-tier-dot { background:#F59E0B; color:#fff; }
+  .summary-tier-name { flex:1; min-width:0; color: var(--text-secondary); font-weight:600; line-height:1.25; }
+  .summary-tier-name small { display:block; font-size:9px; color: var(--text-muted); font-weight:500; }
+  .summary-tier-status { flex:0 0 auto; font-weight:700; color: var(--text-secondary); text-align:right; }
+  .summary-tier-row.tier-ok .summary-tier-status { color: var(--bento-primary); }
+  .summary-tier-row.tier-kejar .summary-tier-status { color:#F59E0B; }
+
   .summary-sub-row {
     margin-top: 10px; padding-top: 9px;
     border-top: 1px solid var(--glass-border);
@@ -3492,6 +3514,31 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
       </div>
     </div>
 
+    <!-- 🎯 Target bertahap GOPAY: Rp50.000/anak lalu Rp100.000/anak. Diisi oleh
+         renderTierSantunanGopay_() -- hanya tampil di program GOPAY. -->
+    <div class="summary-tier" id="summaryTierWrap" style="display:none;">
+      <div class="summary-tier-head">
+        <span>Terkumpul <b id="summaryTierTerkumpul">Rp0</b></span>
+        <span id="summaryTierPct"></span>
+      </div>
+      <div class="summary-tier-track">
+        <div class="summary-tier-fill" id="summaryTierFill"></div>
+        <div class="summary-tier-mark" id="summaryTierMark50"></div>
+      </div>
+      <div class="summary-tier-rows">
+        <div class="summary-tier-row" id="summaryTierRow50">
+          <span class="summary-tier-dot" id="summaryTierDot50">1</span>
+          <span class="summary-tier-name">Target Rp50.000 / anak<small id="summaryTierNeed50"></small></span>
+          <span class="summary-tier-status" id="summaryTierStatus50"></span>
+        </div>
+        <div class="summary-tier-row" id="summaryTierRow100">
+          <span class="summary-tier-dot" id="summaryTierDot100">2</span>
+          <span class="summary-tier-name">Target Rp100.000 / anak<small id="summaryTierNeed100"></small></span>
+          <span class="summary-tier-status" id="summaryTierStatus100"></span>
+        </div>
+      </div>
+    </div>
+
     <!-- Sub-row 1: Kekurangan Santunan (Total Santunan Diperlukan dikurangi
          Total Donasi yang udah terkumpul bulan ini) -- KHUSUS GOPAY, ikut
          disembunyikan otomatis kalau activeProgram = SAPA (belum ada
@@ -5935,6 +5982,8 @@ function renderSummaryCardBeranda_() {
   // field bulan/tahun aktif dari getRingkasanKeuangan).
   const elPeriodeChip = document.getElementById("summaryPeriodeChip");
   if (elPeriodeChip) elPeriodeChip.style.display = "none";
+  const elTierWrapTop = document.getElementById("summaryTierWrap");
+  if (elTierWrapTop) elTierWrapTop.style.display = "none"; // dinyalakan lagi di cabang GOPAY
 
   // 🩹 FIX: dulu kartu ini DIBIARKAN nampilin data program SEBELUMNYA
   // (mis. masih kelihatan angka SAPA) begitu user pindah ke program yang
@@ -6120,6 +6169,94 @@ function renderSummaryCardBeranda_() {
           : "Tercapai";
       }
     }
+  }
+
+  // 🎯 Target bertahap Rp50.000 -> Rp100.000 per anak (menggantikan bar tunggal di atas
+  // kalau datanya tersedia).
+  renderTierSantunanGopay_(d);
+}
+
+// Bonus per anak yatim piatu / disabilitas kalau kolom RateTambahan* di sheet masih kosong.
+const BONUS_TAMBAHAN_GOPAY_DEFAULT_ = 50000;
+const TIER_GOPAY_DASAR_ = [50000, 100000];
+
+// Hitung total kebutuhan kalau rate pokok = 50.000 dan = 100.000 per anak, dari jumlah anak
+// / yatim piatu / disabilitas per wilayah (penyaluranSantunan.rincianWilayah). TIDAK bergantung
+// pada RateSantunanPokok yang diisi Bendahara.
+function hitungTierSantunanGopay_(santunan) {
+  const hasil = { ada: false, jumlahAnak: 0, target50: 0, target100: 0 };
+  if (!santunan || !Array.isArray(santunan.rincianWilayah)) return hasil;
+  let anak = 0, tambahan = 0;
+  santunan.rincianWilayah.forEach(function (w) {
+    const a = Number(w.jumlahAnakYatim || 0);
+    const yp = Number(w.jumlahYatimPiatu || 0);
+    const dsb = Number(w.jumlahDisabilitas || 0);
+    const ryp = Number(w.rateTambahanYatimPiatu || 0) > 0 ? Number(w.rateTambahanYatimPiatu) : BONUS_TAMBAHAN_GOPAY_DEFAULT_;
+    const rdsb = Number(w.rateTambahanDisabilitas || 0) > 0 ? Number(w.rateTambahanDisabilitas) : BONUS_TAMBAHAN_GOPAY_DEFAULT_;
+    anak += a;
+    tambahan += (yp * ryp) + (dsb * rdsb);
+  });
+  if (anak <= 0) return hasil;
+  hasil.ada = true;
+  hasil.jumlahAnak = anak;
+  hasil.target50 = anak * TIER_GOPAY_DASAR_[0] + tambahan;
+  hasil.target100 = anak * TIER_GOPAY_DASAR_[1] + tambahan;
+  return hasil;
+}
+
+function renderTierSantunanGopay_(d) {
+  const wrap = document.getElementById("summaryTierWrap");
+  const elProgressWrap = document.getElementById("summaryProgressWrap");
+  if (!wrap) return;
+  const t = d && d.tier;
+  if (!t || !t.ada) { wrap.style.display = "none"; return; }
+
+  wrap.style.display = "";
+  if (elProgressWrap) elProgressWrap.style.display = "none"; // diganti bar bertahap ini
+
+  const donasi = Math.max(0, Number(d.totalDonasi || 0));
+  const pct100 = Math.max(0, Math.min(100, Math.round((donasi / t.target100) * 100)));
+  const posisi50 = Math.max(0, Math.min(100, (t.target50 / t.target100) * 100));
+
+  const set = function (id, txt) { const el = document.getElementById(id); if (el) el.textContent = txt; };
+  set("summaryTierTerkumpul", formatRupiahHub(donasi));
+  set("summaryTierPct", pct100 + "% dari target Rp100.000");
+  set("summaryTierNeed50", "Butuh " + formatRupiahHub(t.target50) + " (" + t.jumlahAnak + " anak)");
+  set("summaryTierNeed100", "Butuh " + formatRupiahHub(t.target100));
+
+  const fill = document.getElementById("summaryTierFill");
+  const mark = document.getElementById("summaryTierMark50");
+  const row50 = document.getElementById("summaryTierRow50");
+  const row100 = document.getElementById("summaryTierRow100");
+  const dot50 = document.getElementById("summaryTierDot50");
+  const dot100 = document.getElementById("summaryTierDot100");
+  if (mark) mark.style.left = posisi50 + "%";
+  if (fill) {
+    fill.style.width = pct100 + "%";
+    fill.classList.remove("tier-mengejar", "tier-selesai");
+    if (donasi >= t.target100) fill.classList.add("tier-selesai");
+    else if (donasi >= t.target50) fill.classList.add("tier-mengejar");
+  }
+  [row50, row100].forEach(function (r) { if (r) r.classList.remove("tier-ok", "tier-kejar"); });
+
+  const ok50 = donasi >= t.target50;
+  const ok100 = donasi >= t.target100;
+  if (ok50) {
+    if (row50) row50.classList.add("tier-ok");
+    if (dot50) dot50.textContent = "\u2713";
+    set("summaryTierStatus50", "Tercapai");
+  } else {
+    if (dot50) dot50.textContent = "1";
+    set("summaryTierStatus50", "Kurang " + formatRupiahHub(t.target50 - donasi));
+  }
+  if (ok100) {
+    if (row100) row100.classList.add("tier-ok");
+    if (dot100) dot100.textContent = "\u2713";
+    set("summaryTierStatus100", "Tercapai \ud83c\udf89");
+  } else {
+    if (ok50 && row100) row100.classList.add("tier-kejar");
+    if (dot100) dot100.textContent = "2";
+    set("summaryTierStatus100", (ok50 ? "Dikejar \u00b7 " : "") + "Kurang " + formatRupiahHub(t.target100 - donasi));
   }
 }
 
@@ -6574,6 +6711,7 @@ function loadBerandaStats() {
           kekuranganSantunan: kekuranganSantunan,
           santunanDitemukan: santunan.ditemukan,
           totalDonasi: totalDonasi,
+          tier: hitungTierSantunanGopay_(santunan),
           donasiBaruBulanIni: donasiBaruBulanIni,
           saldoBawaan: saldoBawaan,
           // 🆕 periode aktif (bulan/tahun) yang BENERAN dipakai buat hitung
