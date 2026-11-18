@@ -3251,6 +3251,51 @@ html[data-theme="light"] .beranda-top-section,html[data-theme="light"] #berandaA
 .aksi-cepat-row{gap:8px}
 .aksi-cepat-item>div:first-child{border-radius:16px!important}
 </style>
+<style id="beranda-santunan-match">
+/* Kartu Kebutuhan Santunan GOPAY: disamakan dengan desain referensi */
+.summary-card .summary-top{align-items:flex-start;gap:12px;padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid rgba(148,163,184,.16)}
+.summary-card .summary-icon{width:34px;height:34px;border-radius:10px;background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.35);color:#34D399}
+.summary-card .summary-icon .material-symbols-outlined{font-size:18px}
+.summary-card #summaryLabelSantunan,.summary-card #summaryLabelCollapsed{font-family:'Inter','Hanken Grotesk',sans-serif;font-size:12.5px;font-weight:800;letter-spacing:.02em;color:#34D399;margin-bottom:4px;line-height:1.25}
+.summary-card #berandaSyncBadge{align-items:flex-start;gap:6px;font-family:'Inter','Hanken Grotesk',sans-serif;font-size:12px;line-height:1.35;color:var(--text-secondary)}
+.summary-card #berandaSyncBadge>span:first-child{margin-top:5px;flex:0 0 auto}
+.summary-card #berandaSyncBadge #berandaSyncText{white-space:normal!important;overflow:visible!important;text-overflow:clip!important}
+.summary-card .summary-periode-chip{font-family:'Inter','Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;line-height:1.25;text-align:center;white-space:normal;max-width:96px;padding:9px 14px;background:rgba(30,41,59,.8);border:1px solid rgba(71,85,105,.7)}
+.summary-card .summary-eye-btn{width:34px;height:34px;margin-top:8px;background:rgba(30,41,59,.8);border:1px solid rgba(71,85,105,.7)}
+.summary-card .summary-target-label{display:none;font-family:'Inter','Hanken Grotesk',sans-serif;font-size:13.5px;font-weight:500;color:var(--text-secondary);margin-bottom:4px;position:relative;z-index:1}
+.summary-card.tier-aktif:not(.summary-collapsed) .summary-target-label{display:block}
+.summary-card .summary-value{font-family:'Inter','Hanken Grotesk',sans-serif!important;font-size:30px!important;letter-spacing:-.03em!important}
+/* target bertahap */
+.summary-card .summary-tier{margin-top:12px}
+.summary-card .summary-tier-head{align-items:center;font-family:'Inter','Hanken Grotesk',sans-serif;font-size:12.5px;font-weight:500;margin-bottom:10px}
+.summary-card .summary-tier-chip{font-size:12px;font-weight:600;padding:5px 12px;gap:7px}
+.summary-card .summary-tier-chip.chip-low{background:rgba(244,63,94,.14);border:1px solid rgba(244,63,94,.32);color:#FB7185}
+.summary-card .summary-tier-chip.chip-mid{border:1px solid rgba(245,158,11,.32)}
+.summary-card .summary-tier-chip.chip-ok{border:1px solid rgba(16,185,129,.32)}
+.summary-card .summary-tier-track{height:8px;background:rgba(148,163,184,.18)}
+.summary-card .summary-tier-mark{top:-2px;height:12px;background:rgba(203,213,225,.75)}
+.summary-card .summary-tier-rows{margin-top:14px;gap:10px}
+.summary-card .summary-tier-row{padding:11px 12px;gap:12px;border-radius:12px!important;background:rgba(2,6,23,.38);border:1px solid rgba(148,163,184,.16);font-family:'Inter','Hanken Grotesk',sans-serif}
+.summary-card .summary-tier-dot{width:26px;height:26px;font-size:12.5px;background:rgba(148,163,184,.16);border:1px solid rgba(148,163,184,.25)}
+.summary-card .summary-tier-row.tier-ok .summary-tier-dot{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.5);color:#34D399}
+.summary-card .summary-tier-row.tier-kejar .summary-tier-dot{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.5);color:#F59E0B}
+.summary-card .summary-tier-row:first-child .summary-tier-dot{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.45);color:#34D399}
+.summary-card .summary-tier-name{font-size:14px;font-weight:700;color:var(--text-primary)}
+.summary-card .summary-tier-name small{font-family:'Inter','Hanken Grotesk',sans-serif!important;font-size:12px;margin-top:2px;color:var(--text-secondary)}
+.summary-card .summary-tier-status{font-family:'Inter','Hanken Grotesk',sans-serif!important;font-size:13.5px;font-weight:700;color:#FDA4AF}
+.summary-card #summaryProgressPct{font-family:'Inter','Hanken Grotesk',sans-serif!important}
+/* total donasi: ikon kotak, nominal di kanan */
+.summary-card .summary-sub-row{margin-top:14px;padding-top:14px;gap:12px;border-top:1px solid rgba(148,163,184,.16)}
+.summary-card #summarySubRowDonasi .summary-sub-icon{width:34px;height:34px;border-radius:10px;background:rgba(16,185,129,.12)!important;border:1px solid rgba(16,185,129,.35);color:#34D399!important}
+.summary-card #summarySubRowDonasi .summary-sub-icon .material-symbols-outlined{font-size:18px}
+.summary-card #summarySubRowDonasi .summary-sub-text{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;align-items:center}
+.summary-card #summarySubRowDonasi .summary-sub-label{grid-column:1;font-family:'Inter','Hanken Grotesk',sans-serif;font-size:11.5px;font-weight:700;letter-spacing:.06em;color:var(--text-secondary);margin-bottom:1px}
+.summary-card #summaryDonasiSyncText{grid-column:1;font-family:'Inter','Hanken Grotesk',sans-serif;font-size:12.5px!important;color:var(--text-secondary)!important;margin-top:0!important}
+.summary-card #summaryDonasiSyncText b{font-weight:500;color:var(--text-primary)}
+.summary-card #summaryDonasiSaldoText{grid-column:1}
+.summary-card #summaryTotalDonasi{grid-column:2;grid-row:1 / span 3;align-self:center;font-family:'Inter','Hanken Grotesk',sans-serif!important;font-size:20px;font-weight:800;color:#34D399!important;text-align:right}
+.summary-card #summarySubRowKekurangan .summary-sub-value{font-family:'Inter','Hanken Grotesk',sans-serif!important}
+</style>
 
 </head>
 <body>
@@ -3525,7 +3570,7 @@ html[data-theme="light"] .beranda-top-section,html[data-theme="light"] #berandaA
   <div class="summary-card" id="summaryCard">
     <div class="summary-sheen" aria-hidden="true"></div>
     <div class="summary-top">
-      <div class="summary-icon"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">volunteer_activism</span></div>
+      <div class="summary-icon"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">favorite</span></div>
       <div style="flex:1; min-width:0;">
         <div class="summary-label" id="summaryLabelSantunan">Kebutuhan Santunan GOPAY</div>
         <div class="summary-label" id="summaryLabelCollapsed" style="display:none;">Kekurangan Santunan GOPAY</div>
@@ -3545,6 +3590,7 @@ html[data-theme="light"] .beranda-top-section,html[data-theme="light"] #berandaA
         <span class="material-symbols-outlined" id="summaryEyeIcon">expand_less</span>
       </button>
     </div>
+    <div class="summary-target-label" id="summaryTargetLabel">Target Santunan Bulan Ini</div>
     <div class="summary-value" id="summaryTotalSantunanDiperlukan"><span class="kv-loading">...</span></div>
 
     <!-- Progress bar ringkasan "Donasi vs Kebutuhan" -- lihat CSS .summary-progress
@@ -18542,7 +18588,12 @@ function updateHubSyncBadges() {
   if (typeof activeProgram !== "undefined" && activeProgram === "gopay" && dd) {
     // GOPAY: tampilkan waktu INPUT DATA terakhir, bukan waktu app disegarkan.
     if (elB) elB.textContent = "Data santunan: " + formatWaktuInputHub_(dd.inputSantunanTerakhir);
-    if (elD) elD.textContent = "Input donasi terakhir: " + formatWaktuInputHub_(dd.inputDonasiTerakhir);
+    if (elD) {
+      elD.textContent = "Input donasi terakhir: ";
+      const bDon = document.createElement("b");
+      bDon.textContent = formatWaktuInputHub_(dd.inputDonasiTerakhir);
+      elD.appendChild(bDon);
+    }
   } else {
     if (elB) elB.textContent = getHubSyncText_("beranda");
     if (elD) elD.textContent = "";
