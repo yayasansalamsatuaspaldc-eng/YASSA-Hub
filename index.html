@@ -753,7 +753,7 @@
   #content .total-anak-yassa-card .tay-title { color: #FFFFFF; }
   #content .total-anak-yassa-card .tay-sub { color: rgba(255,255,255,0.82); }
   #content .total-anak-yassa-card .tay-lbl { color: rgba(255,255,255,0.80); }
-  #content .total-anak-yassa-card .tay-note { color: rgba(255,255,255,0.72); }
+  #content .total-anak-yassa-card .tay-chevron { color: rgba(255,255,255,0.85); }
   #content .total-anak-yassa-card .tay-sep { background: rgba(255,255,255,0.25); }
 
   /* 🧩 PILIH PROGRAM YASSA + kartu data program (Anak Yatim GOPAY / Anak Asuh SAPA / BASO / PEDAS ...)
@@ -4505,6 +4505,19 @@ html[data-theme="light"] .beranda-top-section,html[data-theme="light"] #berandaA
       <span class="overlay-title">Data Anak Asuh SAPA</span>
     </div>
     <div class="akun-content" id="dataAnakAsuhContent"></div>
+  </div>
+
+  <!-- Halaman Penuh: Total Anak YASSA (Gopay + SAPA) -- rincian PER WILAYAH: KK, anak, yatim piatu,
+       disabilitas. Dibuka dengan menekan kartu "Total Anak YASSA" di Beranda. Datanya dari cache
+       Data Anak Yatim (Gopay) + Data Anak Asuh (SAPA), diperbarui LIVE dari YASSA Mobile tiap dibuka. -->
+  <div class="overlay" id="totalAnakYassaPage">
+    <div class="overlay-header">
+      <button class="overlay-close" id="totalAnakYassaClose">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E2E8F0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <span class="overlay-title">Total Anak YASSA</span>
+    </div>
+    <div class="akun-content" id="totalAnakYassaContent"></div>
   </div>
 
   <!-- Halaman Penuh: Kalender Kegiatan -- jadwal santunan/rapat/event.
@@ -13802,18 +13815,18 @@ function renderTotalAnakYassaCardHtml_() {
       '<div class="tay-lbl" style="font-size:9.5px; font-weight:700; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + label + '</div></div>';
   }
   var sep = '<div class="tay-sep" style="width:1px; align-self:stretch; margin:2px 0;"></div>';
-  return '<div class="total-anak-yassa-card" onclick="this.classList.toggle(\'tay-open\')" style="border-radius: 16px; padding: 12px 14px; margin-bottom: 14px; cursor:pointer;">' +
+  return '<div class="total-anak-yassa-card" onclick="openTotalAnakYassa()" style="border-radius: 16px; padding: 12px 14px; margin-bottom: 14px; cursor:pointer;">' +
     '<div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">' +
     '<div class="tay-icon" style="width:32px; height:32px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">' +
     '<span class="material-symbols-outlined" style="font-size:18px; font-variation-settings: \'FILL\' 1;">groups</span></div>' +
     '<div style="flex:1; min-width:0;"><h3 class="tay-title" style="font-size:13px; font-weight:700; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Total Anak YASSA</h3>' +
-    '<div class="tay-sub" style="font-size:10px; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Gopay + SAPA &bull; Semua Wilayah</div></div></div>' +
+    '<div class="tay-sub" style="font-size:10px; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Gopay + SAPA &bull; Semua Wilayah</div></div>' +
+    '<span class="material-symbols-outlined tay-chevron" style="font-size:22px; flex-shrink:0;">chevron_right</span></div>' +
     '<div style="display:flex; align-items:stretch; gap:4px;">' +
     mini('tay-total', 'Total Anak', '#FFFFFF') + sep +
     mini('tay-piatu', 'Yatim Piatu', '#F5D0FE') + sep +
     mini('tay-dsb', 'Disabilitas*', '#FDE68A') +
     '</div>' +
-    '<div class="tay-note" style="font-size:9px; margin-top:8px;">*Disabilitas = Anak + Ortu digabung (bisa dobel kalau 1 KK punya anak &amp; ibu sama-sama disabilitas).</div>' +
     '</div>';
 }
 
@@ -13834,6 +13847,117 @@ function updateTotalAnakYassaCard_() {
   setAll('tay-total', siap ? gAnak + sAnak : null);
   setAll('tay-piatu', siap ? Number(g.totalYatimPiatu || 0) + Number(s.totalYatimPiatu || 0) : null);
   setAll('tay-dsb', siap ? Number(g.totalDisabilitas || 0) + Number(s.totalDisabilitas || 0) : null);
+}
+
+// ============================================================
+// 📊 RINCIAN TOTAL ANAK YASSA (GOPAY + SAPA) PER WILAYAH
+// Dibuka dari kartu "Total Anak YASSA" di Beranda.
+// Per wilayah: KK, Anak (Yatim Gopay + Anak Asuh SAPA), Yatim Piatu, Disabilitas*.
+// ============================================================
+function openTotalAnakYassa() {
+  document.getElementById("totalAnakYassaPage").classList.add("open");
+  loadTotalAnakYassa();
+}
+
+function loadTotalAnakYassa() {
+  const el = document.getElementById("totalAnakYassaContent");
+  const adaCache = !!(dataAnakYatimCache && dataAnakAsuhCache);
+  if (adaCache) {
+    renderTotalAnakYassa(dataAnakYatimCache, dataAnakAsuhCache, true);
+  } else {
+    el.innerHTML = `
+      <div style="display:flex; align-items:center; justify-content:center; padding: 60px 0; color: var(--text-secondary); font-size: 12.5px; gap: 8px;">
+        <span class="material-symbols-outlined spin" style="font-size: 18px;">progress_activity</span> Mengambil data anak dari YASSA Mobile...
+      </div>`;
+  }
+  Promise.all([
+    callGASWithRetry_("getDataAnakYatim", [authToken]),
+    callGASWithRetry_("getDataAnakAsuh", [authToken]),
+  ]).then(function (hasil) {
+    dataAnakYatimCache = hasil[0]; saveDataAnakYatimCacheHub();
+    dataAnakAsuhCache = hasil[1]; saveDataAnakAsuhCacheHub();
+    renderTotalAnakYassa(hasil[0], hasil[1], false);
+    try { updateTotalAnakYassaCard_(); } catch (e) {}
+  }).catch(function (err) {
+    if (adaCache) return; // data lama sudah tampil, biarkan
+    el.innerHTML = `
+      <div style="padding: 40px 20px; text-align: center; color: var(--text-secondary); font-size: 12.5px;">
+        Gagal memuat data: ${escapeHtmlHub(String(err && err.message || err))}
+        <br><button onclick="loadTotalAnakYassa()" style="margin-top: 14px; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 99px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--text-primary); cursor: pointer;">Coba Lagi</button>
+      </div>`;
+  });
+}
+
+// Gabungkan rincian Gopay & SAPA per wilayah. Urutan: wilayah di Gopay dulu, lalu wilayah yang hanya ada di SAPA.
+function gabungRincianTotalAnak_(g, s) {
+  const n = function (v) { return Number(v || 0); };
+  const peta = {}, urut = [];
+  function ambil(nama) {
+    const kunci = String(nama || "").trim().toUpperCase();
+    if (!peta[kunci]) { peta[kunci] = { wilayah: String(nama || "").trim(), kk: 0, gopay: 0, sapa: 0, piatu: 0, dsb: 0 }; urut.push(kunci); }
+    return peta[kunci];
+  }
+  (g.rincianWilayah || []).forEach(function (r) {
+    const x = ambil(r.wilayah);
+    x.kk += n(r.jumlahKK); x.gopay += n(r.jumlahYatim); x.piatu += n(r.jumlahYatimPiatu); x.dsb += n(r.jumlahDisabilitas);
+  });
+  (s.rincianWilayah || []).forEach(function (r) {
+    const x = ambil(r.wilayah);
+    x.kk += n(r.jumlahKK); x.sapa += n(r.jumlahAnakAsuh); x.piatu += n(r.jumlahYatimPiatu); x.dsb += n(r.jumlahDisabilitas);
+  });
+  return urut.map(function (k) { const x = peta[k]; x.anak = x.gopay + x.sapa; return x; });
+}
+
+function renderTotalAnakYassa(g, s, dariCache) {
+  const el = document.getElementById("totalAnakYassaContent");
+  const n = function (v) { return Number(v || 0); };
+  const rincian = gabungRincianTotalAnak_(g, s);
+  const totalAnak = n(g.totalYatim) + n(s.totalAnakAsuh);
+  const totalKK = n(g.totalKK) + n(s.totalKK);
+  const totalPiatu = n(g.totalYatimPiatu) + n(s.totalYatimPiatu);
+  const totalDsb = n(g.totalDisabilitas) + n(s.totalDisabilitas);
+  const fmt = function (v) { return Number(v).toLocaleString("id-ID"); };
+
+  function kotak(warnaBg, warnaBorder, warnaAngka, angka, label) {
+    return `<div style="flex:1; background:${warnaBg}; border:1px solid ${warnaBorder}; border-radius:12px; padding:10px 8px; text-align:center;">
+      <div style="font-size:17px; font-weight:800; color:${warnaAngka};">${fmt(angka)}</div>
+      <div style="font-size:9px; color: var(--text-muted); margin-top:2px;">${label}</div></div>`;
+  }
+
+  let html = `
+    <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;">
+      Gabungan <b>Program Gopay</b> (anak yatim) + <b>Program SAPA</b> (anak asuh), semua wilayah, diambil langsung dari YASSA Mobile.
+      ${dariCache ? '<span style="color: var(--bento-primary);">Sedang memperbarui...</span>' : ''}
+    </div>
+    <div style="display:flex; gap:8px; margin-bottom: 8px;">
+      ${kotak("rgba(59,130,246,0.08)", "rgba(59,130,246,0.2)", "#93C5FD", totalKK, "KK")}
+      ${kotak("rgba(34,197,94,0.08)", "rgba(34,197,94,0.2)", "#86EFAC", totalAnak, "Total Anak")}
+      ${kotak("rgba(168,85,247,0.08)", "rgba(168,85,247,0.2)", "#D8B4FE", totalPiatu, "Yatim Piatu")}
+      ${kotak("rgba(245,158,11,0.08)", "rgba(245,158,11,0.2)", "#FDE68A", totalDsb, "Disabilitas*")}
+    </div>
+    <div style="font-size: 9.5px; color: var(--text-muted); margin-bottom: 4px;">*Disabilitas = Anak + Ortu digabung (1 KK dgn anak &amp; ibu sama-sama disabilitas dihitung 2x, sesuai aturan santunan).</div>
+    <div style="font-size: 9.5px; color: var(--text-muted); margin-bottom: 18px;">KK dijumlahkan per program: KK yang punya anak di Gopay dan di SAPA sekaligus bisa terhitung dua kali.</div>
+
+    <div style="font-size: 11px; font-weight: 700; color: var(--text-primary); margin: 0 2px 10px;">Rincian per Wilayah (${rincian.length})</div>`;
+
+  if (!rincian.length) {
+    html += `<div style="font-size: 11px; color: var(--text-muted); padding: 20px 0; text-align:center;">Belum ada data wilayah.</div>`;
+  } else {
+    rincian.forEach(function (r) {
+      html += `
+        <div style="background: var(--glass-strong); border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; border: 1px solid var(--glass-border);">
+          <div style="font-size: 12.5px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${escapeHtmlHub(r.wilayah)}</div>
+          <div style="display:flex; gap: 14px; flex-wrap: wrap;">
+            <div style="font-size: 11px; color: var(--text-secondary);">KK <b style="color:#93C5FD;">${fmt(r.kk)}</b></div>
+            <div style="font-size: 11px; color: var(--text-secondary);">Anak <b style="color:#86EFAC;">${fmt(r.anak)}</b></div>
+            <div style="font-size: 11px; color: var(--text-secondary);">Yatim Piatu <b style="color:#D8B4FE;">${fmt(r.piatu)}</b></div>
+            <div style="font-size: 11px; color: var(--text-secondary);">Disabilitas* <b style="color:#FDE68A;">${fmt(r.dsb)}</b></div>
+          </div>
+          <div style="font-size: 10px; color: var(--text-muted); margin-top: 6px;">Anak: Gopay ${fmt(r.gopay)} &bull; SAPA ${fmt(r.sapa)}</div>
+        </div>`;
+    });
+  }
+  el.innerHTML = html;
 }
 
 function loadDataAnakYatimPreviewBeranda() {
@@ -17911,6 +18035,10 @@ document.getElementById("laporanPdfViewerClose").addEventListener("click", funct
 
 document.getElementById("dataAnakYatimClose").addEventListener("click", function () {
   document.getElementById("dataAnakYatimPage").classList.remove("open");
+});
+
+document.getElementById("totalAnakYassaClose").addEventListener("click", function () {
+  document.getElementById("totalAnakYassaPage").classList.remove("open");
 });
 
 document.getElementById("dataAnakAsuhClose").addEventListener("click", function () {
