@@ -723,6 +723,11 @@
   .summary-card.tier-aktif:not(.summary-collapsed) #summarySubRowKekurangan { display:none !important; }
   .summary-collapsed #summaryTierWrap { display:none !important; }
 
+  /* 🧩 PILIH PROGRAM YASSA + kartu data program (Anak Yatim GOPAY / Anak Asuh SAPA / BASO / PEDAS ...)
+     digabung jadi SATU kartu: panel data diratakan (tanpa kotak sendiri) dan dipisah garis tipis. */
+  .program-unified-card { background: var(--glass-strong); border: 1px solid var(--glass-border); border-radius: 22px; padding: 16px 16px 4px; margin-bottom: 20px; }
+  .program-unified-card .program-panel > :first-child { background: transparent !important; border: none !important; border-top: 1px solid var(--glass-border) !important; border-radius: 0 !important; box-shadow: none !important; padding: 16px 0 14px !important; margin-bottom: 0 !important; }
+
   /* 🧷 Kartu "Kebutuhan Santunan" di Beranda ikut ter-scroll bersama isi halaman (dipindah ke dalam
      #content oleh renderContent). Header tidak lagi perlu ruang ekstra untuk kartu yang "menggantung". */
   #content > .summary-card { grid-column: 1 / -1; margin: 0 auto 16px; width: 100%; box-sizing: border-box; }
@@ -5201,6 +5206,9 @@ function selectProgramTab(key) {
   document.querySelectorAll(".program-panel").forEach(function (el) {
     el.style.display = el.id === "programPanel-" + key ? "" : "none";
   });
+  document.querySelectorAll(".program-extra").forEach(function (el) {
+    el.style.display = el.id === "programExtra-" + key ? "" : "none";
+  });
   // Kartu ringkasan "Total Santunan Diperlukan" di atas ikut berubah sesuai
   // program yang baru dipilih -- GOPAY & SAPA nampilin data live, program
   // lain (BADIK dkk) yang belum ready ikut nampilin placeholder "Data
@@ -9069,6 +9077,8 @@ function renderContent() {
     let html = `
       <div class="beranda-top-section" style="grid-column: 1 / -1;">
       ${renderTotalAnakYassaCardHtml_()}
+      <!-- 🧩 Satu kartu: PILIH PROGRAM + data program yang dipilih (dulu dua kartu terpisah) -->
+      <div class="program-unified-card">
       ${renderProgramSelectorHtml_()}
 
       <div id="berandaPanelsWrap" class="hub-data-blur ${berandaSudahAdaCache_ ? '' : 'is-blurred'}">
@@ -9120,20 +9130,7 @@ function renderContent() {
 
       <!-- Ringkasan Angka (Anak, Wilayah, Pengurus) -- dipindah ke BAWAH
            kartu Data Anak Yatim (lihat catatan di atas). -->
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
-        <div class="stat-mini-card" style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid #60A5FA; cursor: pointer;" onclick="setActive('pm')">
-          <span class="material-symbols-outlined stat-mini-icon" style="color: #60A5FA;">group</span>
-          <div><div style="font-size: 20px; font-weight: 700;" id="statTotalAnak">…</div><div style="font-size: 11px; color: var(--text-secondary);">Anak</div><div style="font-size: 8.5px; color: var(--text-muted); margin-top: 1px; line-height: 1.2;">(Gopay &amp; Anak Asuh)</div></div>
-        </div>
-        <div class="stat-mini-card" style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid #C084FC;">
-          <span class="material-symbols-outlined stat-mini-icon" style="color: #C084FC;">location_on</span>
-          <div><div style="font-size: 20px; font-weight: 700;" id="statTotalWilayah">…</div><div style="font-size: 11px; color: var(--text-secondary);">Wilayah</div></div>
-        </div>
-        <div class="stat-mini-card" style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid var(--bento-primary); cursor: pointer;" onclick="handleUserMenuClick('pengurus')">
-          <span class="material-symbols-outlined stat-mini-icon" style="color: var(--bento-primary);">admin_panel_settings</span>
-          <div><div style="font-size: 20px; font-weight: 700;" id="statTotalPengurus">…</div><div style="font-size: 11px; color: var(--text-secondary);">Pengurus &amp; Tim Kerja</div></div>
-        </div>
-      </div>
+      
       </div>
       <!-- /Panel Program GO-PAY -->
 
@@ -9294,6 +9291,25 @@ function renderContent() {
         })
         .join("")}
 
+      </div>
+      </div><!-- /program-unified-card -->
+
+      <!-- Ringkasan Anak / Wilayah / Pengurus: khusus program GOPAY, tampil di luar kartu program -->
+      <div class="program-extra" id="programExtra-gopay">
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+        <div class="stat-mini-card" style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid #60A5FA; cursor: pointer;" onclick="setActive('pm')">
+          <span class="material-symbols-outlined stat-mini-icon" style="color: #60A5FA;">group</span>
+          <div><div style="font-size: 20px; font-weight: 700;" id="statTotalAnak">…</div><div style="font-size: 11px; color: var(--text-secondary);">Anak</div><div style="font-size: 8.5px; color: var(--text-muted); margin-top: 1px; line-height: 1.2;">(Gopay &amp; Anak Asuh)</div></div>
+        </div>
+        <div class="stat-mini-card" style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid #C084FC;">
+          <span class="material-symbols-outlined stat-mini-icon" style="color: #C084FC;">location_on</span>
+          <div><div style="font-size: 20px; font-weight: 700;" id="statTotalWilayah">…</div><div style="font-size: 11px; color: var(--text-secondary);">Wilayah</div></div>
+        </div>
+        <div class="stat-mini-card" style="background: var(--glass-strong); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); border-left: 4px solid var(--bento-primary); cursor: pointer;" onclick="handleUserMenuClick('pengurus')">
+          <span class="material-symbols-outlined stat-mini-icon" style="color: var(--bento-primary);">admin_panel_settings</span>
+          <div><div style="font-size: 20px; font-weight: 700;" id="statTotalPengurus">…</div><div style="font-size: 11px; color: var(--text-secondary);">Pengurus &amp; Tim Kerja</div></div>
+        </div>
+      </div>
       </div>
       <!-- /berandaPanelsWrap -->
 
