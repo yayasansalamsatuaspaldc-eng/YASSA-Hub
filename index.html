@@ -723,6 +723,12 @@
   .summary-card.tier-aktif:not(.summary-collapsed) #summarySubRowKekurangan { display:none !important; }
   .summary-collapsed #summaryTierWrap { display:none !important; }
 
+  /* 🧷 Kartu "Kebutuhan Santunan" di Beranda ikut ter-scroll bersama isi halaman (dipindah ke dalam
+     #content oleh renderContent). Header tidak lagi perlu ruang ekstra untuk kartu yang "menggantung". */
+  #content > .summary-card { grid-column: 1 / -1; margin: 0 auto 16px; width: 100%; box-sizing: border-box; }
+  #app.summary-scroll .header { padding-bottom: 22px; }
+  #app.summary-scroll .content { padding-top: 14px; }
+
   .summary-sub-row {
     margin-top: 10px; padding-top: 9px;
     border-top: 1px solid var(--glass-border);
@@ -9034,6 +9040,12 @@ function showDaftarLoginHariIni() {
 function renderContent() {
   const el = document.getElementById("content");
   const summary = document.getElementById("summaryCard");
+  const appRoot = document.getElementById("app");
+  // 🧷 Di tab Beranda kartu "Kebutuhan Santunan" ditaruh DI DALAM #content supaya ikut ter-scroll
+  // bersama isi Beranda. Lepas dulu ke posisi awalnya (sebelum #content) agar tidak ikut
+  // terhapus waktu el.innerHTML ditimpa di bawah.
+  if (summary && summary.parentNode === el) appRoot.insertBefore(summary, el);
+  appRoot.classList.toggle("summary-scroll", active === "beranda");
   
   el.classList.remove("animate-fade-up");
   void el.offsetWidth;
@@ -9363,6 +9375,7 @@ function renderContent() {
     `;
     html += `<div class="app-version-footer">YASSA GOPAY v${APP_VERSION}</div>`;
     el.innerHTML = html;
+    el.insertBefore(summary, el.firstChild); // 🧷 kartu ikut ter-scroll bersama isi Beranda
     loadBerandaStats();
     loadDataAnakYatimPreviewBeranda();
     loadDataAnakAsuhPreviewBeranda();
