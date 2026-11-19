@@ -723,6 +723,14 @@
   .summary-card.tier-aktif:not(.summary-collapsed) #summarySubRowKekurangan { display:none !important; }
   .summary-collapsed #summaryTierWrap { display:none !important; }
 
+  /* 👆 Petunjuk "Tekan untuk melihat detail": hanya saat kartu ringkas; seluruh kartu bisa ditekan. */
+  .summary-tap-hint { display: none; align-items: center; justify-content: center; gap: 4px; margin-top: 12px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.18); font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.72); letter-spacing: 0.2px; }
+  .summary-tap-hint .material-symbols-outlined { font-size: 18px; animation: tapHintBounce 1.6s ease-in-out infinite; }
+  .summary-card.summary-collapsed .summary-tap-hint { display: flex; }
+  .summary-card.summary-collapsed { cursor: pointer; }
+  @keyframes tapHintBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
+  @media (prefers-reduced-motion: reduce) { .summary-tap-hint .material-symbols-outlined { animation: none; } }
+
   /* 🧩 Kartu "Ringkasan YASSA": Anak / Wilayah / Pengurus & Tim Kerja digabung jadi SATU kartu
      berjudul, dipisah garis tipis (dulu tiga kotak terpisah). */
   .ringkasan-yassa-card { background: var(--st-card, var(--glass-strong)); border: 1px solid var(--st-line, var(--glass-border)); border-radius: 14px; padding: 14px 14px 12px; margin-bottom: 20px; box-shadow: 0 1px 2px rgba(15,23,42,.05); }
@@ -3737,6 +3745,12 @@ html[data-theme="light"] .beranda-top-section,html[data-theme="light"] #berandaA
         <div id="summaryDonasiSaldoText" style="display:none; font-size:10.5px; color:rgba(255,255,255,0.55); margin-top:1px;"></div>
         <div class="summary-sub-value" id="summaryTotalDonasi" style="color: var(--bento-primary);"><span class="kv-loading">...</span></div>
       </div>
+    </div>
+
+    <!-- 👆 Petunjuk: hanya tampil saat kartu RINGKAS. Menekan di mana saja pada kartu membuka rincian. -->
+    <div class="summary-tap-hint" id="summaryTapHint" aria-hidden="true">
+      Tekan untuk melihat detail
+      <span class="material-symbols-outlined">expand_more</span>
     </div>
   </div>
 
@@ -18459,21 +18473,30 @@ function toggleSummaryNominal_(ev) {
   const card = document.getElementById("summaryCard");
   const collapsed = !(card && card.classList.contains("summary-collapsed"));
   applySummaryCollapsed_(collapsed);
-  try { localStorage.setItem("yassa_hub_summary_collapsed", collapsed ? "1" : "0"); } catch (e) {}
+  // Sengaja TIDAK disimpan antar-sesi: setiap aplikasi dibuka, kartu selalu mulai dalam keadaan ringkas.
 }
 (function initSummaryCollapsed_() {
-  // Belum pernah memilih -> otomatis terlipat di layar sempit / tampilan besar
-  // (lebar CSS <= 375px), supaya kartu tidak memenuhi layar.
-  let collapsed = (window.innerWidth || 9999) <= 375;
-  try {
-    const saved = localStorage.getItem("yassa_hub_summary_collapsed");
-    if (saved === "1") collapsed = true;
-    else if (saved === "0") collapsed = false;
-  } catch (e) {}
+  // 📌 Setiap kali aplikasi dibuka, kartu "Kebutuhan Santunan" SELALU mulai ringkas (hanya kekurangan).
+  // Tekan tanda panah bawah untuk melihat rincian lengkap. Pilihan buka/lipat TIDAK diingat antar-sesi
+  // (kunci lama dibersihkan supaya tidak membingungkan).
+  try { localStorage.removeItem("yassa_hub_summary_collapsed"); } catch (e) {}
+  function pasang() {
+    applySummaryCollapsed_(true);
+    const card = document.getElementById("summaryCard");
+    if (!card || card.dataset.tapBuka === "1") return;
+    card.dataset.tapBuka = "1";
+    // Saat RINGKAS, menekan bagian mana pun pada kartu membuka rincian (tidak harus tombol panah).
+    // Tombol panah, chip periode, dan lencana "Diperbarui" tetap punya fungsi sendiri.
+    card.addEventListener("click", function (ev) {
+      if (!card.classList.contains("summary-collapsed")) return;
+      if (ev.target.closest && ev.target.closest("#summaryEyeBtn, #summaryPeriodeChip, #berandaSyncBadge")) return;
+      toggleSummaryNominal_(ev);
+    });
+  }
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", function () { applySummaryCollapsed_(collapsed); });
+    document.addEventListener("DOMContentLoaded", pasang);
   } else {
-    applySummaryCollapsed_(collapsed);
+    pasang();
   }
 })();
 
