@@ -723,6 +723,24 @@
   .summary-card.tier-aktif:not(.summary-collapsed) #summarySubRowKekurangan { display:none !important; }
   .summary-collapsed #summaryTierWrap { display:none !important; }
 
+  /* 🎨 Kartu "Total Anak YASSA": gradasi biru-indigo + teks putih, SENGAJA beda dari kartu lain
+     (hijau = santunan, kaca gelap = kartu data). Selector pakai #content supaya menang atas
+     aturan tema kartu data yang bersifat !important. */
+  #content .beranda-top-section .total-anak-yassa-card {
+    background: linear-gradient(135deg, #1D4ED8 0%, #4338CA 55%, #6D28D9 100%) !important;
+    border: 1px solid rgba(255,255,255,0.20) !important;
+    border-left-width: 1px !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 22px rgba(67,56,202,0.35), inset 0 1px 0 rgba(255,255,255,0.18) !important;
+    color: #FFFFFF;
+  }
+  #content .total-anak-yassa-card .tay-icon { background: rgba(255,255,255,0.18); color: #FFFFFF; }
+  #content .total-anak-yassa-card .tay-title { color: #FFFFFF; }
+  #content .total-anak-yassa-card .tay-sub { color: rgba(255,255,255,0.82); }
+  #content .total-anak-yassa-card .tay-lbl { color: rgba(255,255,255,0.80); }
+  #content .total-anak-yassa-card .tay-note { color: rgba(255,255,255,0.72); }
+  #content .total-anak-yassa-card .tay-sep { background: rgba(255,255,255,0.25); }
+
   /* 🧩 PILIH PROGRAM YASSA + kartu data program (Anak Yatim GOPAY / Anak Asuh SAPA / BASO / PEDAS ...)
      digabung jadi SATU kartu: panel data diratakan (tanpa kotak sendiri) dan dipisah garis tipis. */
   .program-unified-card { background: var(--glass-strong); border: 1px solid var(--glass-border); border-radius: 22px; padding: 16px 16px 4px; margin-bottom: 20px; }
@@ -13743,24 +13761,26 @@ function saveDataAnakYatimCacheHub() {
 // menampilkan total yang kurang.
 // ============================================================
 function renderTotalAnakYassaCardHtml_() {
+  // 🎨 Kartu ini sengaja BERBEDA warna dari kartu lain (biru-indigo, teks putih) supaya langsung
+  // terbaca sebagai "total keseluruhan". Gaya dasar ada di CSS .total-anak-yassa-card (lihat style).
   function mini(cls, label, color) {
     return '<div style="flex:1; min-width:0; text-align:center; padding:2px 4px;">' +
-      '<div class="' + cls + '" style="font-size:16px; font-weight:800; line-height:1.15; color:' + color + ';"><span class="kv-loading">...</span></div>' +
-      '<div style="font-size:9.5px; font-weight:700; color: var(--text-muted); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + label + '</div></div>';
+      '<div class="' + cls + '" style="font-size:17px; font-weight:800; line-height:1.15; color:' + color + ';"><span class="kv-loading">...</span></div>' +
+      '<div class="tay-lbl" style="font-size:9.5px; font-weight:700; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + label + '</div></div>';
   }
-  var sep = '<div style="width:1px; align-self:stretch; background: var(--glass-border); margin:2px 0;"></div>';
-  return '<div class="total-anak-yassa-card" onclick="this.classList.toggle(\'tay-open\')" style="background: var(--glass-strong); border-radius: 16px; padding: 12px 14px; margin-bottom: 14px; border: 1px solid var(--glass-border); border-left: 4px solid #22C55E; cursor:pointer;">' +
+  var sep = '<div class="tay-sep" style="width:1px; align-self:stretch; margin:2px 0;"></div>';
+  return '<div class="total-anak-yassa-card" onclick="this.classList.toggle(\'tay-open\')" style="border-radius: 16px; padding: 12px 14px; margin-bottom: 14px; cursor:pointer;">' +
     '<div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">' +
-    '<div style="width:32px; height:32px; border-radius:10px; background:rgba(34,197,94,0.15); color:#86EFAC; display:flex; align-items:center; justify-content:center; flex-shrink:0;">' +
+    '<div class="tay-icon" style="width:32px; height:32px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">' +
     '<span class="material-symbols-outlined" style="font-size:18px; font-variation-settings: \'FILL\' 1;">groups</span></div>' +
-    '<div style="flex:1; min-width:0;"><h3 style="font-size:13px; font-weight:700; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Total Anak YASSA</h3>' +
-    '<div style="font-size:10px; color: var(--text-secondary); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Gopay + SAPA &bull; Semua Wilayah</div></div></div>' +
+    '<div style="flex:1; min-width:0;"><h3 class="tay-title" style="font-size:13px; font-weight:700; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Total Anak YASSA</h3>' +
+    '<div class="tay-sub" style="font-size:10px; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Gopay + SAPA &bull; Semua Wilayah</div></div></div>' +
     '<div style="display:flex; align-items:stretch; gap:4px;">' +
-    mini('tay-total', 'Total Anak', '#86EFAC') + sep +
-    mini('tay-piatu', 'Yatim Piatu', '#D8B4FE') + sep +
+    mini('tay-total', 'Total Anak', '#FFFFFF') + sep +
+    mini('tay-piatu', 'Yatim Piatu', '#F5D0FE') + sep +
     mini('tay-dsb', 'Disabilitas*', '#FDE68A') +
     '</div>' +
-    '<div class="tay-note" style="font-size:9px; color: var(--text-muted); margin-top:8px;">*Disabilitas = Anak + Ortu digabung (bisa dobel kalau 1 KK punya anak &amp; ibu sama-sama disabilitas).</div>' +
+    '<div class="tay-note" style="font-size:9px; margin-top:8px;">*Disabilitas = Anak + Ortu digabung (bisa dobel kalau 1 KK punya anak &amp; ibu sama-sama disabilitas).</div>' +
     '</div>';
 }
 
