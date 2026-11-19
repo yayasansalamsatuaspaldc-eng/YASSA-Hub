@@ -742,9 +742,11 @@
   #content .total-anak-yassa-card .tay-sep { background: rgba(255,255,255,0.25); }
 
   /* 🧩 PILIH PROGRAM YASSA + kartu data program (Anak Yatim GOPAY / Anak Asuh SAPA / BASO / PEDAS ...)
-     digabung jadi SATU kartu: panel data diratakan (tanpa kotak sendiri) dan dipisah garis tipis. */
-  .program-unified-card { background: var(--glass-strong); border: 1px solid var(--glass-border); border-radius: 22px; padding: 16px 16px 4px; margin-bottom: 20px; }
-  .program-unified-card .program-panel > :first-child { background: transparent !important; border: none !important; border-top: 1px solid var(--glass-border) !important; border-radius: 0 !important; box-shadow: none !important; padding: 16px 0 14px !important; margin-bottom: 0 !important; }
+     digabung jadi SATU kartu. Selector memakai prefix #content karena tema "beranda-stitch" punya aturan
+     !important yang spesifik (mis. .program-panel>div[style*="border-left"]) dan akan menang kalau tidak. */
+  #content .program-unified-card { background: var(--st-card, var(--glass-strong)) !important; border: 1px solid var(--st-line, var(--glass-border)) !important; border-radius: 14px !important; padding: 16px 16px 4px; margin-bottom: 20px; box-shadow: 0 1px 2px rgba(15,23,42,.05); }
+  #content .program-unified-card .program-select-card:not(.active) { background: var(--st-inner, rgba(2,6,23,.45)) !important; }
+  #content .program-unified-card .program-panel > :first-child { background: transparent !important; border: none !important; border-top: 1px solid var(--st-line, var(--glass-border)) !important; border-left-width: 0 !important; border-radius: 0 !important; box-shadow: none !important; padding: 16px 0 14px !important; margin-bottom: 0 !important; }
 
   /* 🧷 Kartu "Kebutuhan Santunan" di Beranda ikut ter-scroll bersama isi halaman (dipindah ke dalam
      #content oleh renderContent). Header tidak lagi perlu ruang ekstra untuk kartu yang "menggantung". */
