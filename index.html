@@ -1096,8 +1096,16 @@
        panjang (mis. section Dokumen Yayasan nambah), item paling bawah
        (Logout) ke-dorong keluar layar & gak bisa dijangkau. Sekarang
        dropdown dibatasi tinggi layar & bisa discroll sendiri. */
-    max-height: calc(100dvh - 76px - 16px - env(safe-area-inset-bottom, 0px));
+    /* 🩹 FIX 2: dulu hanya memakai 100dvh. Di browser/WebView yang belum mendukung
+       dvh, SELURUH baris max-height dianggap tidak valid -> menu tidak punya batas
+       tinggi -> menurun melewati layar & tidak bisa digulir. Sekarang ada urutan
+       cadangan, dan ukuran utama mengikuti --app-vh (tinggi layar asli, sama dengan
+       tinggi #app) supaya selalu pas dengan area yang terlihat. */
+    max-height: calc(100vh - 92px);
+    max-height: calc(var(--app-vh, 1vh) * 100 - 92px - env(safe-area-inset-bottom, 0px));
     overflow-y: auto;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
   }
   .user-menu.open { display: block; animation: scaleIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
@@ -16153,6 +16161,10 @@ async function gambarKartuAnggota_() {
   ]);
   const foto = hasilMuat[0], qr = hasilMuat[1];
   if (!document.getElementById("kartuAnggotaCanvas")) return; // modal sudah ditutup
+  // QR dipindah ke sisi BELAKANG kartu: simpan lalu gambar ulang sisi belakang bila sudah ada
+  kartuBelakangQr_ = qr;
+  kartuDataSvg_ = { nama: nama, jabatan: jabatan, telp: telp, emailKartu: emailKartu, wilayah: String(wilayah), foto: foto, qr: qr, teksQr: teksQr };
+  if (kartuBelakangCanvas_) gambarBelakangKartu_(kartuBelakangCanvas_, qr);
 
   const FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
 
@@ -16207,26 +16219,26 @@ async function gambarKartuAnggota_() {
   ctx.restore();
 
   // Foto (tengah)
-  const fs = 220, fx = (W - fs) / 2, fy = 314;
+  const fs = 290, fx = (W - fs) / 2, fy = 330;
   ctx.save();
   ctx.shadowColor = "rgba(0,0,0,0.65)"; ctx.shadowBlur = 26; ctx.shadowOffsetY = 12;
-  ctx.fillStyle = "#111111"; pathRoundRect_(ctx, fx, fy, fs, fs, 36); ctx.fill();
+  ctx.fillStyle = "#111111"; pathRoundRect_(ctx, fx, fy, fs, fs, 44); ctx.fill();
   ctx.restore();
   ctx.save();
-  pathRoundRect_(ctx, fx, fy, fs, fs, 36); ctx.clip();
+  pathRoundRect_(ctx, fx, fy, fs, fs, 44); ctx.clip();
   if (foto) {
     const sk = Math.max(fs / foto.width, fs / foto.height);
     const dw = foto.width * sk, dh = foto.height * sk;
     ctx.drawImage(foto, fx + (fs - dw) / 2, fy + (fs - dh) / 2, dw, dh);
   } else {
     ctx.fillStyle = "rgba(255,255,255,0.18)"; ctx.fillRect(fx, fy, fs, fs);
-    ctx.fillStyle = "#FFFFFF"; ctx.font = "800 96px " + FONT;
+    ctx.fillStyle = "#FFFFFF"; ctx.font = "800 120px " + FONT;
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillText((nama.trim().charAt(0) || "?").toUpperCase(), fx + fs / 2, fy + fs / 2 + 4);
     ctx.textBaseline = "alphabetic";
   }
   ctx.restore();
-  pathRoundRect_(ctx, fx, fy, fs, fs, 36);
+  pathRoundRect_(ctx, fx, fy, fs, fs, 44);
   const bingkai = ctx.createLinearGradient(fx, fy, fx + fs, fy + fs);
   bingkai.addColorStop(0, "#FFD27A"); bingkai.addColorStop(0.5, "#F39C12"); bingkai.addColorStop(1, "#B86E00");
   ctx.strokeStyle = bingkai; ctx.lineWidth = 6; ctx.stroke();
@@ -16239,12 +16251,12 @@ async function gambarKartuAnggota_() {
   ctx.font = "800 " + ukNama + "px " + FONT;
   while (ukNama > 26 && ctx.measureText(nama).width > lebarTeks) { ukNama -= 1; ctx.font = "800 " + ukNama + "px " + FONT; }
   ctx.fillStyle = "#FFFFFF";
-  ctx.fillText(potongTeksKartu_(ctx, nama, lebarTeks), cx, 590);
+  ctx.fillText(potongTeksKartu_(ctx, nama, lebarTeks), cx, 688);
   ctx.fillStyle = "#F39C12"; ctx.font = "700 26px " + FONT;
-  ctx.fillText(potongTeksKartu_(ctx, jabatan, lebarTeks), cx, 628);
+  ctx.fillText(potongTeksKartu_(ctx, jabatan, lebarTeks), cx, 730);
   ctx.fillStyle = "rgba(255,255,255,0.88)"; ctx.font = "500 22px " + FONT;
-  ctx.fillText(potongTeksKartu_(ctx, "Wilayah: " + wilayah, lebarTeks), cx, 664);
-  if (telp) ctx.fillText(potongTeksKartu_(ctx, "Kontak: " + telp, lebarTeks), cx, 696);
+  ctx.fillText(potongTeksKartu_(ctx, "Wilayah: " + wilayah, lebarTeks), cx, 772);
+  if (telp) ctx.fillText(potongTeksKartu_(ctx, "Kontak: " + telp, lebarTeks), cx, 808);
   if (emailKartu) {
     const teksEmail = "Email: " + emailKartu;
     let ukEmail = 22;
@@ -16253,29 +16265,15 @@ async function gambarKartuAnggota_() {
       ukEmail -= 1;
       ctx.font = "500 " + ukEmail + "px " + FONT;
     }
-    ctx.fillText(potongTeksKartu_(ctx, teksEmail, lebarTeks), cx, 726);
+    ctx.fillText(potongTeksKartu_(ctx, teksEmail, lebarTeks), cx, 844);
   }
   ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-
-  // QR (tengah bawah)
-  const qrBox = 170, qx = (W - qrBox) / 2, qy = 754;
-  ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 24; ctx.shadowOffsetY = 10;
-  ctx.fillStyle = "#FFFFFF"; pathRoundRect_(ctx, qx, qy, qrBox, qrBox, 24); ctx.fill();
-  ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-  pathRoundRect_(ctx, qx, qy, qrBox, qrBox, 24); ctx.strokeStyle = "#F39C12"; ctx.lineWidth = 4; ctx.stroke();
-  if (qr) {
-    ctx.drawImage(qr, qx + 12, qy + 12, qrBox - 24, qrBox - 24);
-  } else {
-    ctx.fillStyle = "#6B7280"; ctx.font = "600 18px " + FONT; ctx.textAlign = "center";
-    ctx.fillText("QR tidak tersedia", qx + qrBox / 2, qy + qrBox / 2 + 6);
-  }
 
   // Footer (rata tengah)
   const tgl = new Date();
   const bln = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
   ctx.fillStyle = "#A0A0A0"; ctx.font = "500 18px " + FONT; ctx.textAlign = "center";
-  ctx.fillText("Scan QR untuk verifikasi kartu", cx, 958);
-  ctx.fillText("Dicetak " + tgl.getDate() + " " + bln[tgl.getMonth()] + " " + tgl.getFullYear(), cx, 982);
+  ctx.fillText("Dicetak " + tgl.getDate() + " " + bln[tgl.getMonth()] + " " + tgl.getFullYear(), cx, 976);
   ctx.textAlign = "left";
 
   const ket = document.getElementById("kartuAnggotaKet");
@@ -16284,7 +16282,8 @@ async function gambarKartuAnggota_() {
   tombol.forEach(function (b) { b.disabled = false; b.style.opacity = "1"; });
 }
 
-function gambarBelakangKartu_(canvas) {
+var kartuBelakangQr_ = null, kartuBelakangCanvas_ = null, kartuDataSvg_ = null;
+function gambarBelakangKartu_(canvas, qr) {
   const ctx = canvas.getContext("2d");
   const W = canvas.width, H = canvas.height;
   const FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
@@ -16311,23 +16310,30 @@ function gambarBelakangKartu_(canvas) {
   const bevel = ctx.createLinearGradient(0, 0, W, H);
   bevel.addColorStop(0, "rgba(255,255,255,0.45)"); bevel.addColorStop(0.5, "rgba(255,255,255,0.03)"); bevel.addColorStop(1, "rgba(0,0,0,0.6)");
   pathRoundRect_(ctx, 2, 2, W - 4, H - 4, 42); ctx.strokeStyle = bevel; ctx.lineWidth = 4; ctx.stroke();
-  // Logo besar di tengah
-  const lr = 112, lcx = W / 2, lcy = 372;
-  ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 20; ctx.shadowOffsetY = 10;
-  ctx.fillStyle = "#111111"; ctx.beginPath(); ctx.arc(lcx, lcy, lr, 0, Math.PI * 2); ctx.fill();
+  // QR besar di tengah (menggantikan logo)
+  const qrBox = 320, qx = (W - qrBox) / 2, qy = 210;
+  ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 24; ctx.shadowOffsetY = 10;
+  ctx.fillStyle = "#FFFFFF"; pathRoundRect_(ctx, qx, qy, qrBox, qrBox, 30); ctx.fill();
   ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-  ctx.strokeStyle = "#F39C12"; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(lcx, lcy, lr, 0, Math.PI * 2); ctx.stroke();
-  gambarLogoYassa_(ctx, lcx - lr * 0.85, lcy - lr * 0.85, lr * 1.7);
+  pathRoundRect_(ctx, qx, qy, qrBox, qrBox, 30); ctx.strokeStyle = "#F39C12"; ctx.lineWidth = 5; ctx.stroke();
+  if (qr) {
+    ctx.drawImage(qr, qx + 16, qy + 16, qrBox - 32, qrBox - 32);
+  } else {
+    ctx.fillStyle = "#6B7280"; ctx.font = "600 20px system-ui, sans-serif"; ctx.textAlign = "center";
+    ctx.fillText("Memuat QR...", qx + qrBox / 2, qy + qrBox / 2 + 7);
+  }
   // Teks
   ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
   ctx.shadowColor = "rgba(0,0,0,0.55)"; ctx.shadowBlur = 6; ctx.shadowOffsetY = 3;
   ctx.fillStyle = "#FFFFFF"; ctx.font = "800 46px " + FONT;
-  ctx.fillText("YASSA", W / 2, 566);
+  ctx.fillText("YASSA", W / 2, 626);
   ctx.fillStyle = "#F39C12"; ctx.font = "700 22px " + FONT;
-  ctx.fillText("YAYASAN SALAM SATU ASPAL", W / 2, 606);
+  ctx.fillText("YAYASAN SALAM SATU ASPAL", W / 2, 666);
   ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
   ctx.fillStyle = "#A0A0A0"; ctx.font = "600 18px " + FONT;
-  ctx.fillText("BROTHERHOOD OF THE ROAD", W / 2, 640);
+  ctx.fillText("BROTHERHOOD OF THE ROAD", W / 2, 700);
+  ctx.fillStyle = "#8A8A8A"; ctx.font = "500 18px " + FONT;
+  ctx.fillText("Scan QR untuk verifikasi kartu", W / 2, 790);
   ctx.textAlign = "left";
 }
 
@@ -16387,7 +16393,8 @@ function pasang3dKartu_() {
     bel.width = 638; bel.height = 1012;
     bel.style.cssText = "position:absolute; inset:0; width:100%; height:100%; border-radius:18px; backface-visibility:hidden; -webkit-backface-visibility:hidden; transform:translateZ(-" + (TEBAL + 1) + "px) rotateY(180deg);";
     flip.appendChild(bel);
-    gambarBelakangKartu_(bel);
+    kartuBelakangCanvas_ = bel;
+    gambarBelakangKartu_(bel, kartuBelakangQr_);
     let terbalik = false;
     const balik = function () {
       terbalik = !terbalik;
@@ -16407,7 +16414,7 @@ function pasang3dKartu_() {
 }
 
 function showKartuAnggotaDigital() {
-  const tombolStyle = "flex:1; border:none; border-radius:14px; padding:12px 10px; font-size:12.5px; font-weight:700; color:#fff; background:var(--grad-primary); cursor:pointer; opacity:0.5; display:flex; align-items:center; justify-content:center; gap:6px;";
+  const tombolStyle = "flex:1 1 calc(50% - 4px); border:none; border-radius:14px; padding:12px 10px; font-size:12.5px; font-weight:700; color:#fff; background:var(--grad-primary); cursor:pointer; opacity:0.5; display:flex; align-items:center; justify-content:center; gap:6px;";
   const bisaBagikan = !!(navigator.share && navigator.canShare);
   const html = '<div style="display:flex; flex-direction:column; align-items:center; gap:12px;">' +
     '<div id="kartu3dWrap" style="width:100%; max-width:260px; perspective:800px; touch-action:none; padding:8px 0 14px;">' +
@@ -16419,29 +16426,206 @@ function showKartuAnggotaDigital() {
       '</div>' +
     '</div>' +
     '<div id="kartuAnggotaKet" style="font-size:10.5px; color:var(--text-muted); text-align:center; min-height:14px;">Menyiapkan kartu...</div>' +
-    '<div style="display:flex; gap:8px; width:100%; max-width:340px;">' +
-      '<button class="kartu-anggota-aksi" disabled onclick="unduhKartuAnggota()" style="' + tombolStyle + '"><span class="material-symbols-outlined" style="font-size:17px;">download</span>Unduh</button>' +
+    '<div style="display:flex; flex-wrap:wrap; gap:8px; width:100%; max-width:340px;">' +
+      '<button class="kartu-anggota-aksi" disabled onclick="unduhKartuAnggota()" style="' + tombolStyle + '"><span class="material-symbols-outlined" style="font-size:17px;">image</span>Unduh PNG</button>' +
+      '<button class="kartu-anggota-aksi" disabled onclick="unduhKartuSvg()" style="' + tombolStyle + '"><span class="material-symbols-outlined" style="font-size:17px;">download</span>Unduh SVG</button>' +
       (bisaBagikan ? '<button class="kartu-anggota-aksi" disabled onclick="bagikanKartuAnggota()" style="' + tombolStyle + '"><span class="material-symbols-outlined" style="font-size:17px;">share</span>Bagikan</button>' : '') +
       '<button type="button" id="kartuBalikBtn" style="' + tombolStyle.replace("opacity:0.5;", "opacity:1;") + '"><span class="material-symbols-outlined" style="font-size:17px;">360</span>Balik</button>' +
     '</div>' +
   '</div>';
   showModal("Kartu Anggota Digital", html, false, null, "Tutup");
+  kartuBelakangQr_ = null; kartuBelakangCanvas_ = null; kartuDataSvg_ = null;
   setTimeout(gambarKartuAnggota_, 30);
   setTimeout(pasang3dKartu_, 50);
 }
 
+// PNG = dua sisi dalam satu gambar (depan kiri, belakang kanan), tiap sisi 638 x 1012 px (= 54 x 86 mm pada 300 dpi)
 function kartuAnggotaBlob_() {
   return new Promise(function (resolve, reject) {
-    const canvas = document.getElementById("kartuAnggotaCanvas");
-    if (!canvas) return reject(new Error("canvas tidak ada"));
+    const dep = document.getElementById("kartuAnggotaCanvas");
+    if (!dep) return reject(new Error("canvas tidak ada"));
     try {
-      canvas.toBlob(function (b) { b ? resolve(b) : reject(new Error("blob kosong")); }, "image/png");
+      const bel = document.createElement("canvas");
+      bel.width = dep.width; bel.height = dep.height;
+      gambarBelakangKartu_(bel, kartuBelakangQr_);
+      const jarak = 60;
+      const c = document.createElement("canvas");
+      c.width = dep.width * 2 + jarak; c.height = dep.height;
+      const cc = c.getContext("2d");
+      cc.drawImage(dep, 0, 0);
+      cc.drawImage(bel, dep.width + jarak, 0);
+      c.toBlob(function (b) { b ? resolve(b) : reject(new Error("blob kosong")); }, "image/png");
     } catch (e) { reject(e); }
   });
 }
 
 function namaFileKartu_() {
   return "Kartu-Anggota-" + String(currentUser.nama || "Pengurus").trim().replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "") + ".png";
+}
+
+// ===== EKSPOR SVG (vektor, ukuran fisik 54 x 86 mm = kartu ID CR80 berdiri) =====
+function xmlEsc_(t) {
+  return String(t == null ? "" : t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function gambarKeDataUrl_(img, maks, tipe) {
+  try {
+    const sk = Math.min(1, maks / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height));
+    const c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round((img.naturalWidth || img.width) * sk));
+    c.height = Math.max(1, Math.round((img.naturalHeight || img.height) * sk));
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    return c.toDataURL(tipe || "image/png", 0.92);
+  } catch (e) { return ""; }
+}
+function logoYassaSvg_(ox, oy, size) {
+  const k = size / 100, h = "#22C55E";
+  return '<g transform="translate(' + ox + ' ' + oy + ') scale(' + k + ')">' +
+    '<circle cx="28" cy="38" r="6" fill="' + h + '"/><path d="M13 56 a15 15 0 0 1 30 0" fill="none" stroke="' + h + '" stroke-width="5" stroke-linecap="round"/>' +
+    '<circle cx="72" cy="38" r="6" fill="' + h + '"/><path d="M57 56 a15 15 0 0 1 30 0" fill="none" stroke="' + h + '" stroke-width="5" stroke-linecap="round"/>' +
+    '<circle cx="50" cy="28" r="7.5" fill="' + h + '"/><path d="M30 53 a20 20 0 0 1 40 0" fill="none" stroke="' + h + '" stroke-width="6.5" stroke-linecap="round"/>' +
+    '<text x="50" y="76" text-anchor="middle" font-family="' + KARTU_FONT_SVG_ + '" font-weight="900" font-size="24"><tspan fill="#FFFFFF">YAS</tspan><tspan fill="' + h + '">SA</tspan></text></g>';
+}
+const KARTU_FONT_SVG_ = "system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif";
+
+function kartuSvgDefs_(sisi) {
+  const W = 638, H = 1012;
+  const glow = sisi === "depan"
+    ? { cx: W * 0.25, cy: H * 0.15, r: 560, a: 0.12 }
+    : { cx: W * 0.5, cy: H * 0.4, r: 520, a: 0.14 };
+  const kil = sisi === "depan" ? [0.13, 0.04] : [0.12, 0.03];
+  return '<defs>' +
+    '<linearGradient id="bg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="' + W + '" y2="' + H + '"><stop offset="0" stop-color="#2B2B2B"/><stop offset="1" stop-color="#1A1A1A"/></linearGradient>' +
+    '<radialGradient id="glow" gradientUnits="userSpaceOnUse" cx="' + glow.cx + '" cy="' + glow.cy + '" r="' + glow.r + '"><stop offset="0" stop-color="#F39C12" stop-opacity="' + glow.a + '"/><stop offset="1" stop-color="#F39C12" stop-opacity="0"/></radialGradient>' +
+    '<linearGradient id="kilau" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="' + (W * 0.75) + '" y2="' + (H * 0.75) + '"><stop offset="0" stop-color="#FFFFFF" stop-opacity="' + kil[0] + '"/><stop offset="0.4" stop-color="#FFFFFF" stop-opacity="' + kil[1] + '"/><stop offset="0.41" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>' +
+    '<linearGradient id="strip" gradientUnits="userSpaceOnUse" x1="0" y1="' + (H - 14) + '" x2="0" y2="' + H + '"><stop offset="0" stop-color="#FFC04D"/><stop offset="0.5" stop-color="#F39C12"/><stop offset="1" stop-color="#B86E00"/></linearGradient>' +
+    '<linearGradient id="bevel" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="' + W + '" y2="' + H + '"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.45"/><stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0.03"/><stop offset="1" stop-color="#000000" stop-opacity="0.6"/></linearGradient>' +
+    '<clipPath id="kartu"><rect width="' + W + '" height="' + H + '" rx="44"/></clipPath>' +
+    '<filter id="bayang" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000000" flood-opacity="0.6"/></filter>' +
+    '</defs>';
+}
+function kartuSvgLatar_(sisi) {
+  const W = 638, H = 1012;
+  let s = '<g clip-path="url(#kartu)">' +
+    '<rect width="' + W + '" height="' + H + '" fill="url(#bg)"/>' +
+    '<rect width="' + W + '" height="' + H + '" fill="url(#glow)"/>' +
+    '<rect width="' + W + '" height="' + H + '" fill="url(#kilau)"/>' +
+    '<rect y="' + (H - 14) + '" width="' + W + '" height="14" fill="url(#strip)"/>';
+  if (sisi === "belakang") {
+    s += '<path d="M56 70 H' + (W - 56) + ' M56 ' + (H - 70) + ' H' + (W - 56) + '" stroke="#F39C12" stroke-opacity="0.6" stroke-width="3" stroke-dasharray="22 14" fill="none"/>';
+  }
+  s += '</g><rect x="2" y="2" width="' + (W - 4) + '" height="' + (H - 4) + '" rx="42" fill="none" stroke="url(#bevel)" stroke-width="4"/>';
+  return s;
+}
+function kartuSvgDepan_(d) {
+  const W = 638, H = 1012, cx = W / 2, FONT = KARTU_FONT_SVG_;
+  const m = document.createElement("canvas").getContext("2d");
+  const lebarTeks = W - 80;
+  let t = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="54mm" height="86mm" viewBox="0 0 ' + W + ' ' + H + '">' +
+    kartuSvgDefs_("depan") + kartuSvgLatar_("depan");
+  // header
+  t += '<circle cx="' + cx + '" cy="98" r="54" fill="#111111" stroke="#F39C12" stroke-width="4" filter="url(#bayang)"/>' + logoYassaSvg_(cx - 54 * 0.85, 98 - 54 * 0.85, 54 * 1.7);
+  t += '<g text-anchor="middle" font-family="' + FONT + '">' +
+    '<text x="' + cx + '" y="206" font-size="40" font-weight="800" fill="#FFFFFF">YASSA</text>' +
+    '<text x="' + cx + '" y="238" font-size="21" font-weight="700" fill="#F39C12">YAYASAN SALAM SATU ASPAL</text>' +
+    '<text x="' + cx + '" y="264" font-size="17" font-weight="600" fill="#A0A0A0">KARTU ANGGOTA PENGURUS</text></g>';
+  t += '<path d="M48 288 H' + (W - 48) + '" stroke="#F39C12" stroke-opacity="0.6" stroke-width="3" stroke-dasharray="22 14" fill="none"/>';
+  // foto
+  const fs = 290, fx = (W - fs) / 2, fy = 330;
+  t += '<rect x="' + fx + '" y="' + fy + '" width="' + fs + '" height="' + fs + '" rx="44" fill="#111111" filter="url(#bayang)"/>';
+  t += '<clipPath id="fotoClip"><rect x="' + fx + '" y="' + fy + '" width="' + fs + '" height="' + fs + '" rx="44"/></clipPath>';
+  if (d.fotoData) {
+    t += '<image x="' + fx + '" y="' + fy + '" width="' + fs + '" height="' + fs + '" preserveAspectRatio="xMidYMid slice" clip-path="url(#fotoClip)" href="' + d.fotoData + '" xlink:href="' + d.fotoData + '"/>';
+  } else {
+    t += '<rect x="' + fx + '" y="' + fy + '" width="' + fs + '" height="' + fs + '" rx="44" fill="#FFFFFF" fill-opacity="0.18"/>' +
+      '<text x="' + cx + '" y="' + (fy + fs / 2 + 42) + '" text-anchor="middle" font-family="' + FONT + '" font-size="120" font-weight="800" fill="#FFFFFF">' + xmlEsc_((d.nama.trim().charAt(0) || "?").toUpperCase()) + '</text>';
+  }
+  t += '<linearGradient id="bingkai" gradientUnits="userSpaceOnUse" x1="' + fx + '" y1="' + fy + '" x2="' + (fx + fs) + '" y2="' + (fy + fs) + '"><stop offset="0" stop-color="#FFD27A"/><stop offset="0.5" stop-color="#F39C12"/><stop offset="1" stop-color="#B86E00"/></linearGradient>' +
+    '<rect x="' + fx + '" y="' + fy + '" width="' + fs + '" height="' + fs + '" rx="44" fill="none" stroke="url(#bingkai)" stroke-width="6"/>';
+  // teks identitas (ukuran & pemotongan sama dengan versi PNG)
+  let ukNama = 40; m.font = "800 " + ukNama + "px " + FONT;
+  while (ukNama > 26 && m.measureText(d.nama).width > lebarTeks) { ukNama -= 1; m.font = "800 " + ukNama + "px " + FONT; }
+  const namaT = potongTeksKartu_(m, d.nama, lebarTeks);
+  m.font = "700 26px " + FONT; const jabT = potongTeksKartu_(m, d.jabatan, lebarTeks);
+  m.font = "500 22px " + FONT;
+  const wilT = potongTeksKartu_(m, "Wilayah: " + d.wilayah, lebarTeks);
+  const telT = d.telp ? potongTeksKartu_(m, "Kontak: " + d.telp, lebarTeks) : "";
+  let emailT = "", ukEmail = 22;
+  if (d.emailKartu) {
+    const te = "Email: " + d.emailKartu;
+    m.font = "500 " + ukEmail + "px " + FONT;
+    while (ukEmail > 14 && m.measureText(te).width > lebarTeks) { ukEmail -= 1; m.font = "500 " + ukEmail + "px " + FONT; }
+    emailT = potongTeksKartu_(m, te, lebarTeks);
+  }
+  t += '<g text-anchor="middle" font-family="' + FONT + '">' +
+    '<text x="' + cx + '" y="688" font-size="' + ukNama + '" font-weight="800" fill="#FFFFFF">' + xmlEsc_(namaT) + '</text>' +
+    '<text x="' + cx + '" y="730" font-size="26" font-weight="700" fill="#F39C12">' + xmlEsc_(jabT) + '</text>' +
+    '<text x="' + cx + '" y="772" font-size="22" font-weight="500" fill="#FFFFFF" fill-opacity="0.88">' + xmlEsc_(wilT) + '</text>' +
+    (telT ? '<text x="' + cx + '" y="808" font-size="22" font-weight="500" fill="#FFFFFF" fill-opacity="0.88">' + xmlEsc_(telT) + '</text>' : '') +
+    (emailT ? '<text x="' + cx + '" y="844" font-size="' + ukEmail + '" font-weight="500" fill="#FFFFFF" fill-opacity="0.88">' + xmlEsc_(emailT) + '</text>' : '') +
+    '<text x="' + cx + '" y="976" font-size="18" font-weight="500" fill="#A0A0A0">' + xmlEsc_(d.dicetak) + '</text></g>';
+  return t + '</svg>';
+}
+function kartuSvgBelakang_(d) {
+  const W = 638, H = 1012, cx = W / 2, FONT = KARTU_FONT_SVG_;
+  const qb = 320, qx = (W - qb) / 2, qy = 210;
+  let t = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="54mm" height="86mm" viewBox="0 0 ' + W + ' ' + H + '">' +
+    kartuSvgDefs_("belakang") + kartuSvgLatar_("belakang");
+  t += '<rect x="' + qx + '" y="' + qy + '" width="' + qb + '" height="' + qb + '" rx="30" fill="#FFFFFF" stroke="#F39C12" stroke-width="5" filter="url(#bayang)"/>';
+  if (d.qrData) {
+    t += '<image x="' + (qx + 16) + '" y="' + (qy + 16) + '" width="' + (qb - 32) + '" height="' + (qb - 32) + '" href="' + d.qrData + '" xlink:href="' + d.qrData + '"/>';
+  }
+  t += '<g text-anchor="middle" font-family="' + FONT + '">' +
+    '<text x="' + cx + '" y="626" font-size="46" font-weight="800" fill="#FFFFFF">YASSA</text>' +
+    '<text x="' + cx + '" y="666" font-size="22" font-weight="700" fill="#F39C12">YAYASAN SALAM SATU ASPAL</text>' +
+    '<text x="' + cx + '" y="700" font-size="18" font-weight="600" fill="#A0A0A0">BROTHERHOOD OF THE ROAD</text>' +
+    '<text x="' + cx + '" y="790" font-size="18" font-weight="500" fill="#8A8A8A">Scan QR untuk verifikasi kartu</text></g>';
+  return t + '</svg>';
+}
+
+// QR untuk SVG: coba ambil versi vektor (format=svg) supaya tajam saat dicetak besar;
+// kalau gagal (CORS/offline) pakai PNG resolusi tinggi, lalu terakhir QR yang sudah tampil di kartu.
+async function ambilQrUntukSvg_(d) {
+  const base = "https://quickchart.io/qr?margin=1&ecLevel=M&text=" + encodeURIComponent(d.teksQr);
+  try {
+    const r = await fetch(base + "&size=900&format=svg");
+    if (r.ok) {
+      const txt = await r.text();
+      if (txt.indexOf("<svg") > -1) return "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(txt)));
+    }
+  } catch (e) { /* lanjut */ }
+  const png = await muatGambarKartu_(base + "&size=900", 8000);
+  if (png) { const u = gambarKeDataUrl_(png, 900); if (u) return u; }
+  return d.qr ? gambarKeDataUrl_(d.qr, 900) : "";
+}
+
+function unduhFileKartu_(isi, nama, mime) {
+  const url = URL.createObjectURL(new Blob([isi], { type: mime }));
+  const a = document.createElement("a");
+  a.href = url; a.download = nama;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+}
+
+async function unduhKartuSvg() {
+  const sumber = kartuDataSvg_;
+  if (!sumber) return;
+  if (typeof showHubToast === "function") showHubToast("Menyiapkan SVG...", "success");
+  try {
+    const tgl = new Date();
+    const bln = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+    const d = {
+      nama: sumber.nama, jabatan: sumber.jabatan, telp: sumber.telp, emailKartu: sumber.emailKartu, wilayah: sumber.wilayah,
+      fotoData: sumber.foto ? gambarKeDataUrl_(sumber.foto, 800, "image/jpeg") : "",
+      qrData: await ambilQrUntukSvg_(sumber),
+      dicetak: "Dicetak " + tgl.getDate() + " " + bln[tgl.getMonth()] + " " + tgl.getFullYear()
+    };
+    const dasar = namaFileKartu_().replace(/\.png$/i, "");
+    unduhFileKartu_(kartuSvgDepan_(d), dasar + "-depan.svg", "image/svg+xml");
+    setTimeout(function () { unduhFileKartu_(kartuSvgBelakang_(d), dasar + "-belakang.svg", "image/svg+xml"); }, 500);
+    if (typeof showHubToast === "function") showHubToast("SVG depan & belakang diunduh", "success");
+  } catch (e) {
+    if (typeof showHubToast === "function") showHubToast("Gagal membuat SVG kartu", "error");
+  }
 }
 
 function unduhKartuAnggota() {
