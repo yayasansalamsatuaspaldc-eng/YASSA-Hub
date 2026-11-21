@@ -16219,26 +16219,26 @@ async function gambarKartuAnggota_() {
   ctx.restore();
 
   // Foto (tengah)
-  const fs = 290, fx = (W - fs) / 2, fy = 330;
+  const fs = 320, fx = (W - fs) / 2, fy = 322;
   ctx.save();
   ctx.shadowColor = "rgba(0,0,0,0.65)"; ctx.shadowBlur = 26; ctx.shadowOffsetY = 12;
-  ctx.fillStyle = "#111111"; pathRoundRect_(ctx, fx, fy, fs, fs, 44); ctx.fill();
+  ctx.fillStyle = "#111111"; pathRoundRect_(ctx, fx, fy, fs, fs, 48); ctx.fill();
   ctx.restore();
   ctx.save();
-  pathRoundRect_(ctx, fx, fy, fs, fs, 44); ctx.clip();
+  pathRoundRect_(ctx, fx, fy, fs, fs, 48); ctx.clip();
   if (foto) {
     const sk = Math.max(fs / foto.width, fs / foto.height);
     const dw = foto.width * sk, dh = foto.height * sk;
     ctx.drawImage(foto, fx + (fs - dw) / 2, fy + (fs - dh) / 2, dw, dh);
   } else {
     ctx.fillStyle = "rgba(255,255,255,0.18)"; ctx.fillRect(fx, fy, fs, fs);
-    ctx.fillStyle = "#FFFFFF"; ctx.font = "800 120px " + FONT;
+    ctx.fillStyle = "#FFFFFF"; ctx.font = "800 132px " + FONT;
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillText((nama.trim().charAt(0) || "?").toUpperCase(), fx + fs / 2, fy + fs / 2 + 4);
     ctx.textBaseline = "alphabetic";
   }
   ctx.restore();
-  pathRoundRect_(ctx, fx, fy, fs, fs, 44);
+  pathRoundRect_(ctx, fx, fy, fs, fs, 48);
   const bingkai = ctx.createLinearGradient(fx, fy, fx + fs, fy + fs);
   bingkai.addColorStop(0, "#FFD27A"); bingkai.addColorStop(0.5, "#F39C12"); bingkai.addColorStop(1, "#B86E00");
   ctx.strokeStyle = bingkai; ctx.lineWidth = 6; ctx.stroke();
@@ -16251,12 +16251,12 @@ async function gambarKartuAnggota_() {
   ctx.font = "800 " + ukNama + "px " + FONT;
   while (ukNama > 26 && ctx.measureText(nama).width > lebarTeks) { ukNama -= 1; ctx.font = "800 " + ukNama + "px " + FONT; }
   ctx.fillStyle = "#FFFFFF";
-  ctx.fillText(potongTeksKartu_(ctx, nama, lebarTeks), cx, 688);
+  ctx.fillText(potongTeksKartu_(ctx, nama, lebarTeks), cx, 712);
   ctx.fillStyle = "#F39C12"; ctx.font = "700 26px " + FONT;
-  ctx.fillText(potongTeksKartu_(ctx, jabatan, lebarTeks), cx, 730);
+  ctx.fillText(potongTeksKartu_(ctx, jabatan, lebarTeks), cx, 754);
   ctx.fillStyle = "rgba(255,255,255,0.88)"; ctx.font = "500 22px " + FONT;
-  ctx.fillText(potongTeksKartu_(ctx, "Wilayah: " + wilayah, lebarTeks), cx, 772);
-  if (telp) ctx.fillText(potongTeksKartu_(ctx, "Kontak: " + telp, lebarTeks), cx, 808);
+  ctx.fillText(potongTeksKartu_(ctx, "Wilayah: " + wilayah, lebarTeks), cx, 796);
+  if (telp) ctx.fillText(potongTeksKartu_(ctx, "Kontak: " + telp, lebarTeks), cx, 832);
   if (emailKartu) {
     const teksEmail = "Email: " + emailKartu;
     let ukEmail = 22;
@@ -16265,7 +16265,7 @@ async function gambarKartuAnggota_() {
       ukEmail -= 1;
       ctx.font = "500 " + ukEmail + "px " + FONT;
     }
-    ctx.fillText(potongTeksKartu_(ctx, teksEmail, lebarTeks), cx, 844);
+    ctx.fillText(potongTeksKartu_(ctx, teksEmail, lebarTeks), cx, 868);
   }
   ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
@@ -16334,6 +16334,8 @@ function gambarBelakangKartu_(canvas, qr) {
   ctx.fillText("BROTHERHOOD OF THE ROAD", W / 2, 700);
   ctx.fillStyle = "#8A8A8A"; ctx.font = "500 18px " + FONT;
   ctx.fillText("Scan QR untuk verifikasi kartu", W / 2, 790);
+  ctx.fillStyle = "#F39C12"; ctx.font = "700 24px " + FONT;
+  ctx.fillText("www.yayasansalamsatuaspal.com", W / 2, 880);
   ctx.textAlign = "left";
 }
 
@@ -16530,17 +16532,17 @@ function kartuSvgDepan_(d) {
     '<text x="' + cx + '" y="264" font-size="17" font-weight="600" fill="#A0A0A0">KARTU ANGGOTA PENGURUS</text></g>';
   t += '<path d="M48 288 H' + (W - 48) + '" stroke="#F39C12" stroke-opacity="0.6" stroke-width="3" stroke-dasharray="22 14" fill="none"/>';
   // foto
-  const fs = 290, fx = (W - fs) / 2, fy = 330;
-  t += '<rect x="' + fx + '" y="' + fy + '" width="' + fs + '" height="' + fs + '" rx="44" fill="#111111" filter="url(#bayang)"/>';
-  t += '<clipPath id="fotoClip"><rect x="' + fx + '" y="' + fy + '" width="' + fs + '" height="' + fs + '" rx="44"/></clipPath>';
+  const fs = 320, fx = (W - fs) / 2, fy = 322;
+  t += '<rect x="' + fx + '" y="' + fy + '" width="' + fs + '" height="' + fs + '" rx="48" fill="#111111" filter="url(#bayang)"/>';
+  t += '<clipPath id="fotoClip"><rect x="' + fx + '" y="' + fy + '" width="' + fs + '" height="' + fs + '" rx="48"/></clipPath>';
   if (d.fotoData) {
     t += '<image x="' + fx + '" y="' + fy + '" width="' + fs + '" height="' + fs + '" preserveAspectRatio="xMidYMid slice" clip-path="url(#fotoClip)" href="' + d.fotoData + '" xlink:href="' + d.fotoData + '"/>';
   } else {
-    t += '<rect x="' + fx + '" y="' + fy + '" width="' + fs + '" height="' + fs + '" rx="44" fill="#FFFFFF" fill-opacity="0.18"/>' +
-      '<text x="' + cx + '" y="' + (fy + fs / 2 + 42) + '" text-anchor="middle" font-family="' + FONT + '" font-size="120" font-weight="800" fill="#FFFFFF">' + xmlEsc_((d.nama.trim().charAt(0) || "?").toUpperCase()) + '</text>';
+    t += '<rect x="' + fx + '" y="' + fy + '" width="' + fs + '" height="' + fs + '" rx="48" fill="#FFFFFF" fill-opacity="0.18"/>' +
+      '<text x="' + cx + '" y="' + (fy + fs / 2 + 46) + '" text-anchor="middle" font-family="' + FONT + '" font-size="132" font-weight="800" fill="#FFFFFF">' + xmlEsc_((d.nama.trim().charAt(0) || "?").toUpperCase()) + '</text>';
   }
   t += '<linearGradient id="bingkai" gradientUnits="userSpaceOnUse" x1="' + fx + '" y1="' + fy + '" x2="' + (fx + fs) + '" y2="' + (fy + fs) + '"><stop offset="0" stop-color="#FFD27A"/><stop offset="0.5" stop-color="#F39C12"/><stop offset="1" stop-color="#B86E00"/></linearGradient>' +
-    '<rect x="' + fx + '" y="' + fy + '" width="' + fs + '" height="' + fs + '" rx="44" fill="none" stroke="url(#bingkai)" stroke-width="6"/>';
+    '<rect x="' + fx + '" y="' + fy + '" width="' + fs + '" height="' + fs + '" rx="48" fill="none" stroke="url(#bingkai)" stroke-width="6"/>';
   // teks identitas (ukuran & pemotongan sama dengan versi PNG)
   let ukNama = 40; m.font = "800 " + ukNama + "px " + FONT;
   while (ukNama > 26 && m.measureText(d.nama).width > lebarTeks) { ukNama -= 1; m.font = "800 " + ukNama + "px " + FONT; }
@@ -16557,11 +16559,11 @@ function kartuSvgDepan_(d) {
     emailT = potongTeksKartu_(m, te, lebarTeks);
   }
   t += '<g text-anchor="middle" font-family="' + FONT + '">' +
-    '<text x="' + cx + '" y="688" font-size="' + ukNama + '" font-weight="800" fill="#FFFFFF">' + xmlEsc_(namaT) + '</text>' +
-    '<text x="' + cx + '" y="730" font-size="26" font-weight="700" fill="#F39C12">' + xmlEsc_(jabT) + '</text>' +
-    '<text x="' + cx + '" y="772" font-size="22" font-weight="500" fill="#FFFFFF" fill-opacity="0.88">' + xmlEsc_(wilT) + '</text>' +
-    (telT ? '<text x="' + cx + '" y="808" font-size="22" font-weight="500" fill="#FFFFFF" fill-opacity="0.88">' + xmlEsc_(telT) + '</text>' : '') +
-    (emailT ? '<text x="' + cx + '" y="844" font-size="' + ukEmail + '" font-weight="500" fill="#FFFFFF" fill-opacity="0.88">' + xmlEsc_(emailT) + '</text>' : '') +
+    '<text x="' + cx + '" y="712" font-size="' + ukNama + '" font-weight="800" fill="#FFFFFF">' + xmlEsc_(namaT) + '</text>' +
+    '<text x="' + cx + '" y="754" font-size="26" font-weight="700" fill="#F39C12">' + xmlEsc_(jabT) + '</text>' +
+    '<text x="' + cx + '" y="796" font-size="22" font-weight="500" fill="#FFFFFF" fill-opacity="0.88">' + xmlEsc_(wilT) + '</text>' +
+    (telT ? '<text x="' + cx + '" y="832" font-size="22" font-weight="500" fill="#FFFFFF" fill-opacity="0.88">' + xmlEsc_(telT) + '</text>' : '') +
+    (emailT ? '<text x="' + cx + '" y="868" font-size="' + ukEmail + '" font-weight="500" fill="#FFFFFF" fill-opacity="0.88">' + xmlEsc_(emailT) + '</text>' : '') +
     '<text x="' + cx + '" y="976" font-size="18" font-weight="500" fill="#A0A0A0">' + xmlEsc_(d.dicetak) + '</text></g>';
   return t + '</svg>';
 }
@@ -16578,7 +16580,8 @@ function kartuSvgBelakang_(d) {
     '<text x="' + cx + '" y="626" font-size="46" font-weight="800" fill="#FFFFFF">YASSA</text>' +
     '<text x="' + cx + '" y="666" font-size="22" font-weight="700" fill="#F39C12">YAYASAN SALAM SATU ASPAL</text>' +
     '<text x="' + cx + '" y="700" font-size="18" font-weight="600" fill="#A0A0A0">BROTHERHOOD OF THE ROAD</text>' +
-    '<text x="' + cx + '" y="790" font-size="18" font-weight="500" fill="#8A8A8A">Scan QR untuk verifikasi kartu</text></g>';
+    '<text x="' + cx + '" y="790" font-size="18" font-weight="500" fill="#8A8A8A">Scan QR untuk verifikasi kartu</text>' +
+    '<text x="' + cx + '" y="880" font-size="24" font-weight="700" fill="#F39C12">www.yayasansalamsatuaspal.com</text></g>';
   return t + '</svg>';
 }
 
