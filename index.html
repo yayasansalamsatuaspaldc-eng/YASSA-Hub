@@ -4520,6 +4520,19 @@ html[data-theme="light"] .beranda-top-section,html[data-theme="light"] #berandaA
     <div class="akun-content" id="dataAnakYatimContent"></div>
   </div>
 
+  <!-- 🆕 Layar Program GO-PAY (dibuka dari kartu GO-PAY di "PILIH PROGRAM YASSA", tab Beranda):
+       banner/foto di atas -> kartu Data Anak Yatim Gopay -> rincian per wilayah.
+       Pakai class "overlay" yang sama, jadi otomatis ikut tombol back HP. -->
+  <div class="overlay" id="programGopayPage">
+    <div class="overlay-header">
+      <button class="overlay-close" id="programGopayClose">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E2E8F0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <span class="overlay-title">Program GO-PAY</span>
+    </div>
+    <div class="akun-content" id="programGopayContent" style="padding: 0 0 28px;"></div>
+  </div>
+
   <!-- Halaman Penuh: Data Anak Asuh (Program SAPA) -- mirror persis
        "Data Anak Yatim Gopay" di atas, narik LIVE dari YASSA Mobile lewat
        action "getDataAnakAsuh" tiap dibuka. -->
@@ -5276,13 +5289,18 @@ function renderProgramComingSoonHtml_(p) {
 // seluruh tab Beranda), jadi ringan & data GO-PAY yang udah kemuat gak
 // perlu fetch ulang tiap ganti-ganti tab program.
 function selectProgramTab(key) {
-  if (activeProgram === key) return;
+  if (activeProgram === key) {
+    // GO-PAY sudah aktif (default) -> tetap buka layar barunya tiap kartu ditekan
+    if (key === "gopay") openProgramGopayPage();
+    return;
+  }
   activeProgram = key;
   document.querySelectorAll(".program-select-card").forEach(function (el) {
     el.classList.toggle("active", el.getAttribute("data-program") === key);
   });
   document.querySelectorAll(".program-panel").forEach(function (el) {
-    el.style.display = el.id === "programPanel-" + key ? "" : "none";
+    // GO-PAY tidak lagi menampilkan panel di bawah selector -- ia membuka layar baru.
+    el.style.display = (el.id === "programPanel-" + key && key !== "gopay") ? "" : "none";
   });
   document.querySelectorAll(".program-extra").forEach(function (el) {
     el.style.display = el.id === "programExtra-" + key ? "" : "none";
@@ -5297,6 +5315,7 @@ function selectProgramTab(key) {
   if (cardEl && cardEl.scrollIntoView) {
     cardEl.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
   }
+  if (key === "gopay") openProgramGopayPage();
 }
 
 // ============================================================
@@ -9165,7 +9184,9 @@ function renderContent() {
            konten yang SEBELUMNYA tampil langsung di Beranda, sekarang
            dibungkus jadi panel program supaya bisa disembunyikan pas
            user pindah ke program lain lewat selector di atas. -->
-      <div class="program-panel" id="programPanel-gopay">
+      <!-- 🆕 Isi panel ini sekarang tampil di LAYAR BARU "Program GO-PAY" (klik kartu GO-PAY).
+           Elemen tetap ada (disembunyikan) karena ID statistiknya masih dipakai kartu Total Anak. -->
+      <div class="program-panel" id="programPanel-gopay" style="display:none;">
       <!-- Data Anak Yatim (Program Gopay) -- kartu klik-buat-detail, narik
            LIVE dari YASSA Mobile (action getDataAnakYatim), NASIONAL/semua
            wilayah, khusus Program Gopay (Anak Asuh tidak termasuk).
@@ -14019,6 +14040,121 @@ function loadDataAnakYatimPreviewBeranda() {
     });
 }
 
+
+// ============================================================
+// 🟢 LAYAR PROGRAM GO-PAY -- dibuka saat kartu GO-PAY di "PILIH PROGRAM YASSA"
+// (Beranda) ditekan. Isi dari atas ke bawah: BANNER/FOTO -> kartu "Data Anak
+// Yatim Gopay" -> "Rincian per Wilayah". Sumber data sama dengan halaman
+// Data Anak Yatim lama (action getDataAnakYatim + cache dataAnakYatimCache).
+//
+// 📷 GANTI FOTO BANNER: isi PROGRAM_BANNER_FOTO.gopay dengan alamat gambar
+// (URL https://... atau data:image/...). Kalau dikosongkan, yang tampil
+// banner gradasi hijau + ikon (tanpa foto).
+// ============================================================
+const PROGRAM_BANNER_FOTO = {
+  gopay: ""   // contoh: "https://domain-kamu.com/banner-gopay.jpg"
+};
+
+function openProgramGopayPage() {
+  document.getElementById("programGopayPage").classList.add("open");
+  loadProgramGopayPage_();
+}
+
+function loadProgramGopayPage_() {
+  const el = document.getElementById("programGopayContent");
+  if (dataAnakYatimCache) {
+    renderProgramGopayPage_(dataAnakYatimCache, true);
+  } else {
+    el.innerHTML = renderProgramGopayBanner_() +
+      '<div style="display:flex; align-items:center; justify-content:center; padding: 50px 0; color: var(--text-secondary); font-size: 12.5px; gap: 8px;">' +
+      '<span class="material-symbols-outlined spin" style="font-size: 18px;">progress_activity</span> Mengambil data anak yatim dari YASSA Mobile...</div>';
+  }
+  callGASWithRetry_("getDataAnakYatim", [authToken])
+    .then(function (data) {
+      dataAnakYatimCache = data;
+      saveDataAnakYatimCacheHub();
+      renderProgramGopayPage_(data, false);
+    })
+    .catch(function (err) {
+      if (dataAnakYatimCache) { renderProgramGopayPage_(dataAnakYatimCache, false); return; }
+      el.innerHTML = renderProgramGopayBanner_() +
+        '<div style="padding: 40px 20px; text-align: center; color: var(--text-secondary); font-size: 12.5px;">Gagal memuat data: ' +
+        escapeHtmlHub(String(err && err.message || err)) +
+        '<br><button onclick="loadProgramGopayPage_()" style="margin-top: 14px; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 99px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--text-primary); cursor: pointer;">Coba lagi</button></div>';
+    });
+}
+
+function renderProgramGopayBanner_() {
+  const foto = PROGRAM_BANNER_FOTO.gopay;
+  const latar = foto
+    ? '<img src="' + escapeHtmlHub(foto) + '" alt="GO-PAY" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover;" onerror="this.style.display=\'none\'">'
+    : '';
+  return (
+    '<div style="position:relative; width:100%; height:200px; overflow:hidden; background: linear-gradient(135deg, #16A34A 0%, #15803D 55%, #14532D 100%);">' +
+      '<div style="position:absolute; top:-50px; right:-30px; width:190px; height:190px; border-radius:50%; background: rgba(255,255,255,0.10);"></div>' +
+      '<div style="position:absolute; bottom:-60px; left:-40px; width:170px; height:170px; border-radius:50%; background: rgba(255,255,255,0.07);"></div>' +
+      '<span class="material-symbols-outlined" style="position:absolute; right:22px; top:26px; font-size:84px; color: rgba(255,255,255,0.22); font-variation-settings:\'FILL\' 1;">volunteer_activism</span>' +
+      latar +
+      '<div style="position:absolute; inset:0; background: linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,0.72) 100%);"></div>' +
+      '<div style="position:absolute; left:20px; right:20px; bottom:16px; color:#fff;">' +
+        '<div style="font-size:11px; font-weight:700; letter-spacing:0.08em; opacity:0.85;">PROGRAM YASSA</div>' +
+        '<div style="font-size:24px; font-weight:800; line-height:1.15; margin-top:2px; text-shadow:0 2px 6px rgba(0,0,0,0.5);">GO-PAY</div>' +
+        '<div style="font-size:12.5px; font-weight:600; opacity:0.92; margin-top:2px;">Gojek Peduli Anak Yatim</div>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function renderProgramGopayPage_(data, dariCache) {
+  const el = document.getElementById("programGopayContent");
+  if (!el) return;
+  const rincian = data.rincianWilayah || [];
+  const mini = function (warna, border, teks, angka, label) {
+    return '<div style="flex:1; background:' + warna + '; border:1px solid ' + border + '; border-radius:12px; padding:10px 6px; text-align:center;">' +
+      '<div style="font-size:17px; font-weight:800; color:' + teks + ';">' + Number(angka || 0) + '</div>' +
+      '<div style="font-size:9px; font-weight:700; color: var(--text-muted); margin-top:2px;">' + label + '</div></div>';
+  };
+
+  let html = renderProgramGopayBanner_() + '<div style="padding: 18px 20px 0;">' +
+    // --- Kartu Data Anak Yatim Gopay ---
+    '<div style="background: var(--glass-strong); border-radius: 20px; padding: 18px 18px 16px; margin-bottom: 22px; border: 1px solid var(--glass-border); border-left: 4px solid #A855F7;">' +
+      '<div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">' +
+        '<div style="width:40px; height:40px; border-radius:12px; background: rgba(168,85,247,0.15); color:#C084FC; display:flex; align-items:center; justify-content:center; flex-shrink:0;">' +
+          '<span class="material-symbols-outlined" style="font-size:21px; font-variation-settings:\'FILL\' 1;">diversity_3</span></div>' +
+        '<div style="flex:1; min-width:0;">' +
+          '<h3 style="font-size:14px; font-weight:700; margin:0;">Data Anak Yatim Gopay</h3>' +
+          '<div style="font-size:10.5px; color: var(--text-secondary); margin-top:1px;">Semua Wilayah' +
+            (dariCache ? ' &bull; <span style="color: var(--bento-primary);">Sedang memperbarui...</span>' : '') + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex; gap:8px;">' +
+        mini("rgba(59,130,246,0.08)", "rgba(59,130,246,0.2)", "#93C5FD", data.totalKK, "KK") +
+        mini("rgba(34,197,94,0.08)", "rgba(34,197,94,0.2)", "#86EFAC", data.totalYatim, "Yatim") +
+        mini("rgba(168,85,247,0.08)", "rgba(168,85,247,0.2)", "#D8B4FE", data.totalYatimPiatu, "Yatim Piatu") +
+        mini("rgba(245,158,11,0.08)", "rgba(245,158,11,0.2)", "#FDE68A", data.totalDisabilitas, "Disabilitas*") +
+      '</div>' +
+      '<div style="font-size:9px; color: var(--text-muted); margin-top:8px; line-height:1.45;">*Disabilitas = Anak + Ortu digabung (1 KK dgn anak &amp; ibu sama-sama disabilitas dihitung 2x, sesuai aturan santunan). Data khusus Program Gopay (Anak Asuh tidak termasuk), diambil langsung dari YASSA Mobile.</div>' +
+    '</div>' +
+    // --- Rincian per wilayah ---
+    '<div style="font-size:12px; font-weight:700; color: var(--text-primary); margin: 0 2px 10px;">Rincian per Wilayah (' + rincian.length + ')</div>';
+
+  if (!rincian.length) {
+    html += '<div style="font-size:11px; color: var(--text-muted); padding:20px 0; text-align:center;">Belum ada data wilayah.</div>';
+  } else {
+    rincian.forEach(function (r) {
+      html += '<div style="background: var(--glass-strong); border-radius:14px; padding:12px 14px; margin-bottom:8px; border:1px solid var(--glass-border);">' +
+        '<div style="font-size:12.5px; font-weight:700; color: var(--text-primary); margin-bottom:8px;">' + escapeHtmlHub(r.wilayah) + '</div>' +
+        '<div style="display:flex; gap:14px; flex-wrap:wrap;">' +
+          '<div style="font-size:11px; color: var(--text-secondary);">KK <b class="pale-blue-text" style="color:#93C5FD;">' + Number(r.jumlahKK || 0) + '</b></div>' +
+          '<div style="font-size:11px; color: var(--text-secondary);">Yatim <b class="pale-green-text" style="color:#86EFAC;">' + Number(r.jumlahYatim || 0) + '</b></div>' +
+          '<div style="font-size:11px; color: var(--text-secondary);">Yatim Piatu <b class="pale-purple-text" style="color:#D8B4FE;">' + Number(r.jumlahYatimPiatu || 0) + '</b></div>' +
+          '<div style="font-size:11px; color: var(--text-secondary);">Disabilitas* <b class="pale-amber-text" style="color:#FDE68A;">' + Number(r.jumlahDisabilitas || 0) + '</b></div>' +
+        '</div></div>';
+    });
+  }
+  el.innerHTML = html + '</div>';
+}
+
 function openDataAnakYatim() {
   document.getElementById("dataAnakYatimPage").classList.add("open");
   loadDataAnakYatim();
@@ -18249,6 +18385,10 @@ document.getElementById("sejarahPerjalananClose").addEventListener("click", func
 document.getElementById("laporanPdfViewerClose").addEventListener("click", function () {
   document.getElementById("laporanPdfViewerPage").classList.remove("open");
   document.getElementById("laporanPdfViewerFrame").src = "about:blank"; // stop loading pas ditutup
+});
+
+document.getElementById("programGopayClose").addEventListener("click", function () {
+  document.getElementById("programGopayPage").classList.remove("open");
 });
 
 document.getElementById("dataAnakYatimClose").addEventListener("click", function () {
