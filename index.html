@@ -3349,179 +3349,44 @@ html[data-theme="light"] .beranda-top-section,html[data-theme="light"] #berandaA
 .summary-card #summaryDonasiSaldoText{grid-column:1}
 .summary-card #summaryTotalDonasi{grid-column:2;grid-row:1 / span 3;align-self:center;font-family:'Inter','Hanken Grotesk',sans-serif!important;font-size:14.5px;font-weight:800;color:#34D399!important;text-align:right}
 .summary-card #summarySubRowKekurangan .summary-sub-value{font-family:'Inter','Hanken Grotesk',sans-serif!important}
+</style>
 <style id="keuangan-design-match">
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
-/* ============================================================
-   TAB KEUANGAN -- tampilan baru "Keuangan & Penyaluran" (glass card, aksen zamrud)
-   HANYA tampilan: semua id, onclick & logika JS tetap sama.
-   Mendukung mode gelap (default) dan mode terang (data-theme="light").
-   ============================================================ */
-:root{
-  --kf-font:'Plus Jakarta Sans','Hanken Grotesk','Inter',system-ui,sans-serif;
-  --kf-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
-  --kf-card:linear-gradient(135deg,rgba(24,36,66,.72) 0%,rgba(15,23,42,.9) 100%);
-  --kf-card-border:rgba(148,163,184,.16);
-  --kf-card-shadow:0 12px 30px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.05);
-  --kf-inset:rgba(8,12,22,.55);
-  --kf-inset-border:rgba(148,163,184,.14);
-  --kf-pill:rgba(15,23,42,.92);
-  --kf-pill-border:rgba(51,65,85,.75);
-  --kf-t1:#f8fafc;--kf-t2:#cbd5e1;--kf-t3:#94a3b8;
-  --kf-em:#34d399;--kf-cy:#22d3ee;
-  --kf-em-bg:rgba(16,185,129,.10);--kf-em-line:rgba(52,211,153,.32);
-  --kf-chev-bg:rgba(51,65,85,.38);
-}
-html[data-theme="light"]{
-  --kf-card:linear-gradient(135deg,#ffffff 0%,#f1f5f9 100%);
-  --kf-card-border:rgba(15,23,42,.10);
-  --kf-card-shadow:0 10px 26px rgba(15,23,42,.10);
-  --kf-inset:rgba(15,23,42,.06);
-  --kf-inset-border:rgba(15,23,42,.10);
-  --kf-pill:rgba(255,255,255,.95);
-  --kf-pill-border:rgba(15,23,42,.14);
-  --kf-t1:#0f172a;--kf-t2:#334155;--kf-t3:#64748b;
-  --kf-em:#059669;--kf-cy:#0891b2;
-  --kf-em-bg:rgba(16,185,129,.10);--kf-em-line:rgba(5,150,105,.35);
-  --kf-chev-bg:rgba(15,23,42,.06);
-}
-@keyframes kfPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(.85)}}
-@media (prefers-reduced-motion:reduce){.kfin-month-label::before{animation:none!important}}
-
-/* ---------- Header: ikon, judul, pill bulan ---------- */
-.keuangan-header-section,#kfinDataWrap{font-family:var(--kf-font)}
-.keuangan-header-section .kfin-icon-wrap{
-  width:40px!important;height:40px!important;border-radius:12px!important;
-  background:linear-gradient(135deg,#059669 0%,#10b981 55%,#2dd4bf 100%)!important;color:#022c22!important;
-  border:1px solid rgba(52,211,153,.35);box-shadow:0 8px 20px rgba(2,44,34,.45)}
-.kfin-title{font-family:var(--kf-font);font-weight:800;font-size:15px;line-height:1.25;letter-spacing:-.01em;margin:0;color:var(--kf-t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.kfin-subtitle{font-family:var(--kf-font);font-size:11px;font-weight:500;letter-spacing:0;color:var(--kf-t3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.kfin-month-pill{display:flex;align-items:center;gap:4px;flex-shrink:0;padding:4px 6px;border-radius:999px;background:var(--kf-pill);border:1px solid var(--kf-pill-border);box-shadow:inset 0 2px 4px rgba(0,0,0,.22)}
-.kfin-month-pill button{width:24px!important;height:24px!important;border:none!important;background:transparent!important;color:var(--kf-t3)!important;border-radius:999px!important;transition:transform .15s ease,background .15s ease}
-.kfin-month-pill button:active{transform:scale(.88);background:var(--kf-chev-bg)!important}
-.kfin-month-pill button:disabled{opacity:.3}
-.kfin-month-label{display:inline-flex;align-items:center;gap:6px;padding:0 4px;font-family:var(--kf-mono);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--kf-t1);white-space:nowrap}
-.kfin-month-label::before{content:"";width:6px;height:6px;border-radius:50%;background:#34d399;box-shadow:0 0 8px rgba(52,211,153,.8);animation:kfPulse 2.2s ease-in-out infinite}
-
-/* ---------- Filter wilayah ---------- */
-.kfin-eyebrow{display:inline-flex;align-items:center;gap:6px;font-family:var(--kf-font);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--kf-t2)}
-.kfin-eyebrow .material-symbols-outlined{font-size:15px!important;color:var(--kf-em)!important}
-.kfin-scope-bar{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:8px!important;padding:0!important;background:transparent!important;border:none!important}
-.kfin-wilayah-col{width:100%;align-items:stretch;gap:8px}
-.kfin-wilayah-hint-bubble{align-self:flex-start;background:var(--kf-em-bg);color:var(--kf-em);border:1px solid var(--kf-em-line);font-family:var(--kf-font);font-size:10px;font-weight:600;letter-spacing:0;padding:3px 10px;border-radius:999px;box-shadow:none;animation:none}
-.kfin-wilayah-hint-bubble::after{display:none}
-.kfin-wilayah-hint-bubble::before{content:"";display:inline-block;width:4px;height:4px;border-radius:50%;background:currentColor;margin-right:6px;vertical-align:middle}
-.kfin-wilayah-filter-wrap{display:flex;width:100%}
-.kfin-pill{font-family:var(--kf-font);font-size:16px;font-weight:700;padding:15px 18px;border-radius:18px;color:var(--kf-t1);
-  background:linear-gradient(135deg,rgba(16,185,129,.12) 0%,rgba(15,23,42,.55) 100%);
-  border:1px solid var(--kf-em-line);box-shadow:0 10px 24px rgba(0,0,0,.22);white-space:nowrap}
-html[data-theme="light"] .kfin-pill{background:linear-gradient(135deg,rgba(16,185,129,.10),#fff)}
-select.kfin-pill-select{width:100%;padding:15px 52px 15px 40px;
-  background:radial-gradient(circle at 20px 50%,#34d399 0 4px,transparent 5px),linear-gradient(135deg,rgba(16,185,129,.12) 0%,rgba(15,23,42,.55) 100%);
-  border:1px solid var(--kf-em-line);color:var(--kf-t1);box-shadow:0 0 0 3px rgba(16,185,129,.06),0 10px 24px rgba(0,0,0,.22)}
-html[data-theme="light"] select.kfin-pill-select{background:radial-gradient(circle at 20px 50%,#10b981 0 4px,transparent 5px),linear-gradient(135deg,rgba(16,185,129,.10),#fff)}
-select.kfin-pill-select option{background:#0f172a;color:#f8fafc}
-.kfin-wilayah-filter-wrap .material-symbols-outlined{right:12px;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;background:var(--kf-em-bg);border:1px solid var(--kf-em-line);color:var(--kf-em)}
-#keuanganSyncBadge{align-self:flex-end;font-family:var(--kf-font);font-weight:600;background:var(--kf-pill)!important;border-color:var(--kf-pill-border)!important}
-
-/* ---------- Kartu utama (1 & 2) ---------- */
-.kfin-card{--kfin-accent:#34d399!important;--kfin-accent-rgb:16,185,129!important;
-  position:relative;overflow:hidden;background:var(--kf-card);border:1px solid var(--kf-card-border);border-radius:24px;
-  padding:20px;margin-bottom:16px;box-shadow:var(--kf-card-shadow);font-family:var(--kf-font);
-  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
-.kfin-card::before{content:"";position:absolute;inset:auto;top:-70px;right:-50px;left:auto;bottom:auto;width:210px;height:210px;border-radius:50%;
-  background:radial-gradient(circle,rgba(16,185,129,.17) 0%,transparent 68%);opacity:1;pointer-events:none}
+/* Tab Keuangan: disamakan dengan desain "Keuangan & Penyaluran" (hanya tampilan; id & logika tetap) */
+.kfin-title{font-weight:700;font-size:15px;margin:0;letter-spacing:-.01em;color:var(--text-primary)}
+.kfin-subtitle{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:.05em;color:var(--text-secondary);margin-top:2px}
+.kfin-month-pill{display:flex;align-items:center;gap:2px;flex-shrink:0;padding:3px;border-radius:999px;background:rgba(30,41,59,.9)}
+.kfin-month-pill button{width:24px!important;height:24px!important;border:none!important;background:transparent!important;color:var(--text-secondary)!important}
+.kfin-month-label{display:inline-flex;align-items:center;gap:6px;padding:0 6px;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text-primary);white-space:nowrap}
+.kfin-month-label::before{content:"";width:6px;height:6px;border-radius:50%;background:#22c55e}
+.kfin-scope-bar{padding:8px;border-radius:12px;background:rgba(14,21,38,.9)}
+.kfin-icon-wrap{width:38px!important;height:38px!important;border-radius:12px!important;background:#1e293b!important;color:#22c55e!important;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.kfin-eyebrow{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text-secondary)}
+/* kartu */
+.kfin-card{background:#121a2f;border:none;border-radius:12px;padding:16px 16px 16px 18px;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.kfin-card::before{width:6px;opacity:1}
 .keuangan-hero-card::after{display:none}
-.kfin-card-head{margin-bottom:16px;align-items:center}
-.kfin-card-head [style*="font-size: 13px"]{font-size:15px!important;font-weight:800!important;color:var(--kf-t1)!important}
-.kfin-card-head [style*="var(--bento-primary)"][style*="font-size: 10.5px"]{font-size:12px!important;font-weight:600!important;color:var(--kf-em)!important}
-.kfin-step{width:28px;height:28px;border-radius:9px;font-family:var(--kf-mono);font-size:12px;font-weight:800;background:var(--kf-em-bg);border:1px solid var(--kf-em-line);color:var(--kf-em)}
-.kfin-badge{font-family:var(--kf-mono);font-size:9px;font-weight:700;letter-spacing:.06em;border-radius:6px;padding:2px 7px;margin-left:8px;background:var(--kf-em-bg);border:1px solid var(--kf-em-line);color:var(--kf-em)}
-.keuangan-hero-icon-wrap{width:40px!important;height:40px!important;border-radius:12px!important;animation:none!important;background:var(--kf-em-bg)!important;border:1px solid var(--kf-em-line);color:var(--kf-em)!important;box-shadow:none}
-
-.kfin-number{font-family:var(--kf-mono);font-size:38px;font-weight:700;line-height:1.1;letter-spacing:-.03em;color:var(--kf-t1);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
-.kfin-number-md{font-size:27px;color:var(--kf-em)}
-#keuanganKebutuhanNominal{font-size:27px}
-#keuanganJumlahYatim::after{content:"JIWA";margin-left:8px;font-family:var(--kf-font);font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--kf-t3)}
-.kfin-caption,.kfin-metric-sub{font-size:12px;font-weight:500;color:var(--kf-t3)}
-.kfin-metric-label{font-family:var(--kf-font);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--kf-t3);margin-bottom:6px}
-.kfin-metric-value{font-family:var(--kf-mono);font-size:22px;font-weight:700;letter-spacing:-.02em;color:var(--kf-em)}
-#keuanganPersenTercapai{font-family:var(--kf-mono)}
-
-.kfin-stat-grid{gap:12px}
-.kfin-stat-chip{border-radius:18px;padding:14px 16px;
-  background:linear-gradient(135deg,rgba(var(--kfin-chip-rgb),.13) 0%,rgba(8,12,22,.35) 100%)!important;
-  border:1px solid rgba(var(--kfin-chip-rgb),.38)!important}
-html[data-theme="light"] .kfin-stat-chip{background:linear-gradient(135deg,rgba(var(--kfin-chip-rgb),.12),#fff)!important}
+.keuangan-hero-icon-wrap{animation:none!important;width:34px!important;height:34px!important}
+.kfin-card-head{margin-bottom:12px}
+.kfin-step{width:18px;height:18px;border-radius:5px;font-size:10px}
+.kfin-badge{font-family:'JetBrains Mono',monospace;font-size:9px;border-radius:4px;padding:2px 6px;background:#1e293b;color:#22c55e}
+.kfin-number{font-size:24px;letter-spacing:-.02em}
+.kfin-number-md{font-size:19px}
+.kfin-caption,.kfin-metric-sub{font-size:10.5px}
+.kfin-metric-label{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text-secondary)}
+.kfin-metric-value{font-size:17px;font-weight:700;color:#22c55e}
+.kfin-stat-chip{border-radius:8px;padding:10px 12px;background:#0e1526!important;border:none!important}
 .kfin-stat-chip::before{display:none}
-.kfin-stat-chip-label{flex-direction:row-reverse;justify-content:space-between;font-family:var(--kf-font);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px}
-.kfin-stat-chip-label .material-symbols-outlined{font-size:19px!important}
-.kfin-stat-chip-value{font-family:var(--kf-mono);font-size:28px;font-weight:700;letter-spacing:-.02em}
-.kfin-divider{border-top:1px solid var(--kf-inset-border)}
-
-.kfin-progress-track{height:12px;border-radius:99px;background:var(--kf-inset);border:1px solid var(--kf-inset-border);box-shadow:inset 0 1px 3px rgba(0,0,0,.35)}
-.keuangan-progress-fill{box-shadow:0 0 14px rgba(52,211,153,.45)}
-.kfin-warning-banner{border-radius:14px;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.30)}
-.kfin-status-banner{padding:14px;border-radius:16px;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
-#keuanganStatusBanner[style*="239, 68, 68"]{background:linear-gradient(135deg,rgba(74,15,26,.62) 0%,rgba(35,10,16,.82) 100%)!important;border-color:rgba(239,68,68,.35)!important}
-#keuanganStatusBanner[style*="34, 197, 94"]{background:linear-gradient(135deg,rgba(6,78,59,.55) 0%,rgba(6,30,24,.82) 100%)!important;border-color:rgba(52,211,153,.35)!important}
-#keuanganStatusBanner[style*="251, 191, 36"]{background:linear-gradient(135deg,rgba(69,45,6,.55) 0%,rgba(30,20,6,.82) 100%)!important;border-color:rgba(251,191,36,.35)!important}
-#keuanganSelisihIconWrap{width:40px!important;height:40px!important;border-radius:12px!important}
-#keuanganSelisihNominal{font-family:var(--kf-mono)!important;font-size:17px!important;font-weight:700;letter-spacing:-.02em}
-#keuanganSelisihLabel{font-family:var(--kf-font)!important;font-size:10px!important;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
-#keuanganRincianWilayahSantunanWrap,#keuanganRincianWilayahWrap{border-top:1px solid var(--kf-inset-border)!important}
-button[onclick*="toggleRincianWilayahKeuangan"]>span:first-child{font-family:var(--kf-font);font-size:13px!important;font-weight:600!important;color:var(--kf-t2)!important}
-
-/* ---------- Pemisah "Ringkasan Program" ---------- */
-#kfinDataWrap>[role="separator"]{justify-content:center;margin:28px 0 20px!important}
-#kfinDataWrap>[role="separator"]>div:first-child,#kfinDataWrap>[role="separator"]>div:last-child{display:none!important}
-#kfinDataWrap>[role="separator"]>div:nth-child(2){gap:8px!important;padding:10px 18px 10px 14px!important;border-radius:999px!important;background:var(--kf-em-bg)!important;border:1px solid var(--kf-em-line)!important;box-shadow:0 0 20px rgba(16,185,129,.12)!important}
-#kfinDataWrap>[role="separator"] span{color:var(--kf-em)!important}
-#kfinDataWrap>[role="separator"] span:last-child{font-size:12px!important;font-weight:800!important;letter-spacing:.12em!important}
-
-/* ---------- Kartu akordeon (Rekap, Saldo, Program YASSA) ---------- */
-#kfinDataWrap>div:not(.kfin-cards-row):not([role="separator"]){
-  background:var(--kf-card)!important;border:1px solid var(--kf-card-border)!important;border-radius:24px!important;
-  padding:18px!important;margin-bottom:16px!important;box-shadow:var(--kf-card-shadow)!important;
-  position:relative;overflow:hidden;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
-#kfinDataWrap button[id*="Header"]>div:first-child{width:46px!important;height:46px!important;border-radius:14px!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,currentColor 32%,transparent)}
-#kfinDataWrap button[id*="Header"] [style*="font-size: 13.5px"]{font-size:15px!important;font-weight:800!important}
-#kfinDataWrap button[id*="Header"] [style*="font-size: 10px"],#kfinDataWrap button[id*="Header"] [style*="font-size: 10.5px"],#kfinDataWrap button[id*="Header"] [style*="font-size: 11px"]{font-size:11.5px!important;line-height:1.5!important;color:var(--kf-t3)!important}
-#kfinDataWrap button[id*="Header"]>.material-symbols-outlined:last-child{display:flex!important;align-items:center;justify-content:center;flex-shrink:0;width:34px;height:34px;border-radius:11px;background:var(--kf-chev-bg);font-size:20px!important}
-#rekapTersalurTotal,#saldoProgramTotal,#saldoRingkas_emergency{font-family:var(--kf-mono)!important;font-weight:700!important;letter-spacing:-.02em;margin:5px 0 3px!important}
-#rekapTersalurTotal{font-size:25px!important;color:var(--kf-em)!important}
-#saldoProgramTotal{font-size:25px!important;color:var(--kf-cy)!important}
-#saldoRingkas_emergency{font-size:19px!important}
-#rekapTersalurPeriodeKet{font-size:12px!important;color:var(--kf-t3)!important}
-#rekapTersalurDetail,#saldoProgramDetail,#programYassaDetail{border-top:1px solid var(--kf-inset-border)!important}
-.kfin-seg{background:var(--kf-pill);border:1px solid var(--kf-pill-border);padding:4px}
-.kfin-seg button{font-family:var(--kf-font);color:var(--kf-t3)}
-.kfin-seg button[aria-pressed="true"]{background:linear-gradient(135deg,#34d399,#14b8a6);color:#022c22;box-shadow:0 4px 12px rgba(16,185,129,.35)}
-.kfin-seg-hint{font-size:10.5px;font-style:italic;color:var(--kf-t3)}
-.kfin-seg-hint .material-symbols-outlined{color:var(--kf-cy)}
-.kfin-chip{font-family:var(--kf-font)}
-.kfin-chip-nas{background:rgba(34,211,238,.10);color:var(--kf-cy);border-color:rgba(34,211,238,.32)}
-
-/* ---------- Tombol program ---------- */
-.kfin-cta{border-radius:18px;padding:14px 16px;font-family:var(--kf-font);
-  background:linear-gradient(135deg,rgba(16,185,129,.10) 0%,rgba(15,23,42,.45) 100%);
-  border:1px solid var(--kf-em-line);box-shadow:0 6px 16px rgba(0,0,0,.18)}
-html[data-theme="light"] .kfin-cta{background:linear-gradient(135deg,rgba(16,185,129,.10),#fff)}
-.kfin-cta .kfin-icon-wrap{border-radius:14px;border:1px solid rgba(var(--kfin-accent-rgb),.30)}
-
-/* ---------- Laporan Gabungan (butuh browser dengan :has, selain itu tampil sebagai kartu biasa) ---------- */
-#kfinDataWrap>div:has(button[onclick*="bukaModalCetakSemuaProgram"]){
-  background:linear-gradient(135deg,rgba(6,78,59,.58) 0%,rgba(15,23,42,.92) 65%)!important;
-  border:1px solid rgba(52,211,153,.38)!important;box-shadow:0 14px 34px rgba(0,0,0,.35),0 0 40px rgba(16,185,129,.10)!important}
-html[data-theme="light"] #kfinDataWrap>div:has(button[onclick*="bukaModalCetakSemuaProgram"]){background:linear-gradient(135deg,rgba(16,185,129,.16),#fff 65%)!important}
-#kfinDataWrap>div:has(button[onclick*="bukaModalCetakSemuaProgram"])>div:first-child>div:first-child{position:relative;width:54px!important;height:54px!important;border-radius:16px!important;box-shadow:0 8px 22px rgba(16,185,129,.40)!important}
-#kfinDataWrap>div:has(button[onclick*="bukaModalCetakSemuaProgram"])>div:first-child>div:first-child::after{content:"";position:absolute;right:-4px;bottom:-4px;width:13px;height:13px;border-radius:50%;background:#0b1220;border:2px solid #34d399}
-#kfinDataWrap>div:has(button[onclick*="bukaModalCetakSemuaProgram"]) [style*="font-size: 14px"]{font-size:16px!important;line-height:1.3}
-#kfinDataWrap button[onclick*="bukaModalCetakSemuaProgram"]{
-  justify-content:flex-start!important;gap:12px!important;padding:16px 18px!important;border-radius:18px!important;
-  background:linear-gradient(135deg,#34d399 0%,#10b981 55%,#14b8a6 100%)!important;color:#022c22!important;
-  font-family:var(--kf-font);font-size:12.5px!important;font-weight:800!important;letter-spacing:.05em;text-transform:uppercase;text-align:left;
-  box-shadow:0 12px 28px rgba(16,185,129,.35),inset 0 1px 0 rgba(255,255,255,.35)!important}
-#kfinDataWrap button[onclick*="bukaModalCetakSemuaProgram"]::after{content:"\203A";margin-left:auto;flex-shrink:0;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;line-height:1;background:rgba(2,44,34,.85);color:#34d399}
+.kfin-stat-chip-label{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px}
+.kfin-stat-chip-value{font-size:17px}
+.kfin-divider{border-top:1px solid rgba(148,163,184,.14)}
+.kfin-progress-track{height:8px;border:none;background:#070b14}
+.kfin-warning-banner{border-radius:10px}
+.kfin-status-banner{padding:12px;border-radius:12px}
+#keuanganStatusBanner[style*="239, 68, 68"]{background:#450a0a!important;border:none!important}
+#keuanganSelisihIconWrap{width:32px!important;height:32px!important;border-radius:8px!important}
+#keuanganSelisihNominal{font-family:'JetBrains Mono',monospace;font-size:14px!important}
+#keuanganSelisihLabel{font-family:'JetBrains Mono',monospace;font-size:9.5px!important;letter-spacing:.05em;text-transform:uppercase}
+.kfin-cta{border-radius:12px}
 </style>
 
 </head>
@@ -7819,6 +7684,45 @@ function tampilkanKeuanganGagal() {
 // Nerapin 1 paket hasil (dari cache ATAU dari fetch baru) ke semua elemen
 // tab Keuangan. Dipisah dari loadKeuanganStats() biar bisa dipanggil 2 cara:
 // instan dari cache, atau setelah Promise.all sukses.
+// 🆕 Kartu 3 tab Keuangan: "Tahapan Target Penyaluran" (desain Stitch).
+// Tier 1 = santunan pokok (jumlah anak x KFIN_TIER1_PER_ANAK), Tier 2 = target
+// penuh (Kebutuhan Donasi dari Bendahara), Tier 3 = target lanjutan, aktif
+// setelah Tier 2 tercapai 100%. Ubah KFIN_TIER1_PER_ANAK kalau rate pokok beda.
+const KFIN_TIER1_PER_ANAK = 50000;
+function kfinRenderTier_(kebutuhan, realisasi, jumlahAnak) {
+  const $ = (id) => document.getElementById(id);
+  if (!$("kfinTierCard")) return;
+  const rp = (n) => formatRupiahHub(Math.max(0, Math.round(n)));
+  const t1 = Math.min(kebutuhan, jumlahAnak * KFIN_TIER1_PER_ANAK);
+  const p1 = t1 > 0 ? Math.min(100, realisasi / t1 * 100) : 0;
+  const p2 = kebutuhan > 0 ? Math.min(100, realisasi / kebutuhan * 100) : 0;
+  const aktif = p2 >= 100 ? 3 : (p1 >= 100 ? 2 : 1);
+  const kurang = Math.max(0, kebutuhan - realisasi);
+  $("ktBadge").textContent = "Tier " + aktif + ": Aktif (" + Math.round(p2) + "%)";
+  $("ktTerkumpul").textContent = rp(realisasi);
+  $("ktTarget").textContent = rp(kebutuhan);
+  $("ktTarget2").textContent = rp(kebutuhan);
+  $("ktKurang").textContent = kurang > 0 ? "-" + rp(kurang) : "Rp0";
+  $("ktAnak").textContent = Number(jumlahAnak || 0).toLocaleString("id-ID") + " anak";
+  $("ktLine").style.width = "calc((100% - 60px) * " + ((aktif - 1) / 2 + (aktif < 3 ? (aktif === 1 ? p1 : p2) / 100 / 2 : 0)) + ")";
+  [1, 2, 3].forEach((i) => {
+    const selesai = i < aktif || (i === 3 && p2 >= 100), now = i === aktif && !selesai;
+    const bg = selesai ? "#10B981" : (now ? "#34D399" : "rgba(148,163,184,0.2)");
+    const col = selesai || now ? "#052e22" : "var(--text-muted)";
+    $("ktN" + i).innerHTML = '<div style="width:26px;height:26px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;background:' + bg + ';color:' + col + ';' + (now ? 'box-shadow:0 0 0 3px rgba(52,211,153,0.35);' : '') + '">' + (selesai ? "&#10003;" : i) + '</div><div style="font-size:9.5px;font-weight:700;margin-top:4px;color:' + (selesai || now ? "#6EE7B7" : "var(--text-muted)") + ';">Tier ' + i + '</div>';
+  });
+  const baris = (judul, sub, pct, target, ket, warna, redup) =>
+    '<div style="padding:11px 12px;border-radius:12px;border:1px solid ' + (redup ? "var(--glass-border)" : "rgba(16,185,129,0.3)") + ';background:rgba(15,23,42,0.35);' + (redup ? "opacity:.75;" : "") + '">' +
+    '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;"><div style="font-size:12px;font-weight:700;">' + judul + ' <span style="font-size:10px;font-weight:500;color:var(--text-muted);">' + sub + '</span></div>' +
+    '<span style="font-size:9px;font-weight:800;padding:2px 7px;border-radius:6px;white-space:nowrap;background:rgba(148,163,184,0.12);color:' + warna + ';">' + ket + '</span></div>' +
+    '<div style="height:6px;border-radius:99px;background:rgba(148,163,184,0.18);margin-top:9px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;border-radius:99px;background:' + warna + ';transition:width .6s;"></div></div>' +
+    '<div style="display:flex;justify-content:space-between;font-size:10px;margin-top:6px;color:var(--text-muted);"><span>' + target[0] + '</span><b>' + target[1] + '</b></div></div>';
+  $("ktList").innerHTML =
+    baris("Tier 1: Santunan Pokok", "(" + formatRupiahHub(KFIN_TIER1_PER_ANAK) + "/anak)", p1, [Number(jumlahAnak || 0).toLocaleString("id-ID") + " anak pokok", "Target: " + rp(t1)], p1 >= 100 ? "Tercapai 100%" : Math.round(p1) + "%", "#34D399", false) +
+    baris("Tier 2: Santunan Penuh Standar", "", p2, [kurang > 0 ? "Sisa " + rp(kurang) + " untuk santunan penuh" : "Santunan penuh terpenuhi", "Target: " + rp(kebutuhan)], p2 >= 100 ? "Tercapai 100%" : Math.round(p2) + "% berjalan", "#FBBF24", p1 < 100) +
+    baris("Tier 3: Paket Nutrisi & Sembako", "", 0, ["Aktif setelah Tier 2 terpenuhi 100%", "Target lanjutan"], p2 >= 100 ? "Aktif" : "Terkunci", "#22D3EE", p2 < 100);
+}
+
 function terapkanKeuanganStats(hasil) {
   const elYatim = document.getElementById("keuanganJumlahYatim");
   const elPiatu = document.getElementById("keuanganYatimPiatu");
@@ -8010,6 +7914,7 @@ function terapkanKeuanganStats(hasil) {
       const realisasi = Number(manual.realisasiDonasi || 0) + realisasiNasionalLuarWilayah;
       const selisih = kebutuhan - realisasi;
       const persen = kebutuhan > 0 ? Math.round((realisasi / kebutuhan) * 100) : 0;
+      try { kfinRenderTier_(kebutuhan, realisasi, Number((hasil[0] || {}).jumlahAnakYatim || 0)); } catch (e) { console.warn("kfinRenderTier_", e); }
       // rateSudahDiisi: default true kalau field ini gak ada (mis. backend
       // lama sebelum patch) supaya gak salah nge-flag "belum diisi" pas
       // sebenarnya cuma belum dikirim backend-nya.
@@ -9979,6 +9884,36 @@ function renderContent() {
             <span class="material-symbols-outlined" id="keuanganRincianWilayahChevron" style="font-size: 18px; color: var(--text-muted); transition: transform 0.2s;">expand_more</span>
           </button>
           <div id="keuanganRincianWilayahList" class="kv-rincian-list" style="display: block;"></div>
+        </div>
+      </div>
+      <div class="kfin-card" id="kfinTierCard" style="--kfin-accent: #10B981; --kfin-accent-rgb: 16,185,129;">
+        <div class="kfin-card-head" style="margin-bottom: 14px;">
+          <div style="display: flex; align-items: center; gap: 9px;">
+            <span class="kfin-step">3</span>
+            <div>
+              <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Tahapan Target Penyaluran</div>
+              <div style="font-size: 10.5px; color: var(--bento-primary); font-weight: 600;">Milestone bertingkat santunan</div>
+            </div>
+          </div>
+          <span id="ktBadge" style="font-size: 10px; font-weight: 800; padding: 3px 9px; border-radius: 99px; background: rgba(16,185,129,0.15); color: #6EE7B7; border: 1px solid rgba(16,185,129,0.3);">...</span>
+        </div>
+        <div class="kfin-metric-label">Terkumpul saat ini</div>
+        <div class="kfin-number kfin-number-md" id="ktTerkumpul" style="margin-bottom: 10px;">...</div>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding-top:10px; border-top:1px solid var(--glass-border); font-size:11px; color:var(--text-muted);">
+          <span>Target: <b id="ktTarget" style="color:var(--text-primary);">...</b></span>
+          <span style="padding:2px 8px; border-radius:6px; background:rgba(245,158,11,0.10); border:1px solid rgba(245,158,11,0.3); color:#FBBF24; font-weight:700;">Kekurangan: <span id="ktKurang">...</span></span>
+        </div>
+        <div style="position:relative; display:flex; justify-content:space-between; padding:18px 18px 6px;">
+          <div style="position:absolute; left:30px; right:30px; top:30px; height:4px; border-radius:99px; background:rgba(148,163,184,0.2);"></div>
+          <div id="ktLine" style="position:absolute; left:30px; top:30px; height:4px; border-radius:99px; background:linear-gradient(90deg,#34D399,#10B981); width:0; transition:width .6s;"></div>
+          <div id="ktN1" style="position:relative; text-align:center;"></div>
+          <div id="ktN2" style="position:relative; text-align:center;"></div>
+          <div id="ktN3" style="position:relative; text-align:center;"></div>
+        </div>
+        <div id="ktList" style="display:grid; gap:10px; margin-top:12px;"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px; padding-top:14px; border-top:1px solid var(--glass-border);">
+          <div><div style="font-size:11px; color:var(--text-muted);">Target donasi berjalan</div><div id="ktTarget2" style="font-size:15px; font-weight:800; margin-top:3px;">...</div></div>
+          <div style="border-left:1px solid var(--glass-border); padding-left:14px;"><div style="font-size:11px; color:var(--text-muted);">Anak penerima manfaat</div><div id="ktAnak" style="font-size:15px; font-weight:800; color:var(--bento-primary); margin-top:3px;">...</div></div>
         </div>
       </div>
       </div>
