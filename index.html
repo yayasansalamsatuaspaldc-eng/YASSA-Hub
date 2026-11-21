@@ -14105,10 +14105,55 @@ function renderProgramGopayBanner_() {
   );
 }
 
+// Kelompok wilayah di layar Program GO-PAY: beberapa wilayah digabung jadi SATU kartu
+// (jumlah KK / Yatim / Yatim Piatu / Disabilitas dijumlahkan). Pencocokan memakai nama
+// yang sudah dinormalkan (huruf kecil, tanda baca dibuang), jadi "Kota Bekasi",
+// "Kabupaten Bekasi", "Kab. Bekasi", "Jakarta Timur", "Jaktim", "Tangerang Selatan",
+// "Tangsel", dst semuanya terbaca. Wilayah yang tidak masuk kelompok tetap tampil sendiri.
+// Mau tambah/ubah kelompok? Cukup edit daftar di bawah ini.
+const GOPAY_KELOMPOK_WILAYAH = [
+  { nama: "Jabodetabek", ikon: "location_city",
+    cocok: /\b(bogor|depok|bekasi|bek|jakarta|jak(tim|bar|sel|pus|ut)|tangerang|tang(kot|kab|sel))\b/ },
+  { nama: "Surabaya Raya", ikon: "domain",
+    cocok: /\b(gresik|sidoarjo|surabaya)\b/ }
+];
+
+function normalNamaWilayah_(t) {
+  return String(t == null ? "" : t).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+// Hasil: array kartu { kelompok:true, nama, ikon, anggota:[nama,...], kk, yatim, piatu, dsb }
+// atau { kelompok:false, nama, kk, yatim, piatu, dsb }. Kartu kelompok ditaruh paling atas.
+function kelompokkanRincianGopay_(rincian) {
+  const hasilKelompok = GOPAY_KELOMPOK_WILAYAH.map(function (g) {
+    return { kelompok: true, nama: g.nama, ikon: g.ikon, anggota: [], kk: 0, yatim: 0, piatu: 0, dsb: 0 };
+  });
+  const lain = [];
+  (rincian || []).forEach(function (r) {
+    const n = normalNamaWilayah_(r.wilayah);
+    let idx = -1;
+    for (let i = 0; i < GOPAY_KELOMPOK_WILAYAH.length; i++) {
+      if (GOPAY_KELOMPOK_WILAYAH[i].cocok.test(n)) { idx = i; break; }
+    }
+    const angka = {
+      kk: Number(r.jumlahKK || 0), yatim: Number(r.jumlahYatim || 0),
+      piatu: Number(r.jumlahYatimPiatu || 0), dsb: Number(r.jumlahDisabilitas || 0)
+    };
+    if (idx >= 0) {
+      const k = hasilKelompok[idx];
+      k.anggota.push(String(r.wilayah));
+      k.kk += angka.kk; k.yatim += angka.yatim; k.piatu += angka.piatu; k.dsb += angka.dsb;
+    } else {
+      lain.push({ kelompok: false, nama: String(r.wilayah), kk: angka.kk, yatim: angka.yatim, piatu: angka.piatu, dsb: angka.dsb });
+    }
+  });
+  return hasilKelompok.filter(function (k) { return k.anggota.length > 0; }).concat(lain);
+}
+
 function renderProgramGopayPage_(data, dariCache) {
   const el = document.getElementById("programGopayContent");
   if (!el) return;
-  const rincian = data.rincianWilayah || [];
+  const rincian = kelompokkanRincianGopay_(data.rincianWilayah || []);
   const mini = function (warna, border, teks, angka, label) {
     return '<div style="flex:1; background:' + warna + '; border:1px solid ' + border + '; border-radius:12px; padding:10px 6px; text-align:center;">' +
       '<div style="font-size:17px; font-weight:800; color:' + teks + ';">' + Number(angka || 0) + '</div>' +
@@ -14142,13 +14187,19 @@ function renderProgramGopayPage_(data, dariCache) {
     html += '<div style="font-size:11px; color: var(--text-muted); padding:20px 0; text-align:center;">Belum ada data wilayah.</div>';
   } else {
     rincian.forEach(function (r) {
-      html += '<div style="background: var(--glass-strong); border-radius:14px; padding:12px 14px; margin-bottom:8px; border:1px solid var(--glass-border);">' +
-        '<div style="font-size:12.5px; font-weight:700; color: var(--text-primary); margin-bottom:8px;">' + escapeHtmlHub(r.wilayah) + '</div>' +
+      const gabungan = r.kelompok;
+      html += '<div style="background: var(--glass-strong); border-radius:14px; padding:12px 14px; margin-bottom:8px; border:1px solid var(--glass-border);' +
+        (gabungan ? ' border-left:4px solid #22C55E;' : '') + '">' +
+        '<div style="display:flex; align-items:center; gap:8px; margin-bottom:' + (gabungan ? '2px' : '8px') + ';">' +
+          (gabungan ? '<span class="material-symbols-outlined" style="font-size:18px; color:#22C55E; font-variation-settings:\'FILL\' 1;">' + r.ikon + '</span>' : '') +
+          '<div style="font-size:12.5px; font-weight:700; color: var(--text-primary);">' + escapeHtmlHub(r.nama) + '</div>' +
+        '</div>' +
+        (gabungan ? '<div style="font-size:9.5px; color: var(--text-muted); line-height:1.45; margin-bottom:8px;">Gabungan ' + r.anggota.length + ' wilayah: ' + r.anggota.map(escapeHtmlHub).join(', ') + '</div>' : '') +
         '<div style="display:flex; gap:14px; flex-wrap:wrap;">' +
-          '<div style="font-size:11px; color: var(--text-secondary);">KK <b class="pale-blue-text" style="color:#93C5FD;">' + Number(r.jumlahKK || 0) + '</b></div>' +
-          '<div style="font-size:11px; color: var(--text-secondary);">Yatim <b class="pale-green-text" style="color:#86EFAC;">' + Number(r.jumlahYatim || 0) + '</b></div>' +
-          '<div style="font-size:11px; color: var(--text-secondary);">Yatim Piatu <b class="pale-purple-text" style="color:#D8B4FE;">' + Number(r.jumlahYatimPiatu || 0) + '</b></div>' +
-          '<div style="font-size:11px; color: var(--text-secondary);">Disabilitas* <b class="pale-amber-text" style="color:#FDE68A;">' + Number(r.jumlahDisabilitas || 0) + '</b></div>' +
+          '<div style="font-size:11px; color: var(--text-secondary);">KK <b class="pale-blue-text" style="color:#93C5FD;">' + r.kk + '</b></div>' +
+          '<div style="font-size:11px; color: var(--text-secondary);">Yatim <b class="pale-green-text" style="color:#86EFAC;">' + r.yatim + '</b></div>' +
+          '<div style="font-size:11px; color: var(--text-secondary);">Yatim Piatu <b class="pale-purple-text" style="color:#D8B4FE;">' + r.piatu + '</b></div>' +
+          '<div style="font-size:11px; color: var(--text-secondary);">Disabilitas* <b class="pale-amber-text" style="color:#FDE68A;">' + r.dsb + '</b></div>' +
         '</div></div>';
     });
   }
