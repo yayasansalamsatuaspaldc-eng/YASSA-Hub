@@ -794,7 +794,11 @@
     gap: 10px;
     overflow-x: auto;
     padding: 2px 2px 6px;
-    scroll-snap-type: x proximity;
+    /* 🩹 FIX gulir ke kiri macet: snap "proximity" menarik balik ke kartu terdekat setelah
+       tiap geseran pendek, dan overscroll di tepi kiri bisa memicu gestur back browser. */
+    scroll-snap-type: none;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x pan-y;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
@@ -19149,6 +19153,7 @@ function initHubPullToRefresh() {
   if (!contentEl || !pullInd || !pullIcon) return;
 
   let startY = 0;
+  let startX = 0;
   let currentY = 0;
   let isTracking = false;
   let pullDistance = 0;
@@ -19157,8 +19162,16 @@ function initHubPullToRefresh() {
 
   contentEl.addEventListener("touchstart", function (e) {
     if (_hubIsPullRefreshing) return;
+    // 🩹 FIX: sentuhan yang dimulai di carousel horizontal (mis. "PILIH PROGRAM YASSA")
+    // bukan tarik-untuk-refresh. Dulu geser jari ke kanan (= gulir ke KIRI) yang sedikit
+    // miring ke bawah dianggap tarikan & di-preventDefault, sehingga carousel macet ke kiri.
+    if (e.target && e.target.closest && e.target.closest(".program-select-scroll")) {
+      isTracking = false;
+      return;
+    }
     if (contentEl.scrollTop <= 0) {
       startY = e.touches[0].clientY;
+      startX = e.touches[0].clientX;
       isTracking = true;
       pullDistance = 0;
     } else {
@@ -19170,6 +19183,14 @@ function initHubPullToRefresh() {
     if (!isTracking || _hubIsPullRefreshing) return;
     currentY = e.touches[0].clientY;
     const rawDelta = currentY - startY;
+    // Gestur lebih condong ke samping daripada ke bawah -> bukan tarik-untuk-refresh, lepaskan.
+    if (Math.abs(e.touches[0].clientX - startX) > Math.abs(rawDelta)) {
+      isTracking = false;
+      pullDistance = 0;
+      pullInd.style.opacity = "0";
+      pullInd.style.transform = "";
+      return;
+    }
 
     if (rawDelta > 0 && contentEl.scrollTop <= 0) {
       pullDistance = Math.min(MAX_PULL, Math.pow(rawDelta, 0.82) * 1.5);
