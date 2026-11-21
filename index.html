@@ -4964,6 +4964,10 @@ const GAS_SSO_URL = "https://script.google.com/macros/s/AKfycbz85pXQuO6VIfgF5zOu
 // Anak) lewat action 'getPublicStats', TANPA perlu login/token, karena
 // yang diambil cuma 1 angka agregat, bukan data pribadi apapun.
 const GAS_MOBILE_URL = "https://script.google.com/macros/s/AKfycbzAcz0lUypjUnzSIdpmsyg6KZNYQ3OATwnRNZchR7ukFo9-qZMlh3Wr8Tz8nQr0qUj2/exec";
+// 🪪 ALAMAT HALAMAN VERIFIKASI KARTU ANGGOTA (kartu.html di GitHub Pages).
+// Isi SETELAH kartu.html diunggah, contoh: "https://NAMA.github.io/REPO/kartu.html"
+// Kosong = QR memakai link Apps Script (tetap berfungsi, tapi tampil script.google.com).
+const URL_VERIFIKASI_KARTU = "https://yayasansalamsatuaspaldc-eng.github.io/YASSA-Hub/kartu.html";
 const GOOGLE_CLIENT_ID = "486322853600-bi8cq6k50ajcue26t3sss20mfqmg8me4.apps.googleusercontent.com";
 
 const ICONS = {
@@ -7684,45 +7688,6 @@ function tampilkanKeuanganGagal() {
 // Nerapin 1 paket hasil (dari cache ATAU dari fetch baru) ke semua elemen
 // tab Keuangan. Dipisah dari loadKeuanganStats() biar bisa dipanggil 2 cara:
 // instan dari cache, atau setelah Promise.all sukses.
-// 🆕 Kartu 3 tab Keuangan: "Tahapan Target Penyaluran" (desain Stitch).
-// Tier 1 = santunan pokok (jumlah anak x KFIN_TIER1_PER_ANAK), Tier 2 = target
-// penuh (Kebutuhan Donasi dari Bendahara), Tier 3 = target lanjutan, aktif
-// setelah Tier 2 tercapai 100%. Ubah KFIN_TIER1_PER_ANAK kalau rate pokok beda.
-const KFIN_TIER1_PER_ANAK = 50000;
-function kfinRenderTier_(kebutuhan, realisasi, jumlahAnak) {
-  const $ = (id) => document.getElementById(id);
-  if (!$("kfinTierCard")) return;
-  const rp = (n) => formatRupiahHub(Math.max(0, Math.round(n)));
-  const t1 = Math.min(kebutuhan, jumlahAnak * KFIN_TIER1_PER_ANAK);
-  const p1 = t1 > 0 ? Math.min(100, realisasi / t1 * 100) : 0;
-  const p2 = kebutuhan > 0 ? Math.min(100, realisasi / kebutuhan * 100) : 0;
-  const aktif = p2 >= 100 ? 3 : (p1 >= 100 ? 2 : 1);
-  const kurang = Math.max(0, kebutuhan - realisasi);
-  $("ktBadge").textContent = "Tier " + aktif + ": Aktif (" + Math.round(p2) + "%)";
-  $("ktTerkumpul").textContent = rp(realisasi);
-  $("ktTarget").textContent = rp(kebutuhan);
-  $("ktTarget2").textContent = rp(kebutuhan);
-  $("ktKurang").textContent = kurang > 0 ? "-" + rp(kurang) : "Rp0";
-  $("ktAnak").textContent = Number(jumlahAnak || 0).toLocaleString("id-ID") + " anak";
-  $("ktLine").style.width = "calc((100% - 60px) * " + ((aktif - 1) / 2 + (aktif < 3 ? (aktif === 1 ? p1 : p2) / 100 / 2 : 0)) + ")";
-  [1, 2, 3].forEach((i) => {
-    const selesai = i < aktif || (i === 3 && p2 >= 100), now = i === aktif && !selesai;
-    const bg = selesai ? "#10B981" : (now ? "#34D399" : "rgba(148,163,184,0.2)");
-    const col = selesai || now ? "#052e22" : "var(--text-muted)";
-    $("ktN" + i).innerHTML = '<div style="width:26px;height:26px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;background:' + bg + ';color:' + col + ';' + (now ? 'box-shadow:0 0 0 3px rgba(52,211,153,0.35);' : '') + '">' + (selesai ? "&#10003;" : i) + '</div><div style="font-size:9.5px;font-weight:700;margin-top:4px;color:' + (selesai || now ? "#6EE7B7" : "var(--text-muted)") + ';">Tier ' + i + '</div>';
-  });
-  const baris = (judul, sub, pct, target, ket, warna, redup) =>
-    '<div style="padding:11px 12px;border-radius:12px;border:1px solid ' + (redup ? "var(--glass-border)" : "rgba(16,185,129,0.3)") + ';background:rgba(15,23,42,0.35);' + (redup ? "opacity:.75;" : "") + '">' +
-    '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;"><div style="font-size:12px;font-weight:700;">' + judul + ' <span style="font-size:10px;font-weight:500;color:var(--text-muted);">' + sub + '</span></div>' +
-    '<span style="font-size:9px;font-weight:800;padding:2px 7px;border-radius:6px;white-space:nowrap;background:rgba(148,163,184,0.12);color:' + warna + ';">' + ket + '</span></div>' +
-    '<div style="height:6px;border-radius:99px;background:rgba(148,163,184,0.18);margin-top:9px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;border-radius:99px;background:' + warna + ';transition:width .6s;"></div></div>' +
-    '<div style="display:flex;justify-content:space-between;font-size:10px;margin-top:6px;color:var(--text-muted);"><span>' + target[0] + '</span><b>' + target[1] + '</b></div></div>';
-  $("ktList").innerHTML =
-    baris("Tier 1: Santunan Pokok", "(" + formatRupiahHub(KFIN_TIER1_PER_ANAK) + "/anak)", p1, [Number(jumlahAnak || 0).toLocaleString("id-ID") + " anak pokok", "Target: " + rp(t1)], p1 >= 100 ? "Tercapai 100%" : Math.round(p1) + "%", "#34D399", false) +
-    baris("Tier 2: Santunan Penuh Standar", "", p2, [kurang > 0 ? "Sisa " + rp(kurang) + " untuk santunan penuh" : "Santunan penuh terpenuhi", "Target: " + rp(kebutuhan)], p2 >= 100 ? "Tercapai 100%" : Math.round(p2) + "% berjalan", "#FBBF24", p1 < 100) +
-    baris("Tier 3: Paket Nutrisi & Sembako", "", 0, ["Aktif setelah Tier 2 terpenuhi 100%", "Target lanjutan"], p2 >= 100 ? "Aktif" : "Terkunci", "#22D3EE", p2 < 100);
-}
-
 function terapkanKeuanganStats(hasil) {
   const elYatim = document.getElementById("keuanganJumlahYatim");
   const elPiatu = document.getElementById("keuanganYatimPiatu");
@@ -7914,7 +7879,6 @@ function terapkanKeuanganStats(hasil) {
       const realisasi = Number(manual.realisasiDonasi || 0) + realisasiNasionalLuarWilayah;
       const selisih = kebutuhan - realisasi;
       const persen = kebutuhan > 0 ? Math.round((realisasi / kebutuhan) * 100) : 0;
-      try { kfinRenderTier_(kebutuhan, realisasi, Number((hasil[0] || {}).jumlahAnakYatim || 0)); } catch (e) { console.warn("kfinRenderTier_", e); }
       // rateSudahDiisi: default true kalau field ini gak ada (mis. backend
       // lama sebelum patch) supaya gak salah nge-flag "belum diisi" pas
       // sebenarnya cuma belum dikirim backend-nya.
@@ -9884,36 +9848,6 @@ function renderContent() {
             <span class="material-symbols-outlined" id="keuanganRincianWilayahChevron" style="font-size: 18px; color: var(--text-muted); transition: transform 0.2s;">expand_more</span>
           </button>
           <div id="keuanganRincianWilayahList" class="kv-rincian-list" style="display: block;"></div>
-        </div>
-      </div>
-      <div class="kfin-card" id="kfinTierCard" style="--kfin-accent: #10B981; --kfin-accent-rgb: 16,185,129;">
-        <div class="kfin-card-head" style="margin-bottom: 14px;">
-          <div style="display: flex; align-items: center; gap: 9px;">
-            <span class="kfin-step">3</span>
-            <div>
-              <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Tahapan Target Penyaluran</div>
-              <div style="font-size: 10.5px; color: var(--bento-primary); font-weight: 600;">Milestone bertingkat santunan</div>
-            </div>
-          </div>
-          <span id="ktBadge" style="font-size: 10px; font-weight: 800; padding: 3px 9px; border-radius: 99px; background: rgba(16,185,129,0.15); color: #6EE7B7; border: 1px solid rgba(16,185,129,0.3);">...</span>
-        </div>
-        <div class="kfin-metric-label">Terkumpul saat ini</div>
-        <div class="kfin-number kfin-number-md" id="ktTerkumpul" style="margin-bottom: 10px;">...</div>
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding-top:10px; border-top:1px solid var(--glass-border); font-size:11px; color:var(--text-muted);">
-          <span>Target: <b id="ktTarget" style="color:var(--text-primary);">...</b></span>
-          <span style="padding:2px 8px; border-radius:6px; background:rgba(245,158,11,0.10); border:1px solid rgba(245,158,11,0.3); color:#FBBF24; font-weight:700;">Kekurangan: <span id="ktKurang">...</span></span>
-        </div>
-        <div style="position:relative; display:flex; justify-content:space-between; padding:18px 18px 6px;">
-          <div style="position:absolute; left:30px; right:30px; top:30px; height:4px; border-radius:99px; background:rgba(148,163,184,0.2);"></div>
-          <div id="ktLine" style="position:absolute; left:30px; top:30px; height:4px; border-radius:99px; background:linear-gradient(90deg,#34D399,#10B981); width:0; transition:width .6s;"></div>
-          <div id="ktN1" style="position:relative; text-align:center;"></div>
-          <div id="ktN2" style="position:relative; text-align:center;"></div>
-          <div id="ktN3" style="position:relative; text-align:center;"></div>
-        </div>
-        <div id="ktList" style="display:grid; gap:10px; margin-top:12px;"></div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px; padding-top:14px; border-top:1px solid var(--glass-border);">
-          <div><div style="font-size:11px; color:var(--text-muted);">Target donasi berjalan</div><div id="ktTarget2" style="font-size:15px; font-weight:800; margin-top:3px;">...</div></div>
-          <div style="border-left:1px solid var(--glass-border); padding-left:14px;"><div style="font-size:11px; color:var(--text-muted);">Anak penerima manfaat</div><div id="ktAnak" style="font-size:15px; font-weight:800; color:var(--bento-primary); margin-top:3px;">...</div></div>
         </div>
       </div>
       </div>
@@ -16185,7 +16119,16 @@ async function ambilTeksQrKartu_(vcardFallback) {
   if (kartuVerifUrlCache_) return kartuVerifUrlCache_;
   try {
     const res = await callGAS("getKartuVerifUrl", [authToken]);
-    if (res && res.url) { kartuVerifUrlCache_ = res.url; return res.url; }
+    if (res && res.url) {
+      let u = res.url;
+      if (URL_VERIFIKASI_KARTU) {
+        // link lama: <exec>?v=<id>.<tandatangan>  ->  <kartu.html>?v=<id>.<tandatangan>
+        const mv = String(u).match(/[?&]v=([^&]+)/);
+        if (mv) u = URL_VERIFIKASI_KARTU + (URL_VERIFIKASI_KARTU.indexOf("?") > -1 ? "&" : "?") + "v=" + mv[1];
+      }
+      kartuVerifUrlCache_ = u;
+      return u;
+    }
   } catch (e) { /* pakai vCard */ }
   return vcardFallback;
 }
