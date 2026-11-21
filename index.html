@@ -10095,55 +10095,57 @@ function renderContent() {
       : (currentUser.wilayahAkses || "-");
 
     let html = `
-      <div class="profil-hero-card profil-card-namecard" style="background: linear-gradient(145deg, #2B2B2B 0%, #1A1A1A 100%); border: 1px solid rgba(255,255,255,0.07); border-radius: 20px; padding: 18px 18px 24px; margin: 16px 0 24px; position: relative; overflow: hidden; box-shadow: 0 16px 32px rgba(0,0,0,0.5), 0 4px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 12px;">
-        <div class="profil-hero-orb profil-hero-orb-1" style="position: absolute; top: -40px; right: -30px; width: 170px; height: 170px; border-radius: 50%; background: radial-gradient(circle, rgba(243,156,18,0.16) 0%, rgba(243,156,18,0) 70%); pointer-events: none;"></div>
-        <div class="profil-hero-orb profil-hero-orb-2" style="position: absolute; bottom: -44px; left: -22px; width: 140px; height: 140px; border-radius: 50%; background: radial-gradient(circle, rgba(243,156,18,0.10) 0%, rgba(243,156,18,0) 70%); pointer-events: none;"></div>
-        <div class="profil-card-chip" style="position: absolute; top: 14px; left: 14px; width: 20px; height: 15px; border-radius: 4px; background: linear-gradient(135deg, #FFD27A, #B86E00); opacity: 0.9; box-shadow: 0 1px 3px rgba(0,0,0,0.5);"></div>
-        <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 7px; background: linear-gradient(180deg, #FFC04D, #F39C12 50%, #B86E00); pointer-events: none;"></div>
+      <!-- 🪪 KARTU NAMA POTRAIT (rasio ~ kartu ID CR80 berdiri, 54:86). Dulu landscape. -->
+      <div class="profil-hero-card profil-card-namecard profil-card-portrait" style="width: 100%; max-width: 290px; aspect-ratio: 54 / 86; min-height: 440px; margin: 16px auto 24px; background: linear-gradient(160deg, #2B2B2B 0%, #1A1A1A 100%); border: 1px solid rgba(255,255,255,0.07); border-radius: 22px; padding: 18px 20px 30px; position: relative; overflow: hidden; box-shadow: 0 16px 32px rgba(0,0,0,0.5), 0 4px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; gap: 12px; box-sizing: border-box;">
+        <div class="profil-hero-orb profil-hero-orb-1" style="position: absolute; top: -50px; right: -40px; width: 190px; height: 190px; border-radius: 50%; background: radial-gradient(circle, rgba(243,156,18,0.18) 0%, rgba(243,156,18,0) 70%); pointer-events: none;"></div>
+        <div class="profil-hero-orb profil-hero-orb-2" style="position: absolute; bottom: -50px; left: -30px; width: 170px; height: 170px; border-radius: 50%; background: radial-gradient(circle, rgba(243,156,18,0.12) 0%, rgba(243,156,18,0) 70%); pointer-events: none;"></div>
+        <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 8px; background: linear-gradient(180deg, #FFC04D, #F39C12 50%, #B86E00); pointer-events: none;"></div>
 
-        <!-- Baris atas: foto kiri, nama/jabatan tengah, lock kanan atas -->
-        <div style="display: flex; align-items: flex-start; gap: 14px; position: relative;">
-          <div style="position: relative; flex-shrink: 0;">
-            <div class="profil-avatar-ring" style="width: 74px; height: 74px; border-radius: 18px; padding: 3px; background: linear-gradient(135deg, #FFD27A, #F39C12 55%, #B86E00); box-shadow: 0 8px 16px rgba(0,0,0,0.5); position: relative;">
-              <div style="width: 100%; height: 100%; border-radius: 15px; overflow: hidden; border: 2px solid #1A1A1A; background: rgba(255,255,255,0.1);">
-                <img id="profilTabAvatarImg" src="${fotoProfil}" alt="Profile" onerror="fotoProfilFallbackSelf_(this)" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="showProfileQR()">
-              </div>
-              <label for="inputFotoProfileTab" id="labelUploadFotoTab" style="position: absolute; bottom: -4px; right: -4px; width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, #FFC04D, #F39C12); display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #1A1A1A; box-shadow: 0 2px 6px rgba(0,0,0,0.4);">
-                ${iconSvg("edit", "#fff", 11)}
-              </label>
-              <input type="file" id="inputFotoProfileTab" accept="image/*" style="display: none;" onchange="uploadFoto(this)">
-            </div>
-          </div>
-
-          <div style="flex: 1; min-width: 0; padding-top: 2px; padding-right: 34px;">
-            <h1 style="font-size: 16.5px; font-weight: 700; margin: 0 0 2px; color: #fff; text-shadow: 0 2px 5px rgba(0,0,0,0.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(currentUser.nama)}</h1>
-            <div style="font-size: 11.5px; font-weight: 700; color: #F39C12; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(currentUser.jabatan || "-")}</div>
-          </div>
-
-          <button onclick="openChangePasswordPanel()" title="Password" style="position: absolute; top: 0; right: 0; width: 30px; height: 30px; border-radius: 50%; background: rgba(243,156,18,0.12); border: 1px solid rgba(243,156,18,0.5); color: #F39C12; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(6px); flex-shrink: 0; box-shadow: 0 3px 8px rgba(0,0,0,0.35);">
+        <!-- Baris paling atas: chip kiri, tombol password kanan -->
+        <div style="width: 100%; display: flex; align-items: center; justify-content: space-between; position: relative;">
+          <div class="profil-card-chip" style="width: 24px; height: 18px; border-radius: 5px; background: linear-gradient(135deg, #FFD27A, #B86E00); opacity: 0.9; box-shadow: 0 1px 3px rgba(0,0,0,0.5);"></div>
+          <button onclick="openChangePasswordPanel()" title="Password" style="width: 30px; height: 30px; border-radius: 50%; background: rgba(243,156,18,0.12); border: 1px solid rgba(243,156,18,0.5); color: #F39C12; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(6px); flex-shrink: 0; box-shadow: 0 3px 8px rgba(0,0,0,0.35);">
             <span class="material-symbols-outlined" style="font-size: 15px;">lock</span>
           </button>
         </div>
 
-        <div style="height: 0; border-top: 2px dashed rgba(243,156,18,0.55);"></div>
-
-        <!-- Baris bawah: kontak kiri, QR besar kanan bawah (seukuran foto) -->
-        <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 14px;">
-          <div style="flex: 1; min-width: 0;">
-            <div style="display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #fff; margin-bottom: 6px;">
-              <span class="material-symbols-outlined" style="font-size: 14px; color: #F39C12;">call</span>
-              <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(currentUser.username || "-")}</span>
+        <!-- Foto besar di tengah -->
+        <div style="position: relative; flex-shrink: 0; margin-top: 4px;">
+          <div class="profil-avatar-ring" style="width: 112px; height: 112px; border-radius: 26px; padding: 3px; background: linear-gradient(135deg, #FFD27A, #F39C12 55%, #B86E00); box-shadow: 0 8px 16px rgba(0,0,0,0.5); position: relative;">
+            <div style="width: 100%; height: 100%; border-radius: 23px; overflow: hidden; border: 2px solid #1A1A1A; background: rgba(255,255,255,0.1);">
+              <img id="profilTabAvatarImg" src="${fotoProfil}" alt="Profile" onerror="fotoProfilFallbackSelf_(this)" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="showProfileQR()">
             </div>
-            <div style="display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #fff;">
-              <span class="material-symbols-outlined" style="font-size: 14px; color: #F39C12;">public</span>
-              <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(wilayahTxt)}</span>
-            </div>
+            <label for="inputFotoProfileTab" id="labelUploadFotoTab" style="position: absolute; bottom: -4px; right: -4px; width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, #FFC04D, #F39C12); display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #1A1A1A; box-shadow: 0 2px 6px rgba(0,0,0,0.4);">
+              ${iconSvg("edit", "#fff", 12)}
+            </label>
+            <input type="file" id="inputFotoProfileTab" accept="image/*" style="display: none;" onchange="uploadFoto(this)">
           </div>
-
-          <button onclick="showProfileQR()" title="QR Saya" style="width: 74px; height: 74px; border-radius: 18px; background: rgba(243,156,18,0.12); border: 2px solid #F39C12; color: #F39C12; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(6px); flex-shrink: 0; box-shadow: 0 8px 16px rgba(0,0,0,0.45);">
-            <span class="material-symbols-outlined" style="font-size: 42px;">qr_code_2</span>
-          </button>
         </div>
+
+        <!-- Nama & jabatan (rata tengah) -->
+        <div style="width: 100%; text-align: center; min-width: 0; position: relative;">
+          <h1 style="font-size: 18px; font-weight: 700; margin: 0 0 4px; color: #fff; text-shadow: 0 2px 5px rgba(0,0,0,0.55); line-height: 1.25; word-break: break-word;">${escapeHtmlHub(currentUser.nama)}</h1>
+          <div style="font-size: 12px; font-weight: 700; color: #F39C12; line-height: 1.3; word-break: break-word;">${escapeHtmlHub(currentUser.jabatan || "-")}</div>
+        </div>
+
+        <div style="width: 100%; height: 0; border-top: 2px dashed rgba(243,156,18,0.55);"></div>
+
+        <!-- Kontak -->
+        <div style="width: 100%; display: flex; flex-direction: column; gap: 6px; position: relative;">
+          <div style="display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; color: #fff;">
+            <span class="material-symbols-outlined" style="font-size: 15px; color: #F39C12;">call</span>
+            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(currentUser.username || "-")}</span>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; color: #fff;">
+            <span class="material-symbols-outlined" style="font-size: 15px; color: #F39C12;">public</span>
+            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(wilayahTxt)}</span>
+          </div>
+        </div>
+
+        <!-- QR di bawah, rata tengah -->
+        <button onclick="showProfileQR()" title="QR Saya" style="margin-top: auto; width: 84px; height: 84px; border-radius: 20px; background: rgba(243,156,18,0.12); border: 2px solid #F39C12; color: #F39C12; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(6px); flex-shrink: 0; box-shadow: 0 8px 16px rgba(0,0,0,0.45);">
+          <span class="material-symbols-outlined" style="font-size: 48px;">qr_code_2</span>
+        </button>
       </div>
 
       <!-- 🔄 PINDAH (04 Sep 2026): tombol "Formulir Data Baru GOPAY" yang
@@ -16178,36 +16180,36 @@ async function gambarKartuAnggota_() {
   bevel.addColorStop(0, "rgba(255,255,255,0.45)"); bevel.addColorStop(0.5, "rgba(255,255,255,0.03)"); bevel.addColorStop(1, "rgba(0,0,0,0.6)");
   pathRoundRect_(ctx, 2, 2, W - 4, H - 4, 42); ctx.strokeStyle = bevel; ctx.lineWidth = 4; ctx.stroke();
 
-  // Header (logo YASSA dalam lingkaran gelap, seperti di halaman login)
-  let hx = 56;
+  // ===== LAYOUT POTRAIT (638 x 1012), semua rata tengah =====
+  const cx = W / 2;
+  // Header: logo YASSA dalam lingkaran gelap
   {
-    const lr = 46, lcx = 56 + lr, lcy = 82;
+    const lr = 54, lcy = 98;
     ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 14; ctx.shadowOffsetY = 6;
     ctx.fillStyle = "#111111";
-    ctx.beginPath(); ctx.arc(lcx, lcy, lr, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, lcy, lr, 0, Math.PI * 2); ctx.fill();
     ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
     ctx.strokeStyle = "#F39C12"; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.arc(lcx, lcy, lr, 0, Math.PI * 2); ctx.stroke();
-    gambarLogoYassa_(ctx, lcx - lr * 0.85, lcy - lr * 0.85, lr * 1.7);
-    hx = lcx + lr + 24;
+    ctx.beginPath(); ctx.arc(cx, lcy, lr, 0, Math.PI * 2); ctx.stroke();
+    gambarLogoYassa_(ctx, cx - lr * 0.85, lcy - lr * 0.85, lr * 1.7);
   }
-  ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic"; ctx.textAlign = "center";
   ctx.shadowColor = "rgba(0,0,0,0.55)"; ctx.shadowBlur = 6; ctx.shadowOffsetY = 3;
-  ctx.fillStyle = "#FFFFFF"; ctx.font = "800 38px " + FONT;
-  ctx.fillText("YASSA", hx, 62);
-  ctx.fillStyle = "#F39C12"; ctx.font = "700 22px " + FONT;
-  ctx.fillText("YAYASAN SALAM SATU ASPAL", hx, 92);
-  ctx.fillStyle = "#A0A0A0"; ctx.font = "600 19px " + FONT;
-  ctx.fillText("KARTU ANGGOTA PENGURUS", hx, 120);
+  ctx.fillStyle = "#FFFFFF"; ctx.font = "800 40px " + FONT;
+  ctx.fillText("YASSA", cx, 206);
+  ctx.fillStyle = "#F39C12"; ctx.font = "700 21px " + FONT;
+  ctx.fillText("YAYASAN SALAM SATU ASPAL", cx, 238);
+  ctx.fillStyle = "#A0A0A0"; ctx.font = "600 17px " + FONT;
+  ctx.fillText("KARTU ANGGOTA PENGURUS", cx, 264);
   ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
   // Garis putus-putus ala marka jalan
   ctx.save();
   ctx.strokeStyle = "rgba(243,156,18,0.6)"; ctx.lineWidth = 3; ctx.setLineDash([22, 14]);
-  ctx.beginPath(); ctx.moveTo(56, 139); ctx.lineTo(W - 56, 139); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(48, 288); ctx.lineTo(W - 48, 288); ctx.stroke();
   ctx.restore();
 
-  // Foto (kiri)
-  const fx = 56, fy = 176, fs = 220;
+  // Foto (tengah)
+  const fs = 220, fx = (W - fs) / 2, fy = 314;
   ctx.save();
   ctx.shadowColor = "rgba(0,0,0,0.65)"; ctx.shadowBlur = 26; ctx.shadowOffsetY = 12;
   ctx.fillStyle = "#111111"; pathRoundRect_(ctx, fx, fy, fs, fs, 36); ctx.fill();
@@ -16223,7 +16225,7 @@ async function gambarKartuAnggota_() {
     ctx.fillStyle = "#FFFFFF"; ctx.font = "800 96px " + FONT;
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillText((nama.trim().charAt(0) || "?").toUpperCase(), fx + fs / 2, fy + fs / 2 + 4);
-    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+    ctx.textBaseline = "alphabetic";
   }
   ctx.restore();
   pathRoundRect_(ctx, fx, fy, fs, fs, 36);
@@ -16231,52 +16233,52 @@ async function gambarKartuAnggota_() {
   bingkai.addColorStop(0, "#FFD27A"); bingkai.addColorStop(0.5, "#F39C12"); bingkai.addColorStop(1, "#B86E00");
   ctx.strokeStyle = bingkai; ctx.lineWidth = 6; ctx.stroke();
 
-  // Teks identitas (tengah)
-  const tx = fx + fs + 36;
-  const qrBox = 220;
-  const lebarTeks = W - 56 - qrBox - 30 - tx; // sisakan ruang untuk QR di kanan
+  // Teks identitas (rata tengah di bawah foto)
+  const lebarTeks = W - 80;
+  ctx.textAlign = "center";
   ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 5; ctx.shadowOffsetY = 3;
-  ctx.fillStyle = "#FFFFFF"; ctx.font = "800 44px " + FONT;
-  ctx.fillText(potongTeksKartu_(ctx, nama, lebarTeks), tx, fy + 46);
-  ctx.fillStyle = "#F39C12"; ctx.font = "700 28px " + FONT;
-  ctx.fillText(potongTeksKartu_(ctx, jabatan, lebarTeks), tx, fy + 82);
-  ctx.fillStyle = "rgba(255,255,255,0.88)"; ctx.font = "500 26px " + FONT;
-  ctx.fillText(potongTeksKartu_(ctx, "Wilayah: " + wilayah, lebarTeks), tx, fy + 118);
-  if (telp) ctx.fillText(potongTeksKartu_(ctx, "Kontak: " + telp, lebarTeks), tx, fy + 152);
+  let ukNama = 40;
+  ctx.font = "800 " + ukNama + "px " + FONT;
+  while (ukNama > 26 && ctx.measureText(nama).width > lebarTeks) { ukNama -= 1; ctx.font = "800 " + ukNama + "px " + FONT; }
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillText(potongTeksKartu_(ctx, nama, lebarTeks), cx, 590);
+  ctx.fillStyle = "#F39C12"; ctx.font = "700 26px " + FONT;
+  ctx.fillText(potongTeksKartu_(ctx, jabatan, lebarTeks), cx, 628);
+  ctx.fillStyle = "rgba(255,255,255,0.88)"; ctx.font = "500 22px " + FONT;
+  ctx.fillText(potongTeksKartu_(ctx, "Wilayah: " + wilayah, lebarTeks), cx, 664);
+  if (telp) ctx.fillText(potongTeksKartu_(ctx, "Kontak: " + telp, lebarTeks), cx, 696);
   if (emailKartu) {
-    // Email diletakkan di atas kotak QR (bukan di sampingnya), jadi bisa memakai lebar penuh sampai margin kanan.
-    const lebarEmail = W - 56 - tx;
     const teksEmail = "Email: " + emailKartu;
-    let ukEmail = 24;
+    let ukEmail = 22;
     ctx.font = "500 " + ukEmail + "px " + FONT;
-    while (ukEmail > 16 && ctx.measureText(teksEmail).width > lebarEmail) {
+    while (ukEmail > 14 && ctx.measureText(teksEmail).width > lebarTeks) {
       ukEmail -= 1;
       ctx.font = "500 " + ukEmail + "px " + FONT;
     }
-    ctx.fillText(potongTeksKartu_(ctx, teksEmail, lebarEmail), tx, fy + 180);
+    ctx.fillText(potongTeksKartu_(ctx, teksEmail, lebarTeks), cx, 726);
   }
   ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
-  // QR (kanan bawah)
-  const qx = W - 56 - qrBox, qy = H - 34 - qrBox; // diturunkan agar tidak menempel dengan baris email
+  // QR (tengah bawah)
+  const qrBox = 170, qx = (W - qrBox) / 2, qy = 754;
   ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 24; ctx.shadowOffsetY = 10;
-  ctx.fillStyle = "#FFFFFF"; pathRoundRect_(ctx, qx, qy, qrBox, qrBox, 28); ctx.fill();
+  ctx.fillStyle = "#FFFFFF"; pathRoundRect_(ctx, qx, qy, qrBox, qrBox, 24); ctx.fill();
   ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-  pathRoundRect_(ctx, qx, qy, qrBox, qrBox, 28); ctx.strokeStyle = "#F39C12"; ctx.lineWidth = 4; ctx.stroke();
+  pathRoundRect_(ctx, qx, qy, qrBox, qrBox, 24); ctx.strokeStyle = "#F39C12"; ctx.lineWidth = 4; ctx.stroke();
   if (qr) {
-    ctx.drawImage(qr, qx + 14, qy + 14, qrBox - 28, qrBox - 28);
+    ctx.drawImage(qr, qx + 12, qy + 12, qrBox - 24, qrBox - 24);
   } else {
-    ctx.fillStyle = "#6B7280"; ctx.font = "600 20px " + FONT; ctx.textAlign = "center";
+    ctx.fillStyle = "#6B7280"; ctx.font = "600 18px " + FONT; ctx.textAlign = "center";
     ctx.fillText("QR tidak tersedia", qx + qrBox / 2, qy + qrBox / 2 + 6);
-    ctx.textAlign = "left";
   }
 
-  // Footer
+  // Footer (rata tengah)
   const tgl = new Date();
   const bln = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
-  ctx.fillStyle = "#A0A0A0"; ctx.font = "500 20px " + FONT;
-  ctx.fillText("Dicetak " + tgl.getDate() + " " + bln[tgl.getMonth()] + " " + tgl.getFullYear(), 56, H - 56);
-  ctx.fillText("Scan QR untuk verifikasi kartu", 56, H - 86);
+  ctx.fillStyle = "#A0A0A0"; ctx.font = "500 18px " + FONT; ctx.textAlign = "center";
+  ctx.fillText("Scan QR untuk verifikasi kartu", cx, 958);
+  ctx.fillText("Dicetak " + tgl.getDate() + " " + bln[tgl.getMonth()] + " " + tgl.getFullYear(), cx, 982);
+  ctx.textAlign = "left";
 
   const ket = document.getElementById("kartuAnggotaKet");
   if (ket && !foto && currentUser.fotoUrl) ket.textContent = "Foto tidak bisa dimuat ke kartu, jadi diganti inisial.";
@@ -16312,7 +16314,7 @@ function gambarBelakangKartu_(canvas) {
   bevel.addColorStop(0, "rgba(255,255,255,0.45)"); bevel.addColorStop(0.5, "rgba(255,255,255,0.03)"); bevel.addColorStop(1, "rgba(0,0,0,0.6)");
   pathRoundRect_(ctx, 2, 2, W - 4, H - 4, 42); ctx.strokeStyle = bevel; ctx.lineWidth = 4; ctx.stroke();
   // Logo besar di tengah
-  const lr = 92, lcx = W / 2, lcy = 232;
+  const lr = 112, lcx = W / 2, lcy = 372;
   ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 20; ctx.shadowOffsetY = 10;
   ctx.fillStyle = "#111111"; ctx.beginPath(); ctx.arc(lcx, lcy, lr, 0, Math.PI * 2); ctx.fill();
   ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
@@ -16321,13 +16323,13 @@ function gambarBelakangKartu_(canvas) {
   // Teks
   ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
   ctx.shadowColor = "rgba(0,0,0,0.55)"; ctx.shadowBlur = 6; ctx.shadowOffsetY = 3;
-  ctx.fillStyle = "#FFFFFF"; ctx.font = "800 44px " + FONT;
-  ctx.fillText("YASSA", W / 2, 394);
-  ctx.fillStyle = "#F39C12"; ctx.font = "700 26px " + FONT;
-  ctx.fillText("YAYASAN SALAM SATU ASPAL", W / 2, 436);
+  ctx.fillStyle = "#FFFFFF"; ctx.font = "800 46px " + FONT;
+  ctx.fillText("YASSA", W / 2, 566);
+  ctx.fillStyle = "#F39C12"; ctx.font = "700 22px " + FONT;
+  ctx.fillText("YAYASAN SALAM SATU ASPAL", W / 2, 606);
   ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-  ctx.fillStyle = "#A0A0A0"; ctx.font = "600 21px " + FONT;
-  ctx.fillText("BROTHERHOOD OF THE ROAD", W / 2, 474);
+  ctx.fillStyle = "#A0A0A0"; ctx.font = "600 18px " + FONT;
+  ctx.fillText("BROTHERHOOD OF THE ROAD", W / 2, 640);
   ctx.textAlign = "left";
 }
 
@@ -16379,13 +16381,13 @@ function pasang3dKartu_() {
   if (flip && depan) {
     for (let i = 1; i <= TEBAL; i++) {
       const l = document.createElement("div");
-      l.style.cssText = "position:absolute; inset:0; border-radius:16px; pointer-events:none; background:" + (i % 2 ? "#8A5A00" : "#5E3C00") + "; transform:translateZ(-" + i + "px);";
+      l.style.cssText = "position:absolute; inset:0; border-radius:18px; pointer-events:none; background:" + (i % 2 ? "#8A5A00" : "#5E3C00") + "; transform:translateZ(-" + i + "px);";
       flip.insertBefore(l, depan);
     }
     // Sisi belakang kartu
     const bel = document.createElement("canvas");
-    bel.width = 1012; bel.height = 638;
-    bel.style.cssText = "position:absolute; inset:0; width:100%; height:100%; border-radius:16px; backface-visibility:hidden; -webkit-backface-visibility:hidden; transform:translateZ(-" + (TEBAL + 1) + "px) rotateY(180deg);";
+    bel.width = 638; bel.height = 1012;
+    bel.style.cssText = "position:absolute; inset:0; width:100%; height:100%; border-radius:18px; backface-visibility:hidden; -webkit-backface-visibility:hidden; transform:translateZ(-" + (TEBAL + 1) + "px) rotateY(180deg);";
     flip.appendChild(bel);
     gambarBelakangKartu_(bel);
     let terbalik = false;
@@ -16410,11 +16412,11 @@ function showKartuAnggotaDigital() {
   const tombolStyle = "flex:1; border:none; border-radius:14px; padding:12px 10px; font-size:12.5px; font-weight:700; color:#fff; background:var(--grad-primary); cursor:pointer; opacity:0.5; display:flex; align-items:center; justify-content:center; gap:6px;";
   const bisaBagikan = !!(navigator.share && navigator.canShare);
   const html = '<div style="display:flex; flex-direction:column; align-items:center; gap:12px;">' +
-    '<div id="kartu3dWrap" style="width:100%; max-width:340px; perspective:800px; touch-action:none; padding:8px 0 14px;">' +
+    '<div id="kartu3dWrap" style="width:100%; max-width:260px; perspective:800px; touch-action:none; padding:8px 0 14px;">' +
       '<div id="kartu3d" style="position:relative; transform-style:preserve-3d; will-change:transform;">' +
         '<div id="kartuFlip" style="position:relative; transform-style:preserve-3d;">' +
-          '<canvas id="kartuAnggotaCanvas" width="1012" height="638" style="display:block; width:100%; aspect-ratio:1012/638; border-radius:16px; backface-visibility:hidden; -webkit-backface-visibility:hidden;"></canvas>' +
-          '<div id="kartu3dGlare" style="position:absolute; inset:0; border-radius:16px; pointer-events:none; opacity:0; transition:opacity 0.2s; transform:translateZ(1px); backface-visibility:hidden; -webkit-backface-visibility:hidden;"></div>' +
+          '<canvas id="kartuAnggotaCanvas" width="638" height="1012" style="display:block; width:100%; aspect-ratio:638/1012; border-radius:18px; backface-visibility:hidden; -webkit-backface-visibility:hidden;"></canvas>' +
+          '<div id="kartu3dGlare" style="position:absolute; inset:0; border-radius:18px; pointer-events:none; opacity:0; transition:opacity 0.2s; transform:translateZ(1px); backface-visibility:hidden; -webkit-backface-visibility:hidden;"></div>' +
         '</div>' +
       '</div>' +
     '</div>' +
