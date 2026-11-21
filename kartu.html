@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Verifikasi Anggota YASSA GOPAY</title>
+<style>
+body{margin:0;min-height:100vh;background:linear-gradient(160deg,#16A34A,#0F5132);font-family:Arial,Helvetica,sans-serif;display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box}
+.card{background:#fff;border-radius:24px;max-width:380px;width:100%;padding:26px 22px;text-align:center;box-shadow:0 14px 40px rgba(0,0,0,.3)}
+.top{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:14px}.top b{color:#14532D;font-size:15px;letter-spacing:.5px}.top .yay{color:#B45309;font-size:12.5px;font-weight:700;letter-spacing:.4px}.top small{color:#6B7280;font-size:11px}
+.av{display:block;width:120px;height:120px;border-radius:28px;object-fit:cover;border:4px solid #22C55E;margin:8px auto 4px;box-sizing:border-box}.ini{display:flex;align-items:center;justify-content:center;background:#16A34A;color:#fff;font-size:52px;font-weight:800}
+.bdg{display:table;padding:6px 14px;border-radius:999px;font-size:11.5px;font-weight:700;margin:8px auto 10px}.ok{background:#DCFCE7;color:#166534}.bad{background:#FEE2E2;color:#991B1B}
+h1{margin:4px 0 2px;font-size:22px;color:#111827}.jab{color:#B45309;font-weight:700;margin-bottom:14px}
+.row{display:flex;justify-content:space-between;padding:10px 4px;border-top:1px solid #E5E7EB;font-size:13.5px;color:#374151}.row b{color:#111827}
+.btns{display:flex;flex-direction:column;gap:8px;margin-top:16px}.btn{display:block;padding:12px;border-radius:12px;background:#16A34A;color:#fff;text-decoration:none;font-weight:700;font-size:14px}.btn.alt{background:#F3F4F6;color:#14532D}
+.muted{color:#6B7280;font-size:13px}.foot{margin-top:16px;font-size:10.5px;color:#9CA3AF}
+</style></head><body><div class="card">
+<div class="top">
+<svg viewBox="0 0 100 100" width="84" height="84" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="48" fill="#0B101E"/><g fill="#22C55E" stroke="#22C55E" stroke-linecap="round"><circle cx="28" cy="38" r="6" stroke="none"/><path d="M13 56 a15 15 0 0 1 30 0" fill="none" stroke-width="5"/><circle cx="72" cy="38" r="6" stroke="none"/><path d="M57 56 a15 15 0 0 1 30 0" fill="none" stroke-width="5"/><circle cx="50" cy="28" r="7.5" stroke="none"/><path d="M30 53 a20 20 0 0 1 40 0" fill="none" stroke-width="6.5"/></g><text x="50" y="76" font-family="Arial,sans-serif" font-weight="900" font-size="20" text-anchor="middle"><tspan fill="#fff">YAS</tspan><tspan fill="#22C55E">SA</tspan></text></svg>
+<b>YASSA GOPAY</b><span class="yay">YAYASAN SALAM SATU ASPAL</span><small>Verifikasi Kartu Anggota Pengurus</small></div>
+<div id="isi"><p class="muted">Memeriksa kartu...</p></div>
+<div class="foot">Halaman ini diterbitkan resmi oleh Yayasan Salam Satu Aspal melalui sistem YASSA GOPAY</div></div>
+<script>
+(function () {
+  // URL /exec Web App YASSA Hub (project Apps Script yang berisi kode Hub).
+  // Cara dapat: scan QR lama di tab Profil Hub, salin link-nya sampai SEBELUM tanda "?".
+  var API = "https://script.google.com/macros/s/AKfycbw0I5I6JiDSPJWiwYSsyY52lTcFFu1aSPsa0cPtQjhXGqXQjnf603kIQudX6o0lieaKNw/exec";
+
+  var isi = document.getElementById("isi");
+  function el(tag, cls, teks) { var e = document.createElement(tag); if (cls) e.className = cls; if (teks != null) e.textContent = teks; return e; }
+  function kosongkan() { while (isi.firstChild) isi.removeChild(isi.firstChild); }
+  function tidakValid(judul, ket) {
+    kosongkan(); isi.appendChild(el("div", "bdg bad", judul)); isi.appendChild(el("p", "muted", ket));
+  }
+  function baris(label, nilai, kecil) {
+    var r = el("div", "row"); r.appendChild(el("span", null, label)); var b = el("b", null, nilai);
+    if (kecil) { b.style.wordBreak = "break-all"; b.style.textAlign = "right"; b.style.marginLeft = "12px"; }
+    r.appendChild(b); return r;
+  }
+
+  var v = new URLSearchParams(window.location.search).get("v") || "";
+  if (API.indexOf("ISI_") === 0) { tidakValid("HALAMAN BELUM DIATUR", "Alamat server belum diisi di berkas kartu.html. Hubungi admin YASSA."); return; }
+  if (!v) { tidakValid("KARTU TIDAK VALID", "Kode verifikasi tidak ditemukan pada tautan ini. Pindai ulang QR di kartu anggota."); return; }
+
+  fetch(API + "?format=json&v=" + encodeURIComponent(v))
+    .then(function (r) { return r.json(); })
+    .then(function (j) {
+      if (j.status !== "ok") { tidakValid("KARTU TIDAK VALID", "Kode verifikasi tidak dikenali. Kartu ini kemungkinan palsu atau sudah tidak berlaku."); return; }
+      var d = j.data; kosongkan();
+      if (d.foto) {
+        var img = el("img", "av"); img.alt = ""; img.src = d.foto;
+        img.onerror = function () { var f = el("div", "av ini", (d.nama.trim().charAt(0) || "?").toUpperCase()); img.parentNode.replaceChild(f, img); };
+        isi.appendChild(img);
+      } else {
+        isi.appendChild(el("div", "av ini", (d.nama.trim().charAt(0) || "?").toUpperCase()));
+      }
+      isi.appendChild(el("div", "bdg " + (d.aktif ? "ok" : "bad"), d.aktif ? "\u2714 ANGGOTA RESMI \u2022 AKTIF" : "TIDAK AKTIF"));
+      isi.appendChild(el("h1", null, d.nama)); isi.appendChild(el("div", "jab", d.jabatan));
+      isi.appendChild(baris("Wilayah", d.wilayah));
+      if (d.telp) isi.appendChild(baris("Kontak", d.telp));
+      if (d.email) isi.appendChild(baris("Email", d.email, true));
+      if (d.telp) {
+        var vcf = "BEGIN:VCARD\nVERSION:3.0\nFN:" + d.nama + " (" + d.jabatan + " YASSA)\nTITLE:" + d.jabatan +
+          "\nORG:Yayasan Salam Satu Aspal (YASSA GOPAY)\nTEL;TYPE=CELL:" + d.telp + "\n" + (d.email ? "EMAIL:" + d.email + "\n" : "") + "END:VCARD";
+        var b = el("div", "btns");
+        var wa = el("a", "btn", "WhatsApp"); wa.href = "https://wa.me/" + d.telp.replace(/^\+/, "");
+        var tel = el("a", "btn alt", "Telepon"); tel.href = "tel:" + d.telp;
+        var sk = el("a", "btn alt", "Simpan Kontak"); sk.href = "data:text/vcard;charset=utf-8," + encodeURIComponent(vcf);
+        sk.download = d.nama.replace(/[^A-Za-z0-9]+/g, "-") + ".vcf";
+        b.appendChild(wa); b.appendChild(tel); b.appendChild(sk); isi.appendChild(b);
+      }
+    })
+    .catch(function () { tidakValid("GAGAL MEMERIKSA", "Tidak dapat terhubung ke server. Periksa koneksi internet lalu coba lagi."); });
+})();
+</script></body></html>
