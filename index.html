@@ -10095,57 +10095,55 @@ function renderContent() {
       : (currentUser.wilayahAkses || "-");
 
     let html = `
-      <!-- 🪪 KARTU NAMA POTRAIT (rasio ~ kartu ID CR80 berdiri, 54:86). Dulu landscape. -->
-      <div class="profil-hero-card profil-card-namecard profil-card-portrait" style="width: 100%; max-width: 290px; aspect-ratio: 54 / 86; min-height: 440px; margin: 16px auto 24px; background: linear-gradient(160deg, #2B2B2B 0%, #1A1A1A 100%); border: 1px solid rgba(255,255,255,0.07); border-radius: 22px; padding: 18px 20px 30px; position: relative; overflow: hidden; box-shadow: 0 16px 32px rgba(0,0,0,0.5), 0 4px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; gap: 12px; box-sizing: border-box;">
-        <div class="profil-hero-orb profil-hero-orb-1" style="position: absolute; top: -50px; right: -40px; width: 190px; height: 190px; border-radius: 50%; background: radial-gradient(circle, rgba(243,156,18,0.18) 0%, rgba(243,156,18,0) 70%); pointer-events: none;"></div>
-        <div class="profil-hero-orb profil-hero-orb-2" style="position: absolute; bottom: -50px; left: -30px; width: 170px; height: 170px; border-radius: 50%; background: radial-gradient(circle, rgba(243,156,18,0.12) 0%, rgba(243,156,18,0) 70%); pointer-events: none;"></div>
-        <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 8px; background: linear-gradient(180deg, #FFC04D, #F39C12 50%, #B86E00); pointer-events: none;"></div>
+      <div class="profil-hero-card profil-card-namecard" style="background: linear-gradient(145deg, #2B2B2B 0%, #1A1A1A 100%); border: 1px solid rgba(255,255,255,0.07); border-radius: 20px; padding: 18px 18px 24px; margin: 16px 0 24px; position: relative; overflow: hidden; box-shadow: 0 16px 32px rgba(0,0,0,0.5), 0 4px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 12px;">
+        <div class="profil-hero-orb profil-hero-orb-1" style="position: absolute; top: -40px; right: -30px; width: 170px; height: 170px; border-radius: 50%; background: radial-gradient(circle, rgba(243,156,18,0.16) 0%, rgba(243,156,18,0) 70%); pointer-events: none;"></div>
+        <div class="profil-hero-orb profil-hero-orb-2" style="position: absolute; bottom: -44px; left: -22px; width: 140px; height: 140px; border-radius: 50%; background: radial-gradient(circle, rgba(243,156,18,0.10) 0%, rgba(243,156,18,0) 70%); pointer-events: none;"></div>
+        <div class="profil-card-chip" style="position: absolute; top: 14px; left: 14px; width: 20px; height: 15px; border-radius: 4px; background: linear-gradient(135deg, #FFD27A, #B86E00); opacity: 0.9; box-shadow: 0 1px 3px rgba(0,0,0,0.5);"></div>
+        <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 7px; background: linear-gradient(180deg, #FFC04D, #F39C12 50%, #B86E00); pointer-events: none;"></div>
 
-        <!-- Baris paling atas: chip kiri, tombol password kanan -->
-        <div style="width: 100%; display: flex; align-items: center; justify-content: space-between; position: relative;">
-          <div class="profil-card-chip" style="width: 24px; height: 18px; border-radius: 5px; background: linear-gradient(135deg, #FFD27A, #B86E00); opacity: 0.9; box-shadow: 0 1px 3px rgba(0,0,0,0.5);"></div>
-          <button onclick="openChangePasswordPanel()" title="Password" style="width: 30px; height: 30px; border-radius: 50%; background: rgba(243,156,18,0.12); border: 1px solid rgba(243,156,18,0.5); color: #F39C12; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(6px); flex-shrink: 0; box-shadow: 0 3px 8px rgba(0,0,0,0.35);">
+        <!-- Baris atas: foto kiri, nama/jabatan tengah, lock kanan atas -->
+        <div style="display: flex; align-items: flex-start; gap: 14px; position: relative;">
+          <div style="position: relative; flex-shrink: 0;">
+            <div class="profil-avatar-ring" style="width: 74px; height: 74px; border-radius: 18px; padding: 3px; background: linear-gradient(135deg, #FFD27A, #F39C12 55%, #B86E00); box-shadow: 0 8px 16px rgba(0,0,0,0.5); position: relative;">
+              <div style="width: 100%; height: 100%; border-radius: 15px; overflow: hidden; border: 2px solid #1A1A1A; background: rgba(255,255,255,0.1);">
+                <img id="profilTabAvatarImg" src="${fotoProfil}" alt="Profile" onerror="fotoProfilFallbackSelf_(this)" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="showProfileQR()">
+              </div>
+              <label for="inputFotoProfileTab" id="labelUploadFotoTab" style="position: absolute; bottom: -4px; right: -4px; width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, #FFC04D, #F39C12); display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #1A1A1A; box-shadow: 0 2px 6px rgba(0,0,0,0.4);">
+                ${iconSvg("edit", "#fff", 11)}
+              </label>
+              <input type="file" id="inputFotoProfileTab" accept="image/*" style="display: none;" onchange="uploadFoto(this)">
+            </div>
+          </div>
+
+          <div style="flex: 1; min-width: 0; padding-top: 2px; padding-right: 34px;">
+            <h1 style="font-size: 16.5px; font-weight: 700; margin: 0 0 2px; color: #fff; text-shadow: 0 2px 5px rgba(0,0,0,0.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(currentUser.nama)}</h1>
+            <div style="font-size: 11.5px; font-weight: 700; color: #F39C12; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(currentUser.jabatan || "-")}</div>
+          </div>
+
+          <button onclick="openChangePasswordPanel()" title="Password" style="position: absolute; top: 0; right: 0; width: 30px; height: 30px; border-radius: 50%; background: rgba(243,156,18,0.12); border: 1px solid rgba(243,156,18,0.5); color: #F39C12; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(6px); flex-shrink: 0; box-shadow: 0 3px 8px rgba(0,0,0,0.35);">
             <span class="material-symbols-outlined" style="font-size: 15px;">lock</span>
           </button>
         </div>
 
-        <!-- Foto besar di tengah -->
-        <div style="position: relative; flex-shrink: 0; margin-top: 4px;">
-          <div class="profil-avatar-ring" style="width: 112px; height: 112px; border-radius: 26px; padding: 3px; background: linear-gradient(135deg, #FFD27A, #F39C12 55%, #B86E00); box-shadow: 0 8px 16px rgba(0,0,0,0.5); position: relative;">
-            <div style="width: 100%; height: 100%; border-radius: 23px; overflow: hidden; border: 2px solid #1A1A1A; background: rgba(255,255,255,0.1);">
-              <img id="profilTabAvatarImg" src="${fotoProfil}" alt="Profile" onerror="fotoProfilFallbackSelf_(this)" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="showProfileQR()">
+        <div style="height: 0; border-top: 2px dashed rgba(243,156,18,0.55);"></div>
+
+        <!-- Baris bawah: kontak kiri, QR besar kanan bawah (seukuran foto) -->
+        <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 14px;">
+          <div style="flex: 1; min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #fff; margin-bottom: 6px;">
+              <span class="material-symbols-outlined" style="font-size: 14px; color: #F39C12;">call</span>
+              <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(currentUser.username || "-")}</span>
             </div>
-            <label for="inputFotoProfileTab" id="labelUploadFotoTab" style="position: absolute; bottom: -4px; right: -4px; width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, #FFC04D, #F39C12); display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #1A1A1A; box-shadow: 0 2px 6px rgba(0,0,0,0.4);">
-              ${iconSvg("edit", "#fff", 12)}
-            </label>
-            <input type="file" id="inputFotoProfileTab" accept="image/*" style="display: none;" onchange="uploadFoto(this)">
+            <div style="display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #fff;">
+              <span class="material-symbols-outlined" style="font-size: 14px; color: #F39C12;">public</span>
+              <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(wilayahTxt)}</span>
+            </div>
           </div>
+
+          <button onclick="showProfileQR()" title="QR Saya" style="width: 74px; height: 74px; border-radius: 18px; background: rgba(243,156,18,0.12); border: 2px solid #F39C12; color: #F39C12; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(6px); flex-shrink: 0; box-shadow: 0 8px 16px rgba(0,0,0,0.45);">
+            <span class="material-symbols-outlined" style="font-size: 42px;">qr_code_2</span>
+          </button>
         </div>
-
-        <!-- Nama & jabatan (rata tengah) -->
-        <div style="width: 100%; text-align: center; min-width: 0; position: relative;">
-          <h1 style="font-size: 18px; font-weight: 700; margin: 0 0 4px; color: #fff; text-shadow: 0 2px 5px rgba(0,0,0,0.55); line-height: 1.25; word-break: break-word;">${escapeHtmlHub(currentUser.nama)}</h1>
-          <div style="font-size: 12px; font-weight: 700; color: #F39C12; line-height: 1.3; word-break: break-word;">${escapeHtmlHub(currentUser.jabatan || "-")}</div>
-        </div>
-
-        <div style="width: 100%; height: 0; border-top: 2px dashed rgba(243,156,18,0.55);"></div>
-
-        <!-- Kontak -->
-        <div style="width: 100%; display: flex; flex-direction: column; gap: 6px; position: relative;">
-          <div style="display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; color: #fff;">
-            <span class="material-symbols-outlined" style="font-size: 15px; color: #F39C12;">call</span>
-            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(currentUser.username || "-")}</span>
-          </div>
-          <div style="display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; color: #fff;">
-            <span class="material-symbols-outlined" style="font-size: 15px; color: #F39C12;">public</span>
-            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(wilayahTxt)}</span>
-          </div>
-        </div>
-
-        <!-- QR di bawah, rata tengah -->
-        <button onclick="showProfileQR()" title="QR Saya" style="margin-top: auto; width: 84px; height: 84px; border-radius: 20px; background: rgba(243,156,18,0.12); border: 2px solid #F39C12; color: #F39C12; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(6px); flex-shrink: 0; box-shadow: 0 8px 16px rgba(0,0,0,0.45);">
-          <span class="material-symbols-outlined" style="font-size: 48px;">qr_code_2</span>
-        </button>
       </div>
 
       <!-- 🔄 PINDAH (04 Sep 2026): tombol "Formulir Data Baru GOPAY" yang
