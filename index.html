@@ -4929,39 +4929,6 @@ html[data-theme="light"] .beranda-top-section,html[data-theme="light"] #berandaA
     </div>
   </div>
 
-  <!-- Form Donasi Online via Midtrans -->
-  <div class="user-form-overlay" id="midtransFormOverlay" onclick="if(event.target===this) toggleMidtransForm()" style="align-items: flex-end;">
-    <div class="user-form-sheet" style="padding-bottom: 40px; border-radius: 24px 24px 0 0;">
-      <div style="width: 48px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 4px; margin: 0 auto 16px;"></div>
-      <h3 style="text-align: center; font-size: 16px; font-weight: 700; margin-bottom: 4px;">Donasi Online</h3>
-      <p style="text-align: center; font-size: 11.5px; color: var(--text-secondary); margin: 0 0 16px;">Bikin link pembayaran (QRIS/VA/kartu) buat dikirim ke donatur</p>
-
-      <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
-        <div>
-          <label style="font-size: 11.5px; color: var(--text-secondary); margin-bottom: 4px; display: block;">Nama Donatur</label>
-          <input type="text" id="midtransNama" placeholder="Nama donatur" style="width: 100%; background: var(--glass-strong); border: 1px solid var(--glass-border); border-radius: 10px; padding: 12px; color: var(--text-primary); font-size: 13.5px; box-sizing: border-box;">
-        </div>
-        <div>
-          <label style="font-size: 11.5px; color: var(--text-secondary); margin-bottom: 4px; display: block;">Nomor HP (opsional)</label>
-          <input type="tel" id="midtransTelepon" placeholder="08xxxxxxxxxx" style="width: 100%; background: var(--glass-strong); border: 1px solid var(--glass-border); border-radius: 10px; padding: 12px; color: var(--text-primary); font-size: 13.5px; box-sizing: border-box;">
-        </div>
-        <div>
-          <label style="font-size: 11.5px; color: var(--text-secondary); margin-bottom: 4px; display: block;">Email (opsional)</label>
-          <input type="email" id="midtransEmail" placeholder="email@contoh.com" style="width: 100%; background: var(--glass-strong); border: 1px solid var(--glass-border); border-radius: 10px; padding: 12px; color: var(--text-primary); font-size: 13.5px; box-sizing: border-box;">
-        </div>
-        <div>
-          <label style="font-size: 11.5px; color: var(--text-secondary); margin-bottom: 4px; display: block;">Nominal Donasi (Rp)</label>
-          <input type="number" id="midtransNominal" placeholder="Minimal 10000" min="10000" style="width: 100%; background: var(--glass-strong); border: 1px solid var(--glass-border); border-radius: 10px; padding: 12px; color: var(--text-primary); font-size: 13.5px; box-sizing: border-box;">
-        </div>
-      </div>
-
-      <div id="midtransFormError" style="display: none; color: #F87171; font-size: 12px; margin-bottom: 12px; text-align: center;"></div>
-
-      <button id="midtransSubmitBtn" style="width: 100%; padding: 14px; background: var(--bento-primary); border-radius: 12px; font-size: 14px; font-weight: 700; color: #052e16; border: none; cursor: pointer; margin-bottom: 10px;" onclick="submitMidtransDonation()">Buat Link Pembayaran</button>
-      <button style="width: 100%; padding: 14px; background: var(--glass); border-radius: 12px; font-size: 14px; font-weight: 600; color: var(--text-primary); border: 1px solid var(--glass-border); cursor: pointer;" onclick="toggleMidtransForm()">Batal</button>
-    </div>
-  </div>
-
 
 </div>
 
@@ -9305,10 +9272,6 @@ function renderContent() {
         <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="window.open('https://kitabisa.com/campaign/patunganrumahkebaikan', '_blank')">
           <div class="aksi-cepat-icon aksi-rumah-icon"><span class="material-symbols-outlined">home_health</span></div>
           <span style="font-size: 10.5px; color: var(--text-secondary); text-align: center; line-height: 1.2;">Rumah<br>Kebaikan</span>
-        </div>
-        <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="toggleMidtransForm()">
-          <div class="aksi-cepat-icon aksi-online-icon"><span class="material-symbols-outlined">credit_card</span></div>
-          <span class="aksi-online-label">Donasi<br>Online</span>
         </div>
         <div class="aksi-cepat-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;" onclick="showQrCodeDonasiCepat()">
           <div class="aksi-qr-icon"><span class="material-symbols-outlined">qr_code_scanner</span><span class="aksi-qr-scanline" aria-hidden="true"></span></div>
@@ -15753,52 +15716,6 @@ function submitFormulirDataBaru() {
     });
 }
 
-function toggleMidtransForm() {
-  document.getElementById('midtransFormOverlay').classList.toggle('open');
-  const err = document.getElementById('midtransFormError');
-  if (err) err.style.display = 'none';
-}
-
-function submitMidtransDonation() {
-  const nama = document.getElementById('midtransNama').value.trim();
-  const telepon = document.getElementById('midtransTelepon').value.trim();
-  const email = document.getElementById('midtransEmail').value.trim();
-  const nominal = Number(document.getElementById('midtransNominal').value);
-  const errEl = document.getElementById('midtransFormError');
-  const btn = document.getElementById('midtransSubmitBtn');
-
-  if (!nominal || nominal < 10000) {
-    errEl.textContent = 'Nominal donasi minimal Rp10.000.';
-    errEl.style.display = 'block';
-    return;
-  }
-
-  errEl.style.display = 'none';
-  btn.disabled = true;
-  btn.textContent = 'Memproses…';
-
-  callGAS('createMidtransDonation', [authToken, { nama: nama, telepon: telepon, email: email, nominal: nominal }])
-    .then(function (res) {
-      toggleMidtransForm();
-      // Buka halaman pembayaran Midtrans di tab baru (bukan iframe, karena
-      // halaman Snap biasanya nolak dibuka lewat iframe/X-Frame-Options).
-      window.open(res.redirectUrl, '_blank');
-      showModal('Link Pembayaran Dibuat', 'Link pembayaran (' + res.env + ') sudah dibuka di tab baru. Kirim link itu ke donatur, atau salin dari tab tersebut.');
-      document.getElementById('midtransNama').value = '';
-      document.getElementById('midtransTelepon').value = '';
-      document.getElementById('midtransEmail').value = '';
-      document.getElementById('midtransNominal').value = '';
-    })
-    .catch(function (err) {
-      errEl.textContent = err.message || 'Gagal membuat link pembayaran.';
-      errEl.style.display = 'block';
-    })
-    .finally(function () {
-      btn.disabled = false;
-      btn.textContent = 'Buat Link Pembayaran';
-    });
-}
-
 // Nampilin dokumen legalitas (Pengesahan Yayasan / Akte Notaris / Regulasi)
 // LANGSUNG di dalam Hub lewat iframe preview Google Drive -- bukan
 // window.open ke tab baru, dan bukan link download. fileId diambil dari
@@ -18447,24 +18364,11 @@ function openApp(index) {
     const navNonce = "nav_" + Date.now() + "_" + Math.random().toString(36).slice(2);
     let navAckDiterima = false;
 
-    // Tirai "Membuka ..." menutupi iframe selama pesan pindah-tab belum dibalas, supaya
-    // user tidak sempat melihat tab LAMA (mis. Beranda) sebelum tab tujuan (mis. Data KK) tampil.
-    const veilEl = document.getElementById("overlaySsoLoading");
-    const veilTextEl = document.getElementById("overlaySsoLoadingText");
-    const veilSpinnerEl = document.getElementById("overlaySsoSpinner");
-    if (veilEl) {
-      if (veilTextEl) veilTextEl.textContent = "Membuka " + item.label + "...";
-      if (veilSpinnerEl) veilSpinnerEl.style.display = "";
-      veilEl.classList.add("show");
-    }
-
     function handleNavAck(e) {
       if (e.origin !== targetOrigin) return;
       if (!e.data || e.data.type !== "YASSA_HUB_NAV_ACK" || e.data.nonce !== navNonce) return;
       navAckDiterima = true;
       window.removeEventListener("message", handleNavAck);
-      // Beri jeda singkat supaya app sempat menggambar tab barunya, baru tirai dibuka.
-      setTimeout(function () { if (veilEl) veilEl.classList.remove("show"); }, 180);
     }
     window.addEventListener("message", handleNavAck);
 
@@ -18482,7 +18386,7 @@ function openApp(index) {
         overlayLoadedBaseUrl = null;
         openApp(index);
       }
-    }, 3000);
+    }, 1200);
 
     return;
   }
