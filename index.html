@@ -5289,29 +5289,14 @@ function renderProgramComingSoonHtml_(p) {
 // seluruh tab Beranda), jadi ringan & data GO-PAY yang udah kemuat gak
 // perlu fetch ulang tiap ganti-ganti tab program.
 function selectProgramTab(key) {
-  if (activeProgram === key) {
-    // Program yang sudah aktif -> tetap buka layar barunya tiap kartunya ditekan
-    openProgramPage_(key);
-    return;
-  }
-  activeProgram = key;
+  // 🔒 Kartu ringkasan "Kebutuhan / Kekurangan Santunan" di atas SELALU milik GO-PAY.
+  // Karena setiap program sekarang membuka LAYAR BARU-nya sendiri (lihat openProgramPage_),
+  // kartu itu tidak perlu lagi berganti isi mengikuti program yang ditekan. Maka
+  // `activeProgram` SENGAJA tidak diubah di sini (tetap "gopay") -- yang berganti hanya
+  // sorotan kartu pilihan, lalu layar program yang dipilih dibuka.
   document.querySelectorAll(".program-select-card").forEach(function (el) {
     el.classList.toggle("active", el.getAttribute("data-program") === key);
   });
-  document.querySelectorAll(".program-panel").forEach(function (el) {
-    // Semua program (GO-PAY, SAPA, BASO, PEDAS, BADIK, BATAN) kini membuka LAYAR BARU,
-    // jadi tidak ada panel yang ditampilkan di bawah selector.
-    el.style.display = "none";
-  });
-  document.querySelectorAll(".program-extra").forEach(function (el) {
-    el.style.display = el.id === "programExtra-" + key ? "" : "none";
-  });
-  // Kartu ringkasan "Total Santunan Diperlukan" di atas ikut berubah sesuai
-  // program yang baru dipilih -- GOPAY & SAPA nampilin data live, program
-  // lain (BADIK dkk) yang belum ready ikut nampilin placeholder "Data
-  // segera hadir" (lihat renderSummaryCardBeranda_), BUKAN dibiarkan
-  // nyisain angka program sebelumnya.
-  renderSummaryCardBeranda_();
   const cardEl = document.querySelector('.program-select-card[data-program="' + key + '"]');
   if (cardEl && cardEl.scrollIntoView) {
     cardEl.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
@@ -6197,17 +6182,10 @@ let berandaStatsCache = (function() {
 })();
 
 // ============================================================
-// Kartu ringkasan "Total Santunan Diperlukan" di Beranda -- SEKARANG ikut
-// program yang lagi aktif di selector "PILIH PROGRAM YASSA" (dipanggil
-// dari selectProgramTab() tiap pindah tab, & dari loadBerandaStats() tiap
-// ada data baru/dari cache). Data KEDUA program (GOPAY & SAPA) tetap
-// ditarik BARENGAN lewat getBerandaBundle -- pindah GOPAY<->SAPA gak
-// perlu fetch ulang, instan dari cache di memori (berandaStatsCache).
-//
-// SAPA beda dari GOPAY: belum ada sumber data "Total Donasi"/realisasi,
-// jadi sub-row "Kekurangan Santunan" & "Total Donasi" SENGAJA disembunyikan
-// khusus SAPA (dikonfirmasi Herudin) -- cuma nilai utama "Total Santunan
-// Diperlukan PROGRAM SAPA" yang tampil.
+// Kartu ringkasan "Kebutuhan / Kekurangan Santunan" di Beranda -- KHUSUS GO-PAY.
+// Program lain (SAPA, BASO, PEDAS, BADIK, BATAN) tidak memakai kartu ini: tiap program
+// membuka layar barunya sendiri (lihat openProgramPage_()). Dipanggil dari
+// loadBerandaStats() tiap ada data baru/dari cache.
 // ============================================================
 function renderSummaryCardBeranda_() {
   if (typeof refreshSummaryCollapsedMode_ === "function") refreshSummaryCollapsedMode_();
@@ -6226,86 +6204,8 @@ function renderSummaryCardBeranda_() {
   const elCardTop = document.getElementById("summaryCard");
   if (elCardTop) elCardTop.classList.remove("tier-aktif");
 
-  // 🩹 FIX: dulu kartu ini DIBIARKAN nampilin data program SEBELUMNYA
-  // (mis. masih kelihatan angka SAPA) begitu user pindah ke program yang
-  // belum ready (BASO/PEDAS/BADIK/BATAN) -- padahal panel di bawahnya udah
-  // benar nampilin "Data segera hadir". Sekarang kartu ringkasan ini juga
-  // ikut nampilin placeholder yang sama, konsisten sama panel bawah,
-  // bukan nyisain angka program lain yang menyesatkan.
-  const programAktif = YASSA_PROGRAMS.find(function (p) { return p.key === activeProgram; });
-  if (activeProgram !== "gopay") updateHubSyncBadges();
-  if (programAktif && !programAktif.ready) {
-    if (elLabel) elLabel.textContent = "Kebutuhan Santunan " + programAktif.label;
-    if (elSubKekurangan) elSubKekurangan.style.display = "none";
-    if (elSubDonasi) elSubDonasi.style.display = "none";
-    if (elProgressWrap) elProgressWrap.style.display = "none";
-    if (elValue) {
-      elValue.removeAttribute("data-raw-value");
-      elValue.innerHTML = '<span style="display:inline-flex; align-items:center; gap:5px; font-size: 12px; font-weight:700;">' +
-        '<span class="material-symbols-outlined" style="font-size:15px;">schedule</span> Data segera hadir</span>';
-    }
-    return;
-  }
-
-  if (activeProgram === "sapa") {
-    if (elLabel) elLabel.textContent = "Kebutuhan Santunan SAPA";
-    if (elSubKekurangan) elSubKekurangan.style.display = "none";
-    if (elSubDonasi) elSubDonasi.style.display = "none";
-    if (elProgressWrap) elProgressWrap.style.display = "none";
-    const d = berandaStatsCache.santunanSapa;
-    if (elValue) {
-      if (d) animateRupiahValue_(elValue, d.totalSantunanDiperlukan);
-      else elValue.textContent = "...";
-    }
-    return;
-  }
-
-  if (activeProgram === "baso") {
-    const d = berandaStatsCache.santunanBaso;
-    const tahunLabel = d && d.tahun ? d.tahun : new Date().getFullYear();
-    if (elLabel) elLabel.textContent = "Dana Tersalur BASO " + tahunLabel;
-    if (elSubKekurangan) elSubKekurangan.style.display = "none";
-    if (elSubDonasi) elSubDonasi.style.display = "none";
-    if (elProgressWrap) elProgressWrap.style.display = "none";
-    if (elValue) {
-      if (d) animateRupiahValue_(elValue, d.totalDisalurkan);
-      else elValue.textContent = "...";
-    }
-    return;
-  }
-
-  if (activeProgram === "badik" || activeProgram === "batan") {
-    const d = activeProgram === "badik" ? berandaStatsCache.santunanBadik : berandaStatsCache.santunanBatan;
-    const tahunLabel = d && d.tahun ? d.tahun : new Date().getFullYear();
-    const labelLain = activeProgram === "badik"
-      ? "Bantuan Tersalur BADIK "
-      : "Bantuan Tersalur BATAN ";
-    if (elLabel) elLabel.textContent = labelLain + tahunLabel;
-    if (elSubKekurangan) elSubKekurangan.style.display = "none";
-    if (elSubDonasi) elSubDonasi.style.display = "none";
-    if (elProgressWrap) elProgressWrap.style.display = "none";
-    if (elValue) {
-      if (d) animateRupiahValue_(elValue, d.totalDisalurkan);
-      else elValue.textContent = "...";
-    }
-    return;
-  }
-
-  if (activeProgram === "pedas") {
-    const d = berandaStatsCache.santunanPedas;
-    const tahunLabel = d && d.tahun ? d.tahun : new Date().getFullYear();
-    if (elLabel) elLabel.textContent = "Bantuan Tersalur PEDAS " + tahunLabel;
-    if (elSubKekurangan) elSubKekurangan.style.display = "none";
-    if (elSubDonasi) elSubDonasi.style.display = "none";
-    if (elProgressWrap) elProgressWrap.style.display = "none";
-    if (elValue) {
-      if (d) animateRupiahValue_(elValue, d.totalDisalurkan);
-      else elValue.textContent = "...";
-    }
-    return;
-  }
-
-  // Default / activeProgram === "gopay"
+  // Kartu ini HANYA untuk GO-PAY (setiap program lain punya layar sendiri -- lihat
+  // openProgramPage_()), jadi tidak ada lagi cabang per-program di sini.
   if (elLabel) elLabel.textContent = "Kebutuhan Santunan GOPAY";
   if (elSubKekurangan) elSubKekurangan.style.display = "";
   if (elSubDonasi) elSubDonasi.style.display = "";
@@ -6997,7 +6897,7 @@ function loadBerandaStats() {
           inputDonasiTerakhir: Number(r.inputDonasiTerakhir || 0),
         };
         renderSummaryCardBeranda_();
-      } else if (!berandaStatsCache.donasi && activeProgram === "gopay") {
+      } else if (!berandaStatsCache.donasi) {
         // Kalau udah ada cache, biarin angka lama tetap tampil daripada
         // direset ke "-" cuma gara-gara 1x gangguan jaringan. Guard
         // activeProgram biar gak nimpa kartu kalau yang lagi ditampilin
@@ -7016,10 +6916,6 @@ function loadBerandaStats() {
       // "Anak" di spreadsheet terpisah, kolom R=Program & S=Santunan).
       if (bundle.santunanSapa) {
         berandaStatsCache.santunanSapa = bundle.santunanSapa;
-        renderSummaryCardBeranda_();
-      } else if (!berandaStatsCache.santunanSapa && activeProgram === "sapa") {
-        const elTSD = document.getElementById("summaryTotalSantunanDiperlukan");
-        if (elTSD) elTSD.textContent = "-";
       }
 
       // 1c) Total Dana Tersalur PROGRAM BASO -> kartu ringkasan Beranda
@@ -7029,13 +6925,8 @@ function loadBerandaStats() {
       // Program BASO -- lihat getTotalSantunanBaso() di Code.gs.
       if (bundle.santunanBaso) {
         berandaStatsCache.santunanBaso = bundle.santunanBaso;
-        renderSummaryCardBeranda_();
         renderProgramPanelBaso_(bundle.santunanBaso);
       } else if (!berandaStatsCache.santunanBaso) {
-        if (activeProgram === "baso") {
-          const elTSD3 = document.getElementById("summaryTotalSantunanDiperlukan");
-          if (elTSD3) elTSD3.textContent = "-";
-        }
         renderProgramPanelBaso_(null, true);
       }
 
@@ -7047,13 +6938,8 @@ function loadBerandaStats() {
       // getTotalSantunanPedas() di Code.gs.
       if (bundle.santunanPedas) {
         berandaStatsCache.santunanPedas = bundle.santunanPedas;
-        renderSummaryCardBeranda_();
         renderProgramPanelPedas_(bundle.santunanPedas);
       } else if (!berandaStatsCache.santunanPedas) {
-        if (activeProgram === "pedas") {
-          const elTSD4 = document.getElementById("summaryTotalSantunanDiperlukan");
-          if (elTSD4) elTSD4.textContent = "-";
-        }
         renderProgramPanelPedas_(null, true);
       }
 
@@ -7064,13 +6950,8 @@ function loadBerandaStats() {
         const kunci = pr[0], statsKey = pr[1];
         if (bundle[statsKey]) {
           berandaStatsCache[statsKey] = bundle[statsKey];
-          renderSummaryCardBeranda_();
           renderProgramPanelLain_(kunci, bundle[statsKey]);
         } else if (!berandaStatsCache[statsKey]) {
-          if (activeProgram === kunci) {
-            const elTSDl = document.getElementById("summaryTotalSantunanDiperlukan");
-            if (elTSDl) elTSDl.textContent = "-";
-          }
           renderProgramPanelLain_(kunci, null, true);
         }
       });
@@ -7117,7 +6998,7 @@ function loadBerandaStats() {
       // Seluruh bundle gagal (mis. sesi putus/jaringan mati total). Kalau
       // belum ada cache sama sekali buat bagian itu, baru tampilin "-".
       // Guard activeProgram biar gak salah nimpa kartu yang lagi tampil.
-      if (!berandaStatsCache.donasi && activeProgram === "gopay") {
+      if (!berandaStatsCache.donasi) {
         const elTSD = document.getElementById("summaryTotalSantunanDiperlukan");
         const elTD = document.getElementById("summaryTotalDonasi");
         const elKek = document.getElementById("summaryKekuranganDonasi");
@@ -7125,24 +7006,8 @@ function loadBerandaStats() {
         if (elTD) elTD.textContent = "-";
         if (elKek) elKek.textContent = "-";
       }
-      if (!berandaStatsCache.santunanSapa && activeProgram === "sapa") {
-        const elTSD2 = document.getElementById("summaryTotalSantunanDiperlukan");
-        if (elTSD2) elTSD2.textContent = "-";
-      }
-      if (!berandaStatsCache.santunanBaso) {
-        if (activeProgram === "baso") {
-          const elTSD3 = document.getElementById("summaryTotalSantunanDiperlukan");
-          if (elTSD3) elTSD3.textContent = "-";
-        }
-        renderProgramPanelBaso_(null, true);
-      }
-      if (!berandaStatsCache.santunanPedas) {
-        if (activeProgram === "pedas") {
-          const elTSD4 = document.getElementById("summaryTotalSantunanDiperlukan");
-          if (elTSD4) elTSD4.textContent = "-";
-        }
-        renderProgramPanelPedas_(null, true);
-      }
+      if (!berandaStatsCache.santunanBaso) renderProgramPanelBaso_(null, true);
+      if (!berandaStatsCache.santunanPedas) renderProgramPanelPedas_(null, true);
       if (!berandaStatsCache.santunanBadik) renderProgramPanelLain_("badik", null, true);
       if (!berandaStatsCache.santunanBatan) renderProgramPanelLain_("batan", null, true);
       if (!berandaStatsCache.dashboard) {
