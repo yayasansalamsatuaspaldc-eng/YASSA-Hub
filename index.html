@@ -18447,11 +18447,24 @@ function openApp(index) {
     const navNonce = "nav_" + Date.now() + "_" + Math.random().toString(36).slice(2);
     let navAckDiterima = false;
 
+    // Tirai "Membuka ..." menutupi iframe selama pesan pindah-tab belum dibalas, supaya
+    // user tidak sempat melihat tab LAMA (mis. Beranda) sebelum tab tujuan (mis. Data KK) tampil.
+    const veilEl = document.getElementById("overlaySsoLoading");
+    const veilTextEl = document.getElementById("overlaySsoLoadingText");
+    const veilSpinnerEl = document.getElementById("overlaySsoSpinner");
+    if (veilEl) {
+      if (veilTextEl) veilTextEl.textContent = "Membuka " + item.label + "...";
+      if (veilSpinnerEl) veilSpinnerEl.style.display = "";
+      veilEl.classList.add("show");
+    }
+
     function handleNavAck(e) {
       if (e.origin !== targetOrigin) return;
       if (!e.data || e.data.type !== "YASSA_HUB_NAV_ACK" || e.data.nonce !== navNonce) return;
       navAckDiterima = true;
       window.removeEventListener("message", handleNavAck);
+      // Beri jeda singkat supaya app sempat menggambar tab barunya, baru tirai dibuka.
+      setTimeout(function () { if (veilEl) veilEl.classList.remove("show"); }, 180);
     }
     window.addEventListener("message", handleNavAck);
 
@@ -18469,7 +18482,7 @@ function openApp(index) {
         overlayLoadedBaseUrl = null;
         openApp(index);
       }
-    }, 1200);
+    }, 3000);
 
     return;
   }
