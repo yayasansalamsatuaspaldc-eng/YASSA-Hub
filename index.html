@@ -17451,6 +17451,7 @@ function renderPengaturanPanel(el) {
     '<button onclick="setPengaturanSubTab(\'user\')" style="flex:1;min-width:100px;padding:10px 6px;border-radius:12px;border:1px solid var(--glass-border);cursor:pointer;font-size:12px;font-weight:700;background:' + (pengaturanSubTab === "user" ? "var(--bento-primary);color:#0B1220;" : "var(--glass-strong);color:var(--text-secondary);") + '">Manajemen User</button>' +
     '<button onclick="setPengaturanSubTab(\'aksesMenu\')" style="flex:1;min-width:100px;padding:10px 6px;border-radius:12px;border:1px solid var(--glass-border);cursor:pointer;font-size:12px;font-weight:700;background:' + (pengaturanSubTab === "aksesMenu" ? "var(--bento-primary);color:#0B1220;" : "var(--glass-strong);color:var(--text-secondary);") + '">Akses Menu</button>' +
     '<button onclick="setPengaturanSubTab(\'monitorAkses\')" style="flex:1;min-width:100px;padding:10px 6px;border-radius:12px;border:1px solid var(--glass-border);cursor:pointer;font-size:12px;font-weight:700;background:' + (pengaturanSubTab === "monitorAkses" ? "var(--bento-primary);color:#0B1220;" : "var(--glass-strong);color:var(--text-secondary);") + '">Monitor Akses</button>' +
+    '<button onclick="setPengaturanSubTab(\'riwayatPengguna\')" style="flex:1;min-width:100px;padding:10px 6px;border-radius:12px;border:1px solid var(--glass-border);cursor:pointer;font-size:12px;font-weight:700;background:' + (pengaturanSubTab === "riwayatPengguna" ? "var(--bento-primary);color:#0B1220;" : "var(--glass-strong);color:var(--text-secondary);") + '">Riwayat Pengguna</button>' +
     '<button onclick="setPengaturanSubTab(\'wilayah\')" style="flex:1;min-width:100px;padding:10px 6px;border-radius:12px;border:1px solid var(--glass-border);cursor:pointer;font-size:12px;font-weight:700;background:' + (pengaturanSubTab === "wilayah" ? "var(--bento-primary);color:#0B1220;" : "var(--glass-strong);color:var(--text-secondary);") + '">Wilayah</button>' +
     '</div>' +
     '<div id="pengaturanSubContent"></div>';
@@ -17459,11 +17460,84 @@ function renderPengaturanPanel(el) {
     renderAksesMenuPanel();
   } else if (pengaturanSubTab === "monitorAkses") {
     renderMonitorAksesPanel();
+  } else if (pengaturanSubTab === "riwayatPengguna") {
+    renderRiwayatPenggunaPanel();
   } else if (pengaturanSubTab === "wilayah") {
     renderWilayahPanel();
   } else {
     renderUserManagementPanel();
   }
+}
+
+
+// ============================================================
+// PANEL "RIWAYAT PENGGUNA" (Pengaturan, SUPERADMIN) -- pilih orang (nama/username) + tanggal,
+// tampil urutan: buka app / login + aksi penting (cetak PDF, simpan keuangan, ubah akun, dll).
+// Data dari getRiwayatPengguna (gabungan Log_Akses_Aplikasi + Log_Audit_Hub).
+// ============================================================
+let riwayatPenggunaCari = "";
+let riwayatPenggunaTanggal = monitorAksesTanggalHariIni_();
+
+function riwayatPenggunaLabelAksi_(kode) {
+  const k = String(kode || "").replace(/^MOBILE:\s*/i, "");
+  const akses = { BUKA_APP: "Buka App", LOGIN_SUKSES: "Login Sukses", LOGIN_GAGAL: "Login Gagal" };
+  if (akses[k]) return akses[k];
+  if (/^[A-Z0-9_]+$/.test(k)) return k.toLowerCase().split("_").map(function (w) { return w.charAt(0).toUpperCase() + w.slice(1); }).join(" ");
+  return k;
+}
+
+function cariRiwayatPengguna() {
+  const inp = document.getElementById("riwayatPenggunaCariInput");
+  const tgl = document.getElementById("riwayatPenggunaTanggalInput");
+  riwayatPenggunaCari = inp ? inp.value.trim() : "";
+  if (tgl && tgl.value) riwayatPenggunaTanggal = tgl.value;
+  renderRiwayatPenggunaPanel();
+}
+
+function renderRiwayatPenggunaPanel() {
+  const sub = document.getElementById("pengaturanSubContent");
+  if (!sub) return;
+  const hariIni = monitorAksesTanggalHariIni_();
+  const gaya = "padding:8px 10px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-strong);color:var(--text-primary);font-size:12.5px;";
+  sub.innerHTML =
+    '<div class="settings-toolbar"><span style="font-size:12.5px;color:#94A3B8;">Apa saja yang dilakukan seseorang di Hub pada satu tanggal</span></div>' +
+    '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;background:var(--glass-strong);border:1px solid var(--glass-border);border-radius:14px;padding:10px 12px;">' +
+    '<input type="text" id="riwayatPenggunaCariInput" value="' + escapeHtmlHub(riwayatPenggunaCari) + '" placeholder="Nama / username (kosong = semua)" onkeydown="if(event.key===\'Enter\')cariRiwayatPengguna()" style="flex:2;min-width:150px;' + gaya + '">' +
+    '<input type="date" id="riwayatPenggunaTanggalInput" value="' + riwayatPenggunaTanggal + '" max="' + hariIni + '" style="flex:1;min-width:130px;font-weight:700;' + gaya + '">' +
+    '<button class="btn-add-user" onclick="cariRiwayatPengguna()"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px;">search</span> Tampilkan</button>' +
+    '</div>' +
+    '<div id="riwayatPenggunaList"><div style="padding:20px;text-align:center;color:#94A3B8;font-size:13px;">Memuat riwayat ' + escapeHtmlHub(monitorAksesFormatTanggalLabel_(riwayatPenggunaTanggal)) + '...</div></div>';
+
+  callGASWithRetry_("getRiwayatPengguna", [authToken, riwayatPenggunaCari, riwayatPenggunaTanggal])
+    .then(function (rows) {
+      const wrap = document.getElementById("riwayatPenggunaList");
+      if (!wrap) return;
+      if (!rows || !rows.length) {
+        wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#94A3B8;font-size:13px;">Tidak ada catatan' + (riwayatPenggunaCari ? ' untuk "' + escapeHtmlHub(riwayatPenggunaCari) + '"' : '') + ' pada tanggal ini.</div>';
+        return;
+      }
+      const meta = {
+        AKSES: { color: "#60A5FA", bg: "rgba(96,165,250,0.14)", icon: "login", label: "Akses" },
+        AUDIT: { color: "#FBBF24", bg: "rgba(251,191,36,0.14)", icon: "edit_note", label: "Aksi" },
+        MOBILE: { color: "#4ADE80", bg: "rgba(74,222,128,0.14)", icon: "smartphone", label: "Mobile" },
+      };
+      wrap.innerHTML = '<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">' + rows.length + ' catatan, terbaru di atas</div>' +
+        rows.map(function (l) {
+          const m = meta[l.sumber] || meta.AKSES;
+          const siapa = l.nama ? escapeHtmlHub(l.nama) + (l.role ? " (" + escapeHtmlHub(roleLabel(l.role)) + ")" : "") : (l.username ? escapeHtmlHub(l.username) : "Belum login");
+          return '<div style="background:var(--glass-strong);border:1px solid var(--glass-border);border-left:3px solid ' + m.color + ';border-radius:14px;padding:12px 14px;margin-bottom:10px;">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;">' +
+            '<span style="display:inline-flex;align-items:center;gap:5px;background:' + m.bg + ';color:' + m.color + ';font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:99px;"><span class="material-symbols-outlined" style="font-size:13px;">' + m.icon + '</span>' + escapeHtmlHub(riwayatPenggunaLabelAksi_(l.aksi)) + '</span>' +
+            '<span style="font-size:10.5px;color:var(--text-muted);">' + escapeHtmlHub(formatWaktuMonitorAkses_(l.waktu)) + '</span></div>' +
+            '<div style="font-size:12.5px;font-weight:700;color:var(--text-primary);">' + siapa + '</div>' +
+            (l.detail ? '<div style="font-size:11.5px;color:var(--text-secondary);margin-top:4px;line-height:1.4;">' + escapeHtmlHub(l.detail) + '</div>' : '') +
+            '</div>';
+        }).join("");
+    })
+    .catch(function (err) {
+      const wrap = document.getElementById("riwayatPenggunaList");
+      if (wrap) wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#F87171;font-size:13px;">' + escapeHtmlHub(err.message) + '</div>';
+    });
 }
 
 
