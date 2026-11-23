@@ -4288,6 +4288,368 @@ html[data-theme="light"] .input-action-icon {
 .input-sheet-cancel:active {
   transform: scale(0.985);
 }
+
+/* ===== Profile Drawer (#userMenu) Redesign ===== */
+#userMenuOverlay.user-menu-overlay {
+  background: rgba(2, 6, 20, 0.62);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+html[data-theme="light"] #userMenuOverlay.user-menu-overlay {
+  background: rgba(15, 23, 42, 0.40);
+}
+
+@keyframes userDrawerSlideIn {
+  from { opacity: 0; transform: translateX(-18px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+#userMenu.user-menu {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  bottom: 10px;
+  right: auto;
+  width: min(calc(100% - 20px), 356px);
+  max-width: 356px;
+  max-height: none;
+  padding: 14px;
+  border-radius: 22px;
+  background: #0D1321 !important;
+  border: 1px solid var(--glass-border-strong);
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.56);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  transform-origin: top left;
+}
+html[data-theme="light"] #userMenu.user-menu {
+  background: #FFFFFF !important;
+  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.14);
+}
+#userMenu.user-menu.open {
+  display: flex;
+  animation: userDrawerSlideIn 0.24s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.um-profile-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 4px 2px 14px;
+  border-bottom: 1px solid var(--glass-border);
+  flex-shrink: 0;
+}
+.um-avatar-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1.5px solid rgba(16, 185, 129, 0.55);
+  background: var(--glass-inner);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.um-avatar-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.um-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bento-primary);
+}
+.um-profile-info {
+  flex: 1;
+  min-width: 0;
+}
+.um-profile-name {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.um-profile-meta {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.um-close-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-inner);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  transition: background 0.16s ease, color 0.16s ease, transform 0.14s ease;
+}
+.um-close-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--glass-border-strong);
+}
+.um-close-btn:active {
+  transform: scale(0.93);
+}
+.um-close-btn .material-symbols-outlined {
+  font-size: 19px;
+}
+
+.um-scroll-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 2px 10px;
+}
+html:not([data-theme="light"]) .um-scroll-body {
+  color-scheme: dark;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
+}
+
+.um-section-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 8px 2px;
+}
+.um-section-label.is-spaced {
+  margin-top: 16px;
+}
+
+.um-akun-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.um-akun-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 11px 12px;
+  border-radius: 14px;
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-border);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.18s ease, background 0.18s ease, box-shadow 0.22s ease;
+}
+html[data-theme="light"] .um-akun-tile {
+  background: #F8FAFC;
+}
+.um-akun-tile:hover {
+  transform: translateY(-2px);
+  border-color: var(--glass-border-strong);
+  box-shadow: 0 10px 22px -10px rgba(0, 0, 0, 0.42);
+}
+html[data-theme="light"] .um-akun-tile:hover {
+  background: #FFFFFF;
+  box-shadow: 0 8px 18px -8px rgba(15, 23, 42, 0.12);
+}
+.um-akun-tile:active {
+  transform: scale(0.97);
+  transition: transform 0.1s ease-out;
+}
+.um-akun-tile-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--um-rgb), 0.14);
+  border: 1px solid rgba(var(--um-rgb), 0.25);
+  color: var(--um-accent);
+}
+html[data-theme="light"] .um-akun-tile-icon {
+  color: var(--um-accent-light, var(--um-accent));
+  background: rgba(var(--um-rgb), 0.11);
+}
+.um-akun-tile-icon .material-symbols-outlined {
+  font-size: 19px;
+  font-variation-settings: 'FILL' 1;
+}
+.um-akun-tile-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+.um-akun-tile-sub {
+  font-size: 10.5px;
+  color: var(--text-secondary);
+  line-height: 1.25;
+  margin-top: 2px;
+}
+
+.um-list-card {
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+html[data-theme="light"] .um-list-card {
+  background: #F8FAFC;
+}
+
+.um-list-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 12px !important;
+  border: none;
+  border-bottom: 1px solid var(--glass-border);
+  border-radius: 0 !important;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.16s ease;
+}
+.um-list-row:last-child {
+  border-bottom: none;
+}
+.um-list-row:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+html[data-theme="light"] .um-list-row:hover {
+  background: #FFFFFF !important;
+}
+.um-list-row:active {
+  background: rgba(255, 255, 255, 0.07) !important;
+  transform: none !important;
+}
+html[data-theme="light"] .um-list-row:active {
+  background: rgba(15, 23, 42, 0.04) !important;
+}
+
+.um-row-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--um-rgb, 148, 163, 184), 0.14);
+  border: 1px solid rgba(var(--um-rgb, 148, 163, 184), 0.24);
+  color: var(--um-accent, var(--text-secondary));
+}
+html[data-theme="light"] .um-row-icon {
+  color: var(--um-accent-light, var(--um-accent, var(--text-secondary)));
+  background: rgba(var(--um-rgb, 148, 163, 184), 0.11);
+}
+.um-row-icon .material-symbols-outlined {
+  font-size: 18px;
+  font-variation-settings: 'FILL' 1;
+}
+.um-row-body {
+  flex: 1;
+  min-width: 0;
+}
+.um-row-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+.um-row-sub {
+  font-size: 10.5px;
+  color: var(--text-secondary);
+  line-height: 1.3;
+  margin-top: 2px;
+}
+.um-row-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+.um-row-chevron {
+  font-size: 18px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+.um-list-row:hover .um-row-chevron {
+  transform: translateX(2px);
+  color: var(--text-primary);
+}
+
+.um-footer {
+  padding-top: 12px;
+  margin-top: 4px;
+  border-top: 1px solid var(--glass-border);
+  flex-shrink: 0;
+}
+.um-logout-btn {
+  width: 100%;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-radius: 13px;
+  background: rgba(239, 68, 68, 0.10);
+  border: 1px solid rgba(239, 68, 68, 0.24);
+  color: #F87171;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, transform 0.14s ease;
+}
+html[data-theme="light"] .um-logout-btn {
+  color: #DC2626;
+  background: rgba(220, 38, 38, 0.07);
+  border-color: rgba(220, 38, 38, 0.20);
+}
+.um-logout-btn:hover {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(239, 68, 68, 0.38);
+}
+.um-logout-btn:active {
+  transform: scale(0.98);
+}
+.um-logout-btn .material-symbols-outlined {
+  font-size: 18px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #userMenu.user-menu.open,
+  .um-akun-tile,
+  .um-row-chevron {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
 </style>
 
 </head>
@@ -4659,74 +5021,149 @@ html[data-theme="light"] .input-action-icon {
   <!-- Dropdown Menu Akun -->
   <div class="user-menu-overlay" id="userMenuOverlay" onclick="closeUserMenu()"></div>
   <div class="user-menu" id="userMenu">
-    <div class="user-menu-section-label">Akun</div>
-    <button class="user-menu-item" onclick="handleUserMenuClick('profile')">
-      <span class="user-menu-icon tone-green"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
-      Profile YASSA
-    </button>
-    <button class="user-menu-item" onclick="openDocViewer('1zzLqjhysg9hxwGF8jLeuMgs5Hz7er39k', 'Sejarah YASSA')">
-      <span class="user-menu-icon tone-purple"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg></span>
-      Sejarah YASSA
-    </button>
-    <!-- 🆕 Timeline "Perjalanan YASSA" -- PELENGKAP dokumen PDF "Sejarah
-         YASSA" di atas (bukan pengganti). Data & foto diambil dari sheet
-         "Sejarah_Perjalanan" lewat getSejarahPerjalanan (lihat
-         openSejarahPerjalanan() & Code.gs). -->
-    <button class="user-menu-item" onclick="openSejarahPerjalanan()">
-      <span class="user-menu-icon tone-amber"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></span>
-      Perjalanan YASSA
-    </button>
-    <button class="user-menu-item" onclick="handleUserMenuClick('pengurus')">
-      <span class="user-menu-icon tone-cyan"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
-      Daftar Pengurus
-    </button>
+    <div class="um-profile-head">
+      <div class="um-avatar-box">
+        <img id="userMenuAvatarImg" alt="Foto Profil" style="display:none;" />
+        <div id="userMenuAvatarFallback" class="um-avatar-fallback">
+          <span class="material-symbols-outlined">person</span>
+        </div>
+      </div>
+      <div class="um-profile-info">
+        <div class="um-profile-name" id="userMenuName">Pengurus YASSA</div>
+        <div class="um-profile-meta" id="userMenuMeta">YASSA Hub</div>
+      </div>
+      <button type="button" class="um-close-btn" aria-label="Tutup Menu" onclick="closeUserMenu()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
 
-    <div class="user-menu-divider"></div>
+    <div class="um-scroll-body">
+      <div class="um-section-label">Akun &amp; Organisasi</div>
+      <div class="um-akun-grid">
+        <button type="button" class="um-akun-tile" style="--um-rgb: 16, 185, 129; --um-accent: #10B981; --um-accent-light: #059669;" onclick="handleUserMenuClick('profile')">
+          <span class="um-akun-tile-icon"><span class="material-symbols-outlined">person</span></span>
+          <div>
+            <div class="um-akun-tile-title">Profile YASSA</div>
+            <div class="um-akun-tile-sub">Sekretariat &amp; Legal</div>
+          </div>
+        </button>
 
-    <div class="user-menu-section-label">Dokumen Yayasan</div>
-    <button class="user-menu-item" onclick="openDocViewer('1Okr37b06X3j42cvGaplbL5X2LgpChPXd', 'Pengesahan Yayasan')">
-      <span class="user-menu-icon tone-purple"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>
-      Pengesahan Yayasan
-    </button>
-    <button class="user-menu-item" onclick="openDocViewer('1dU3sthfLm4FTfdQnp_VmS_JbrrQ5vwjC', 'NPWP Yayasan')">
-      <span class="user-menu-icon tone-purple"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="9" y2="12"/><line x1="12" y1="15" x2="12" y2="11"/><line x1="15" y1="15" x2="15" y2="13"/></svg></span>
-      NPWP Yayasan
-    </button>
-    <button class="user-menu-item" onclick="openDocViewer('1e2F544MhO67uu1ffCIPX0d_xi-u-bmbe', 'Akte Notaris')">
-      <span class="user-menu-icon tone-purple"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
-      Akte Notaris
-    </button>
-    <button class="user-menu-item" onclick="openDocViewer('1jbT1PP9teuqJcyezrVMphPpAcSuJRFTR', 'Regulasi YASSA')">
-      <span class="user-menu-icon tone-purple"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
-      Regulasi YASSA
-    </button>
-    <button class="user-menu-item" onclick="openDocViewer('1yGxdBizhmNWx9shBH96YT3y3E97pR6w2', 'Panduan Santunan YASSA')">
-      <span class="user-menu-icon tone-purple"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
-      Panduan Santunan YASSA
-    </button>
+        <button type="button" class="um-akun-tile" style="--um-rgb: 168, 85, 247; --um-accent: #C084FC; --um-accent-light: #7E22CE;" onclick="openDocViewer('1zzLqjhysg9hxwGF8jLeuMgs5Hz7er39k', 'Sejarah YASSA')">
+          <span class="um-akun-tile-icon"><span class="material-symbols-outlined">history</span></span>
+          <div>
+            <div class="um-akun-tile-title">Sejarah YASSA</div>
+            <div class="um-akun-tile-sub">Latar Berdiri</div>
+          </div>
+        </button>
 
-    <div class="user-menu-divider"></div>
+        <!-- 🆕 Timeline "Perjalanan YASSA" -- PELENGKAP dokumen PDF "Sejarah YASSA" di atas -->
+        <button type="button" class="um-akun-tile" style="--um-rgb: 245, 158, 11; --um-accent: #FBBF24; --um-accent-light: #B45309;" onclick="openSejarahPerjalanan()">
+          <span class="um-akun-tile-icon"><span class="material-symbols-outlined">monitoring</span></span>
+          <div>
+            <div class="um-akun-tile-title">Perjalanan YASSA</div>
+            <div class="um-akun-tile-sub">Jejak Kegiatan</div>
+          </div>
+        </button>
 
-    <div class="user-menu-section-label">Lainnya</div>
-    <button class="user-menu-item" onclick="replayTour()">
-      <span class="user-menu-icon tone-amber"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span>
-      Tutorial Penggunaan
-    </button>
-    <button class="user-menu-item" id="themeToggleBtn" onclick="toggleTheme()">
-      <span class="user-menu-icon tone-cyan" id="themeToggleIcon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></span>
-      <span id="themeToggleLabel">Mode Terang (Outdoor)</span>
-    </button>
+        <button type="button" class="um-akun-tile" style="--um-rgb: 34, 211, 238; --um-accent: #22D3EE; --um-accent-light: #0891B2;" onclick="handleUserMenuClick('pengurus')">
+          <span class="um-akun-tile-icon"><span class="material-symbols-outlined">groups</span></span>
+          <div>
+            <div class="um-akun-tile-title">Daftar Pengurus</div>
+            <div class="um-akun-tile-sub">Struktur Tim</div>
+          </div>
+        </button>
+      </div>
 
-    <div class="user-menu-divider"></div>
+      <div class="um-section-label is-spaced">Dokumen Yayasan</div>
+      <div class="um-list-card">
+        <button type="button" class="user-menu-item um-list-row" style="--um-rgb: 99, 102, 241; --um-accent: #818CF8; --um-accent-light: #4F46E5;" onclick="openDocViewer('1Okr37b06X3j42cvGaplbL5X2LgpChPXd', 'Pengesahan Yayasan')">
+          <span class="um-row-icon"><span class="material-symbols-outlined">verified_user</span></span>
+          <span class="um-row-body">
+            <div class="um-row-title">Pengesahan Yayasan</div>
+            <div class="um-row-sub">SK Kemenkumham RI</div>
+          </span>
+          <span class="um-row-tag">PDF</span>
+          <span class="material-symbols-outlined um-row-chevron">chevron_right</span>
+        </button>
 
-    <button class="user-menu-item" id="userMenuPengaturanBtn" style="display:none;" onclick="handleUserMenuClick('pengaturan')">
-      <span class="user-menu-icon tone-muted"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2Z"/><circle cx="12" cy="12" r="3"/></svg></span>
-      Pengaturan
-    </button>
-    <button class="user-menu-item danger" onclick="handleUserMenuClick('logout')">
-      <span class="user-menu-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
-      Keluar (Logout)
-    </button>
+        <button type="button" class="user-menu-item um-list-row" style="--um-rgb: 59, 130, 246; --um-accent: #60A5FA; --um-accent-light: #2563EB;" onclick="openDocViewer('1dU3sthfLm4FTfdQnp_VmS_JbrrQ5vwjC', 'NPWP Yayasan')">
+          <span class="um-row-icon"><span class="material-symbols-outlined">receipt_long</span></span>
+          <span class="um-row-body">
+            <div class="um-row-title">NPWP Yayasan</div>
+            <div class="um-row-sub">Identitas Perpajakan</div>
+          </span>
+          <span class="um-row-tag">PDF</span>
+          <span class="material-symbols-outlined um-row-chevron">chevron_right</span>
+        </button>
+
+        <button type="button" class="user-menu-item um-list-row" style="--um-rgb: 168, 85, 247; --um-accent: #C084FC; --um-accent-light: #7E22CE;" onclick="openDocViewer('1e2F544MhO67uu1ffCIPX0d_xi-u-bmbe', 'Akte Notaris')">
+          <span class="um-row-icon"><span class="material-symbols-outlined">gavel</span></span>
+          <span class="um-row-body">
+            <div class="um-row-title">Akte Notaris</div>
+            <div class="um-row-sub">Akta Pendirian Resmi</div>
+          </span>
+          <span class="um-row-tag">PDF</span>
+          <span class="material-symbols-outlined um-row-chevron">chevron_right</span>
+        </button>
+
+        <button type="button" class="user-menu-item um-list-row" style="--um-rgb: 20, 184, 166; --um-accent: #2DD4BF; --um-accent-light: #0D9488;" onclick="openDocViewer('1jbT1PP9teuqJcyezrVMphPpAcSuJRFTR', 'Regulasi YASSA')">
+          <span class="um-row-icon"><span class="material-symbols-outlined">menu_book</span></span>
+          <span class="um-row-body">
+            <div class="um-row-title">Regulasi YASSA</div>
+            <div class="um-row-sub">Tata Tertib &amp; Aturan</div>
+          </span>
+          <span class="um-row-tag">PDF</span>
+          <span class="material-symbols-outlined um-row-chevron">chevron_right</span>
+        </button>
+
+        <button type="button" class="user-menu-item um-list-row" style="--um-rgb: 244, 63, 94; --um-accent: #FB7185; --um-accent-light: #E11D48;" onclick="openDocViewer('1yGxdBizhmNWx9shBH96YT3y3E97pR6w2', 'Panduan Santunan YASSA')">
+          <span class="um-row-icon"><span class="material-symbols-outlined">volunteer_activism</span></span>
+          <span class="um-row-body">
+            <div class="um-row-title">Panduan Santunan YASSA</div>
+            <div class="um-row-sub">SOP Penyaluran Bantuan</div>
+          </span>
+          <span class="um-row-tag">PDF</span>
+          <span class="material-symbols-outlined um-row-chevron">chevron_right</span>
+        </button>
+      </div>
+
+      <div class="um-section-label is-spaced">Preferensi &amp; Lainnya</div>
+      <div class="um-list-card">
+        <button type="button" class="user-menu-item um-list-row" style="--um-rgb: 245, 158, 11; --um-accent: #FBBF24; --um-accent-light: #B45309;" onclick="replayTour()">
+          <span class="um-row-icon"><span class="material-symbols-outlined">help_center</span></span>
+          <span class="um-row-body">
+            <div class="um-row-title">Tutorial Penggunaan</div>
+            <div class="um-row-sub">Panduan interaktif aplikasi</div>
+          </span>
+          <span class="material-symbols-outlined um-row-chevron">chevron_right</span>
+        </button>
+
+        <button type="button" class="user-menu-item um-list-row" id="themeToggleBtn" style="--um-rgb: 34, 211, 238; --um-accent: #22D3EE; --um-accent-light: #0891B2;" onclick="toggleTheme()">
+          <span class="um-row-icon" id="themeToggleIcon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></span>
+          <span class="um-row-body">
+            <div class="um-row-title" id="themeToggleLabel">Mode Terang (Outdoor)</div>
+            <div class="um-row-sub">Ganti tampilan tema layar</div>
+          </span>
+          <span class="material-symbols-outlined um-row-chevron">chevron_right</span>
+        </button>
+
+        <button type="button" class="user-menu-item um-list-row" id="userMenuPengaturanBtn" style="display:none; --um-rgb: 148, 163, 184; --um-accent: #94A3B8; --um-accent-light: #475569;" onclick="handleUserMenuClick('pengaturan')">
+          <span class="um-row-icon"><span class="material-symbols-outlined">admin_panel_settings</span></span>
+          <span class="um-row-body">
+            <div class="um-row-title">Pengaturan</div>
+            <div class="um-row-sub">Kelola pengguna &amp; akses</div>
+          </span>
+          <span class="material-symbols-outlined um-row-chevron">chevron_right</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="um-footer">
+      <button type="button" class="um-logout-btn" onclick="handleUserMenuClick('logout')">
+        <span class="material-symbols-outlined">logout</span>
+        Keluar (Logout)
+      </button>
+    </div>
   </div>
 
   <!-- Konten Utama dan Footer Dinamis -->
@@ -16814,11 +17251,41 @@ function openAppUrl(url) {
   document.getElementById("overlay").classList.add("open");
 }
 
+function syncUserMenuHeader_() {
+  const nameEl = document.getElementById("userMenuName");
+  const metaEl = document.getElementById("userMenuMeta");
+  const imgEl = document.getElementById("userMenuAvatarImg");
+  const fbEl = document.getElementById("userMenuAvatarFallback");
+  if (nameEl) {
+    nameEl.textContent = (currentUser && (currentUser.nama || currentUser.username || currentUser.email)) || "Pengurus YASSA";
+  }
+  if (metaEl) {
+    const jab = (currentUser && currentUser.jabatan) ? currentUser.jabatan : "";
+    const wil = (currentUser && currentUser.wilayahAkses)
+      ? (String(currentUser.wilayahAkses).toUpperCase() === "ALL" ? "Semua Wilayah" : currentUser.wilayahAkses)
+      : "";
+    metaEl.textContent = [jab, wil].filter(Boolean).join(" • ") || "YASSA Hub";
+  }
+  const srcImg = document.getElementById("headerAvatarImg");
+  if (imgEl && fbEl) {
+    if (srcImg && srcImg.style.display !== "none" && srcImg.getAttribute("src")) {
+      imgEl.src = srcImg.src;
+      imgEl.style.display = "block";
+      fbEl.style.display = "none";
+    } else {
+      imgEl.style.display = "none";
+      imgEl.removeAttribute("src");
+      fbEl.style.display = "flex";
+    }
+  }
+}
+
 function toggleUserMenu() {
   const menu = document.getElementById("userMenu");
   if (menu.classList.contains("open")) {
     closeUserMenu();
   } else {
+    syncUserMenuHeader_();
     menu.classList.add("open");
     document.getElementById("userMenuOverlay").classList.add("open");
   }
