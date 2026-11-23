@@ -10821,6 +10821,15 @@ let laporanBulananSapaBisaLihat = false;
 
 // Buka viewer PDF laporan bulanan (iframe, TANPA download paksa) + siapin
 // tombol "Unduh" di header viewer buat yang emang mau simpan filenya.
+// 🧾 Catat ke audit (Log_Audit_Hub) siapa yang membuka / mengunduh PDF laporan. Fire-and-forget:
+// gagal kirim TIDAK boleh mengganggu buka PDF-nya.
+function catatAksesLaporanPdf_(jenis, judulEncoded) {
+  try {
+    const judul = judulEncoded ? decodeURIComponent(judulEncoded) : "Laporan PDF";
+    callGASWithRetry_("catatAksesLaporanPdf", [authToken, jenis, judul]).catch(function () {});
+  } catch (e) {}
+}
+
 function openLaporanPdfViewer(linkPreviewEncoded, linkUnduhEncoded, judulEncoded) {
   const linkPreview = decodeURIComponent(linkPreviewEncoded);
   const linkUnduh = decodeURIComponent(linkUnduhEncoded);
@@ -10838,6 +10847,8 @@ function openLaporanPdfViewer(linkPreviewEncoded, linkUnduhEncoded, judulEncoded
     elUnduhBtn.style.display = "none";
   }
   document.getElementById("laporanPdfViewerPage").classList.add("open");
+  catatAksesLaporanPdf_("LIHAT", judulEncoded);
+  elUnduhBtn.onclick = function () { catatAksesLaporanPdf_("UNDUH", judulEncoded); };
 }
 
 function openLaporanBulanan() {
@@ -10947,7 +10958,7 @@ function renderLaporanBulananList(data) {
             <span class="material-symbols-outlined" style="font-size: 15px;">visibility</span> Lihat PDF
           </button>
           ${laporanBulananBisaUnduh ? `
-          <a href="${escapeHtmlHub(urlAmanHub_(b.linkUnduhPdf))}" target="_blank" rel="noopener" style="flex:1; display:flex; align-items:center; justify-content:center; gap: 6px; font-size: 11px; font-weight: 700; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-primary); text-decoration:none;">
+          <a href="${escapeHtmlHub(urlAmanHub_(b.linkUnduhPdf))}" target="_blank" rel="noopener" onclick="catatAksesLaporanPdf_('UNDUH', '${encodeURIComponent('Laporan ' + b.namaBulan + ' ' + b.tahun)}')" style="flex:1; display:flex; align-items:center; justify-content:center; gap: 6px; font-size: 11px; font-weight: 700; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-primary); text-decoration:none;">
             <span class="material-symbols-outlined" style="font-size: 15px;">download</span> Unduh
           </a>` : ''}
           <button type="button" onclick="event.stopPropagation(); bukaLaporanWilayahUpload(${b.bulan}, ${b.tahun}, '', 'nasional')" style="flex-shrink:0; display:flex; align-items:center; justify-content:center; width:38px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-secondary); cursor:pointer;">
@@ -13273,7 +13284,7 @@ function renderLaporanBulananListSapa(data) {
             <span class="material-symbols-outlined" style="font-size: 15px;">visibility</span> Lihat PDF
           </button>
           ${laporanBulananSapaBisaUnduh ? `
-          <a href="${escapeHtmlHub(urlAmanHub_(b.linkUnduhPdf))}" target="_blank" rel="noopener" style="flex:1; display:flex; align-items:center; justify-content:center; gap: 6px; font-size: 11px; font-weight: 700; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-primary); text-decoration:none;">
+          <a href="${escapeHtmlHub(urlAmanHub_(b.linkUnduhPdf))}" target="_blank" rel="noopener" onclick="catatAksesLaporanPdf_('UNDUH', '${encodeURIComponent('Laporan SAPA ' + b.namaBulan + ' ' + b.tahun)}')" style="flex:1; display:flex; align-items:center; justify-content:center; gap: 6px; font-size: 11px; font-weight: 700; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-primary); text-decoration:none;">
             <span class="material-symbols-outlined" style="font-size: 15px;">download</span> Unduh
           </a>` : ''}
           <button type="button" onclick="event.stopPropagation(); bukaLaporanWilayahUpload(${b.bulan}, ${b.tahun}, '', 'sapa-nasional')" style="flex-shrink:0; display:flex; align-items:center; justify-content:center; width:38px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-secondary); cursor:pointer;">
