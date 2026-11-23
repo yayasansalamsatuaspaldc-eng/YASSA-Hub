@@ -396,7 +396,8 @@
        tetapnya (repeat(2,1fr)) diganti auto-fill kartu kecil supaya gak
        jadi 2 kartu raksasa yang renggang di layar lebar. */
     #appGridContainer {
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+      gap: 14px !important;
     }
     /* Tambahan width: 100% agar header tidak menyusut (squished) ke tengah layar */
     .header, .summary-card { width: 100%; max-width: 1360px; margin-left: auto; margin-right: auto; }
@@ -3675,6 +3676,338 @@ html[data-theme="light"] .profil-logout-title { color: #DC2626; }
 @media (min-width: 1280px) {
   .bottom-nav::before { display: none; }
 }
+
+/* ===== Tab App Redesign ("Humanitarian Fintech Console Launcher") ===== */
+.app-header-section {
+  grid-column: 1 / -1;
+  padding-top: 6px;
+}
+.app-header-top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.app-header-title {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  margin: 0;
+  color: var(--text-primary);
+}
+.app-header-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 3px;
+}
+.app-header-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.app-filter-bar {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  gap: 2px;
+  border-radius: 11px;
+  background: var(--glass-inner);
+  border: 1px solid var(--glass-border);
+  margin-bottom: 16px;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.app-filter-bar::-webkit-scrollbar { display: none; }
+.app-filter-btn {
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+.app-filter-btn:hover { color: var(--text-primary); }
+.app-filter-btn[aria-pressed="true"] {
+  background: var(--bento-primary);
+  color: #FFFFFF;
+  font-weight: 700;
+}
+.app-filter-btn:focus-visible {
+  outline: 2px solid var(--bento-primary);
+  outline-offset: 2px;
+}
+
+.app-console-grid {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+@media (min-width: 680px) {
+  .app-console-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+
+.app-module-card {
+  position: relative;
+  width: 100%;
+  min-height: 74px;
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s ease, box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.app-module-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--glass-border-strong);
+  box-shadow: 0 14px 28px -10px rgba(0, 0, 0, 0.45);
+}
+html[data-theme="light"] .app-module-card:hover {
+  box-shadow: 0 12px 24px -10px rgba(15, 23, 42, 0.12);
+}
+.app-module-card:active {
+  transform: scale(0.985);
+  border-color: var(--glass-border-strong);
+  box-shadow: 0 4px 10px -4px rgba(0, 0, 0, 0.25);
+  transition: transform 0.12s ease-out, border-color 0.12s ease, box-shadow 0.12s ease;
+}
+.app-module-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--app-rgb), 0.14);
+  border: 1px solid rgba(var(--app-rgb), 0.26);
+  color: var(--app-accent);
+}
+html[data-theme="light"] .app-module-icon {
+  color: var(--app-accent-light, var(--app-accent));
+  background: rgba(var(--app-rgb), 0.11);
+}
+.app-module-icon .material-symbols-outlined {
+  font-size: 22px;
+  font-variation-settings: 'FILL' 1;
+}
+.app-module-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.app-module-top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.app-module-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+.app-module-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.app-module-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app-module-notice {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #F59E0B;
+  margin-top: 2px;
+  line-height: 1.3;
+}
+html[data-theme="light"] .app-module-notice { color: #B45309; }
+.app-module-notice .material-symbols-outlined { font-size: 13px; flex-shrink: 0; }
+.app-module-chevron {
+  font-size: 19px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
+}
+.app-module-card:hover .app-module-chevron {
+  transform: translateX(3px);
+  color: var(--text-primary);
+}
+
+.app-formulir-wrap {
+  grid-column: 1 / -1;
+}
+.app-formulir-card {
+  width: 100%;
+  background: var(--glass-strong);
+  border: 1px solid rgba(249, 115, 22, 0.30);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s ease, box-shadow 0.28s ease;
+}
+.app-formulir-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(249, 115, 22, 0.50);
+  box-shadow: 0 14px 28px -10px rgba(0, 0, 0, 0.42);
+}
+html[data-theme="light"] .app-formulir-card:hover {
+  box-shadow: 0 12px 24px -10px rgba(15, 23, 42, 0.12);
+}
+.app-formulir-card:active {
+  transform: scale(0.985);
+  transition: transform 0.12s ease-out;
+}
+.app-formulir-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  background: rgba(249, 115, 22, 0.14);
+  border: 1px solid rgba(249, 115, 22, 0.28);
+  color: #F97316;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+html[data-theme="light"] .app-formulir-icon { color: #C2410C; }
+
+/* App Submenu Screen */
+.app-sub-head {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding-top: 6px;
+}
+.app-sub-back {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  color: var(--text-primary);
+  padding: 0;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.app-sub-back:active { transform: scale(0.94); }
+.menu-panel {
+  grid-column: 1 / -1;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (min-width: 720px) {
+  .menu-grid { grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); }
+}
+.menu-item {
+  border-radius: 16px !important;
+  padding: 18px 12px !important;
+  background: var(--glass-strong) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06) !important;
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s ease, box-shadow 0.28s ease !important;
+}
+.menu-item:hover {
+  transform: translateY(-2px);
+  border-color: var(--glass-border-strong) !important;
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.42) !important;
+}
+html[data-theme="light"] .menu-item:hover {
+  box-shadow: 0 10px 22px -10px rgba(15, 23, 42, 0.12) !important;
+}
+.menu-item:active {
+  transform: scale(0.97) !important;
+  transition: transform 0.12s ease-out !important;
+}
+.menu-icon {
+  width: 46px !important;
+  height: 46px !important;
+  border-radius: 13px !important;
+}
+
+/* Onboarding Gate Card */
+.app-notif-gate-card {
+  grid-column: 1 / -1;
+  max-width: 380px;
+  width: 100%;
+  margin: 24px auto 0;
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 28px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-module-card,
+  .app-formulir-card,
+  .menu-item,
+  .app-module-chevron {
+    transition: none !important;
+    transform: none !important;
+  }
+}
 </style>
 
 </head>
@@ -5458,6 +5791,11 @@ const MENUS = {
 };
 
 let active = "beranda";
+let appTabFilter = "all";
+function setAppTabFilter(cat) {
+  appTabFilter = cat || "all";
+  renderContent();
+}
 let currentUser = null;
 let authToken = null;
 let pendingOldPassword = null; 
@@ -9610,38 +9948,23 @@ function renderContent() {
   }
 
   if (active === "app") {
-    // 🔔 GATE 2-LANGKAH: notifikasi WAJIB diaktifkan dulu sebelum grid 6 app
-    // muncul -- sekarang digabung jadi 1 alur berurutan (dulu tombol
-    // "Aktifkan Notifikasi" Hub cuma ada di tab Profil, terpisah dari gate
-    // Mobile di sini, jadi user gampang kelewat salah satunya). Urutannya:
-    //   Langkah 1: Notifikasi Hub (izin diminta LANGSUNG, gak perlu tab baru
-    //              karena halaman Hub ini sendiri bukan iframe)
-    //   Langkah 2: Notifikasi Mobile (perlu tab baru -- lihat penjelasan di
-    //              openMobileAppForNotif())
-    // Begitu Langkah 1 selesai/dilewati, render() dipanggil ulang dan
-    // otomatis lanjut ke Langkah 2 (lihat aktifkanNotifikasiHub(true)).
-    // 🩹 FIX: pakai isHubNotifResolved_()/isNotifGateBypassed_() -- "skip"
-    // cuma valid untuk sesi app yang sedang berjalan (sessionStorage),
-    // BUKAN permanen. Begitu app ditutup & dibuka lagi dari awal, gate ini
-    // wajib muncul lagi sampai user beneran menekan "Aktifkan Notifikasi"
-    // & Allow di kedua langkah.
     if (!isHubNotifResolved_()) {
       el.innerHTML = `
-        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:60px 24px; gap:16px;">
-          <div style="font-size:11px; font-weight:700; letter-spacing:0.5px; color:var(--text-muted); text-transform:uppercase;">Langkah 1 dari 2</div>
-          <div style="width:72px; height:72px; border-radius:50%; background:rgba(11,122,69,0.15); color:#0B7A45; display:flex; align-items:center; justify-content:center;">
-            <span class="material-symbols-outlined" style="font-size:36px;">notifications_active</span>
+        <div class="app-notif-gate-card">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:700; letter-spacing:0.06em; color:var(--text-muted); text-transform:uppercase;">Langkah 1 dari 2</div>
+          <div style="width:60px; height:60px; border-radius:16px; background:rgba(var(--bento-primary-rgb),0.14); border:1px solid rgba(var(--bento-primary-rgb),0.28); color:var(--bento-primary); display:flex; align-items:center; justify-content:center;">
+            <span class="material-symbols-outlined" style="font-size:30px;">notifications_active</span>
           </div>
           <div>
-            <h2 style="font-weight:700; font-size:17px; margin:0 0 6px;">Aktifkan Notifikasi Hub</h2>
+            <h2 style="font-weight:800; font-size:17px; margin:0 0 6px; letter-spacing:-0.02em;">Aktifkan Notifikasi Hub</h2>
             <div style="font-size:13px; color:var(--text-secondary); max-width:280px; line-height:1.5;">
               Supaya kamu langsung dapat info terbaru dari YASSA Hub
             </div>
           </div>
-          <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:8px; width:100%;">
+          <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:4px; width:100%;">
             ${renderHubNotifOnboardingButton_()}
           </div>
-          <button onclick="sessionStorage.setItem('yassa_hub_notif_skip_session','1'); render();" style="margin-top:4px; background:transparent; border:none; color:var(--text-muted); font-size:12px; text-decoration:underline; cursor:pointer;">
+          <button onclick="sessionStorage.setItem('yassa_hub_notif_skip_session','1'); render();" style="margin-top:2px; min-height:40px; background:transparent; border:none; color:var(--text-muted); font-size:12px; font-weight:600; text-decoration:underline; cursor:pointer;">
             Lewati dulu, nanti saja
           </button>
         </div>`;
@@ -9650,113 +9973,114 @@ function renderContent() {
 
     if (!isNotifGateBypassed_()) {
       el.innerHTML = `
-        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:60px 24px; gap:16px;">
-          <div style="font-size:11px; font-weight:700; letter-spacing:0.5px; color:var(--text-muted); text-transform:uppercase;">Langkah 2 dari 2</div>
-          <div style="width:72px; height:72px; border-radius:50%; background:rgba(245,158,11,0.15); color:#F59E0B; display:flex; align-items:center; justify-content:center;">
-            <span class="material-symbols-outlined" style="font-size:36px;">notifications_active</span>
+        <div class="app-notif-gate-card">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:700; letter-spacing:0.06em; color:var(--text-muted); text-transform:uppercase;">Langkah 2 dari 2</div>
+          <div style="width:60px; height:60px; border-radius:16px; background:rgba(245,158,11,0.14); border:1px solid rgba(245,158,11,0.28); color:#F59E0B; display:flex; align-items:center; justify-content:center;">
+            <span class="material-symbols-outlined" style="font-size:30px;">notifications_active</span>
           </div>
           <div>
-            <h2 style="font-weight:700; font-size:17px; margin:0 0 6px;">Aktifkan Notifikasi Mobile</h2>
+            <h2 style="font-weight:800; font-size:17px; margin:0 0 6px; letter-spacing:-0.02em;">Aktifkan Notifikasi Mobile</h2>
             <div style="font-size:13px; color:var(--text-secondary); max-width:280px; line-height:1.5;">
               Supaya kamu juga dapat info terbaru dari YASSA Mobile
             </div>
           </div>
-          <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:8px; width:100%;">
+          <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:4px; width:100%;">
             ${renderMobileNotifButton()}
           </div>
-          <button onclick="sessionStorage.setItem('yassa_mobile_notif_skip_session','1'); active='beranda'; render();" style="margin-top:4px; background:transparent; border:none; color:var(--text-muted); font-size:12px; text-decoration:underline; cursor:pointer;">
+          <button onclick="sessionStorage.setItem('yassa_mobile_notif_skip_session','1'); active='beranda'; render();" style="margin-top:2px; min-height:40px; background:transparent; border:none; color:var(--text-muted); font-size:12px; font-weight:600; text-decoration:underline; cursor:pointer;">
             Lewati dulu, nanti saja
           </button>
         </div>`;
       return;
     }
 
-    let html = `
-      <div class="app-header-section" style="grid-column: 1 / -1;">
-      <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px; padding-top:16px;">
-        <div style="width:40px; height:40px; border-radius:12px; background:rgba(var(--bento-primary-rgb),0.15); color:var(--bento-primary); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-          <span class="material-symbols-outlined" style="font-size:22px; font-variation-settings:'FILL' 1;">apps</span>
-        </div>
-        <div>
-          <h2 style="font-weight:700; font-size:18px; margin:0; letter-spacing:-0.2px;">Semua Aplikasi</h2>
-          <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Pilih aplikasi yang ingin dibuka</div>
-        </div>
-      </div>
-      <div style="height:1px; background:linear-gradient(90deg, var(--glass-border-strong), transparent); margin: 16px 0 24px;"></div>
-      </div>
-      <div id="appGridContainer" style="grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
-    `;
-
     const APP_CARDS = [
-      { key: "mobile", grad: "linear-gradient(135deg, #34D399 0%, #059669 100%)", glow: "rgba(16,185,129,0.35)", icon: "smartphone", title: "YASSA Mobile", desc: "Data Base<br>YASSA" },
-      { key: "donasi", grad: "linear-gradient(135deg, #4ADE80 0%, #15803D 100%)", glow: "rgba(34,197,94,0.35)", icon: "box", title: "Kotak & Donasi", desc: "Kelola kotak<br>dan donasi", notice: "Masih Tahap Pengembangan, Data mungkin tidak Akurat" },
-      { key: "absensi", grad: "linear-gradient(135deg, #60A5FA 0%, #1D4ED8 100%)", glow: "rgba(59,130,246,0.35)", icon: "assignment", title: "Kehadiran", desc: "Catat kehadiran<br>kegiatan" },
-      { key: "awg", grad: "linear-gradient(135deg, #E879F9 0%, #7E22CE 100%)", glow: "rgba(168,85,247,0.35)", icon: "favorite", title: "AWG", desc: "Ahli Waris<br>Akun" },
-      { key: "pm", grad: "linear-gradient(135deg, #FCD34D 0%, #D97706 100%)", glow: "rgba(251,191,36,0.35)", icon: "group", title: "Penerima Manfaat", desc: "Data penerima<br>manfaat" },
-      // 🚧 notice: dipakai buat nampilin badge peringatan "masih tahap
-      // pengembangan" di card grid App. Field ini sengaja dibikin generik
-      // (bukan cuma khusus bukubesar) supaya gampang dipasang/dicopot di
-      // app lain juga nanti kalau statusnya berubah -- tinggal
-      // tambah/hapus baris "notice" di object card-nya, gak perlu ubah
-      // logika render di bawah.
-      { key: "bukubesar", grad: "linear-gradient(135deg, #67E8F9 0%, #0E7490 100%)", glow: "rgba(34,211,238,0.35)", icon: "menu_book", title: "Cloud Buku", desc: "Pembukuan Digital<br>Yayasan", notice: "Masih Tahap Pengembangan, Data mungkin tidak Akurat" },
-      { key: "lentera", grad: "linear-gradient(135deg, #FBBF24 0%, #D97706 100%)", glow: "rgba(251,191,36,0.35)", icon: "lightbulb", title: "Lentera Yassa", desc: "Aplikasi<br>Lentera Yassa" },
+      { key: "mobile", cat: "ops", accent: "#10B981", accentLight: "#059669", rgb: "16, 185, 129", icon: "smartphone", title: "YASSA Mobile", desc: "Data induk keluarga, anak yatim & kontrol" },
+      { key: "donasi", cat: "fin", accent: "#22C55E", accentLight: "#15803D", rgb: "34, 197, 94", icon: "box", title: "Kotak & Donasi", desc: "Kelola kotak amal & pencatatan donasi", notice: "Tahap uji coba · Data mungkin belum akurat" },
+      { key: "absensi", cat: "ops", accent: "#3B82F6", accentLight: "#1D4ED8", rgb: "59, 130, 246", icon: "assignment", title: "Kehadiran", desc: "Catat kehadiran & notulen kegiatan" },
+      { key: "awg", cat: "prog", accent: "#A855F7", accentLight: "#7E22CE", rgb: "168, 85, 247", icon: "favorite", title: "AWG", desc: "Pengelolaan ahli waris driver Gojek" },
+      { key: "pm", cat: "prog", accent: "#F59E0B", accentLight: "#B45309", rgb: "245, 158, 11", icon: "group", title: "Penerima Manfaat", desc: "Data & penyaluran penerima manfaat" },
+      { key: "bukubesar", cat: "fin", accent: "#06B6D4", accentLight: "#0E7490", rgb: "6, 182, 212", icon: "menu_book", title: "Cloud Buku", desc: "Pembukuan digital & laporan ISAK 35", notice: "Tahap uji coba · Data mungkin belum akurat" },
+      { key: "lentera", cat: "prog", accent: "#EAB308", accentLight: "#A16207", rgb: "234, 179, 8", icon: "lightbulb", title: "Lentera Yassa", desc: "Al-Quran, Yasin, jadwal sholat & galeri" },
     ];
 
-    APP_CARDS.filter(function (c) { return isAppVisible(c.key); }).forEach(function (c) {
+    const visibleAppCards = APP_CARDS.filter(function (c) { return isAppVisible(c.key); });
+    const filteredAppCards = appTabFilter === "all"
+      ? visibleAppCards
+      : visibleAppCards.filter(function (c) { return c.cat === appTabFilter; });
+
+    const APP_FILTERS = [
+      { key: "all", label: "Semua" },
+      { key: "ops", label: "Operasional" },
+      { key: "fin", label: "Keuangan" },
+      { key: "prog", label: "Program" },
+    ];
+
+    let html = `
+      <div class="app-header-section">
+        <div class="app-header-top">
+          <div>
+            <h2 class="app-header-title">Semua Aplikasi</h2>
+            <div class="app-header-sub">Pilih modul yang ingin dibuka</div>
+          </div>
+          <span class="app-header-count">${filteredAppCards.length} modul</span>
+        </div>
+        <div class="app-filter-bar" role="group" aria-label="Filter kategori aplikasi">
+          ${APP_FILTERS.map(function (f) {
+            const pressed = appTabFilter === f.key ? "true" : "false";
+            return `<button type="button" class="app-filter-btn" aria-pressed="${pressed}" onclick="setAppTabFilter('${f.key}')">${f.label}</button>`;
+          }).join("")}
+        </div>
+      </div>
+      <div id="appGridContainer" class="app-console-grid">
+    `;
+
+    filteredAppCards.forEach(function (c) {
+      const menuObj = MENUS[c.key];
+      const menuCount = menuObj && Array.isArray(menuObj.items)
+        ? menuObj.items.filter(function (_, idx) { return isMenuItemVisible(c.key, idx); }).length
+        : 0;
+      const metaText = menuCount > 0 ? `${menuCount} menu` : "Modul";
       html += `
-        <button onclick="setActive('${c.key}')" style="position: relative; background: var(--glass-strong); padding: 20px 16px 22px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; gap: 14px; border: 1px solid var(--glass-border); cursor: pointer;">
-          ${c.notice ? `
-          <div style="position: absolute; top: 10px; right: 10px; display: flex; align-items: center; gap: 3px; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.4); color: #F59E0B; font-size: 9px; font-weight: 700; padding: 3px 7px; border-radius: 999px; line-height: 1;" title="${c.notice}">
-            <span class="material-symbols-outlined" style="font-size: 11px;">construction</span>
-            Uji Coba
-          </div>` : ``}
-          <div style="position: relative; width: 64px; height: 64px; border-radius: 20px; background: ${c.grad}; box-shadow: 0 10px 22px ${c.glow}, inset 0 1px 0 rgba(255,255,255,0.35); display: flex; align-items: center; justify-content: center; overflow: hidden;">
-            <div style="position: absolute; top: -18px; left: -14px; width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.22); filter: blur(2px);"></div>
-            <span class="material-symbols-outlined" style="position: relative; font-size: 30px; color: #fff; font-variation-settings: 'FILL' 1; text-shadow: 0 1px 3px rgba(0,0,0,0.25);">${c.icon}</span>
+        <button type="button" class="app-module-card" onclick="setActive('${c.key}')" style="--app-accent:${c.accent}; --app-accent-light:${c.accentLight}; --app-rgb:${c.rgb};" ${c.notice ? `title="${c.notice}"` : ""}>
+          <div class="app-module-icon">
+            <span class="material-symbols-outlined">${c.icon}</span>
           </div>
-          <div style="text-align: center;">
-            <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">${c.title}</div>
-            <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.2;">${c.desc}</div>
-            ${c.notice ? `<div style="font-size: 9px; color: #F59E0B; line-height: 1.3; margin-top: 6px; font-weight: 600;">${c.notice}</div>` : ``}
+          <div class="app-module-body">
+            <div class="app-module-top">
+              <span class="app-module-title">${c.title}</span>
+              <span class="app-module-meta">${metaText}</span>
+            </div>
+            <div class="app-module-desc">${c.desc}</div>
+            ${c.notice ? `
+            <div class="app-module-notice">
+              <span class="material-symbols-outlined">construction</span>
+              <span>${c.notice}</span>
+            </div>` : ``}
           </div>
+          <span class="material-symbols-outlined app-module-chevron">chevron_right</span>
         </button>
       `;
     });
 
     html += `</div>`;
 
-    // FORMULIR_DI_TAB_APP: dulu tombol ini ada di tab Profile, sekarang
-    // dipindah ke sini. Sengaja dibuat SATU BLOK TERPISAH di bawah grid
-    // Aplikasi (bukan ikut jadi salah satu kartu di appGridContainer),
-    // dengan gaya visual yang beda sendiri (border putus-putus, badge
-    // "Formulir", tanpa ikon kotak gradasi ala app) -- supaya user
-    // langsung bisa bedain mana "Aplikasi" (dibuka penuh, banyak menu)
-    // dan mana "Formulir" (cuma isi data, bukan aplikasi). Role dibatasi
-    // sama seperti sebelumnya: SUPERADMIN/ADMIN/KORWIL saja.
     if (["SUPERADMIN", "ADMIN", "KORWIL"].indexOf(currentUser.role) !== -1) {
       html += `
-        <div style="grid-column: 1 / -1; margin-top: 40px;">
-          <div style="height:1px; background:linear-gradient(90deg, var(--glass-border-strong), transparent); margin: 0 0 26px;"></div>
-          <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
-            <div style="width:34px; height:34px; border-radius:10px; background:rgba(249,115,22,0.15); color:#F97316; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-              <span class="material-symbols-outlined" style="font-size:18px;">description</span>
-            </div>
-            <div>
-              <h3 style="font-weight:700; font-size:14px; margin:0; letter-spacing:-0.1px;">Formulir</h3>
-              <div style="font-size:11px; color:var(--text-secondary); margin-top:1px;">Isi data pengajuan -- bukan aplikasi penuh</div>
-            </div>
-          </div>
-          <button onclick="openFormulirDataBaru()" class="profil-formulir-cta" style="position:relative; width: 100%; background: linear-gradient(135deg, rgba(249,115,22,0.14), rgba(234,88,12,0.08)); border: 1.5px dashed rgba(249,115,22,0.45); border-radius: 18px; padding: 16px 18px; display: flex; align-items: center; gap: 14px; cursor: pointer; text-align: left;">
-            <span style="position:absolute; top:10px; right:10px; font-size:9px; font-weight:700; letter-spacing:0.3px; color:#F97316; background:rgba(249,115,22,0.14); border:1px solid rgba(249,115,22,0.35); border-radius:999px; padding:3px 8px; line-height:1;">FORMULIR</span>
-            <div class="profil-formulir-icon-wrap" style="width: 44px; height: 44px; border-radius: 14px; background: rgba(249,115,22,0.18); color: #F97316; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <div class="app-formulir-wrap">
+          <div class="kfin-section-heading"><span>Formulir Pengajuan</span></div>
+          <button type="button" onclick="openFormulirDataBaru()" class="app-formulir-card">
+            <div class="app-formulir-icon">
               <span class="material-symbols-outlined" style="font-size: 22px;">note_add</span>
             </div>
-            <div style="flex: 1;">
-              <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Formulir Data Baru GOPAY</div>
-              <div style="font-size: 11px; color: var(--text-secondary);">Input data pengajuan santunan Alm/Keluarga/Anak</div>
+            <div class="app-module-body">
+              <div class="app-module-top">
+                <span class="app-module-title">Formulir Data Baru GOPAY</span>
+                <span class="app-module-meta">Pengajuan</span>
+              </div>
+              <div class="app-module-desc">Input data pengajuan santunan Alm/Keluarga/Anak</div>
             </div>
-            <span class="material-symbols-outlined profil-formulir-chevron" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
+            <span class="material-symbols-outlined app-module-chevron">chevron_right</span>
           </button>
         </div>
       `;
@@ -10367,23 +10691,19 @@ function renderContent() {
 
   const menu = MENUS[active];
   let html = `
-    <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px; padding-top:16px;">
-      <button onclick="setActive('app')" aria-label="Kembali" style="width:36px; height:36px; border-radius:50%; background: var(--glass-strong); border:1px solid var(--glass-border-strong); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; color:var(--text-primary); padding:0;">
+    <div class="app-sub-head">
+      <button type="button" class="app-sub-back" onclick="setActive('app')" aria-label="Kembali">
         <span class="material-symbols-outlined" style="font-size:20px;">arrow_back</span>
       </button>
-      <div class="section-title" style="margin-bottom:0;">${menu.title}</div>
+      <div style="min-width:0;">
+        <div class="section-title" style="margin-bottom:0; font-size:18px; font-weight:800; letter-spacing:-0.02em;">${menu.title}</div>
+        <div style="font-size:11.5px; color:var(--text-secondary); margin-top:2px;">Pilih menu untuk membuka layanan</div>
+      </div>
     </div>`;
 
-  // 🚧 Strip peringatan "masih tahap pengembangan" -- sama persis kayak
-  // yang nempel di atas iframe (lihat toggleOverlayDevNotice_), dipasang
-  // di sini juga karena screen submenu ini (Dashboard/Lainnya) muncul
-  // SEBELUM iframe-nya sendiri kebuka, jadi user perlu liat peringatannya
-  // dari titik ini juga -- bukan cuma pas udah masuk ke Dashboard.
-  // Sengaja pakai array OVERLAY_DEV_NOTICE_APPS yang sama (bukan bikin
-  // daftar baru) supaya kalau statusnya diubah, cukup edit 1 tempat.
   if (OVERLAY_DEV_NOTICE_APPS.indexOf(active) !== -1) {
     html += `
-    <div style="display:flex; align-items:center; gap:8px; background:rgba(245,158,11,0.14); border:1px solid rgba(245,158,11,0.35); color:#F59E0B; font-size:11.5px; font-weight:700; padding:10px 14px; border-radius:14px; margin-bottom:16px;">
+    <div style="grid-column: 1 / -1; display:flex; align-items:center; gap:8px; background:rgba(245,158,11,0.10); border:1px solid rgba(245,158,11,0.28); color:#F59E0B; font-size:11.5px; font-weight:600; padding:10px 14px; border-radius:14px; margin-bottom:14px;">
       <span class="material-symbols-outlined" style="font-size:16px; flex-shrink:0;">construction</span>
       <span>Masih Tahap Pengembangan — Data mungkin tidak Akurat</span>
     </div>`;
@@ -10392,25 +10712,24 @@ function renderContent() {
   html += `<div class="menu-panel"><div class="menu-grid">`;
 
   menu.items.forEach((item, i) => {
-    if (!isMenuItemVisible(active, i)) return; // "tidak" di sheet Setting_Akses_Menu -> sembunyikan tombol ini
+    if (!isMenuItemVisible(active, i)) return;
     const c = ICON_COLORS[item.color] || ICON_COLORS.teal;
-    html += `<button class="menu-item" style="border-color:${c.fg}40; box-shadow:0 6px 16px ${c.fg}1F;" onclick="openApp(${i})">
-      <div class="menu-icon" style="background:${c.bg}">${iconSvg(item.icon, c.fg, 26)}</div>
+    html += `<button type="button" class="menu-item" onclick="openApp(${i})">
+      <div class="menu-icon" style="background:${c.bg}">${iconSvg(item.icon, c.fg, 22)}</div>
       <span class="menu-label">${item.label}</span>
       ${item.desc ? `<span class="menu-desc">${item.desc}</span>` : ""}
     </button>`;
   });
   
-  html += `<button class="menu-item" onclick="showModal('Lainnya', 'Fitur selengkapnya sedang dikembangkan.')">
-    <div class="menu-icon" style="background:rgba(255,255,255,0.06)">${iconSvg("more", "#94A3B8", 26)}</div>
+  html += `<button type="button" class="menu-item" onclick="showModal('Lainnya', 'Fitur selengkapnya sedang dikembangkan.')">
+    <div class="menu-icon" style="background:rgba(148,163,184,0.12)">${iconSvg("more", "#94A3B8", 22)}</div>
     <span class="menu-label">Lainnya</span>
+    <span class="menu-desc">Segera hadir</span>
   </button>`;
   html += `</div></div>`;
 
-  // 🔔 YASSA Mobile: tombol "Aktifkan Notifikasi" tetap ditampilkan di bawah
-  // grid menu (dulu nempel di tombol "Masuk App" tunggal, sekarang di sini).
   if (active === "mobile") {
-    html += `<div style="display:flex; flex-direction:column; align-items:center; gap:10px; padding:4px 16px 24px;">${renderMobileNotifButton()}</div>`;
+    html += `<div style="grid-column: 1 / -1; display:flex; flex-direction:column; align-items:center; gap:10px; padding:12px 16px 24px;">${renderMobileNotifButton()}</div>`;
   }
   
   el.innerHTML = html;
