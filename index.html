@@ -886,14 +886,26 @@
     align-items: center;
     cursor: pointer;
     border: 1px solid var(--glass-border);
-    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s ease, background 0.2s ease;
+    transition: transform 0.34s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s ease, background 0.2s ease, box-shadow 0.32s cubic-bezier(0.22, 1, 0.36, 1);
     text-align: center;
   }
   .quick-card:hover {
     transform: scale(1.03);
     border-color: var(--glass-border-strong);
+    box-shadow: 0 18px 36px -8px rgba(0, 0, 0, 0.52), 0 8px 18px -6px rgba(0, 0, 0, 0.36);
   }
-  .quick-card:active { transform: scale(0.94); border-color: var(--glass-border-strong); }
+  html[data-theme="light"] .quick-card:hover {
+    box-shadow: 0 18px 36px -8px rgba(15, 23, 42, 0.15), 0 8px 16px -6px rgba(15, 23, 42, 0.08);
+  }
+  .quick-card:active {
+    transform: scale(0.94);
+    border-color: var(--glass-border-strong);
+    box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.28);
+    transition: transform 0.12s ease-out, border-color 0.12s ease, box-shadow 0.12s ease;
+  }
+  html[data-theme="light"] .quick-card:active {
+    box-shadow: 0 4px 10px -4px rgba(15, 23, 42, 0.1);
+  }
   .quick-icon {
     width: 44px; height: 44px; border-radius: 50%;
     background: var(--surface-container-highest, rgba(255,255,255,0.06));
