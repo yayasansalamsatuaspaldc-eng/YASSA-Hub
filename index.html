@@ -3129,25 +3129,31 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
       scrollbar-color: rgba(148,163,184,0.45) transparent;
     }
 
-    /* Menu "Input Data": di HP berupa panel sempit dari bawah. Di laptop panelnya jadi
-       dialog di tengah, tombol program disusun 2 kolom supaya semua pilihan terlihat
-       tanpa scroll (sebelumnya terpotong di bawah dan harus digulir). */
-    #inputOverlay { align-items: center !important; }
-    #inputOverlay .user-form-sheet {
-      max-width: 800px;
+    /* Menu "Input Data" & Sub-sheet GOPAY: di HP tampil sebagai bottom-sheet rapi,
+       di desktop (>=1280px) tampil sebagai dialog terpusat dengan grid 2 kolom. */
+    #inputOverlay,
+    #inputGopaySubOverlay {
+      align-items: center !important;
+      padding: 24px;
+    }
+    #inputOverlay .input-sheet {
+      max-width: 720px;
       border-radius: 24px !important;
       border: 1px solid var(--glass-border-strong);
-      padding: 22px 24px 24px !important;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px 16px;
-      align-content: start;
+      padding: 24px 26px 24px !important;
+      max-height: min(86vh, 760px);
     }
-    #inputOverlay .user-form-sheet > div:first-child,
-    #inputOverlay .user-form-sheet > h3,
-    #inputOverlay .user-form-sheet > button:last-child { grid-column: 1 / -1; }
-    #inputOverlay .user-form-sheet > h3 { margin-bottom: 4px !important; }
-    #inputOverlay .user-form-sheet > button { margin: 0 !important; }
+    #inputGopaySubOverlay .input-sheet {
+      max-width: 480px;
+      border-radius: 24px !important;
+      border: 1px solid var(--glass-border-strong);
+      padding: 24px !important;
+    }
+    .input-sheet-handle { display: none; }
+    .input-action-grid-2col {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
     /* Scrollbar di dalam dialog juga disamakan dengan tema gelap */
     html:not([data-theme="light"]) .user-form-sheet {
       color-scheme: dark;
@@ -4003,10 +4009,284 @@ html[data-theme="light"] .menu-item:hover {
   .app-module-card,
   .app-formulir-card,
   .menu-item,
-  .app-module-chevron {
+  .app-module-chevron,
+  .input-action-card,
+  .input-action-arrow,
+  .input-sheet {
     transition: none !important;
+    animation: none !important;
     transform: none !important;
   }
+}
+
+/* ===== Tab Input Sheet Redesign (Clean & Structured) ===== */
+#inputOverlay,
+#inputGopaySubOverlay {
+  background: rgba(2, 6, 20, 0.64);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+html[data-theme="light"] #inputOverlay,
+html[data-theme="light"] #inputGopaySubOverlay {
+  background: rgba(15, 23, 42, 0.42);
+}
+
+@keyframes inputSheetSlideUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.input-sheet {
+  width: 100%;
+  max-width: 480px;
+  background: #0F172A;
+  border-radius: 24px 24px 0 0;
+  border-top: 1px solid var(--glass-border-strong);
+  box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.52);
+  padding: 12px 18px calc(22px + env(safe-area-inset-bottom, 0px));
+  max-height: 86vh;
+  overflow-y: auto;
+  animation: inputSheetSlideUp 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+html[data-theme="light"] .input-sheet {
+  background: #FFFFFF;
+  box-shadow: 0 -12px 36px rgba(15, 23, 42, 0.14);
+}
+
+.input-sheet-handle {
+  width: 38px;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--glass-border-strong);
+  margin: 0 auto 14px;
+}
+
+.input-sheet-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--glass-border);
+}
+.input-sheet-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+.input-sheet-sub {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+.input-sheet-close {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-inner);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  transition: background 0.16s ease, color 0.16s ease, transform 0.14s ease;
+}
+.input-sheet-close:hover {
+  color: var(--text-primary);
+  border-color: var(--glass-border-strong);
+}
+.input-sheet-close:active {
+  transform: scale(0.93);
+}
+.input-sheet-close .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.input-group {
+  margin-bottom: 16px;
+}
+.input-group:last-of-type {
+  margin-bottom: 18px;
+}
+.input-group-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin: 0 0 8px 2px;
+}
+
+.input-action-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+@media (min-width: 680px) {
+  #inputOverlay .input-sheet {
+    max-width: 680px;
+  }
+  .input-action-grid-2col {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+}
+
+.input-action-card {
+  width: 100%;
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-border);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.18s ease, box-shadow 0.24s ease, background 0.18s ease;
+}
+html[data-theme="light"] .input-action-card {
+  background: #F8FAFC;
+}
+.input-action-card:not(:disabled):hover {
+  transform: translateY(-2px);
+  border-color: var(--glass-border-strong);
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.42);
+}
+html[data-theme="light"] .input-action-card:not(:disabled):hover {
+  background: #FFFFFF;
+  box-shadow: 0 10px 22px -10px rgba(15, 23, 42, 0.12);
+}
+.input-action-card:not(:disabled):active {
+  transform: scale(0.985);
+  transition: transform 0.1s ease-out;
+}
+.input-action-card.is-locked {
+  background: var(--glass-inner);
+  border-color: var(--glass-border);
+  opacity: 0.62;
+  cursor: not-allowed;
+}
+
+.input-action-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--in-rgb, 148, 163, 184), 0.14);
+  border: 1px solid rgba(var(--in-rgb, 148, 163, 184), 0.26);
+  color: var(--in-accent, var(--text-muted));
+}
+html[data-theme="light"] .input-action-icon {
+  color: var(--in-accent-light, var(--in-accent, var(--text-muted)));
+  background: rgba(var(--in-rgb, 148, 163, 184), 0.11);
+}
+.input-action-icon .material-symbols-outlined {
+  font-size: 21px;
+  font-variation-settings: 'FILL' 1;
+}
+.input-action-card.is-locked .input-action-icon {
+  background: rgba(148, 163, 184, 0.10);
+  border-color: rgba(148, 163, 184, 0.18);
+  color: var(--text-muted);
+}
+
+.input-action-body {
+  flex: 1;
+  min-width: 0;
+}
+.input-action-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+.input-action-card.is-locked .input-action-title {
+  color: var(--text-secondary);
+}
+.input-action-desc {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  line-height: 1.35;
+  margin-top: 2px;
+}
+.input-action-card.is-locked .input-action-desc {
+  color: var(--text-muted);
+}
+
+.input-action-arrow {
+  font-size: 19px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.18s ease;
+}
+.input-action-card:not(:disabled):hover .input-action-arrow {
+  transform: translateX(3px);
+  color: var(--text-primary);
+}
+.input-action-lock {
+  font-size: 17px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.input-empty-state {
+  padding: 28px 16px;
+  border-radius: 16px;
+  background: var(--glass-inner);
+  border: 1px solid var(--glass-border);
+  text-align: center;
+  margin-bottom: 16px;
+}
+.input-empty-state .material-symbols-outlined {
+  font-size: 28px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.input-empty-state p {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.input-sheet-footer {
+  display: flex;
+  gap: 10px;
+}
+.input-sheet-cancel {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 13px;
+  background: var(--glass-inner);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+.input-sheet-cancel:hover {
+  background: var(--glass-strong);
+  border-color: var(--glass-border-strong);
+  color: var(--text-primary);
+}
+.input-sheet-cancel:active {
+  transform: scale(0.985);
 }
 </style>
 
@@ -5384,147 +5664,179 @@ html[data-theme="light"] .menu-item:hover {
 
   <!-- Input Bottom Sheet (Menu Tengah) -->
   <div class="user-form-overlay" id="inputOverlay" onclick="if(event.target===this) toggleInputSheet()" style="align-items: flex-end;">
-    <div class="user-form-sheet" style="padding-bottom: 40px; border-radius: 24px 24px 0 0;">
-      <div style="width: 48px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 4px; margin: 0 auto 16px;"></div>
-      <h3 style="text-align: center; font-size: 16px; font-weight: 700; margin-bottom: 16px;">Input Data</h3>
+    <div class="user-form-sheet input-sheet">
+      <div class="input-sheet-handle"></div>
+      <div class="input-sheet-head">
+        <div>
+          <h3 class="input-sheet-title">Input Data</h3>
+          <p class="input-sheet-sub">Pilih jenis pencatatan cepat sesuai program</p>
+        </div>
+        <button type="button" class="input-sheet-close" aria-label="Tutup" onclick="toggleInputSheet()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
 
-      <!-- 📲 Scan Absen (QR/barcode pengurus) -- khusus SUPERADMIN/ADMIN, display diatur di toggleInputSheet(). -->
-      <button id="inputScanAbsenBtn" style="display:none; width: 100%; align-items: center; gap: 16px; background: var(--glass-strong); padding: 16px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 16px; cursor: pointer;" onclick="closeAllInputSheets_(); bukaScanAbsen();">
-        <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(34, 211, 238, 0.15); color: #22D3EE; display: flex; align-items: center; justify-content: center;">
-          <span class="material-symbols-outlined">qr_code_scanner</span>
+      <div class="input-group" id="inputSectionOps" style="display:none;">
+        <div class="input-group-label">Operasional</div>
+        <div class="input-action-grid">
+          <!-- 📲 Scan Absen (QR/barcode pengurus) -- khusus SUPERADMIN/ADMIN, display diatur di toggleInputSheet(). -->
+          <button id="inputScanAbsenBtn" class="input-action-card" style="display:none; --in-rgb: 34, 211, 238; --in-accent: #22D3EE; --in-accent-light: #0891B2;" onclick="closeAllInputSheets_(); bukaScanAbsen();">
+            <div class="input-action-icon">
+              <span class="material-symbols-outlined">qr_code_scanner</span>
+            </div>
+            <div class="input-action-body">
+              <div class="input-action-title">Scan Absen</div>
+              <div class="input-action-desc">Scan QR / barcode pengurus untuk kehadiran kegiatan</div>
+            </div>
+            <span class="material-symbols-outlined input-action-arrow">chevron_right</span>
+          </button>
         </div>
-        <div style="text-align: left;">
-          <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Scan Absen</div>
-          <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Scan QR / barcode pengurus untuk kehadiran kegiatan</div>
-        </div>
-      </button>
+      </div>
 
-      <!-- 🩹 FIX: jalan pintas "Tambah Bantuan Program BASO" dari sheet Input
-           Data -- SEBELUMNYA cuma bisa lewat: Beranda > panel "Program BASO" >
-           buka halaman penuh > baru ketemu tombol "Tambah Bantuan BASO", jadi
-           kesannya harus lewat Sheet. Padahal fiturnya udah ada
-           (bukaTambahBantuanProgramLain(), lihat renderRekapProgramLain()),
-           cuma belum ada akses cepatnya. display:none default -- ditampilkan
-           lewat JS di toggleInputSheet() KHUSUS SUPERADMIN/ADMIN, SAMA seperti
-           pembatasan `bisaEdit` yang sudah ada di halaman Program
-           BASO/BADIK/BATAN itu sendiri. -->
-      <button id="inputBasoShortcutBtn" style="display:none; width: 100%; align-items: center; gap: 16px; background: var(--glass-strong); padding: 16px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 16px; cursor: pointer;" onclick="pintasTambahBantuanProgramLain('baso')">
-        <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(245, 158, 11, 0.15); color: #F59E0B; display: flex; align-items: center; justify-content: center;">
-          <span class="material-symbols-outlined">shopping_bag</span>
-        </div>
-        <div style="text-align: left;">
-          <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Input Program BASO</div>
-          <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Catat bantuan sembako yang disalurkan</div>
-        </div>
-      </button>
+      <div class="input-group" id="inputSectionProgram" style="display:none;">
+        <div class="input-group-label">Program Donasi &amp; Bantuan</div>
+        <div class="input-action-grid input-action-grid-2col">
+          <!-- 🩹 FIX: "Realisasi Donasi Lapangan" & "Realisasi Kitabisa" digabung jadi SATU tombol "Input Program GOPAY" -->
+          <button id="inputGopayShortcutBtn" class="input-action-card" style="display:none; --in-rgb: 16, 185, 129; --in-accent: #10B981; --in-accent-light: #059669;" onclick="toggleInputGopaySubSheet()">
+            <div class="input-action-icon">
+              <span class="material-symbols-outlined">account_balance</span>
+            </div>
+            <div class="input-action-body">
+              <div class="input-action-title">Input Program GOPAY</div>
+              <div class="input-action-desc">Realisasi Donasi Lapangan &amp; Realisasi Kitabisa</div>
+            </div>
+            <span class="material-symbols-outlined input-action-arrow">chevron_right</span>
+          </button>
 
-      <!-- 🩹 FIX: pintasan yang sama juga buat BADIK & BATAN -- SAMA POLA
-           persis kayak tombol BASO di atas, cuma beda program key/warna/ikon.
-           Tetap khusus SUPERADMIN/ADMIN (dicek bareng di toggleInputSheet()). -->
-      <button id="inputBadikShortcutBtn" style="display:none; width: 100%; align-items: center; gap: 16px; background: var(--glass-strong); padding: 16px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 16px; cursor: pointer;" onclick="pintasTambahBantuanProgramLain('badik')">
-        <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(59, 130, 246, 0.15); color: #3B82F6; display: flex; align-items: center; justify-content: center;">
-          <span class="material-symbols-outlined">school</span>
-        </div>
-        <div style="text-align: left;">
-          <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Input Program BADIK</div>
-          <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Catat bantuan pendidikan yang disalurkan</div>
-        </div>
-      </button>
+          <!-- 🩹 FIX: jalan pintas "Tambah Bantuan Program BASO" dari sheet Input Data -->
+          <button id="inputBasoShortcutBtn" class="input-action-card" style="display:none; --in-rgb: 245, 158, 11; --in-accent: #F59E0B; --in-accent-light: #D97706;" onclick="pintasTambahBantuanProgramLain('baso')">
+            <div class="input-action-icon">
+              <span class="material-symbols-outlined">shopping_bag</span>
+            </div>
+            <div class="input-action-body">
+              <div class="input-action-title">Input Program BASO</div>
+              <div class="input-action-desc">Catat bantuan sembako yang disalurkan</div>
+            </div>
+            <span class="material-symbols-outlined input-action-arrow">chevron_right</span>
+          </button>
 
-      <button id="inputBatanShortcutBtn" style="display:none; width: 100%; align-items: center; gap: 16px; background: var(--glass-strong); padding: 16px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 16px; cursor: pointer;" onclick="pintasTambahBantuanProgramLain('batan')">
-        <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(20, 184, 166, 0.15); color: #14B8A6; display: flex; align-items: center; justify-content: center;">
-          <span class="material-symbols-outlined">medical_services</span>
-        </div>
-        <div style="text-align: left;">
-          <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Input Program BATAN</div>
-          <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Catat bantuan kesehatan yang disalurkan</div>
-        </div>
-      </button>
+          <button id="inputBadikShortcutBtn" class="input-action-card" style="display:none; --in-rgb: 59, 130, 246; --in-accent: #60A5FA; --in-accent-light: #2563EB;" onclick="pintasTambahBantuanProgramLain('badik')">
+            <div class="input-action-icon">
+              <span class="material-symbols-outlined">school</span>
+            </div>
+            <div class="input-action-body">
+              <div class="input-action-title">Input Program BADIK</div>
+              <div class="input-action-desc">Catat bantuan pendidikan yang disalurkan</div>
+            </div>
+            <span class="material-symbols-outlined input-action-arrow">chevron_right</span>
+          </button>
 
-      <!-- 🩹 FIX: "Realisasi Donasi Lapangan" & "Realisasi Kitabisa" digabung jadi
-           SATU tombol "Input Program GOPAY" -- tombol ini gak langsung buka modal,
-           tapi buka sub-sheet "inputGopaySubOverlay" (lihat toggleInputGopaySubSheet())
-           yang isinya 2 pilihan tadi. Backend/modal masing-masing (rdInputOverlay &
-           kbInputOverlay) TIDAK berubah, cuma jalan masuknya yang disatukan.
-           Tetap khusus SUPERADMIN/ADMIN (dicek bareng di toggleInputSheet()). -->
-      <button id="inputGopayShortcutBtn" style="display:none; width: 100%; align-items: center; gap: 16px; background: var(--glass-strong); padding: 16px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 16px; cursor: pointer;" onclick="toggleInputGopaySubSheet()">
-        <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(34, 197, 94, 0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center;">
-          <span class="material-symbols-outlined">account_balance</span>
+          <button id="inputBatanShortcutBtn" class="input-action-card" style="display:none; --in-rgb: 20, 184, 166; --in-accent: #2DD4BF; --in-accent-light: #0D9488;" onclick="pintasTambahBantuanProgramLain('batan')">
+            <div class="input-action-icon">
+              <span class="material-symbols-outlined">medical_services</span>
+            </div>
+            <div class="input-action-body">
+              <div class="input-action-title">Input Program BATAN</div>
+              <div class="input-action-desc">Catat bantuan kesehatan yang disalurkan</div>
+            </div>
+            <span class="material-symbols-outlined input-action-arrow">chevron_right</span>
+          </button>
         </div>
-        <div style="text-align: left;">
-          <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Input Program GOPAY</div>
-          <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Realisasi Donasi Lapangan &amp; Realisasi Kitabisa</div>
-        </div>
-      </button>
+      </div>
 
-      <!-- 🔄 DIPINDAH dari tab Keuangan (kartu "Input Data Santunan") ke sheet
-           Input ini sesuai permintaan Heru. Fungsi/modal TIDAK berubah
-           (bukaInputRateSantunan & bukaInputSantunanSapa). SUPERADMIN lihat
-           tombol aktif, ADMIN lihat versi terkunci (diatur di toggleInputSheet()). -->
-      <button id="inputRateGopayBtn" style="display:none; width: 100%; align-items: center; gap: 16px; background: var(--glass-strong); padding: 16px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 16px; cursor: pointer;" onclick="closeAllInputSheets_(); bukaInputRateSantunan()">
-        <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(34, 197, 94, 0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center;">
-          <span class="material-symbols-outlined">groups</span>
-        </div>
-        <div style="text-align: left;">
-          <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Input Data Santunan GOPAY</div>
-          <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Catat realisasi penyaluran santunan bulanan GOPAY</div>
-        </div>
-      </button>
+      <div class="input-group" id="inputSectionSantunan" style="display:none;">
+        <div class="input-group-label">Santunan Bulanan</div>
+        <div class="input-action-grid input-action-grid-2col">
+          <!-- 🔄 DIPINDAH dari tab Keuangan (kartu "Input Data Santunan") ke sheet Input -->
+          <button id="inputRateGopayBtn" class="input-action-card" style="display:none; --in-rgb: 16, 185, 129; --in-accent: #10B981; --in-accent-light: #059669;" onclick="closeAllInputSheets_(); bukaInputRateSantunan()">
+            <div class="input-action-icon">
+              <span class="material-symbols-outlined">groups</span>
+            </div>
+            <div class="input-action-body">
+              <div class="input-action-title">Input Data Santunan GOPAY</div>
+              <div class="input-action-desc">Catat realisasi penyaluran santunan bulanan GOPAY</div>
+            </div>
+            <span class="material-symbols-outlined input-action-arrow">chevron_right</span>
+          </button>
 
-      <button id="inputRateGopayLockedBtn" disabled title="Input Data Santunan GOPAY khusus Super Admin" style="display:none; width: 100%; align-items: center; gap: 16px; background: rgba(148,163,184,0.10); padding: 16px; border-radius: 16px; border: 1px solid rgba(148,163,184,0.3); margin-bottom: 16px; cursor: not-allowed;">
-        <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(148,163,184,0.15); color: var(--text-muted); display: flex; align-items: center; justify-content: center;">
-          <span class="material-symbols-outlined">lock</span>
-        </div>
-        <div style="text-align: left;">
-          <div style="font-size: 14px; font-weight: 600; color: var(--text-muted);">Input Data Santunan GOPAY</div>
-          <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Khusus Super Admin</div>
-        </div>
-      </button>
+          <button id="inputRateGopayLockedBtn" class="input-action-card is-locked" disabled title="Input Data Santunan GOPAY khusus Super Admin" style="display:none;">
+            <div class="input-action-icon">
+              <span class="material-symbols-outlined">groups</span>
+            </div>
+            <div class="input-action-body">
+              <div class="input-action-title">Input Data Santunan GOPAY</div>
+              <div class="input-action-desc">Khusus Super Admin</div>
+            </div>
+            <span class="material-symbols-outlined input-action-lock">lock</span>
+          </button>
 
-      <button id="inputSantunanSapaBtn" style="display:none; width: 100%; align-items: center; gap: 16px; background: var(--glass-strong); padding: 16px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 16px; cursor: pointer;" onclick="closeAllInputSheets_(); bukaInputSantunanSapa()">
-        <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(236, 72, 153, 0.15); color: #EC4899; display: flex; align-items: center; justify-content: center;">
-          <span class="material-symbols-outlined">diversity_1</span>
-        </div>
-        <div style="text-align: left;">
-          <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Input Data Santunan SAPA</div>
-          <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Catat realisasi penyaluran santunan bulanan SAPA</div>
-        </div>
-      </button>
+          <button id="inputSantunanSapaBtn" class="input-action-card" style="display:none; --in-rgb: 236, 72, 153; --in-accent: #F472B6; --in-accent-light: #DB2777;" onclick="closeAllInputSheets_(); bukaInputSantunanSapa()">
+            <div class="input-action-icon">
+              <span class="material-symbols-outlined">diversity_1</span>
+            </div>
+            <div class="input-action-body">
+              <div class="input-action-title">Input Data Santunan SAPA</div>
+              <div class="input-action-desc">Catat realisasi penyaluran santunan bulanan SAPA</div>
+            </div>
+            <span class="material-symbols-outlined input-action-arrow">chevron_right</span>
+          </button>
 
-      <button id="inputSantunanSapaLockedBtn" disabled title="Input Data Santunan SAPA khusus Super Admin" style="display:none; width: 100%; align-items: center; gap: 16px; background: rgba(148,163,184,0.10); padding: 16px; border-radius: 16px; border: 1px solid rgba(148,163,184,0.3); margin-bottom: 16px; cursor: not-allowed;">
-        <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(148,163,184,0.15); color: var(--text-muted); display: flex; align-items: center; justify-content: center;">
-          <span class="material-symbols-outlined">lock</span>
+          <button id="inputSantunanSapaLockedBtn" class="input-action-card is-locked" disabled title="Input Data Santunan SAPA khusus Super Admin" style="display:none;">
+            <div class="input-action-icon">
+              <span class="material-symbols-outlined">diversity_1</span>
+            </div>
+            <div class="input-action-body">
+              <div class="input-action-title">Input Data Santunan SAPA</div>
+              <div class="input-action-desc">Khusus Super Admin</div>
+            </div>
+            <span class="material-symbols-outlined input-action-lock">lock</span>
+          </button>
         </div>
-        <div style="text-align: left;">
-          <div style="font-size: 14px; font-weight: 600; color: var(--text-muted);">Input Data Santunan SAPA</div>
-          <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Khusus Super Admin</div>
-        </div>
-      </button>
+      </div>
 
-      <button style="width: 100%; padding: 14px; background: var(--glass); border-radius: 12px; font-size: 14px; font-weight: 600; color: var(--text-primary); border: 1px solid var(--glass-border); cursor: pointer;" onclick="toggleInputSheet()">Batal</button>
+      <div id="inputEmptyState" class="input-empty-state" style="display:none;">
+        <span class="material-symbols-outlined">lock_person</span>
+        <p>Belum ada menu input cepat yang tersedia untuk peran akun Anda saat ini.</p>
+      </div>
+
+      <div class="input-sheet-footer">
+        <button type="button" class="input-sheet-cancel" onclick="toggleInputSheet()">Tutup</button>
+      </div>
     </div>
   </div>
 
-  <!-- 🩹 FIX: Sub-sheet "Input Program GOPAY" -- muncul kalau tombol "Input Program
-       GOPAY" di sheet "Input Data" ditekan, isinya 2 pilihan: "Realisasi Donasi
-       Lapangan" & "Realisasi Kitabisa" (sebelumnya 2 tombol terpisah di sheet utama).
-       Lihat toggleInputGopaySubSheet() di bagian script utama. -->
+  <!-- 🩹 FIX: Sub-sheet "Input Program GOPAY" -->
   <div class="user-form-overlay" id="inputGopaySubOverlay" onclick="if(event.target===this) toggleInputGopaySubSheet()" style="align-items: flex-end;">
-    <div class="user-form-sheet" style="padding-bottom: 40px; border-radius: 24px 24px 0 0;">
-      <div style="width: 48px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 4px; margin: 0 auto 16px;"></div>
-      <h3 style="text-align: center; font-size: 16px; font-weight: 700; margin-bottom: 16px;">Input Program GOPAY</h3>
-
-      <button style="width: 100%; display: flex; align-items: center; gap: 16px; background: var(--glass-strong); padding: 16px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 12px; cursor: pointer;" onclick="bukaInputRealisasiLapangan()">
-        <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(34, 197, 94, 0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center;">
-          <span class="material-symbols-outlined">account_balance</span>
+    <div class="user-form-sheet input-sheet">
+      <div class="input-sheet-handle"></div>
+      <div class="input-sheet-head">
+        <div>
+          <h3 class="input-sheet-title">Input Program GOPAY</h3>
+          <p class="input-sheet-sub">Pilih jenis pencatatan realisasi program GOPAY</p>
         </div>
-        <div style="text-align: left;">
-          <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Realisasi Donasi Lapangan</div>
-          <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Catat/update realisasi donasi per wilayah</div>
-        </div>
-      </button>
+        <button type="button" class="input-sheet-close" aria-label="Tutup" onclick="toggleInputGopaySubSheet()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
 
-      <button style="width: 100%; padding: 14px; background: var(--glass); border-radius: 12px; font-size: 14px; font-weight: 600; color: var(--text-primary); border: 1px solid var(--glass-border); cursor: pointer;" onclick="toggleInputGopaySubSheet()">Batal</button>
+      <div class="input-group">
+        <div class="input-action-grid">
+          <button class="input-action-card" style="--in-rgb: 16, 185, 129; --in-accent: #10B981; --in-accent-light: #059669;" onclick="bukaInputRealisasiLapangan()">
+            <div class="input-action-icon">
+              <span class="material-symbols-outlined">account_balance</span>
+            </div>
+            <div class="input-action-body">
+              <div class="input-action-title">Realisasi Donasi Lapangan</div>
+              <div class="input-action-desc">Catat atau perbarui realisasi donasi per wilayah</div>
+            </div>
+            <span class="material-symbols-outlined input-action-arrow">chevron_right</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="input-sheet-footer">
+        <button type="button" class="input-sheet-cancel" onclick="toggleInputGopaySubSheet()">Kembali</button>
+      </div>
     </div>
   </div>
 
@@ -11328,6 +11640,14 @@ function toggleInputSheet() {
       const btn = document.getElementById(pair[0]);
       if (btn) btn.style.display = pair[1] ? "flex" : "none";
     });
+    const secOps = document.getElementById("inputSectionOps");
+    const secProg = document.getElementById("inputSectionProgram");
+    const secSantunan = document.getElementById("inputSectionSantunan");
+    const emptyState = document.getElementById("inputEmptyState");
+    if (secOps) secOps.style.display = bolehProgramLain ? "block" : "none";
+    if (secProg) secProg.style.display = bolehProgramLain ? "block" : "none";
+    if (secSantunan) secSantunan.style.display = (isSuper || isAdmin) ? "block" : "none";
+    if (emptyState) emptyState.style.display = (!bolehProgramLain && !isSuper && !isAdmin) ? "block" : "none";
     sheet.classList.add('open');
   }
 }
