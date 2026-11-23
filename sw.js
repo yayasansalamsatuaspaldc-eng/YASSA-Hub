@@ -40,7 +40,7 @@ _hubMessaging.onBackgroundMessage(function (payload) {
   });
 });
 
-const CACHE_NAME = "yassa-GOPAY-shell-v12"; // dinaikkan ke v12 agar browser otomatis mengaktifkan update baru ini
+const CACHE_NAME = "yassa-GOPAY-shell-v12.1"; // dinaikkan ke v12.1 agar browser otomatis mengaktifkan update baru ini
 const SHELL_FILES = [
   "./",
   "./index.html",
