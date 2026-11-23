@@ -4650,6 +4650,701 @@ html[data-theme="light"] .um-logout-btn {
     transform: none !important;
   }
 }
+
+/* ===== Program YASSA / Program GO-PAY Overlay (#programGopayPage) ===== */
+#programGopayPage .overlay-header {
+  padding: 10px 16px;
+  min-height: 58px;
+  background: rgba(11, 16, 28, 0.92);
+  border-bottom: 1px solid var(--glass-border);
+  backdrop-filter: blur(18px);
+}
+html[data-theme="light"] #programGopayPage .overlay-header {
+  background: rgba(255, 255, 255, 0.94);
+}
+.pg-header-inner {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+#programGopayPage .overlay-close.pg-back-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  padding: 0;
+  flex-shrink: 0;
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-border-strong);
+  color: var(--text-primary);
+  transition: background 0.16s ease, border-color 0.16s ease, transform 0.14s ease;
+}
+#programGopayPage .overlay-close.pg-back-btn:hover {
+  border-color: rgba(var(--bento-primary-rgb), 0.45);
+  background: rgba(var(--bento-primary-rgb), 0.08);
+}
+#programGopayPage .overlay-close.pg-back-btn:active {
+  transform: scale(0.95);
+}
+.pg-header-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pg-accent-bg, rgba(34, 197, 94, 0.14));
+  border: 1px solid var(--pg-accent-border, rgba(34, 197, 94, 0.28));
+  color: var(--pg-accent, #22C55E);
+}
+.pg-header-badge .material-symbols-outlined {
+  font-size: 19px;
+  font-variation-settings: 'FILL' 1;
+}
+.pg-header-titles {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+#programGopayPage .overlay-title {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  color: var(--text-primary);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pg-header-sub {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  line-height: 1.25;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#programGopayContent.akun-content {
+  padding: 0 !important;
+  background: var(--bg-navy);
+}
+.pg-shell {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px 16px 36px;
+  box-sizing: border-box;
+}
+.pg-hero-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.pg-banner-card {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-strong);
+  box-shadow: 0 8px 24px rgba(2, 6, 23, 0.22);
+  position: relative;
+}
+html[data-theme="light"] .pg-banner-card {
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+}
+.pg-banner-card.has-photo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0B1220;
+}
+.pg-banner-img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.pg-banner-fallback {
+  display: none;
+  padding: 26px 20px;
+  text-align: left;
+  width: 100%;
+  color: #FFFFFF;
+}
+.pg-banner-card.img-broken .pg-banner-fallback {
+  display: block;
+}
+.pg-banner-mesh {
+  min-height: 176px;
+  padding: 22px 20px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  background:
+    radial-gradient(circle at 90% 18%, var(--pg-accent-bg, rgba(34,197,94,0.28)) 0%, transparent 55%),
+    linear-gradient(135deg, #0F172A 0%, #16233B 100%);
+  color: #F8FAFC;
+}
+html[data-theme="light"] .pg-banner-mesh {
+  background:
+    radial-gradient(circle at 90% 18%, var(--pg-accent-bg, rgba(34,197,94,0.20)) 0%, transparent 58%),
+    linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+}
+.pg-banner-kicker {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pg-accent, #4ADE80);
+  margin-bottom: 6px;
+}
+.pg-banner-title {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  color: #FFFFFF;
+  margin: 0;
+}
+.pg-banner-sub {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #CBD5E1;
+  margin-top: 4px;
+}
+.pg-banner-mark {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pg-accent-bg, rgba(34, 197, 94, 0.16));
+  border: 1px solid var(--pg-accent-border, rgba(34, 197, 94, 0.35));
+  color: var(--pg-accent, #4ADE80);
+}
+.pg-banner-mark .material-symbols-outlined {
+  font-size: 30px;
+  font-variation-settings: 'FILL' 1;
+}
+
+.pg-summary-card {
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  box-shadow: 0 4px 16px rgba(2, 6, 23, 0.14);
+}
+html[data-theme="light"] .pg-summary-card {
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+}
+.pg-summary-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pg-summary-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pg-summary-icon .material-symbols-outlined {
+  font-size: 21px;
+  font-variation-settings: 'FILL' 1;
+}
+.pg-summary-title {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.25;
+}
+.pg-summary-meta {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  line-height: 1.35;
+}
+.pg-sync-note {
+  color: var(--bento-primary);
+  font-weight: 600;
+}
+
+.pg-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  background: var(--glass-inner);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.pg-kpi-cell {
+  padding: 12px 10px;
+  text-align: center;
+  position: relative;
+  border-bottom: 1px solid var(--glass-border);
+  border-right: 1px solid var(--glass-border);
+}
+.pg-kpi-cell:nth-child(2n) {
+  border-right: none;
+}
+.pg-kpi-cell:nth-last-child(-n+2) {
+  border-bottom: none;
+}
+.pg-kpi-cell::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 16px;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: var(--cell-accent, var(--bento-primary));
+  opacity: 0.78;
+}
+.pg-kpi-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+.pg-kpi-val.is-money {
+  font-size: 14px;
+}
+.pg-kpi-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-top: 4px;
+  letter-spacing: 0.02em;
+}
+.pg-summary-note {
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--text-muted);
+  padding-top: 10px;
+  border-top: 1px solid var(--glass-border);
+}
+
+.pg-num-blue   { color: #60A5FA; }
+.pg-num-green  { color: #4ADE80; }
+.pg-num-purple { color: #C084FC; }
+.pg-num-amber  { color: #FBBF24; }
+.pg-num-pink   { color: #F472B6; }
+html[data-theme="light"] .pg-num-blue   { color: #2563EB; }
+html[data-theme="light"] .pg-num-green  { color: #15803D; }
+html[data-theme="light"] .pg-num-purple { color: #7E22CE; }
+html[data-theme="light"] .pg-num-amber  { color: #B45309; }
+html[data-theme="light"] .pg-num-pink   { color: #BE185D; }
+
+/* Section Header & Live Search */
+.pg-wilayah-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.pg-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.pg-section-title-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.pg-section-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.pg-section-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.pg-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 200px;
+  max-width: 280px;
+  min-width: 170px;
+}
+.pg-search-icon {
+  position: absolute;
+  left: 11px;
+  font-size: 17px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.pg-search-input {
+  width: 100%;
+  height: 36px;
+  padding: 0 32px 0 34px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border-strong);
+  background: var(--glass-strong);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  outline: none;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+.pg-search-input::placeholder {
+  color: var(--text-muted);
+}
+.pg-search-input:focus {
+  border-color: var(--bento-primary);
+  box-shadow: 0 0 0 3px rgba(var(--bento-primary-rgb), 0.14);
+}
+.pg-search-clear {
+  position: absolute;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.pg-search-clear.visible {
+  display: flex;
+}
+.pg-search-clear:hover {
+  color: var(--text-primary);
+  background: var(--glass-border);
+}
+.pg-search-clear .material-symbols-outlined {
+  font-size: 15px;
+}
+
+.pg-region-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+.pg-region-card {
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+.pg-region-card:hover {
+  border-color: var(--glass-border-strong);
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.16);
+}
+html[data-theme="light"] .pg-region-card:hover {
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+.pg-region-card.is-cluster {
+  grid-column: 1 / -1;
+  border-radius: 16px;
+  padding: 16px;
+  border-color: rgba(var(--bento-primary-rgb), 0.30);
+}
+.pg-region-card.is-hidden {
+  display: none;
+}
+
+.pg-cluster-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.pg-cluster-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.pg-cluster-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--bento-primary-rgb), 0.13);
+  border: 1px solid rgba(var(--bento-primary-rgb), 0.25);
+  color: var(--bento-primary);
+}
+.pg-cluster-icon .material-symbols-outlined {
+  font-size: 19px;
+  font-variation-settings: 'FILL' 1;
+}
+.pg-region-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+.pg-cluster-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.pg-cluster-toggle {
+  min-height: 32px;
+  padding: 4px 10px;
+  border-radius: 9px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-inner);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.pg-cluster-toggle:hover {
+  background: var(--glass-border);
+  color: var(--text-primary);
+}
+.pg-cluster-toggle .material-symbols-outlined {
+  font-size: 16px;
+  transition: transform 0.18s ease;
+}
+.pg-region-card.is-collapsed .pg-cluster-toggle .material-symbols-outlined {
+  transform: rotate(-90deg);
+}
+.pg-region-card.is-collapsed .pg-member-wrap {
+  display: none;
+}
+
+.pg-card-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--glass-inner);
+  border: 1px solid var(--glass-border);
+  border-radius: 11px;
+  margin-top: 10px;
+}
+.pg-region-card.is-cluster .pg-card-metrics {
+  margin-top: 0;
+}
+.pg-metric-col {
+  min-width: 0;
+}
+.pg-metric-lbl {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pg-metric-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 13.5px;
+  font-weight: 800;
+  line-height: 1.3;
+  margin-top: 2px;
+}
+
+.pg-member-wrap {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--glass-border);
+}
+.pg-member-head {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.pg-member-list {
+  display: flex;
+  flex-direction: column;
+}
+.pg-member-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 14px;
+  padding: 9px 4px;
+  border-top: 1px solid var(--glass-border);
+}
+.pg-member-row:first-child {
+  border-top: none;
+  padding-top: 2px;
+}
+.pg-member-row:last-child {
+  padding-bottom: 2px;
+}
+.pg-member-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.pg-member-stats {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+.pg-member-stat {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.pg-member-stat b {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  margin-left: 3px;
+}
+
+.pg-region-ket {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
+.pg-state-card {
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 36px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.pg-retry-btn {
+  min-height: 40px;
+  padding: 0 18px;
+  border-radius: 11px;
+  border: 1px solid rgba(var(--bento-primary-rgb), 0.35);
+  background: rgba(var(--bento-primary-rgb), 0.14);
+  color: var(--bento-primary);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.16s ease, transform 0.14s ease;
+}
+.pg-retry-btn:hover {
+  background: rgba(var(--bento-primary-rgb), 0.22);
+}
+.pg-retry-btn:active {
+  transform: scale(0.97);
+}
+.pg-search-empty {
+  display: none;
+  padding: 24px 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+}
+.pg-search-empty.visible {
+  display: block;
+}
+
+@media (min-width: 440px) {
+  .pg-kpi-strip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .pg-kpi-strip--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .pg-kpi-cell {
+    border-bottom: none;
+    border-right: 1px solid var(--glass-border);
+  }
+  .pg-kpi-cell:nth-child(2n) {
+    border-right: 1px solid var(--glass-border);
+  }
+  .pg-kpi-cell:last-child {
+    border-right: none;
+  }
+}
+
+@media (min-width: 720px) {
+  .pg-shell {
+    padding: 20px 24px 44px;
+  }
+  .pg-region-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+
+@media (min-width: 860px) {
+  .pg-hero-grid {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: 16px;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 400px) {
+  .pg-card-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pg-region-card,
+  .pg-cluster-toggle .material-symbols-outlined,
+  #programGopayPage .overlay-close.pg-back-btn {
+    transition: none !important;
+  }
+}
 </style>
 
 </head>
@@ -5847,16 +6542,24 @@ html[data-theme="light"] .um-logout-btn {
   </div>
 
   <!-- 🆕 Layar Program GO-PAY (dibuka dari kartu GO-PAY di "PILIH PROGRAM YASSA", tab Beranda):
-       banner/foto di atas -> kartu Data Anak Yatim Gopay -> rincian per wilayah.
+       banner/foto -> kartu Data Anak Yatim Gopay -> rincian per wilayah.
        Pakai class "overlay" yang sama, jadi otomatis ikut tombol back HP. -->
   <div class="overlay" id="programGopayPage">
     <div class="overlay-header">
-      <button class="overlay-close" id="programGopayClose">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E2E8F0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-      </button>
-      <span class="overlay-title" id="programPageTitle">Program GO-PAY</span>
+      <div class="pg-header-inner">
+        <button class="overlay-close pg-back-btn" id="programGopayClose" aria-label="Kembali">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <div class="pg-header-badge" id="programPageBadge">
+          <span class="material-symbols-outlined" id="programPageIcon">volunteer_activism</span>
+        </div>
+        <div class="pg-header-titles">
+          <span class="overlay-title" id="programPageTitle">Program GO-PAY</span>
+          <span class="pg-header-sub" id="programPageSub">Gojek Peduli Anak Yatim</span>
+        </div>
+      </div>
     </div>
-    <div class="akun-content" id="programGopayContent" style="padding: 0 0 28px;"></div>
+    <div class="akun-content" id="programGopayContent"></div>
   </div>
 
   <!-- Halaman Penuh: Data Anak Asuh (Program SAPA) -- mirror persis
@@ -15226,7 +15929,17 @@ function openProgramPage_(key) {
   const p = programInfo_(key);
   const judul = document.getElementById("programPageTitle");
   if (judul) judul.textContent = "Program " + p.label;
-  document.getElementById("programGopayPage").classList.add("open");
+  const sub = document.getElementById("programPageSub");
+  if (sub) sub.textContent = p.sub || "Program YASSA";
+  const ico = document.getElementById("programPageIcon");
+  if (ico) ico.textContent = p.icon || "volunteer_activism";
+  const pageEl = document.getElementById("programGopayPage");
+  if (pageEl) {
+    pageEl.style.setProperty("--pg-accent", p.color || "#22C55E");
+    pageEl.style.setProperty("--pg-accent-bg", p.bg || "rgba(34,197,94,0.15)");
+    pageEl.style.setProperty("--pg-accent-border", (p.color || "#22C55E") + "44");
+    pageEl.classList.add("open");
+  }
   const area = document.getElementById("programGopayContent");
   if (area) area.scrollTop = 0;
   if (key === "gopay") loadProgramGopayPage_();
@@ -15266,46 +15979,135 @@ function formatAngkaKolom_(kol, v) {
   return kol.rp ? formatRupiahHub(v) : Number(v).toLocaleString("id-ID");
 }
 
-// kolom: [{key,label,warna,rp?}] -> deretan "Label <b>angka</b>"
+function pgColorClass_(warna, fallback) {
+  const w = String(warna || "").toUpperCase();
+  if (w === "#93C5FD" || w === "#3B82F6" || w === "#60A5FA") return "pg-num-blue";
+  if (w === "#86EFAC" || w === "#22C55E" || w === "#4ADE80") return "pg-num-green";
+  if (w === "#D8B4FE" || w === "#A855F7" || w === "#C084FC") return "pg-num-purple";
+  if (w === "#FDE68A" || w === "#F59E0B" || w === "#FBBF24") return "pg-num-amber";
+  if (w === "#F9A8D4" || w === "#F472B6" || w === "#EC4899") return "pg-num-pink";
+  return fallback || "";
+}
+
+// kolom: [{key,label,warna,rp?}] -> deretan metrik terstruktur
 function barisMetrikWilayah_(v, kolom, ukuran) {
-  const out = kolom.map(function (kol) {
+  const items = kolom.map(function (kol) {
     const t = formatAngkaKolom_(kol, v[kol.key]);
-    if (t === null) return "";
-    return '<div style="font-size:' + ukuran + 'px; color: var(--text-secondary);">' + kol.label +
-      ' <b style="color:' + kol.warna + ';">' + t + '</b></div>';
-  }).join("");
-  return out ? '<div style="display:flex; gap:12px; flex-wrap:wrap;">' + out + '</div>' : "";
+    if (t === null) return null;
+    const cls = pgColorClass_(kol.warna, "");
+    const styleColor = cls ? "" : ' style="color:' + kol.warna + ';"';
+    return { label: kol.label, val: t, cls: cls, styleColor: styleColor };
+  }).filter(Boolean);
+  if (!items.length) return "";
+  if (ukuran && ukuran < 11) {
+    return '<div class="pg-member-stats">' + items.map(function (it) {
+      return '<span class="pg-member-stat">' + escapeHtmlHub(it.label) + '<b class="' + it.cls + '"' + it.styleColor + '>' + it.val + '</b></span>';
+    }).join("") + '</div>';
+  }
+  const cols = items.length <= 2 ? items.length : 4;
+  return '<div class="pg-card-metrics" style="grid-template-columns:repeat(' + cols + ',minmax(0,1fr));">' +
+    items.map(function (it) {
+      return '<div class="pg-metric-col">' +
+        '<div class="pg-metric-lbl">' + escapeHtmlHub(it.label) + '</div>' +
+        '<div class="pg-metric-val ' + it.cls + '"' + it.styleColor + '>' + it.val + '</div>' +
+      '</div>';
+    }).join("") + '</div>';
+}
+
+function togglePgCluster_(btn) {
+  const card = btn && btn.closest(".pg-region-card");
+  if (!card) return;
+  const collapsed = card.classList.toggle("is-collapsed");
+  const lbl = btn.querySelector("span:first-child");
+  if (lbl) lbl.textContent = collapsed ? "Lihat rincian" : "Tutup rincian";
+}
+
+function filterProgramWilayah_(inputEl) {
+  const section = inputEl && inputEl.closest(".pg-wilayah-section");
+  if (!section) return;
+  const q = String(inputEl.value || "").trim().toLowerCase();
+  const clearBtn = section.querySelector(".pg-search-clear");
+  if (clearBtn) clearBtn.classList.toggle("visible", q.length > 0);
+  let visibleCount = 0;
+  section.querySelectorAll(".pg-region-card").forEach(function (card) {
+    const hay = (card.getAttribute("data-wilayah-search") || "").toLowerCase();
+    const match = !q || hay.indexOf(q) !== -1;
+    card.classList.toggle("is-hidden", !match);
+    if (match) visibleCount++;
+  });
+  const emptyEl = section.querySelector(".pg-search-empty");
+  if (emptyEl) emptyEl.classList.toggle("visible", visibleCount === 0);
+}
+
+function clearFilterProgramWilayah_(btn) {
+  const wrap = btn && btn.closest(".pg-search-wrap");
+  const input = wrap && wrap.querySelector(".pg-search-input");
+  if (!input) return;
+  input.value = "";
+  filterProgramWilayah_(input);
+  input.focus();
 }
 
 function renderKartuWilayahGenerik_(r, kolom, warnaAksen) {
   const gab = r.kelompok;
-  let h = '<div style="background: var(--glass-strong); border-radius:14px; padding:12px 14px; margin-bottom:8px; border:1px solid ' +
-    (gab ? warnaAksen + '55' : 'var(--glass-border)') + ';">' +
-    '<div style="display:flex; align-items:center; gap:8px; margin-bottom:' + (gab ? '2px' : '6px') + ';">' +
-      (gab ? '<span class="material-symbols-outlined" style="font-size:18px; color:' + warnaAksen + '; font-variation-settings:\'FILL\' 1;">' + r.ikon + '</span>' : '') +
-      '<div style="font-size:12.5px; font-weight:700; color: var(--text-primary);">' + escapeHtmlHub(r.nama) + '</div>' +
-    '</div>';
-  if (gab) h += '<div style="font-size:9.5px; color: var(--text-muted); margin-bottom:8px;">Gabungan ' + r.anggota.length + ' wilayah</div>';
-  h += barisMetrikWilayah_(r.v, kolom, 11);
-  if (r.ket) h += '<div style="font-size:10.5px; color: var(--text-secondary); margin-top:4px;">' + escapeHtmlHub(r.ket) + '</div>';
+  const searchTerms = [r.nama].concat(gab ? r.anggota.map(function (a) { return a.nama; }) : []).join(" ");
+  let h = '<div class="pg-region-card' + (gab ? ' is-cluster' : '') + '" data-wilayah-search="' + escapeHtmlHub(searchTerms) + '">';
   if (gab) {
-    h += '<div style="margin-top:12px; padding-top:4px; border-top:1px dashed var(--glass-border);">' +
-      '<div style="font-size:9.5px; font-weight:700; letter-spacing:0.06em; color: var(--text-muted); margin:8px 0 2px;">RINCIAN PER WILAYAH</div>' +
-      r.anggota.map(function (a, i) {
-        return '<div style="padding:9px 0;' + (i ? ' border-top:1px solid var(--glass-border);' : '') + '">' +
-          '<div style="font-size:11.5px; font-weight:700; color: var(--text-primary); margin-bottom:4px;">' + escapeHtmlHub(a.nama) + '</div>' +
+    h += '<div class="pg-cluster-top">' +
+      '<div class="pg-cluster-brand">' +
+        '<div class="pg-cluster-icon" style="color:' + warnaAksen + '; background:' + warnaAksen + '22; border-color:' + warnaAksen + '44;">' +
+          '<span class="material-symbols-outlined">' + r.ikon + '</span>' +
+        '</div>' +
+        '<div>' +
+          '<div class="pg-region-name">' + escapeHtmlHub(r.nama) + '</div>' +
+          '<div class="pg-cluster-sub">Gabungan ' + r.anggota.length + ' wilayah</div>' +
+        '</div>' +
+      '</div>' +
+      '<button type="button" class="pg-cluster-toggle" onclick="togglePgCluster_(this)">' +
+        '<span>Tutup rincian</span><span class="material-symbols-outlined">expand_more</span>' +
+      '</button>' +
+    '</div>';
+  } else {
+    h += '<div class="pg-region-name">' + escapeHtmlHub(r.nama) + '</div>';
+  }
+  h += barisMetrikWilayah_(r.v, kolom, 11);
+  if (r.ket) h += '<div class="pg-region-ket">' + escapeHtmlHub(r.ket) + '</div>';
+  if (gab) {
+    h += '<div class="pg-member-wrap">' +
+      '<div class="pg-member-head">Rincian Wilayah Anggota (' + r.anggota.length + ')</div>' +
+      '<div class="pg-member-list">' +
+      r.anggota.map(function (a) {
+        return '<div class="pg-member-row">' +
+          '<div class="pg-member-name">' + escapeHtmlHub(a.nama) + '</div>' +
           barisMetrikWilayah_(a.v, kolom, 10.5) +
-          (a.ket ? '<div style="font-size:10px; color: var(--text-secondary); margin-top:3px;">' + escapeHtmlHub(a.ket) + '</div>' : '') +
+          (a.ket ? '<div class="pg-region-ket" style="width:100%; margin-top:2px;">' + escapeHtmlHub(a.ket) + '</div>' : '') +
         '</div>';
-      }).join("") + '</div>';
+      }).join("") + '</div></div>';
   }
   return h + '</div>';
 }
 
 function htmlDaftarRincianWilayah_(kartu, kolom, warnaAksen) {
-  let h = '<div style="font-size:12px; font-weight:700; color: var(--text-primary); margin: 0 2px 10px;">Rincian per Wilayah (' + kartu.length + ')</div>';
-  if (!kartu.length) return h + '<div style="font-size:11px; color: var(--text-muted); padding:20px 0; text-align:center;">Belum ada data wilayah.</div>';
-  return h + kartu.map(function (r) { return renderKartuWilayahGenerik_(r, kolom, warnaAksen); }).join("");
+  let h = '<div class="pg-wilayah-section">' +
+    '<div class="pg-section-head">' +
+      '<div class="pg-section-title-wrap">' +
+        '<h4 class="pg-section-title">Rincian per Wilayah</h4>' +
+        '<span class="pg-section-count">' + kartu.length + ' wilayah</span>' +
+      '</div>' +
+      (kartu.length > 3
+        ? '<div class="pg-search-wrap">' +
+            '<span class="material-symbols-outlined pg-search-icon">search</span>' +
+            '<input type="search" class="pg-search-input" placeholder="Cari wilayah..." oninput="filterProgramWilayah_(this)" aria-label="Cari wilayah">' +
+            '<button type="button" class="pg-search-clear" onclick="clearFilterProgramWilayah_(this)" aria-label="Hapus pencarian"><span class="material-symbols-outlined">close</span></button>' +
+          '</div>'
+        : '') +
+    '</div>';
+  if (!kartu.length) {
+    return h + '<div class="pg-state-card">Belum ada data wilayah.</div></div>';
+  }
+  return h + '<div class="pg-region-grid">' +
+    kartu.map(function (r) { return renderKartuWilayahGenerik_(r, kolom, warnaAksen); }).join("") +
+    '</div><div class="pg-search-empty">Tidak ada wilayah yang cocok dengan pencarian Anda.</div></div>';
 }
 
 // ---------- SAPA (Anak Asuh): sumber sama dengan halaman Data Anak Asuh ----------
@@ -15314,9 +16116,10 @@ function loadProgramSapaPage_() {
   if (dataAnakAsuhCache) {
     renderProgramSapaPage_(dataAnakAsuhCache, true);
   } else {
-    el.innerHTML = renderProgramGopayBanner_("sapa") +
-      '<div style="display:flex; align-items:center; justify-content:center; padding: 50px 0; color: var(--text-secondary); font-size: 12.5px; gap: 8px;">' +
-      '<span class="material-symbols-outlined spin" style="font-size: 18px;">progress_activity</span> Mengambil data Anak Asuh dari YASSA Mobile...</div>';
+    el.innerHTML = '<div class="pg-shell">' +
+      '<div class="pg-hero-grid">' + renderProgramGopayBanner_("sapa") +
+        '<div class="pg-state-card"><span class="material-symbols-outlined spin" style="font-size: 22px; color: var(--bento-primary);">progress_activity</span><span>Mengambil data Anak Asuh dari YASSA Mobile...</span></div>' +
+      '</div></div>';
   }
   callGASWithRetry_("getDataAnakAsuh", [authToken])
     .then(function (data) {
@@ -15327,10 +16130,11 @@ function loadProgramSapaPage_() {
     .catch(function (err) {
       if (dataAnakAsuhCache) { if (programPageKey_ === "sapa") renderProgramSapaPage_(dataAnakAsuhCache, false); return; }
       if (programPageKey_ !== "sapa") return;
-      el.innerHTML = renderProgramGopayBanner_("sapa") +
-        '<div style="padding: 40px 20px; text-align: center; color: var(--text-secondary); font-size: 12.5px;">Gagal memuat data: ' +
-        escapeHtmlHub(String(err && err.message || err)) +
-        '<br><button onclick="loadProgramSapaPage_()" style="margin-top: 14px; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 99px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--text-primary); cursor: pointer;">Coba lagi</button></div>';
+      el.innerHTML = '<div class="pg-shell">' +
+        '<div class="pg-hero-grid">' + renderProgramGopayBanner_("sapa") +
+          '<div class="pg-state-card"><span>Gagal memuat data: ' + escapeHtmlHub(String(err && err.message || err)) + '</span>' +
+          '<button type="button" class="pg-retry-btn" onclick="loadProgramSapaPage_()">Coba lagi</button></div>' +
+        '</div></div>';
     });
 }
 
@@ -15349,29 +16153,36 @@ function renderProgramSapaPage_(data, dariCache) {
       kk: Number(r.jumlahKK || 0), anak: Number(r.jumlahAnakAsuh || 0),
       piatu: Number(r.jumlahYatimPiatu || 0), dsb: Number(r.jumlahDisabilitas || 0) } };
   });
-  const mini = function (warna, border, teks, angka, label) {
-    return '<div style="flex:1; background:' + warna + '; border:1px solid ' + border + '; border-radius:12px; padding:10px 6px; text-align:center;">' +
-      '<div style="font-size:17px; font-weight:800; color:' + teks + ';">' + Number(angka || 0) + '</div>' +
-      '<div style="font-size:9px; font-weight:700; color: var(--text-muted); margin-top:2px;">' + label + '</div></div>';
+  const kpiCell = function (accentHex, numClass, angka, label) {
+    return '<div class="pg-kpi-cell" style="--cell-accent:' + accentHex + ';">' +
+      '<div class="pg-kpi-val ' + numClass + '">' + Number(angka || 0).toLocaleString("id-ID") + '</div>' +
+      '<div class="pg-kpi-lbl">' + label + '</div></div>';
   };
-  el.innerHTML = renderProgramGopayBanner_("sapa") + '<div style="padding: 18px 20px 0;">' +
-    '<div style="background: var(--glass-strong); border-radius: 16px; padding: 18px 18px 16px; margin-bottom: 18px; border: 1px solid var(--glass-border);">' +
-      '<div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">' +
-        '<div style="width:40px; height:40px; border-radius:12px; background:' + p.bg + '; color:#F9A8D4; display:flex; align-items:center; justify-content:center; flex-shrink:0;">' +
-          '<span class="material-symbols-outlined" style="font-size:21px; font-variation-settings:\'FILL\' 1;">' + p.icon + '</span></div>' +
-        '<div style="flex:1; min-width:0;"><h3 style="font-size:14px; font-weight:700; margin:0;">Data Anak Asuh SAPA</h3>' +
-          '<div style="font-size:10.5px; color: var(--text-secondary); margin-top:1px;">Semua Wilayah' +
-          (dariCache ? ' &bull; <span style="color:' + p.color + ';">Sedang memperbarui...</span>' : '') + '</div></div>' +
+  el.innerHTML = '<div class="pg-shell">' +
+    '<div class="pg-hero-grid">' +
+      renderProgramGopayBanner_("sapa") +
+      '<div class="pg-summary-card">' +
+        '<div class="pg-summary-head">' +
+          '<div class="pg-summary-icon" style="background:' + p.bg + '; color:' + p.color + '; border:1px solid ' + p.color + '44;">' +
+            '<span class="material-symbols-outlined">' + p.icon + '</span></div>' +
+          '<div style="flex:1; min-width:0;">' +
+            '<h3 class="pg-summary-title">Data Anak Asuh SAPA</h3>' +
+            '<div class="pg-summary-meta">Semua Wilayah' +
+              (dariCache ? ' &middot; <span class="pg-sync-note">Memperbarui data...</span>' : '') +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="pg-kpi-strip">' +
+          kpiCell("#EC4899", "pg-num-pink", data.totalKK, "KK") +
+          kpiCell("#F472B6", "pg-num-pink", data.totalAnakAsuh, "Anak Asuh") +
+          kpiCell("#A855F7", "pg-num-purple", data.totalYatimPiatu, "Yatim Piatu") +
+          kpiCell("#F59E0B", "pg-num-amber", data.totalDisabilitas, "Disabilitas*") +
+        '</div>' +
+        '<div class="pg-summary-note">*Disabilitas = Anak + Ortu digabung (1 KK dengan anak &amp; ibu sama-sama disabilitas dihitung 2x, sesuai aturan santunan). Data khusus Program SAPA, diambil langsung dari YASSA Mobile.</div>' +
       '</div>' +
-      '<div style="display:flex; gap:8px;">' +
-        mini("rgba(236,72,153,0.08)", "rgba(236,72,153,0.2)", "#F9A8D4", data.totalKK, "KK") +
-        mini("rgba(219,39,119,0.08)", "rgba(219,39,119,0.2)", "#F472B6", data.totalAnakAsuh, "Anak Asuh") +
-        mini("rgba(168,85,247,0.08)", "rgba(168,85,247,0.2)", "#D8B4FE", data.totalYatimPiatu, "Yatim Piatu") +
-        mini("rgba(245,158,11,0.08)", "rgba(245,158,11,0.2)", "#FDE68A", data.totalDisabilitas, "Disabilitas*") +
-      '</div>' +
-      '<div style="font-size:9px; color: var(--text-muted); margin-top:8px; line-height:1.45;">*Disabilitas = Anak + Ortu digabung (1 KK dgn anak &amp; ibu sama-sama disabilitas dihitung 2x, sesuai aturan santunan). Data khusus Program SAPA (Anak Asuh), diambil langsung dari YASSA Mobile.</div>' +
     '</div>' +
-    htmlDaftarRincianWilayah_(kartu, kolom, p.color) + '</div>';
+    htmlDaftarRincianWilayah_(kartu, kolom, p.color) +
+  '</div>';
 }
 
 // ---------- BASO / PEDAS / BADIK / BATAN: data penyaluran tahun berjalan ----------
@@ -15399,12 +16210,13 @@ function renderProgramTersalurPage_(key, percobaan) {
   if (!data) {
     // Data Beranda belum sampai -> tunggu sebentar (maks ~8 detik), lalu menyerah dengan pesan.
     const menunggu = percobaan < 8;
-    el.innerHTML = renderProgramGopayBanner_(key) +
-      '<div style="display:flex; align-items:center; justify-content:center; padding: 50px 20px; color: var(--text-secondary); font-size: 12.5px; gap: 8px; text-align:center;">' +
+    el.innerHTML = '<div class="pg-shell"><div class="pg-hero-grid">' +
+      renderProgramGopayBanner_(key) +
+      '<div class="pg-state-card">' +
       (menunggu
-        ? '<span class="material-symbols-outlined spin" style="font-size:18px;">progress_activity</span> Mengambil data Program ' + escapeHtmlHub(p.label) + '...'
-        : 'Data Program ' + escapeHtmlHub(p.label) + ' belum tersedia. Tutup layar ini lalu tarik Beranda ke bawah untuk memuat ulang.') +
-      '</div>';
+        ? '<span class="material-symbols-outlined spin" style="font-size:22px; color: var(--bento-primary);">progress_activity</span><span>Mengambil data Program ' + escapeHtmlHub(p.label) + '...</span>'
+        : '<span>Data Program ' + escapeHtmlHub(p.label) + ' belum tersedia. Tutup layar ini lalu tarik Beranda ke bawah untuk memuat ulang.</span>') +
+      '</div></div></div>';
     if (menunggu) {
       setTimeout(function () {
         if (programPageKey_ === key && document.getElementById("programGopayPage").classList.contains("open")) {
@@ -15419,26 +16231,33 @@ function renderProgramTersalurPage_(key, percobaan) {
   const kolom = cfg.kolom.map(function (k, i) { return { key: k.key, label: k.label, rp: k.rp, warna: warnaKolom[i % 2] }; });
   const kartu = kelompokkanWilayah_(data.rincianWilayah || [], cfg.ambil);
   const tahun = data.tahun || new Date().getFullYear();
-  const mini = function (flex, ukuran, teks, label) {
-    return '<div style="flex:' + flex + '; background:' + p.bg + '; border:1px solid ' + p.color + '33; border-radius:12px; padding:10px 6px; text-align:center;">' +
-      '<div style="font-size:' + ukuran + 'px; font-weight:800; color:' + p.color + ';">' + teks + '</div>' +
-      '<div style="font-size:9px; font-weight:700; color: var(--text-muted); margin-top:2px;">' + label + '</div></div>';
+  const kpiCell = function (teks, label, isMoney) {
+    return '<div class="pg-kpi-cell" style="--cell-accent:' + p.color + ';">' +
+      '<div class="pg-kpi-val' + (isMoney ? ' is-money' : '') + '" style="color:' + p.color + ';">' + teks + '</div>' +
+      '<div class="pg-kpi-lbl">' + label + '</div></div>';
   };
-  el.innerHTML = renderProgramGopayBanner_(key) + '<div style="padding: 18px 20px 0;">' +
-    '<div style="background: var(--glass-strong); border-radius: 16px; padding: 18px 18px 16px; margin-bottom: 18px; border: 1px solid var(--glass-border);">' +
-      '<div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">' +
-        '<div style="width:40px; height:40px; border-radius:12px; background:' + p.bg + '; color:' + p.color + '; display:flex; align-items:center; justify-content:center; flex-shrink:0;">' +
-          '<span class="material-symbols-outlined" style="font-size:21px; font-variation-settings:\'FILL\' 1;">' + p.icon + '</span></div>' +
-        '<div style="flex:1; min-width:0;"><h3 style="font-size:14px; font-weight:700; margin:0;">' + cfg.judul + '</h3>' +
-          '<div style="font-size:10.5px; color: var(--text-secondary); margin-top:1px;">' + cfg.teksSub + ' &middot; Tahun ' + escapeHtmlHub(String(tahun)) + ' &middot; Semua Wilayah</div></div>' +
-      '</div>' +
-      '<div style="display:flex; gap:8px;">' +
-        mini(1, 17, Number(data[cfg.fieldPenerima] || 0), cfg.labelPenerima) +
-        mini(1.4, 14, formatRupiahHub(data.totalDisalurkan || 0), key === "baso" ? "Total Dana Tersalur" : "Total Bantuan Tersalur") +
-        mini(1, 17, Number(data.jumlahWilayah || 0), "Wilayah Tersalur") +
+  el.innerHTML = '<div class="pg-shell">' +
+    '<div class="pg-hero-grid">' +
+      renderProgramGopayBanner_(key) +
+      '<div class="pg-summary-card">' +
+        '<div class="pg-summary-head">' +
+          '<div class="pg-summary-icon" style="background:' + p.bg + '; color:' + p.color + '; border:1px solid ' + p.color + '44;">' +
+            '<span class="material-symbols-outlined">' + p.icon + '</span></div>' +
+          '<div style="flex:1; min-width:0;">' +
+            '<h3 class="pg-summary-title">' + cfg.judul + '</h3>' +
+            '<div class="pg-summary-meta">' + cfg.teksSub + ' &middot; Tahun ' + escapeHtmlHub(String(tahun)) + ' &middot; Semua Wilayah</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="pg-kpi-strip pg-kpi-strip--3">' +
+          kpiCell(Number(data[cfg.fieldPenerima] || 0).toLocaleString("id-ID"), cfg.labelPenerima, false) +
+          kpiCell(formatRupiahHub(data.totalDisalurkan || 0), key === "baso" ? "Total Dana Tersalur" : "Total Bantuan Tersalur", true) +
+          kpiCell(Number(data.jumlahWilayah || 0).toLocaleString("id-ID"), "Wilayah Tersalur", false) +
+        '</div>' +
+        '<div class="pg-summary-note">Rekapitulasi penyaluran tahun ' + escapeHtmlHub(String(tahun)) + ' seluruh wilayah YASSA.</div>' +
       '</div>' +
     '</div>' +
-    htmlDaftarRincianWilayah_(kartu, kolom, p.color) + '</div>';
+    htmlDaftarRincianWilayah_(kartu, kolom, p.color) +
+  '</div>';
 }
 
 function loadProgramGopayPage_() {
@@ -15446,9 +16265,12 @@ function loadProgramGopayPage_() {
   if (dataAnakYatimCache) {
     renderProgramGopayPage_(dataAnakYatimCache, true);
   } else {
-    el.innerHTML = renderProgramGopayBanner_() +
-      '<div style="display:flex; align-items:center; justify-content:center; padding: 50px 0; color: var(--text-secondary); font-size: 12.5px; gap: 8px;">' +
-      '<span class="material-symbols-outlined spin" style="font-size: 18px;">progress_activity</span> Mengambil data anak yatim dari YASSA Mobile...</div>';
+    el.innerHTML = '<div class="pg-shell"><div class="pg-hero-grid">' +
+      renderProgramGopayBanner_() +
+      '<div class="pg-state-card">' +
+        '<span class="material-symbols-outlined spin" style="font-size: 22px; color: var(--bento-primary);">progress_activity</span>' +
+        '<span>Mengambil data anak yatim dari YASSA Mobile...</span>' +
+      '</div></div></div>';
   }
   callGASWithRetry_("getDataAnakYatim", [authToken])
     .then(function (data) {
@@ -15459,10 +16281,12 @@ function loadProgramGopayPage_() {
     .catch(function (err) {
       if (programPageKey_ !== "gopay") return;
       if (dataAnakYatimCache) { renderProgramGopayPage_(dataAnakYatimCache, false); return; }
-      el.innerHTML = renderProgramGopayBanner_() +
-        '<div style="padding: 40px 20px; text-align: center; color: var(--text-secondary); font-size: 12.5px;">Gagal memuat data: ' +
-        escapeHtmlHub(String(err && err.message || err)) +
-        '<br><button onclick="loadProgramGopayPage_()" style="margin-top: 14px; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 99px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--text-primary); cursor: pointer;">Coba lagi</button></div>';
+      el.innerHTML = '<div class="pg-shell"><div class="pg-hero-grid">' +
+        renderProgramGopayBanner_() +
+        '<div class="pg-state-card">' +
+          '<span>Gagal memuat data: ' + escapeHtmlHub(String(err && err.message || err)) + '</span>' +
+          '<button type="button" class="pg-retry-btn" onclick="loadProgramGopayPage_()">Coba lagi</button>' +
+        '</div></div></div>';
     });
 }
 
@@ -15477,23 +16301,24 @@ function renderProgramGopayBanner_(key) {
   key = key || "gopay";
   const p = programInfo_(key);
   const foto = PROGRAM_BANNER_FOTO[key];
-  const gradasi = 'linear-gradient(135deg, ' + p.color + ' 0%, ' + p.color + 'B3 50%, #0B1220 140%)';
   if (foto) {
-    return '<div style="position:relative; width:100%; min-height:120px; background:' + gradasi + ';">' +
-      '<img src="' + escapeHtmlHub(foto) + '" alt="' + escapeHtmlHub(p.label) + '" style="display:block; width:100%; height:auto;" onerror="this.style.display=\'none\'">' +
-      '</div>';
+    return '<div class="pg-banner-card has-photo" style="--pg-accent:' + p.color + '; --pg-accent-bg:' + p.bg + '; --pg-accent-border:' + p.color + '44;">' +
+      '<img class="pg-banner-img" src="' + escapeHtmlHub(foto) + '" alt="Program ' + escapeHtmlHub(p.label) + '" onerror="this.style.display=\'none\'; this.parentNode.classList.add(\'img-broken\');">' +
+      '<div class="pg-banner-fallback">' +
+        '<div class="pg-banner-kicker">Program YASSA</div>' +
+        '<h2 class="pg-banner-title">' + escapeHtmlHub(p.label) + '</h2>' +
+        '<div class="pg-banner-sub">' + escapeHtmlHub(p.sub) + '</div>' +
+      '</div>' +
+    '</div>';
   }
   return (
-    '<div style="position:relative; width:100%; height:200px; overflow:hidden; background:' + gradasi + ';">' +
-      '<div style="position:absolute; top:-50px; right:-30px; width:190px; height:190px; border-radius:50%; background: rgba(255,255,255,0.10);"></div>' +
-      '<div style="position:absolute; bottom:-60px; left:-40px; width:170px; height:170px; border-radius:50%; background: rgba(255,255,255,0.07);"></div>' +
-      '<span class="material-symbols-outlined" style="position:absolute; right:22px; top:26px; font-size:84px; color: rgba(255,255,255,0.25); font-variation-settings:\'FILL\' 1;">' + p.icon + '</span>' +
-      '<div style="position:absolute; inset:0; background: linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,0.72) 100%);"></div>' +
-      '<div style="position:absolute; left:20px; right:20px; bottom:16px; color:#fff;">' +
-        '<div style="font-size:11px; font-weight:700; letter-spacing:0.08em; opacity:0.85;">PROGRAM YASSA</div>' +
-        '<div style="font-size:24px; font-weight:800; line-height:1.15; margin-top:2px; text-shadow:0 2px 6px rgba(0,0,0,0.5);">' + escapeHtmlHub(p.label) + '</div>' +
-        '<div style="font-size:12.5px; font-weight:600; opacity:0.92; margin-top:2px;">' + escapeHtmlHub(p.sub) + '</div>' +
+    '<div class="pg-banner-card pg-banner-mesh" style="--pg-accent:' + p.color + '; --pg-accent-bg:' + p.bg + '; --pg-accent-border:' + p.color + '55;">' +
+      '<div style="flex:1; min-width:0;">' +
+        '<div class="pg-banner-kicker">Program YASSA</div>' +
+        '<h2 class="pg-banner-title">' + escapeHtmlHub(p.label) + '</h2>' +
+        '<div class="pg-banner-sub">' + escapeHtmlHub(p.sub) + '</div>' +
       '</div>' +
+      '<div class="pg-banner-mark"><span class="material-symbols-outlined">' + p.icon + '</span></div>' +
     '</div>'
   );
 }
@@ -15544,78 +16369,109 @@ function kelompokkanRincianGopay_(rincian) {
 }
 
 // Rincian tiap wilayah anggota di dalam kartu gabungan (Jabodetabek / Surabaya Raya):
-// satu baris per wilayah dengan KK, Yatim, Yatim Piatu, Disabilitas*.
+// satu baris terstruktur per wilayah dengan KK, Yatim, Yatim Piatu, Disabilitas*.
 function renderRincianAnggotaGopay_(anggota) {
-  const baris = anggota.map(function (a, i) {
-    return '<div style="padding:9px 0;' + (i ? ' border-top:1px solid var(--glass-border);' : '') + '">' +
-      '<div style="font-size:11.5px; font-weight:700; color: var(--text-primary); margin-bottom:4px;">' + escapeHtmlHub(a.nama) + '</div>' +
-      '<div style="display:flex; gap:12px; flex-wrap:wrap;">' +
-        '<div style="font-size:10.5px; color: var(--text-secondary);">KK <b class="pale-blue-text" style="color:#93C5FD;">' + a.kk + '</b></div>' +
-        '<div style="font-size:10.5px; color: var(--text-secondary);">Yatim <b class="pale-green-text" style="color:#86EFAC;">' + a.yatim + '</b></div>' +
-        '<div style="font-size:10.5px; color: var(--text-secondary);">Yatim Piatu <b class="pale-purple-text" style="color:#D8B4FE;">' + a.piatu + '</b></div>' +
-        '<div style="font-size:10.5px; color: var(--text-secondary);">Disabilitas* <b class="pale-amber-text" style="color:#FDE68A;">' + a.dsb + '</b></div>' +
+  const baris = anggota.map(function (a) {
+    return '<div class="pg-member-row">' +
+      '<div class="pg-member-name">' + escapeHtmlHub(a.nama) + '</div>' +
+      '<div class="pg-member-stats">' +
+        '<span class="pg-member-stat">KK<b class="pg-num-blue">' + Number(a.kk || 0).toLocaleString("id-ID") + '</b></span>' +
+        '<span class="pg-member-stat">Yatim<b class="pg-num-green">' + Number(a.yatim || 0).toLocaleString("id-ID") + '</b></span>' +
+        '<span class="pg-member-stat">Yatim Piatu<b class="pg-num-purple">' + Number(a.piatu || 0).toLocaleString("id-ID") + '</b></span>' +
+        '<span class="pg-member-stat">Disabilitas*<b class="pg-num-amber">' + Number(a.dsb || 0).toLocaleString("id-ID") + '</b></span>' +
       '</div></div>';
   }).join("");
-  return '<div style="margin-top:12px; padding-top:4px; border-top:1px dashed var(--glass-border);">' +
-    '<div style="font-size:9.5px; font-weight:700; letter-spacing:0.06em; color: var(--text-muted); margin:8px 0 2px;">RINCIAN PER WILAYAH</div>' + baris + '</div>';
+  return '<div class="pg-member-wrap">' +
+    '<div class="pg-member-head">Rincian Wilayah Anggota (' + anggota.length + ')</div>' +
+    '<div class="pg-member-list">' + baris + '</div></div>';
 }
 
 function renderProgramGopayPage_(data, dariCache) {
   const el = document.getElementById("programGopayContent");
   if (!el) return;
   const rincian = kelompokkanRincianGopay_(data.rincianWilayah || []);
-  const mini = function (warna, border, teks, angka, label) {
-    return '<div style="flex:1; background:' + warna + '; border:1px solid ' + border + '; border-radius:12px; padding:10px 6px; text-align:center;">' +
-      '<div style="font-size:17px; font-weight:800; color:' + teks + ';">' + Number(angka || 0) + '</div>' +
-      '<div style="font-size:9px; font-weight:700; color: var(--text-muted); margin-top:2px;">' + label + '</div></div>';
+  const kpiCell = function (accentHex, numClass, angka, label) {
+    return '<div class="pg-kpi-cell" style="--cell-accent:' + accentHex + ';">' +
+      '<div class="pg-kpi-val ' + numClass + '">' + Number(angka || 0).toLocaleString("id-ID") + '</div>' +
+      '<div class="pg-kpi-lbl">' + label + '</div></div>';
   };
 
-  let html = renderProgramGopayBanner_() + '<div style="padding: 18px 20px 0;">' +
-    // --- Kartu Data Anak Yatim Gopay ---
-    '<div style="background: var(--glass-strong); border-radius: 16px; padding: 18px 18px 16px; margin-bottom: 18px; border: 1px solid var(--glass-border);">' +
-      '<div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">' +
-        '<div style="width:40px; height:40px; border-radius:12px; background: rgba(168,85,247,0.15); color:#C084FC; display:flex; align-items:center; justify-content:center; flex-shrink:0;">' +
-          '<span class="material-symbols-outlined" style="font-size:21px; font-variation-settings:\'FILL\' 1;">diversity_3</span></div>' +
-        '<div style="flex:1; min-width:0;">' +
-          '<h3 style="font-size:14px; font-weight:700; margin:0;">Data Anak Yatim Gopay</h3>' +
-          '<div style="font-size:10.5px; color: var(--text-secondary); margin-top:1px;">Semua Wilayah' +
-            (dariCache ? ' &bull; <span style="color: var(--bento-primary);">Sedang memperbarui...</span>' : '') + '</div>' +
+  let html = '<div class="pg-shell">' +
+    '<div class="pg-hero-grid">' +
+      renderProgramGopayBanner_("gopay") +
+      // --- Kartu Data Anak Yatim Gopay ---
+      '<div class="pg-summary-card">' +
+        '<div class="pg-summary-head">' +
+          '<div class="pg-summary-icon" style="background: rgba(34,197,94,0.14); color:#22C55E; border: 1px solid rgba(34,197,94,0.28);">' +
+            '<span class="material-symbols-outlined">diversity_3</span></div>' +
+          '<div style="flex:1; min-width:0;">' +
+            '<h3 class="pg-summary-title">Data Anak Yatim Gopay</h3>' +
+            '<div class="pg-summary-meta">Semua Wilayah' +
+              (dariCache ? ' &middot; <span class="pg-sync-note">Memperbarui data...</span>' : '') +
+            '</div>' +
+          '</div>' +
         '</div>' +
+        '<div class="pg-kpi-strip">' +
+          kpiCell("#3B82F6", "pg-num-blue", data.totalKK, "KK") +
+          kpiCell("#22C55E", "pg-num-green", data.totalYatim, "Yatim") +
+          kpiCell("#A855F7", "pg-num-purple", data.totalYatimPiatu, "Yatim Piatu") +
+          kpiCell("#F59E0B", "pg-num-amber", data.totalDisabilitas, "Disabilitas*") +
+        '</div>' +
+        '<div class="pg-summary-note">*Disabilitas = Anak + Ortu digabung (1 KK dengan anak &amp; ibu sama-sama disabilitas dihitung 2x, sesuai aturan santunan). Data khusus Program Gopay (Anak Asuh tidak termasuk), diambil langsung dari YASSA Mobile.</div>' +
       '</div>' +
-      '<div style="display:flex; gap:8px;">' +
-        mini("rgba(59,130,246,0.08)", "rgba(59,130,246,0.2)", "#93C5FD", data.totalKK, "KK") +
-        mini("rgba(34,197,94,0.08)", "rgba(34,197,94,0.2)", "#86EFAC", data.totalYatim, "Yatim") +
-        mini("rgba(168,85,247,0.08)", "rgba(168,85,247,0.2)", "#D8B4FE", data.totalYatimPiatu, "Yatim Piatu") +
-        mini("rgba(245,158,11,0.08)", "rgba(245,158,11,0.2)", "#FDE68A", data.totalDisabilitas, "Disabilitas*") +
-      '</div>' +
-      '<div style="font-size:9px; color: var(--text-muted); margin-top:8px; line-height:1.45;">*Disabilitas = Anak + Ortu digabung (1 KK dgn anak &amp; ibu sama-sama disabilitas dihitung 2x, sesuai aturan santunan). Data khusus Program Gopay (Anak Asuh tidak termasuk), diambil langsung dari YASSA Mobile.</div>' +
     '</div>' +
     // --- Rincian per wilayah ---
-    '<div style="font-size:12px; font-weight:700; color: var(--text-primary); margin: 0 2px 10px;">Rincian per Wilayah (' + rincian.length + ')</div>';
+    '<div class="pg-wilayah-section">' +
+      '<div class="pg-section-head">' +
+        '<div class="pg-section-title-wrap">' +
+          '<h4 class="pg-section-title">Rincian per Wilayah</h4>' +
+          '<span class="pg-section-count">' + rincian.length + ' wilayah</span>' +
+        '</div>' +
+        (rincian.length > 3
+          ? '<div class="pg-search-wrap">' +
+              '<span class="material-symbols-outlined pg-search-icon">search</span>' +
+              '<input type="search" class="pg-search-input" placeholder="Cari wilayah..." oninput="filterProgramWilayah_(this)" aria-label="Cari wilayah">' +
+              '<button type="button" class="pg-search-clear" onclick="clearFilterProgramWilayah_(this)" aria-label="Hapus pencarian"><span class="material-symbols-outlined">close</span></button>' +
+            '</div>'
+          : '') +
+      '</div>';
 
   if (!rincian.length) {
-    html += '<div style="font-size:11px; color: var(--text-muted); padding:20px 0; text-align:center;">Belum ada data wilayah.</div>';
+    html += '<div class="pg-state-card">Belum ada data wilayah.</div>';
   } else {
+    html += '<div class="pg-region-grid">';
     rincian.forEach(function (r) {
       const gabungan = r.kelompok;
-      html += '<div style="background: var(--glass-strong); border-radius:14px; padding:12px 14px; margin-bottom:8px; border:1px solid ' +
-        (gabungan ? 'rgba(var(--bento-primary-rgb),0.38)' : 'var(--glass-border)') + ';">' +
-        '<div style="display:flex; align-items:center; gap:8px; margin-bottom:' + (gabungan ? '2px' : '8px') + ';">' +
-          (gabungan ? '<span class="material-symbols-outlined" style="font-size:18px; color:#22C55E; font-variation-settings:\'FILL\' 1;">' + r.ikon + '</span>' : '') +
-          '<div style="font-size:12.5px; font-weight:700; color: var(--text-primary);">' + escapeHtmlHub(r.nama) + '</div>' +
-        '</div>' +
-        (gabungan ? '<div style="font-size:9.5px; color: var(--text-muted); margin-bottom:8px;">Gabungan ' + r.anggota.length + ' wilayah</div>' : '') +
-        '<div style="display:flex; gap:14px; flex-wrap:wrap;">' +
-          '<div style="font-size:11px; color: var(--text-secondary);">KK <b class="pale-blue-text" style="color:#93C5FD;">' + r.kk + '</b></div>' +
-          '<div style="font-size:11px; color: var(--text-secondary);">Yatim <b class="pale-green-text" style="color:#86EFAC;">' + r.yatim + '</b></div>' +
-          '<div style="font-size:11px; color: var(--text-secondary);">Yatim Piatu <b class="pale-purple-text" style="color:#D8B4FE;">' + r.piatu + '</b></div>' +
-          '<div style="font-size:11px; color: var(--text-secondary);">Disabilitas* <b class="pale-amber-text" style="color:#FDE68A;">' + r.dsb + '</b></div>' +
+      const searchTerms = [r.nama].concat(gabungan ? r.anggota.map(function (a) { return a.nama; }) : []).join(" ");
+      html += '<div class="pg-region-card' + (gabungan ? ' is-cluster' : '') + '" data-wilayah-search="' + escapeHtmlHub(searchTerms) + '">';
+      if (gabungan) {
+        html += '<div class="pg-cluster-top">' +
+          '<div class="pg-cluster-brand">' +
+            '<div class="pg-cluster-icon"><span class="material-symbols-outlined">' + r.ikon + '</span></div>' +
+            '<div>' +
+              '<div class="pg-region-name">' + escapeHtmlHub(r.nama) + '</div>' +
+              '<div class="pg-cluster-sub">Gabungan ' + r.anggota.length + ' wilayah</div>' +
+            '</div>' +
+          '</div>' +
+          '<button type="button" class="pg-cluster-toggle" onclick="togglePgCluster_(this)">' +
+            '<span>Tutup rincian</span><span class="material-symbols-outlined">expand_more</span>' +
+          '</button>' +
+        '</div>';
+      } else {
+        html += '<div class="pg-region-name">' + escapeHtmlHub(r.nama) + '</div>';
+      }
+      html += '<div class="pg-card-metrics">' +
+          '<div class="pg-metric-col"><div class="pg-metric-lbl">KK</div><div class="pg-metric-val pg-num-blue">' + Number(r.kk || 0).toLocaleString("id-ID") + '</div></div>' +
+          '<div class="pg-metric-col"><div class="pg-metric-lbl">Yatim</div><div class="pg-metric-val pg-num-green">' + Number(r.yatim || 0).toLocaleString("id-ID") + '</div></div>' +
+          '<div class="pg-metric-col"><div class="pg-metric-lbl">Yatim Piatu</div><div class="pg-metric-val pg-num-purple">' + Number(r.piatu || 0).toLocaleString("id-ID") + '</div></div>' +
+          '<div class="pg-metric-col"><div class="pg-metric-lbl">Disabilitas*</div><div class="pg-metric-val pg-num-amber">' + Number(r.dsb || 0).toLocaleString("id-ID") + '</div></div>' +
         '</div>' +
         (gabungan ? renderRincianAnggotaGopay_(r.anggota) : '') +
-        '</div>';
+      '</div>';
     });
+    html += '</div><div class="pg-search-empty">Tidak ada wilayah yang cocok dengan pencarian Anda.</div>';
   }
-  el.innerHTML = html + '</div>';
+  el.innerHTML = html + '</div></div>';
 }
 
 function openDataAnakYatim() {
