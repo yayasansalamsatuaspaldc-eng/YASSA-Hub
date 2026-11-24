@@ -2064,6 +2064,328 @@
     .profil-dedikasi-bar::before { animation: none !important; }
   }
 
+  .profil-lencana-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: rgba(251, 191, 36, 0.14);
+    border: 1px solid rgba(251, 191, 36, 0.28);
+    color: #FCD34D;
+  }
+  html[data-theme="light"] .profil-lencana-count {
+    background: rgba(217, 119, 6, 0.10);
+    border-color: rgba(217, 119, 6, 0.24);
+    color: #B45309;
+  }
+  .profil-lencana-btn {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    text-align: left;
+    padding: 10px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid var(--glass-border);
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+    opacity: 0.68;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.14s ease, border-color 0.2s ease, background-color 0.2s ease, opacity 0.2s ease;
+  }
+  html[data-theme="light"] .profil-lencana-btn {
+    background: #F8FAFC;
+  }
+  .profil-lencana-btn.is-earned {
+    background: rgba(255, 255, 255, 0.06);
+    opacity: 1;
+  }
+  html[data-theme="light"] .profil-lencana-btn.is-earned {
+    background: #FFFFFF;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+  }
+  .profil-lencana-btn.is-next-target {
+    border-style: dashed;
+    opacity: 0.92;
+  }
+  .profil-lencana-btn:active {
+    transform: scale(0.97);
+  }
+  .profil-lencana-next {
+    margin-top: 12px;
+    padding: 9px 11px;
+    border-radius: 11px;
+    background: rgba(34, 211, 238, 0.08);
+    border: 1px solid rgba(34, 211, 238, 0.20);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+  }
+  .profil-lencana-next.is-complete {
+    background: rgba(34, 197, 94, 0.10);
+    border-color: rgba(34, 197, 94, 0.26);
+  }
+  html[data-theme="light"] .profil-lencana-next {
+    background: rgba(8, 145, 178, 0.07);
+    border-color: rgba(8, 145, 178, 0.18);
+  }
+  html[data-theme="light"] .profil-lencana-next.is-complete {
+    background: rgba(22, 163, 74, 0.08);
+    border-color: rgba(22, 163, 74, 0.22);
+  }
+  .profil-session-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 16px;
+    cursor: pointer;
+    transition: background-color 0.16s ease;
+  }
+  .profil-session-row + .profil-session-row {
+    border-top: 1px solid var(--glass-border);
+  }
+  .profil-session-row:active {
+    background: rgba(148, 163, 184, 0.08);
+  }
+  .profil-session-pill {
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 4px 9px;
+    border-radius: 8px;
+    background: var(--glass-inner);
+    border: 1px solid var(--glass-border-strong);
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+
+  /* ===== Tab Profil Visual Polish (Navy-Emerald-Gold ID, Quick Grid, Shimmer) ===== */
+  .profil-card-namecard {
+    background:
+      radial-gradient(circle at 88% 12%, rgba(16, 185, 129, 0.20) 0%, transparent 48%),
+      linear-gradient(142deg, #0D2D24 0%, #101E2E 52%, #0A101C 100%);
+    border: 1px solid rgba(52, 211, 153, 0.28);
+    border-radius: 20px;
+    padding: 15px 18px 22px;
+    margin: 12px 0 14px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 16px 34px -10px rgba(2, 6, 23, 0.55), 0 1px 0 rgba(255, 255, 255, 0.08) inset;
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
+  }
+  .profil-card-watermark {
+    position: absolute;
+    right: 18px;
+    top: 48%;
+    transform: translateY(-50%);
+    font-size: 46px;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.035);
+    pointer-events: none;
+    user-select: none;
+    line-height: 1;
+  }
+  .profil-card-shimmer {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(112deg, transparent 30%, rgba(255, 255, 255, 0.11) 48%, rgba(52, 211, 153, 0.10) 53%, transparent 70%);
+    transform: translateX(-110%);
+    animation: profilCardShimmerOnce 1.25s cubic-bezier(0.22, 1, 0.36, 1) 0.18s 1 forwards;
+    pointer-events: none;
+  }
+  @keyframes profilCardShimmerOnce {
+    to { transform: translateX(120%); }
+  }
+  .profil-card-bottom-bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 6px;
+    background: linear-gradient(90deg, #10B981 0%, #F59E0B 60%, #FFD27A 100%);
+    pointer-events: none;
+  }
+  .profil-card-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    position: relative;
+    z-index: 2;
+  }
+  .profil-card-top-left {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+  }
+  .profil-card-chip {
+    width: 24px;
+    height: 17px;
+    border-radius: 4px;
+    background: linear-gradient(135deg, #FFE09A 0%, #F59E0B 55%, #B45309 100%);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    flex-shrink: 0;
+    position: relative;
+  }
+  .profil-card-chip::after {
+    content: "";
+    position: absolute;
+    inset: 4px 5px;
+    border-radius: 1.5px;
+    border: 1px solid rgba(120, 53, 15, 0.45);
+  }
+  .profil-card-kicker {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(209, 250, 229, 0.78);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .profil-card-top-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .profil-role-pill {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: rgba(16, 185, 129, 0.16);
+    border: 1px solid rgba(52, 211, 153, 0.35);
+    color: #6EE7B7;
+  }
+  .profil-lock-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(245, 158, 11, 0.14);
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    color: #FBBF24;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.16s ease, background-color 0.18s ease;
+  }
+  .profil-lock-btn:hover { background: rgba(245, 158, 11, 0.24); }
+  .profil-lock-btn:active { transform: scale(0.92); }
+  .profil-qr-btn {
+    width: 68px;
+    height: 68px;
+    border-radius: 16px;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1.5px solid rgba(52, 211, 153, 0.55);
+    color: #34D399;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    cursor: pointer;
+    flex-shrink: 0;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.36);
+    transition: transform 0.18s ease, background-color 0.2s ease, border-color 0.2s ease;
+  }
+  .profil-qr-btn:hover {
+    transform: translateY(-1px);
+    background: rgba(16, 185, 129, 0.20);
+    border-color: #6EE7B7;
+  }
+  .profil-qr-btn:active { transform: scale(0.94); }
+  .profil-quick-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .profil-quick-card {
+    margin-bottom: 0 !important;
+    padding: 13px 13px !important;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    text-align: left;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+    transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .profil-quick-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(52, 211, 153, 0.38) !important;
+    box-shadow: 0 8px 20px -8px rgba(2, 6, 23, 0.35);
+  }
+  .profil-quick-card:active {
+    transform: scale(0.975);
+  }
+  .profil-quick-top {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .profil-dedikasi-pct {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .profil-dedikasi-sep {
+    height: 1px;
+    background: var(--glass-border);
+    margin: 2px 0;
+  }
+  @media (min-width: 900px) and (max-width: 1279px) {
+    .content:has(.profil-dedikasi-section) {
+      display: grid;
+      grid-template-columns: minmax(0, 440px) minmax(0, 1fr);
+      grid-auto-rows: min-content;
+      align-items: start;
+      align-content: start;
+      column-gap: 24px;
+      row-gap: 0;
+      max-width: 1120px;
+      margin-left: auto;
+      margin-right: auto;
+      width: 100%;
+    }
+    .content:has(.profil-dedikasi-section) > * {
+      min-width: 0;
+    }
+    .content:has(.profil-dedikasi-section) .profil-dedikasi-section {
+      grid-column: 2;
+      grid-row: 1 / span 4;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .profil-card-shimmer { animation: none !important; display: none; }
+    .profil-quick-card, .profil-card-namecard, .profil-qr-btn, .profil-lock-btn { transition: none !important; }
+  }
+  html.lite-mode .profil-card-shimmer {
+    animation: none !important;
+    display: none;
+  }
+
   /* ============================================================
      ✨ IMMERSIVE: kartu "Jabatan/Wilayah" + tombol CTA "Formulir Data
      Baru GOPAY" di tab Profil.
@@ -8422,17 +8744,43 @@ document.addEventListener("DOMContentLoaded", function () {
 // ============================================================
 const THEME_STORAGE_KEY = "yassa_gopay_theme";
 
+const LAST_LOGIN_AT_KEY_ = "yassa_last_login_at";
+
+function formatLastLoginLabel_(iso) {
+  if (!iso) return "Sesi aktif saat ini";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "Sesi aktif saat ini";
+  const now = new Date();
+  const sameDay = d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  if (sameDay) return "Hari ini, " + hh + ":" + mm;
+  const bln = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+  return d.getDate() + " " + bln[d.getMonth()] + " " + d.getFullYear() + ", " + hh + ":" + mm;
+}
+
 function applyThemeUI_(theme) {
   const icon = document.getElementById("themeToggleIcon");
   const label = document.getElementById("themeToggleLabel");
+  const profilIcon = document.getElementById("profilThemeIcon");
+  const profilLabel = document.getElementById("profilThemeLabel");
+  const profilPill = document.getElementById("profilThemePill");
   const metaThemeColor = document.querySelector('meta[name="theme-color"]');
   if (theme === "light") {
     if (label) label.textContent = "Mode Gelap (Default)";
     if (icon) icon.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>';
+    if (profilIcon) profilIcon.textContent = "light_mode";
+    if (profilLabel) profilLabel.textContent = "Mode Terang (Outdoor) aktif";
+    if (profilPill) profilPill.textContent = "Ubah ke Gelap";
     if (metaThemeColor) metaThemeColor.setAttribute("content", "#F8FAFC");
   } else {
     if (label) label.textContent = "Mode Terang (Outdoor)";
     if (icon) icon.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+    if (profilIcon) profilIcon.textContent = "dark_mode";
+    if (profilLabel) profilLabel.textContent = "Mode Gelap (Default) aktif";
+    if (profilPill) profilPill.textContent = "Ubah ke Terang";
     if (metaThemeColor) metaThemeColor.setAttribute("content", "#090D16");
   }
 }
@@ -8932,6 +9280,7 @@ function onLoginSuccess(res) {
   };
   localStorage.setItem("yassa_token", authToken);
   localStorage.setItem("yassa_user", JSON.stringify(currentUser));
+  try { localStorage.setItem(LAST_LOGIN_AT_KEY_, new Date().toISOString()); } catch (e) {}
   document.getElementById("loginForm").reset();
 
   // 🔒 Akun wajib ganti password: server menolak semua aksi lain sampai password diganti,
@@ -11103,13 +11452,62 @@ function hitungLencanaProfil_(hasil) {
 function renderProfilLencana_(hasil) {
   const grid = document.getElementById("profilLencanaGrid");
   if (!grid) return;
+  const countEl = document.getElementById("profilLencanaCount");
+  const nextEl = document.getElementById("profilLencanaNextHint");
   const daftar = hitungLencanaProfil_(hasil);
   const jumlah = daftar.filter(function (b) { return b.diraih; }).length;
+
+  const k = (hasil && hasil.kehadiran) || {};
+  const d = (hasil && hasil.donasi) || {};
+  const totalKeg = Number(k.totalKegiatan || 0);
+  const hadir = Number(k.jumlahHadir || 0);
+  const persenHadir = Math.max(0, Number(k.persenKehadiran || 0));
+  const donasiAda = !!d.ditemukan;
+  const persenDonasi = Math.max(0, Number(d.persenTercapai || 0));
+
+  let nextIdx = -1;
+  let nextMsg = "";
+  if (jumlah === daftar.length) {
+    nextMsg = "Semua lencana dedikasi tahun ini sudah diraih. Pertahankan amanah dan keaktifan Anda!";
+  } else {
+    if (!daftar[0].diraih) {
+      nextIdx = 0;
+      nextMsg = "Target terdekat: Pertama Hadir — hadir 1x kegiatan/pertemuan lagi.";
+    } else if (!daftar[1].diraih) {
+      nextIdx = 1;
+      const perlu80 = totalKeg > 0 ? Math.max(1, Math.ceil(totalKeg * 0.8) - hadir) : 0;
+      nextMsg = totalKeg > 0
+        ? "Target terdekat: Rajin Hadir — hadir " + perlu80 + "x lagi untuk capai 80% (saat ini " + persenHadir + "%)."
+        : "Target terdekat: Rajin Hadir — capai minimal 80% kehadiran pertemuan.";
+    } else if (!daftar[2].diraih) {
+      nextIdx = 2;
+      const perlu100 = totalKeg > 0 ? Math.max(1, totalKeg - hadir) : 0;
+      nextMsg = totalKeg > 0
+        ? "Target terdekat: Kehadiran Penuh — selisih " + perlu100 + "x pertemuan dari 100%."
+        : "Target terdekat: Kehadiran Penuh — hadir di 100% pertemuan.";
+    } else if (!daftar[3].diraih) {
+      nextIdx = 3;
+      nextMsg = donasiAda
+        ? "Target terdekat: Donasi Tercapai — realisasi wilayah saat ini " + persenDonasi + "% dari target 100%."
+        : "Target terdekat: Donasi Tercapai — menunggu pencatatan realisasi donasi wilayah tahun ini.";
+    }
+  }
+
+  if (countEl) countEl.textContent = jumlah + " / " + daftar.length + " diraih";
+  if (nextEl && nextMsg) {
+    nextEl.className = "profil-lencana-next" + (jumlah === daftar.length ? " is-complete" : "");
+    nextEl.innerHTML =
+      '<span class="material-symbols-outlined" style="font-size:15px; flex-shrink:0; color:' + (jumlah === daftar.length ? '#4ADE80' : 'var(--neon-cyan)') + ';">' + (jumlah === daftar.length ? 'verified' : 'trending_up') + '</span>' +
+      '<span>' + escapeHtmlHub(nextMsg) + '</span>';
+    nextEl.style.display = "flex";
+  }
+
   grid.innerHTML = daftar.map(function (b, i) {
     const warnaTeks = b.diraih ? "var(--text-primary)" : "var(--text-muted)";
-    const latar = b.diraih ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.02)";
-    const garis = b.diraih ? b.warna : "var(--glass-border)";
-    return '<button type="button" onclick="infoLencanaProfil_(' + i + ')" style="display:flex; align-items:center; gap:9px; text-align:left; padding:10px; border-radius:14px; background:' + latar + '; border:1px solid ' + garis + '; cursor:pointer; color:inherit; font:inherit; -webkit-tap-highlight-color:transparent; ' + (b.diraih ? '' : 'opacity:0.65;') + '">' +
+    const isNext = !b.diraih && i === nextIdx;
+    const garis = b.diraih ? b.warna : (isNext ? b.warna + "88" : "var(--glass-border)");
+    const cls = "profil-lencana-btn" + (b.diraih ? " is-earned" : "") + (isNext ? " is-next-target" : "");
+    return '<button type="button" class="' + cls + '" onclick="infoLencanaProfil_(' + i + ')" style="border-color:' + garis + ';">' +
       '<span style="width:32px; height:32px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:' + (b.diraih ? b.warna : 'var(--glass-border-strong)') + '; color:' + (b.diraih ? '#0B1220' : 'var(--text-muted)') + ';">' +
         '<span class="material-symbols-outlined" style="font-size:18px; font-variation-settings:\'FILL\' 1;">' + (b.diraih ? b.ikon : 'lock') + '</span>' +
       '</span>' +
@@ -12867,60 +13265,73 @@ function renderContent() {
     return;
   }
 
- if (active === "profil") {
+  if (active === "profil") {
     const fotoProfil = fotoProfilSrc_(currentUser.fotoUrl) || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
     const wilayahTxt = String(currentUser.wilayahAkses || "").toUpperCase() === "ALL"
       ? "Semua Wilayah"
       : (currentUser.wilayahAkses || "-");
+    const roleTxt = roleLabel(currentUser.role || "");
 
     let html = `
-      <div class="profil-hero-card profil-card-namecard" style="background: linear-gradient(145deg, #161F33 0%, #0D1321 100%); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 18px; padding: 18px 18px 22px; margin: 12px 0 16px; position: relative; overflow: hidden; box-shadow: 0 14px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 12px;">
-        <div class="profil-hero-orb profil-hero-orb-1" style="position: absolute; top: -40px; right: -30px; width: 170px; height: 170px; border-radius: 50%; background: radial-gradient(circle, rgba(243,156,18,0.16) 0%, rgba(243,156,18,0) 70%); pointer-events: none;"></div>
-        <div class="profil-hero-orb profil-hero-orb-2" style="position: absolute; bottom: -44px; left: -22px; width: 140px; height: 140px; border-radius: 50%; background: radial-gradient(circle, rgba(243,156,18,0.10) 0%, rgba(243,156,18,0) 70%); pointer-events: none;"></div>
-        <div class="profil-card-chip" style="position: absolute; top: 14px; left: 14px; width: 20px; height: 15px; border-radius: 4px; background: linear-gradient(135deg, #FFD27A, #B86E00); opacity: 0.9; box-shadow: 0 1px 3px rgba(0,0,0,0.5);"></div>
-        <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 7px; background: linear-gradient(180deg, #FFC04D, #F39C12 50%, #B86E00); pointer-events: none;"></div>
+      <div class="profil-hero-card profil-card-namecard">
+        <div class="profil-hero-orb profil-hero-orb-1" style="position: absolute; top: -42px; right: -28px; width: 170px; height: 170px; border-radius: 50%; background: radial-gradient(circle, rgba(16,185,129,0.20) 0%, rgba(16,185,129,0) 70%); pointer-events: none;"></div>
+        <div class="profil-hero-orb profil-hero-orb-2" style="position: absolute; bottom: -46px; left: -24px; width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(circle, rgba(245,158,11,0.14) 0%, rgba(245,158,11,0) 70%); pointer-events: none;"></div>
+        <div class="profil-card-watermark" aria-hidden="true">YASSA</div>
+        <div class="profil-card-shimmer" aria-hidden="true"></div>
+        <div class="profil-card-bottom-bar"></div>
 
-        <!-- Baris atas: foto kiri, nama/jabatan tengah, lock kanan atas -->
-        <div style="display: flex; align-items: flex-start; gap: 14px; position: relative;">
+        <!-- Baris header kartu: chip & label kiri, badge peran & tombol sandi kanan -->
+        <div class="profil-card-topbar">
+          <div class="profil-card-top-left">
+            <div class="profil-card-chip" aria-hidden="true"></div>
+            <span class="profil-card-kicker">Kartu Identitas YASSA</span>
+          </div>
+          <div class="profil-card-top-right">
+            ${roleTxt ? `<span class="profil-role-pill">${escapeHtmlHub(roleTxt)}</span>` : ""}
+            <button type="button" class="profil-lock-btn" onclick="openChangePasswordPanel()" title="Ubah Password" aria-label="Ubah Password">
+              <span class="material-symbols-outlined" style="font-size: 15px;">lock</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Baris identitas: foto kiri, nama & jabatan kanan -->
+        <div style="display: flex; align-items: center; gap: 14px; position: relative; z-index: 2;">
           <div style="position: relative; flex-shrink: 0;">
-            <div class="profil-avatar-ring" style="width: 74px; height: 74px; border-radius: 18px; padding: 3px; background: linear-gradient(135deg, #FFD27A, #F39C12 55%, #B86E00); box-shadow: 0 8px 16px rgba(0,0,0,0.5); position: relative;">
-              <div style="width: 100%; height: 100%; border-radius: 15px; overflow: hidden; border: 2px solid #1A1A1A; background: rgba(255,255,255,0.1);">
+            <div class="profil-avatar-ring" style="width: 72px; height: 72px; border-radius: 18px; padding: 3px; background: linear-gradient(135deg, #34D399 0%, #10B981 48%, #F59E0B 100%); box-shadow: 0 8px 18px rgba(0,0,0,0.45); position: relative;">
+              <div style="width: 100%; height: 100%; border-radius: 15px; overflow: hidden; border: 2px solid #0B141D; background: rgba(255,255,255,0.1);">
                 <img id="profilTabAvatarImg" src="${fotoProfil}" alt="Profile" onerror="fotoProfilFallbackSelf_(this)" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="showProfileQR()">
               </div>
-              <label for="inputFotoProfileTab" id="labelUploadFotoTab" style="position: absolute; bottom: -4px; right: -4px; width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, #FFC04D, #F39C12); display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #1A1A1A; box-shadow: 0 2px 6px rgba(0,0,0,0.4);">
+              <label for="inputFotoProfileTab" id="labelUploadFotoTab" style="position: absolute; bottom: -4px; right: -4px; width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, #10B981, #059669); display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #0B141D; box-shadow: 0 2px 6px rgba(0,0,0,0.4);">
                 ${iconSvg("edit", "#fff", 11)}
               </label>
               <input type="file" id="inputFotoProfileTab" accept="image/*" style="display: none;" onchange="uploadFoto(this)">
             </div>
           </div>
 
-          <div style="flex: 1; min-width: 0; padding-top: 2px; padding-right: 34px;">
-            <h1 style="font-size: 16.5px; font-weight: 700; margin: 0 0 2px; color: #fff; text-shadow: 0 2px 5px rgba(0,0,0,0.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(currentUser.nama)}</h1>
-            <div style="font-size: 11.5px; font-weight: 700; color: #F39C12; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(currentUser.jabatan || "-")}</div>
+          <div style="flex: 1; min-width: 0;">
+            <h1 style="font-size: 17px; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 3px; color: #FFFFFF; text-shadow: 0 2px 6px rgba(0,0,0,0.45); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(currentUser.nama)}</h1>
+            <div style="font-size: 12px; font-weight: 700; color: #FBBF24; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(currentUser.jabatan || "-")}</div>
           </div>
-
-          <button onclick="openChangePasswordPanel()" title="Password" style="position: absolute; top: 0; right: 0; width: 30px; height: 30px; border-radius: 50%; background: rgba(243,156,18,0.12); border: 1px solid rgba(243,156,18,0.5); color: #F39C12; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(6px); flex-shrink: 0; box-shadow: 0 3px 8px rgba(0,0,0,0.35);">
-            <span class="material-symbols-outlined" style="font-size: 15px;">lock</span>
-          </button>
         </div>
 
-        <div style="height: 0; border-top: 2px dashed rgba(243,156,18,0.55);"></div>
+        <div style="height: 0; border-top: 1.5px dashed rgba(52, 211, 153, 0.32); position: relative; z-index: 2;"></div>
 
-        <!-- Baris bawah: kontak kiri, QR besar kanan bawah (seukuran foto) -->
-        <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 14px;">
+        <!-- Baris bawah: kontak kiri, QR cepat kanan -->
+        <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; position: relative; z-index: 2;">
           <div style="flex: 1; min-width: 0;">
-            <div style="display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #fff; margin-bottom: 6px;">
-              <span class="material-symbols-outlined" style="font-size: 14px; color: #F39C12;">call</span>
+            <div style="display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: rgba(248,250,252,0.92); margin-bottom: 6px; font-family: 'JetBrains Mono', monospace;">
+              <span class="material-symbols-outlined" style="font-size: 14px; color: #34D399;">call</span>
               <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(currentUser.username || "-")}</span>
             </div>
-            <div style="display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #fff;">
-              <span class="material-symbols-outlined" style="font-size: 14px; color: #F39C12;">public</span>
+            <div style="display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: rgba(226,232,240,0.90);">
+              <span class="material-symbols-outlined" style="font-size: 14px; color: #FBBF24;">public</span>
               <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtmlHub(wilayahTxt)}</span>
             </div>
           </div>
 
-          <button onclick="showProfileQR()" title="QR Saya" style="width: 74px; height: 74px; border-radius: 18px; background: rgba(243,156,18,0.12); border: 2px solid #F39C12; color: #F39C12; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(6px); flex-shrink: 0; box-shadow: 0 8px 16px rgba(0,0,0,0.45);">
-            <span class="material-symbols-outlined" style="font-size: 42px;">qr_code_2</span>
+          <button type="button" class="profil-qr-btn" onclick="showProfileQR()" title="QR Saya" aria-label="Buka QR Saya">
+            <span class="material-symbols-outlined" style="font-size: 34px;">qr_code_2</span>
+            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;">QR Saya</span>
           </button>
         </div>
       </div>
@@ -12931,59 +13342,66 @@ function renderContent() {
            kelihatan sebagai kategori terpisah dari kartu-kartu Aplikasi,
            bukan tercampur di tab Profile. Jangan tambahkan lagi di sini. -->
 
-      <button onclick="showKartuAnggotaDigital()" class="profil-list-card" style="width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; padding: 14px 16px; cursor: pointer; color: inherit; font: inherit;">
-        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(243,156,18,0.14); color: #F59E0B; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-          <span class="material-symbols-outlined" style="font-size: 19px;">badge</span>
-        </div>
-        <div style="flex: 1; min-width: 0;">
-          <div style="font-size: 13px; font-weight: 600;">Kartu Anggota Digital</div>
-          <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">Lihat &amp; unduh kartu pengenal pengurus</div>
-        </div>
-        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
-      </button>
+      <div class="profil-quick-actions">
+        <button type="button" onclick="showKartuAnggotaDigital()" class="profil-list-card profil-quick-card">
+          <div class="profil-quick-top">
+            <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(245,158,11,0.14); color: #F59E0B; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <span class="material-symbols-outlined" style="font-size: 19px;">badge</span>
+            </div>
+            <span class="material-symbols-outlined" style="font-size: 18px; color: var(--text-muted);">chevron_right</span>
+          </div>
+          <div style="width: 100%; min-width: 0;">
+            <div style="font-size: 12.5px; font-weight: 700; line-height: 1.25;">Kartu Anggota</div>
+            <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px; line-height: 1.3;">Lihat &amp; unduh kartu pengenal</div>
+          </div>
+        </button>
 
-      <button onclick="bukaKodeAbsen()" class="profil-list-card" style="width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; padding: 14px 16px; margin-bottom: 18px !important; cursor: pointer; color: inherit; font: inherit;">
-        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(var(--bento-primary-rgb), 0.14); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-          <span class="material-symbols-outlined" style="font-size: 19px;">qr_code_2</span>
-        </div>
-        <div style="flex: 1; min-width: 0;">
-          <div style="font-size: 13px; font-weight: 600;">Kode Absen</div>
-          <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">Tunjukkan QR / barcode ke admin saat pertemuan</div>
-        </div>
-        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-muted);">chevron_right</span>
-      </button>
+        <button type="button" onclick="bukaKodeAbsen()" class="profil-list-card profil-quick-card">
+          <div class="profil-quick-top">
+            <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(var(--bento-primary-rgb), 0.14); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <span class="material-symbols-outlined" style="font-size: 19px;">qr_code_2</span>
+            </div>
+            <span class="material-symbols-outlined" style="font-size: 18px; color: var(--text-muted);">chevron_right</span>
+          </div>
+          <div style="width: 100%; min-width: 0;">
+            <div style="font-size: 12.5px; font-weight: 700; line-height: 1.25;">Kode Absen</div>
+            <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px; line-height: 1.3;">QR &amp; barcode pertemuan</div>
+          </div>
+        </button>
+      </div>
 
       <div class="profil-dedikasi-section">
       <h3 class="stitch-section-title">Dedikasi</h3>
-      <div id="profilDedikasiTourTarget" class="profil-list-card" style="padding: 18px; margin-bottom: 18px !important; display: flex; flex-direction: column; gap: 20px;">
+      <div id="profilDedikasiTourTarget" class="profil-list-card" style="padding: 18px; margin-bottom: 18px !important; display: flex; flex-direction: column; gap: 16px;">
         <div id="profilKehadiranTap" role="button" tabindex="0" onclick="showDetailKehadiran()" style="cursor: pointer; -webkit-tap-highlight-color: transparent;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
             <div style="display: flex; align-items: center; gap: 10px;">
               <div style="width: 30px; height: 30px; border-radius: 10px; background: rgba(34,211,238,0.15); color: var(--neon-cyan); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                 <span class="material-symbols-outlined" style="font-size: 16px;">event_available</span>
               </div>
-              <span style="font-size: 12.5px; font-weight: 600;">Kehadiran</span>
+              <span style="font-size: 12.5px; font-weight: 700;">Kehadiran</span>
             </div>
-            <span id="profilPerformaKehadiranPersen" style="font-size: 13px; font-weight: 700; color: var(--neon-cyan);">...</span>
+            <span id="profilPerformaKehadiranPersen" class="profil-dedikasi-pct" style="color: var(--neon-cyan);">...</span>
           </div>
-          <div style="font-size: 10px; color: var(--text-muted); margin: -4px 0 10px 40px;">Persentase kehadiran kamu di kegiatan/pertemuan tahun ini</div>
+          <div style="font-size: 10px; color: var(--text-muted); margin: -2px 0 10px 40px;">Persentase kehadiran kamu di kegiatan/pertemuan tahun ini</div>
           <div style="height: 8px; border-radius: 6px; background: var(--glass-border-strong); overflow: hidden;">
             <div id="profilPerformaKehadiranBar" class="profil-dedikasi-bar" style="height: 100%; width: 0%; border-radius: 6px; background: linear-gradient(90deg, #0891B2, #22D3EE); transition: width .7s cubic-bezier(0.22, 1, 0.36, 1);"></div>
           </div>
           <div id="profilPerformaKehadiranKeterangan" style="font-size: 10.5px; color: var(--text-muted); margin-top: 6px;">Memuat data kehadiran...</div>
           <div style="display: flex; align-items: center; gap: 2px; font-size: 10.5px; font-weight: 600; color: var(--neon-cyan); margin-top: 8px;">Lihat detail kegiatan <span class="material-symbols-outlined" style="font-size: 14px;">chevron_right</span></div>
         </div>
+        <div class="profil-dedikasi-sep"></div>
         <div>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
             <div style="display: flex; align-items: center; gap: 10px;">
               <div style="width: 30px; height: 30px; border-radius: 10px; background: rgba(34,197,94,0.15); color: var(--bento-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                 <span class="material-symbols-outlined" style="font-size: 16px;">volunteer_activism</span>
               </div>
-              <span style="font-size: 12.5px; font-weight: 600;">Pencapaian Donasi</span>
+              <span style="font-size: 12.5px; font-weight: 700;">Pencapaian Donasi</span>
             </div>
-            <span id="profilPerformaDonasiPersen" style="font-size: 13px; font-weight: 700; color: var(--bento-primary);">...</span>
+            <span id="profilPerformaDonasiPersen" class="profil-dedikasi-pct" style="color: var(--bento-primary);">...</span>
           </div>
-          <div style="font-size: 10px; color: var(--text-muted); margin: -4px 0 10px 40px;">Persentase realisasi donasi dibanding kebutuhan santunan wilayah kamu tahun ini</div>
+          <div style="font-size: 10px; color: var(--text-muted); margin: -2px 0 10px 40px;">Persentase realisasi donasi dibanding kebutuhan santunan wilayah kamu tahun ini</div>
           <div style="height: 8px; border-radius: 6px; background: var(--glass-border-strong); overflow: hidden;">
             <div id="profilPerformaDonasiBar" class="profil-dedikasi-bar" style="height: 100%; width: 0%; border-radius: 6px; background: linear-gradient(90deg, #15803D, #4ADE80); transition: width .7s cubic-bezier(0.22, 1, 0.36, 1);"></div>
           </div>
@@ -12991,13 +13409,17 @@ function renderContent() {
         </div>
         <div id="profilLencanaWrap">
           <div style="height: 1px; background: var(--glass-border); margin: 0 0 16px;"></div>
-          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-            <div style="width: 30px; height: 30px; border-radius: 10px; background: rgba(251,191,36,0.15); color: #FCD34D; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-              <span class="material-symbols-outlined" style="font-size: 16px;">military_tech</span>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="width: 30px; height: 30px; border-radius: 10px; background: rgba(251,191,36,0.15); color: #FCD34D; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <span class="material-symbols-outlined" style="font-size: 16px;">military_tech</span>
+              </div>
+              <span style="font-size: 12.5px; font-weight: 600;">Lencana</span>
             </div>
-            <span style="font-size: 12.5px; font-weight: 600;">Lencana</span>
+            <span id="profilLencanaCount" class="profil-lencana-count">0 / 4 diraih</span>
           </div>
           <div id="profilLencanaGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;"></div>
+          <div id="profilLencanaNextHint" class="profil-lencana-next" style="display:none;"></div>
         </div>
       </div>
       </div>
@@ -13018,6 +13440,29 @@ function renderContent() {
       </div>
 
       <div id="notifHubProfilCard"></div>
+
+      <div class="profil-list-card" style="display: flex; flex-direction: column; overflow: hidden;">
+        <div class="profil-session-row" onclick="openChangePasswordPanel()">
+          <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(59, 130, 246, 0.14); color: #60A5FA; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <span class="material-symbols-outlined">history</span>
+          </div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 13.5px; font-weight: 600;">Sesi Terakhir Akun</div>
+            <div id="profilLastLoginText" style="font-size: 10.5px; color: var(--text-secondary); margin-top: 1px;">${escapeHtmlHub(formatLastLoginLabel_((function () { try { return localStorage.getItem(LAST_LOGIN_AT_KEY_); } catch (e) { return ""; } })()))}</div>
+          </div>
+          <span class="profil-session-pill">Ubah Sandi</span>
+        </div>
+        <div class="profil-session-row" onclick="toggleTheme()">
+          <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(245, 158, 11, 0.14); color: #F59E0B; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <span class="material-symbols-outlined" id="profilThemeIcon">${document.documentElement.getAttribute("data-theme") === "light" ? "light_mode" : "dark_mode"}</span>
+          </div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 13.5px; font-weight: 600;">Mode Tampilan</div>
+            <div id="profilThemeLabel" style="font-size: 10.5px; color: var(--text-secondary); margin-top: 1px;">${document.documentElement.getAttribute("data-theme") === "light" ? "Mode Terang (Outdoor) aktif" : "Mode Gelap (Default) aktif"}</div>
+          </div>
+          <span id="profilThemePill" class="profil-session-pill">${document.documentElement.getAttribute("data-theme") === "light" ? "Ubah ke Gelap" : "Ubah ke Terang"}</span>
+        </div>
+      </div>
 
       <div class="profil-list-card" style="display: flex; flex-direction: column; overflow: hidden;">
         <div style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer;" onclick="handleUserMenuClick('logout')">
