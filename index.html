@@ -1567,38 +1567,6 @@
   .user-form-danger-zone { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--glass-border); display: flex; gap: 10px; }
   .btn-form-reset, .btn-form-toggle { flex: 1; padding: 10px; border: 1.5px solid var(--glass-border-strong); background: rgba(255,255,255,0.04); border-radius: 10px; font-size: 12.5px; font-weight: 600; color: var(--text-primary); cursor: pointer; }
 
-  .login-screen {
-    width: 100%;
-    min-height: 100vh; min-height: 100dvh;
-    min-height: calc(var(--app-vh, 1vh) * 100); /* 🩹 fallback tinggi viewport asli, lihat script di <head> */
-    display: flex; align-items: flex-start; justify-content: center;
-    /* 🩹 FIX (2026): align-items DULU "center" -- kalau kartu login lebih
-       TINGGI dari layar (HP layar pendek/address-bar makan tempat/dll),
-       bagian ATAS kartu (logo/Username/Password) jadi ketutupan/kepotong
-       dan TIDAK BISA di-scroll ke atas buat ngeliatnya lagi, walau
-       overflow-y:auto sudah ada -- ini bug klasik "flex center + overflow"
-       (browser nge-clip sisi atas, scroll cuma nyampe ke titik natural,
-       gak bisa negatif). Ganti ke "flex-start" biar kartu SELALU mulai
-       dari paling atas container yang bisa di-scroll -- gak ada lagi yang
-       ketutupan permanen, di HP paling pendek sekalipun.
-       🩹 REVISI: padding-top SENGAJA GAK dipakai -- sempat dicoba
-       "padding: 32px 0" tapi malah nongolin background gelap
-       (--bg-navy-deep) punya .login-screen sendiri sebagai bar hitam di
-       ATAS, sebelum kartu hijau (login-card) mulai (laporan user: "bagian
-       atasnya terlihat hitam, tidak full"). Padding-bottom doang yang
-       dipakai, buat ruang scroll nyaman sampai footer/versi app tanpa
-       nyisain gap kosong di atas.
-       🩹 FIX TAMBAHAN (2026): padding-bottom pakai env(safe-area-inset-bottom)
-       supaya di HP dengan gesture-bar/navigation-bar Android yang "makan"
-       area bawah, footer "Versi ... / Aplikasi Resmi ..." gak mepet/ketutupan
-       -- sama seperti perlakuan .bottom-nav di halaman dalam app. */
-    padding: 0 0 calc(32px + env(safe-area-inset-bottom, 0px));
-    box-sizing: border-box;
-    background: var(--bg-navy-deep);
-    overflow-y: auto; /* 🩹 FIX: biar bisa di-scroll kalau konten form lebih
-                          tinggi dari layar (mis. HP pendek / keyboard muncul) */
-    -webkit-overflow-scrolling: touch;
-  }
 
   /* Splash / loading awal pas aplikasi dibuka (bersihin cache + refresh data) */
   .app-splash {
@@ -2148,331 +2116,626 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  .login-card {
-    width: 100%; max-width: 400px;
-    background: var(--bg-navy);
+  /* ===== LOGIN SCREEN: Humanitarian Fintech Console Redesign ===== */
+  .login-screen {
+    width: 100%;
     min-height: 100vh; min-height: 100dvh;
-    min-height: calc(var(--app-vh, 1vh) * 100); /* 🩹 sinkron sama fallback tinggi viewport asli */
+    min-height: calc(var(--app-vh, 1vh) * 100);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 16px 10px calc(24px + env(safe-area-inset-bottom, 0px));
+    box-sizing: border-box;
+    background:
+      radial-gradient(ellipse 85% 42% at 50% 0%, rgba(16, 185, 129, 0.14) 0%, transparent 70%),
+      var(--bg-navy-deep);
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  html[data-theme="light"] .login-screen {
+    background:
+      radial-gradient(ellipse 85% 42% at 50% 0%, rgba(5, 150, 105, 0.10) 0%, transparent 70%),
+      #EDF2F7;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 420px;
+    background: var(--glass-strong);
+    border: 1px solid var(--glass-border-strong);
+    border-radius: 22px;
     display: flex;
     flex-direction: column;
     position: relative;
-    overflow-y: auto;   /* 🩹 FIX: sebelumnya "hidden" -- ikut mematikan scroll
-                            kalau konten (logo+form+footer) lebih tinggi dari
-                            layar; sekarang boleh scroll vertikal. */
-    overflow-x: hidden; /* tetap jaga sudut membulat di desktop (>=1024px)
-                            gak "bocor" secara horizontal */
-    -webkit-overflow-scrolling: touch;
+    overflow: hidden;
+    box-shadow: 0 22px 48px -14px rgba(0, 0, 0, 0.52), 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+    margin: auto 0;
   }
-
-  /* Laptop/Desktop asli ke atas: layar login jadi kanvas ambient penuh, kartu login terpusat.
-     HP dan TABLET (termasuk landscape, hingga 1279px) tetap full-screen seperti mode mobile. */
-  @media (min-width: 1024px) {
-    .login-screen {
-      padding: 56px 20px;
-      align-items: center; /* Desktop jarang kena bug overflow (layar cukup tinggi), balikin ke center biar tetap rapi persis di tengah */
-      background:
-        radial-gradient(circle at 18% 15%, rgba(59,130,246,0.16), transparent 45%),
-        radial-gradient(circle at 82% 20%, rgba(168,85,247,0.14), transparent 48%),
-        radial-gradient(circle at 50% 95%, rgba(34,211,238,0.08), transparent 55%),
-        var(--bg-navy-deep);
-    }
-    .login-card {
-      max-width: 880px !important;
-      width: 100%;
-      min-height: 520px;
-      flex-direction: row;
-      border-radius: 32px;
-      box-shadow: var(--shadow-deep), 0 0 120px rgba(59,130,246,0.12), 0 0 60px rgba(168,85,247,0.08);
-      border: 1px solid var(--glass-border);
-    }
-    .login-header-bg {
-      flex: 0 0 45%;
-      height: 100%;
-      min-height: 100%;
-      padding-bottom: 0;
-      border-right: 1px solid var(--glass-border-strong);
-    }
-    .login-form-container {
-      flex: 0 0 55%;
-      justify-content: center;
-      padding: 40px 48px;
-    }
-    .login-header-wave {
-      display: none;
-    }
+  html[data-theme="light"] .login-card {
+    background: #FFFFFF;
+    border-color: rgba(15, 23, 42, 0.10);
+    box-shadow: 0 20px 44px -14px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(15, 23, 42, 0.04);
   }
 
   .login-header-bg {
-    background:
-      repeating-linear-gradient(
-        45deg,
-        rgba(255, 255, 255, 0.03) 0px,
-        rgba(255, 255, 255, 0.03) 1px,
-        transparent 1px,
-        transparent 10px
-      ),
-      linear-gradient(135deg, #0B101E 0%, #166534 45%, #14532D 100%);
-    height: 35%;
-    min-height: 250px;
     position: relative;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 20px;
+    background:
+      linear-gradient(135deg, rgba(16, 185, 129, 0.14) 0%, rgba(15, 23, 42, 0.0) 65%),
+      var(--glass-inner);
+    border-bottom: 1px solid var(--glass-border);
+  }
+  html[data-theme="light"] .login-header-bg {
+    background:
+      linear-gradient(135deg, rgba(5, 150, 105, 0.08) 0%, rgba(248, 250, 252, 0.8) 70%),
+      #F8FAFC;
+    border-bottom-color: rgba(15, 23, 42, 0.08);
+  }
+
+  .login-brand-lockup {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    z-index: 2;
+    width: 100%;
+  }
+
+  .login-logo-ring {
+    width: 50px;
+    height: 50px;
+    border-radius: 15px;
+    background: #090D16;
+    border: 1.5px solid rgba(16, 185, 129, 0.45);
+    box-shadow: 0 6px 18px -6px rgba(16, 185, 129, 0.35);
+    display: flex;
     align-items: center;
     justify-content: center;
-    padding-bottom: 40px;
-    overflow: hidden;
-  }
-
-  .login-header-wave {
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    right: 0;
-    height: 60px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%230F172A' fill-opacity='1' d='M0,224L60,202.7C120,181,240,139,360,149.3C480,160,600,224,720,240C840,256,960,224,1080,202.7C1200,181,1320,171,1380,165.3L1440,160L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center bottom;
-    z-index: 5;
-  }
-
-  .decor-blob {
-    position: absolute;
-    z-index: 1;
-    filter: blur(1px);
-  }
-
-  .decor-blob-1 {
-    width: 180px; height: 180px;
-    top: -40px; left: -40px;
-    background: linear-gradient(135deg, rgba(34,211,238,0.18) 0%, rgba(34,211,238,0) 100%);
-    border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
-    animation: morphBlob 10s ease-in-out infinite alternate;
-  }
-
-  .decor-blob-2 {
-    width: 220px; height: 220px;
-    bottom: -20px; right: -60px;
-    background: radial-gradient(circle, rgba(168,85,247,0.18) 0%, transparent 60%);
-    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
-    animation: morphBlob 12s ease-in-out infinite alternate-reverse;
-  }
-
-  .decor-iso {
-    position: absolute;
-    opacity: 0.25;
-    z-index: 2;
-    animation: float 6s ease-in-out infinite;
-  }
-
-  @keyframes morphBlob {
-    0% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; transform: rotate(0deg) scale(1); }
-    100% { border-radius: 70% 30% 50% 70% / 30% 70% 50% 50%; transform: rotate(45deg) scale(1.1); }
-  }
-
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+    flex-shrink: 0;
+    padding: 6px;
   }
 
   .login-logo {
-    width: 80px; height: 80px; border-radius: 50%; object-fit: contain;
-    box-shadow: 0 0 30px rgba(34,211,238,0.4);
-    background: #0B101E;
-    padding: 6px;
-    z-index: 10;
-    border: 2px solid rgba(34,211,238,0.4);
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  .login-brand-copy {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
   }
 
   .login-title {
-    font-size: 24px; font-weight: 800; color: #fff;
-    letter-spacing: -0.5px;
-    margin-top: 16px;
-    z-index: 10;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    margin: 0;
+  }
+
+  .login-subtitle {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    line-height: 1.35;
+    margin-top: 2px;
+  }
+
+  .login-desktop-mission {
+    display: none;
   }
 
   .login-form-container {
-    padding: 30px 40px calc(28px + env(safe-area-inset-bottom, 0px));
+    padding: 20px 16px 20px;
     flex: 1;
     display: flex;
     flex-direction: column;
-    background: var(--bg-navy);
+    background: transparent;
+  }
+
+  .login-form-head {
+    margin-bottom: 18px;
+  }
+
+  .login-form-heading {
+    font-size: 19px;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    margin: 0 0 4px;
+  }
+
+  .login-form-desc {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    line-height: 1.45;
+    margin: 0;
   }
 
   .login-error {
-    background: rgba(248,113,113,0.12); color: #FCA5A5; font-size: 12.5px; font-weight: 600;
-    border: 1px solid rgba(248,113,113,0.3);
-    padding: 12px 14px; border-radius: 12px; margin-bottom: 20px; text-align: left;
+    background: rgba(239, 68, 68, 0.11);
+    color: #FCA5A5;
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.45;
+    border: 1px solid rgba(239, 68, 68, 0.34);
+    padding: 11px 13px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    text-align: left;
+  }
+  html[data-theme="light"] .login-error {
+    background: #FEF2F2;
+    color: #B91C1C;
+    border-color: rgba(220, 38, 38, 0.28);
+  }
+
+  .login-field-group {
+    margin-bottom: 14px;
+  }
+
+  .login-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .login-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+  }
+
+  .login-label-hint {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
   }
 
   .login-field {
-    margin-bottom: 24px;
     position: relative;
     display: flex;
     align-items: center;
+    background: var(--glass-inner);
+    border: 1.5px solid var(--glass-border-strong);
+    border-radius: 12px;
+    height: 48px;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+  }
+  html[data-theme="light"] .login-field {
+    background: #F8FAFC;
+    border-color: rgba(15, 23, 42, 0.13);
+  }
+  .login-field:focus-within {
+    border-color: var(--bento-primary);
+    box-shadow: 0 0 0 3px rgba(var(--bento-primary-rgb), 0.16);
   }
 
   .login-field-icon {
     position: absolute;
-    left: 0;
+    left: 13px;
     color: var(--text-muted);
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 100%;
+    width: 20px;
+    height: 20px;
+    pointer-events: none;
+    transition: color 0.18s ease;
+  }
+  .login-field:focus-within .login-field-icon {
+    color: var(--bento-primary);
   }
 
   .login-input {
     width: 100%;
-    padding: 12px 12px 12px 36px;
+    height: 100%;
+    padding: 0 14px 0 42px;
     border: none;
-    border-bottom: 1.5px solid var(--glass-border-strong);
+    border-radius: 11px;
     background: transparent;
-    font-size: 15px;
+    font-size: 14.5px;
+    font-weight: 500;
     font-family: inherit;
     outline: none;
     color: var(--text-primary);
-    transition: all .2s;
+    min-width: 0;
+  }
+  .login-field--password .login-input {
+    padding-right: 48px;
   }
 
   .login-input::placeholder {
     color: var(--text-muted);
+    font-weight: 400;
   }
 
-  /* Fix background putih dari Autofill browser di tema gelap */
+  /* Fix background putih dari Autofill browser di tema gelap & terang */
   .login-input:-webkit-autofill,
-  .login-input:-webkit-autofill:hover, 
-  .login-input:-webkit-autofill:focus, 
+  .login-input:-webkit-autofill:hover,
+  .login-input:-webkit-autofill:focus,
   .login-input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 30px var(--bg-navy) inset !important;
+    -webkit-box-shadow: 0 0 0 40px var(--glass-inner) inset !important;
     -webkit-text-fill-color: var(--text-primary) !important;
     transition: background-color 5000s ease-in-out 0s;
+    caret-color: var(--text-primary);
   }
-
-  .login-field .login-input { padding-right: 40px; }
+  html[data-theme="light"] .login-input:-webkit-autofill,
+  html[data-theme="light"] .login-input:-webkit-autofill:hover,
+  html[data-theme="light"] .login-input:-webkit-autofill:focus,
+  html[data-theme="light"] .login-input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 40px #F8FAFC inset !important;
+  }
 
   .password-toggle-btn {
     position: absolute;
-    right: 0;
+    right: 2px;
     top: 50%;
     transform: translateY(-50%);
     background: none;
     border: none;
+    border-radius: 10px;
     cursor: pointer;
     color: var(--text-muted);
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 6px;
-    transition: color 0.2s;
+    transition: color 0.18s ease, background-color 0.18s ease;
   }
-  .password-toggle-btn:hover, .password-toggle-btn:active { color: var(--neon-cyan); }
+  .password-toggle-btn.gtap-pressed {
+    transform: translateY(-50%) scale(0.95);
+  }
+  .login-field--password .password-toggle-btn {
+    top: 0;
+    bottom: 0;
+    margin: auto 0;
+    transform: none;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+  }
+  .login-field--password .password-toggle-btn.gtap-pressed {
+    transform: scale(0.95);
+  }
+  .password-toggle-btn:hover {
+    color: var(--text-primary);
+    background: rgba(148, 163, 184, 0.10);
+  }
+  .password-toggle-btn:focus-visible {
+    outline: 2px solid var(--bento-primary);
+    outline-offset: -2px;
+    color: var(--bento-primary);
+  }
 
   .password-input-wrap { position: relative; }
   .password-input-wrap .user-form-input { padding-right: 42px; }
   .password-input-wrap .password-toggle-btn { right: 8px; }
 
-  .login-input:focus {
-    border-bottom-color: var(--neon-cyan);
-  }
-
-  .login-input:focus + .login-field-icon svg {
-    stroke: var(--neon-cyan);
-  }
-
   .login-btn {
-    width: 100%; padding: 14px; border: none; border-radius: 99px; background: var(--grad-cool);
-    color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 12px;
-    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.45), 0 0 24px rgba(34,211,238,0.25); transition: all .2s;
-    letter-spacing: 0.5px;
+    width: 100%;
+    height: 48px;
+    padding: 0 18px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    color: #FFFFFF;
+    font-size: 14.5px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    margin-top: 6px;
+    box-shadow: 0 10px 22px -8px rgba(16, 185, 129, 0.55), 0 1px 0 rgba(255, 255, 255, 0.18) inset;
+    transition: transform 0.15s ease, filter 0.18s ease, box-shadow 0.18s ease;
   }
-  .login-btn:active { transform: translateY(2px); box-shadow: 0 2px 10px rgba(59, 130, 246, 0.4); }
-  .login-btn:disabled { opacity: .6; cursor: not-allowed; box-shadow: none; transform: none; }
-
-  .login-links {
-    display: flex;
-    justify-content: center;
-    margin-top: 16px;
+  .login-btn:hover:not(:disabled) {
+    filter: brightness(1.06);
+    box-shadow: 0 12px 24px -8px rgba(16, 185, 129, 0.65), 0 1px 0 rgba(255, 255, 255, 0.22) inset;
+  }
+  .login-btn:active:not(:disabled) {
+    transform: scale(0.985);
+    box-shadow: 0 4px 12px -4px rgba(16, 185, 129, 0.45);
+  }
+  .login-btn:focus-visible {
+    outline: 2px solid #34D399;
+    outline-offset: 2px;
+  }
+  .login-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
   }
 
   .login-link {
-    font-size: 13px;
-    color: var(--neon-cyan);
+    font-size: 12px;
+    color: var(--bento-primary);
     text-decoration: none;
-    font-weight: 500;
+    font-weight: 600;
+    padding: 4px 2px;
+    border-radius: 6px;
+    transition: opacity 0.16s ease;
+  }
+  .login-link:hover {
+    text-decoration: underline;
+  }
+  .login-link:focus-visible {
+    outline: 2px solid var(--bento-primary);
+    outline-offset: 2px;
   }
 
   .login-divider {
-    display: flex; align-items: center; gap: 12px; margin: 22px 0 16px; color: var(--text-muted); font-size: 12px; font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 18px 0 14px;
+    color: var(--text-muted);
+    font-size: 11.5px;
+    font-weight: 600;
   }
-  .login-divider::before, .login-divider::after { content: ""; flex: 1; height: 1px; background: var(--glass-border-strong); }
+  .login-divider::before, .login-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--glass-border);
+  }
 
-  .google-btn-wrap { display: flex; justify-content: center; min-height: 44px; margin-bottom: 12px;}
+  .google-btn-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 44px;
+    width: 100%;
+    margin-bottom: 16px;
+  }
 
   .login-footer-icons {
-    display: flex;
-    justify-content: space-around;
-    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    padding-top: 14px;
+    border-top: 1px solid var(--glass-border);
   }
 
   .login-footer-icon-btn {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 6px;
-    background: none;
-    border: none;
+    min-height: 60px;
+    padding: 8px 6px;
+    background: var(--glass-inner);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
     cursor: pointer;
+    transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.14s ease;
+  }
+  html[data-theme="light"] .login-footer-icon-btn {
+    background: #F8FAFC;
+    border-color: rgba(15, 23, 42, 0.08);
+  }
+  .login-footer-icon-btn:hover {
+    border-color: var(--glass-border-strong);
+    background: rgba(148, 163, 184, 0.08);
+  }
+  .login-footer-icon-btn:active {
+    transform: scale(0.97);
+  }
+  .login-footer-icon-btn:focus-visible {
+    outline: 2px solid var(--bento-primary);
+    outline-offset: 2px;
   }
 
   .login-footer-icon-circle {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 14px rgba(59,130,246,0.15);
-    background: rgba(255,255,255,0.04);
-    border: 1px solid var(--glass-border-strong);
+    background: rgba(148, 163, 184, 0.08);
   }
+  .login-footer-icon-btn--cyan .login-footer-icon-circle { background: rgba(34, 211, 238, 0.12); color: #22D3EE; }
+  .login-footer-icon-btn--emerald .login-footer-icon-circle { background: rgba(16, 185, 129, 0.12); color: #10B981; }
+  .login-footer-icon-btn--amber .login-footer-icon-circle { background: rgba(245, 158, 11, 0.12); color: #F59E0B; }
+  html[data-theme="light"] .login-footer-icon-btn--cyan .login-footer-icon-circle { background: rgba(8, 145, 178, 0.10); color: #0891B2; }
+  html[data-theme="light"] .login-footer-icon-btn--emerald .login-footer-icon-circle { background: rgba(5, 150, 105, 0.10); color: #059669; }
+  html[data-theme="light"] .login-footer-icon-btn--amber .login-footer-icon-circle { background: rgba(217, 119, 6, 0.10); color: #D97706; }
 
   .login-footer-icon-label {
     font-size: 11px;
+    font-weight: 600;
     color: var(--text-secondary);
+    line-height: 1.2;
   }
 
-  .login-app-version { font-size: 11px; font-weight: 500; color: var(--text-muted); margin-top: 10px; text-align: center; }
-
-  /* 🩹 FIX (2026): di HP dengan tinggi layar terbatas (mis. Redmi 9 --
-     viewport-nya makin pendek lagi kalau address bar Chrome kelihatan),
-     total tinggi konten login (header hijau + form + tombol Google + ikon
-     footer + versi app) sedikit LEBIH TINGGI dari layar yang benar-benar
-     terlihat. Sebelumnya cuma diatasi dengan bikin areanya scrollable
-     (overflow-y:auto) -- itu tetap ada sebagai jaring pengaman, tapi lebih
-     enak kalau semuanya muat pas tanpa perlu scroll sama sekali. Jadi di
-     breakpoint tinggi <= 740px, kita "compact"-kan spacing & elemen paling
-     "boros" tempat (header hijau & jarak antar section) TANPA mengubah
-     komposisi/urutan desainnya. Breakpoint 740px sengaja dipilih supaya HP
-     kelas Redmi 9 (viewport ~700-780px pas address bar kelihatan) kena,
-     tapi HP/tablet yang layarnya cukup tinggi tetap dapat versi normal. */
-  @media (max-height: 740px) {
-    .login-header-bg { height: 26%; min-height: 168px; padding-bottom: 28px; }
-    .login-logo { width: 64px; height: 64px; }
-    .login-form-container { padding-top: 20px; }
-    .login-field { margin-bottom: 16px; }
-    .login-links { margin-top: 10px; }
-    .login-divider { margin: 16px 0 12px; }
-    .google-btn-wrap { margin-bottom: 8px; }
-    .login-footer-icons { margin-top: 6px; }
-    .login-footer-icon-circle { width: 34px; height: 34px; }
-    .login-app-version { margin-top: 6px; }
+  .login-meta-footer {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    text-align: center;
   }
-  @media (max-height: 620px) {
-    .login-header-bg { height: 20%; min-height: 128px; padding-bottom: 20px; }
-    .login-logo { width: 52px; height: 52px; }
-    .login-footer-icons { display: none; } /* ikon Kehadiran/Keamanan/Keluhan bukan aksi vital di layar sesempit ini -- diprioritaskan form login & tombol Google tetap kelihatan penuh tanpa scroll */
+
+  .login-app-version {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin: 0;
+  }
+
+  .login-official-note {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    opacity: 0.85;
+  }
+
+  @media (min-width: 480px) {
+    .login-screen {
+      padding: 24px 16px calc(32px + env(safe-area-inset-bottom, 0px));
+    }
+    .login-header-bg {
+      padding: 22px 26px;
+    }
+    .login-form-container {
+      padding: 24px 26px 24px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .login-screen {
+      padding: 40px 24px;
+      align-items: center;
+      background:
+        radial-gradient(circle at 18% 18%, rgba(16, 185, 129, 0.14), transparent 46%),
+        radial-gradient(circle at 82% 82%, rgba(34, 211, 238, 0.08), transparent 48%),
+        var(--bg-navy-deep);
+    }
+    html[data-theme="light"] .login-screen {
+      background:
+        radial-gradient(circle at 18% 18%, rgba(5, 150, 105, 0.10), transparent 46%),
+        radial-gradient(circle at 82% 82%, rgba(14, 116, 144, 0.06), transparent 48%),
+        #EDF2F7;
+    }
+    .login-card {
+      max-width: 900px !important;
+      width: 100%;
+      min-height: 540px;
+      flex-direction: row;
+      align-items: stretch;
+      border-radius: 26px;
+    }
+    .login-header-bg {
+      flex: 0 0 43%;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 38px 34px;
+      background:
+        radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+        linear-gradient(155deg, #0D3327 0%, #0E1F2A 54%, #090E1A 100%);
+      background-size: 22px 22px, 100% 100%;
+      border-bottom: none;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      color: #F8FAFC;
+    }
+    html[data-theme="light"] .login-header-bg {
+      background:
+        radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+        linear-gradient(155deg, #064E3B 0%, #0B2531 58%, #09131F 100%);
+      background-size: 22px 22px, 100% 100%;
+      border-right-color: rgba(15, 23, 42, 0.12);
+    }
+    .login-brand-lockup {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .login-logo-ring {
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      padding: 8px;
+    }
+    .login-header-bg .login-title {
+      font-size: 23px;
+      color: #FFFFFF;
+    }
+    .login-header-bg .login-subtitle {
+      font-size: 13px;
+      color: rgba(226, 232, 240, 0.78);
+    }
+    .login-desktop-mission {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      margin-top: 28px;
+      position: relative;
+      z-index: 2;
+    }
+    .login-desktop-headline {
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1.3;
+      letter-spacing: -0.02em;
+      color: #FFFFFF;
+      margin: 0;
+    }
+    .login-desktop-copy {
+      font-size: 13px;
+      line-height: 1.6;
+      color: rgba(203, 213, 225, 0.85);
+      margin: 0;
+    }
+    .login-desktop-list {
+      list-style: none;
+      padding: 16px 0 0;
+      margin: 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.10);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .login-desktop-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: rgba(241, 245, 249, 0.9);
+    }
+    .login-desktop-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 6px;
+      background: rgba(16, 185, 129, 0.18);
+      border: 1px solid rgba(52, 211, 153, 0.35);
+      color: #34D399;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .login-form-container {
+      flex: 1;
+      justify-content: center;
+      padding: 36px 42px;
+    }
+  }
+
+  @media (max-height: 680px) and (max-width: 1023px) {
+    .login-screen { padding-top: 10px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+    .login-header-bg { padding: 14px 16px; }
+    .login-logo-ring { width: 44px; height: 44px; border-radius: 13px; }
+    .login-form-container { padding: 16px 14px; }
+    .login-form-head { margin-bottom: 14px; }
+    .login-field-group { margin-bottom: 12px; }
+    .login-divider { margin: 14px 0 12px; }
+    .google-btn-wrap { margin-bottom: 12px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .login-field, .login-btn, .login-footer-icon-btn, .password-toggle-btn {
+      transition: none !important;
+    }
   }
 
   /* Aksi Cepat: Donasi Kitabisa.com -- dibuat mencolok supaya jadi fokus utama */
@@ -3064,9 +3327,6 @@ html.lite-mode .profil-avatar-ring,
 html.lite-mode .profil-dedikasi-bar::before,
 html.lite-mode .profil-formulir-cta::after,
 html.lite-mode .profil-formulir-icon-wrap,
-html.lite-mode .decor-blob-1,
-html.lite-mode .decor-blob-2,
-html.lite-mode .decor-iso,
 html.lite-mode .aksi-kitabisa-icon,
 html.lite-mode .aksi-online-icon,
 html.lite-mode .aksi-kitabisa-icon::after,
@@ -3088,17 +3348,6 @@ html.lite-mode .gtap-ripple { animation-duration: 0.25s !important; }
      supaya menang atas aturan dasar di atas. Hanya aktif di layar lebar;
      tampilan HP/tablet tidak berubah.
      ============================================================ */
-  @media (min-width: 1024px) {
-    /* Login: panel hijau kiri sebelumnya hanya setengah tinggi (aturan dasar
-       height:35% menimpa aturan desktop), sisanya kosong. Dibuat setinggi kartu. */
-    .login-card { align-items: stretch; }
-    .login-header-bg {
-      height: auto !important;
-      min-height: 100% !important;
-      align-self: stretch;
-      padding-bottom: 0 !important;
-    }
-  }
   @media (min-width: 1280px) {
     /* Navigasi bawah: di HP sengaja selebar layar, tapi di laptop 5 tombolnya
        tersebar sepanjang 1350px. Dirapatkan jadi "dock" di tengah. */
@@ -5408,69 +5657,85 @@ html[data-theme="light"] .pg-region-card:hover {
 <div id="loginScreen" class="login-screen">
   <div class="login-card">
     <div class="login-header-bg">
-      <!-- Background Decorations -->
-      <div class="decor-blob decor-blob-1"></div>
-      <div class="decor-blob decor-blob-2"></div>
-      
-      <!-- Isometric Shapes for Tech Vibe -->
-      <svg class="decor-iso" viewBox="0 0 100 100" style="width: 50px; top: 15%; left: 10%;">
-         <polygon points="50,10 90,30 90,70 50,90 10,70 10,30" fill="rgba(255,255,255,0.1)" stroke="#fff" stroke-width="3"/>
-         <polyline points="10,30 50,50 90,30" fill="none" stroke="#fff" stroke-width="3"/>
-         <line x1="50" y1="50" x2="50" y2="90" stroke="#fff" stroke-width="3"/>
-      </svg>
-      <svg class="decor-iso" viewBox="0 0 100 100" style="width: 35px; top: 40%; right: 12%; animation-delay: 1s;">
-         <polygon points="50,10 90,30 90,70 50,90 10,70 10,30" fill="rgba(255,255,255,0.05)" stroke="#fff" stroke-width="4"/>
-         <polyline points="10,30 50,50 90,30" fill="none" stroke="#fff" stroke-width="4"/>
-         <line x1="50" y1="50" x2="50" y2="90" stroke="#fff" stroke-width="4"/>
-      </svg>
-      
-      <!-- Floating Particles -->
-      <div style="position: absolute; width: 6px; height: 6px; background: #fff; border-radius: 50%; top: 25%; right: 30%; opacity: 0.4; animation: float 4s infinite; z-index: 2;"></div>
-      <div style="position: absolute; width: 4px; height: 4px; background: #fff; border-radius: 50%; top: 60%; left: 25%; opacity: 0.3; animation: float 5s infinite 2s; z-index: 2;"></div>
-      <div style="position: absolute; width: 8px; height: 8px; background: #fff; border-radius: 50%; top: 70%; right: 20%; opacity: 0.2; animation: float 7s infinite 1s; z-index: 2;"></div>
+      <div class="login-brand-lockup">
+        <div class="login-logo-ring">
+          <svg viewBox="0 0 100 100" class="login-logo" aria-label="YASSA Logo">
+            <circle cx="28" cy="38" r="6" fill="#22C55E"/>
+            <path d="M13 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="72" cy="38" r="6" fill="#22C55E"/>
+            <path d="M57 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="50" cy="28" r="7.5" fill="#22C55E"/>
+            <path d="M30 53 a 20 20 0 0 1 40 0" fill="none" stroke="#22C55E" stroke-width="6.5" stroke-linecap="round"/>
+            <text x="50" y="76" font-family="'Plus Jakarta Sans', sans-serif" font-weight="900" font-size="24" text-anchor="middle" letter-spacing="-0.5">
+              <tspan fill="#ffffff">YAS</tspan><tspan fill="#22C55E">SA</tspan>
+            </text>
+          </svg>
+        </div>
+        <div class="login-brand-copy">
+          <div class="login-title">YASSA GOPAY</div>
+          <div class="login-subtitle">Yayasan Salam Satu Aspal</div>
+        </div>
+      </div>
 
-      <svg viewBox="0 0 100 100" class="login-logo" aria-label="YASSA Logo">
-        <circle cx="28" cy="38" r="6" fill="#22C55E"/>
-        <path d="M13 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
-        <circle cx="72" cy="38" r="6" fill="#22C55E"/>
-        <path d="M57 56 a 15 15 0 0 1 30 0" fill="none" stroke="#22C55E" stroke-width="5" stroke-linecap="round"/>
-        <circle cx="50" cy="28" r="7.5" fill="#22C55E"/>
-        <path d="M30 53 a 20 20 0 0 1 40 0" fill="none" stroke="#22C55E" stroke-width="6.5" stroke-linecap="round"/>
-        <text x="50" y="76" font-family="'Inter', sans-serif" font-weight="900" font-size="24" text-anchor="middle" letter-spacing="-0.5">
-          <tspan fill="#ffffff">YAS</tspan><tspan fill="#22C55E">SA</tspan>
-        </text>
-      </svg>
-      <!-- Title is optional here since it's already in the logo, but kept for balance -->
-      
-      <div class="login-header-wave"></div>
+      <div class="login-desktop-mission">
+        <h2 class="login-desktop-headline">Portal Amanah &amp; Operasional Pengurus</h2>
+        <p class="login-desktop-copy">Kelola penyaluran santunan yatim, realisasi donasi wilayah, serta laporan lapangan dalam satu sistem terintegrasi.</p>
+        <ul class="login-desktop-list">
+          <li>
+            <span class="login-desktop-dot"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+            <span>Rekap santunan &amp; penerima terpadu</span>
+          </li>
+          <li>
+            <span class="login-desktop-dot"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+            <span>Transparansi kas wilayah real-time</span>
+          </li>
+          <li>
+            <span class="login-desktop-dot"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+            <span>Dokumentasi &amp; absensi pengurus</span>
+          </li>
+        </ul>
+      </div>
     </div>
 
     <div class="login-form-container">
-      <div id="loginError" class="login-error" style="display:none;"></div>
+      <div class="login-form-head">
+        <h1 class="login-form-heading">Masuk ke Akun</h1>
+        <p class="login-form-desc">Gunakan nomor WhatsApp terdaftar atau akun Google Anda.</p>
+      </div>
+
+      <div id="loginError" class="login-error" role="alert" style="display:none;"></div>
 
       <form id="loginForm" onsubmit="handleLoginSubmit(event)">
-        <div class="login-field">
-          <div class="login-field-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <div class="login-field-group">
+          <div class="login-label-row">
+            <label for="loginEmail" class="login-label">Username / WhatsApp</label>
+            <span class="login-label-hint">628xxxxxxxxx</span>
           </div>
-          <input type="tel" id="loginEmail" class="login-input" placeholder="Username (628xxxxxxxxx)" required autocomplete="tel">
-        </div>
-        
-        <div class="login-field">
-          <div class="login-field-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <div class="login-field">
+            <div class="login-field-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <input type="tel" id="loginEmail" class="login-input" placeholder="628xxxxxxxxx" required autocomplete="tel" inputmode="numeric">
           </div>
-          <input type="password" id="loginPassword" class="login-input" placeholder="Password" required autocomplete="current-password">
-          <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('loginPassword', this)" aria-label="Tampilkan/Sembunyikan Password">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
         </div>
-        
+
+        <div class="login-field-group">
+          <div class="login-label-row">
+            <label for="loginPassword" class="login-label">Password</label>
+            <a href="#" class="login-link" onclick="showModal('Lupa Password', 'Silakan hubungi Super Admin untuk mereset password Anda.'); return false;">Lupa Password?</a>
+          </div>
+          <div class="login-field login-field--password">
+            <div class="login-field-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <input type="password" id="loginPassword" class="login-input" placeholder="Masukkan password" required autocomplete="current-password">
+            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('loginPassword', this)" aria-label="Tampilkan/Sembunyikan Password">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+
         <button type="submit" id="loginSubmitBtn" class="login-btn">Masuk</button>
-        
-        <div class="login-links">
-          <a href="#" class="login-link" onclick="showModal('Lupa Password', 'Silakan hubungi Super Admin untuk mereset password Anda.'); return false;">Lupa Password?</a>
-        </div>
       </form>
 
       <div class="login-divider"><span>atau Login Otomatis</span></div>
@@ -5481,30 +5746,31 @@ html[data-theme="light"] .pg-region-card:hover {
         <span>Sedang masuk dengan Google...</span>
       </div>
 
-      <!-- Additional footer icons mirroring the reference design -->
       <div class="login-footer-icons">
-        <button class="login-footer-icon-btn" onclick="window.location.href='https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Absensi.html'">
+        <button type="button" class="login-footer-icon-btn login-footer-icon-btn--cyan" onclick="window.location.href='https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Absensi.html'">
           <div class="login-footer-icon-circle">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22D3EE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>
           </div>
           <span class="login-footer-icon-label">Kehadiran</span>
         </button>
-        <button class="login-footer-icon-btn" onclick="showModal('Keamanan Sistem', 'Insya Allah, sistem ini dalam lindungan Allah SWT. Data yang tersimpan di sini adalah amanah untuk anak-anak yatim — siapa pun yang berniat jahat meretasnya, sama saja menzalimi hak mereka yang tidak berdaya. Semoga Allah melindungi kita semua. 🤲')">
+        <button type="button" class="login-footer-icon-btn login-footer-icon-btn--emerald" onclick="showModal('Keamanan Sistem', 'Insya Allah, sistem ini dalam lindungan Allah SWT. Data yang tersimpan di sini adalah amanah untuk anak-anak yatim — siapa pun yang berniat jahat meretasnya, sama saja menzalimi hak mereka yang tidak berdaya. Semoga Allah melindungi kita semua. 🤲')">
           <div class="login-footer-icon-circle">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           </div>
           <span class="login-footer-icon-label">Keamanan</span>
         </button>
-        <button class="login-footer-icon-btn" onclick="tampilkanMotivasiKeluhan()">
+        <button type="button" class="login-footer-icon-btn login-footer-icon-btn--amber" onclick="tampilkanMotivasiKeluhan()">
           <div class="login-footer-icon-circle">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
           </div>
           <span class="login-footer-icon-label">Keluhan</span>
         </button>
       </div>
 
-      <div id="loginAppVersion" class="login-app-version"></div>
-      <div style="text-align:center; font-size:11px; color:var(--text-muted); opacity:0.7; margin-top:4px; letter-spacing:0.2px;">Aplikasi Resmi Yayasan Salam Satu Aspal</div>
+      <div class="login-meta-footer">
+        <div id="loginAppVersion" class="login-app-version"></div>
+        <div class="login-official-note">Aplikasi Resmi Yayasan Salam Satu Aspal</div>
+      </div>
     </div>
   </div>
 </div>
