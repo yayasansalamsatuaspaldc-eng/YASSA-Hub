@@ -732,10 +732,11 @@
      selectProgramTab() & .program-panel). Cuma GO-PAY yang punya data
      LIVE sekarang, program lain nampilin placeholder "segera hadir". */
   .program-select-scroll {
+    position: relative;
     display: flex;
     gap: 10px;
     overflow-x: auto;
-    padding: 2px 2px 6px;
+    padding: 4px 2px 13px;
     /* 🩹 FIX gulir ke kiri macet: snap "proximity" menarik balik ke kartu terdekat setelah
        tiap geseran pendek, dan overscroll di tepi kiri bisa memicu gestur back browser. */
     scroll-snap-type: none;
@@ -745,7 +746,31 @@
     scrollbar-width: none;
   }
   .program-select-scroll::-webkit-scrollbar { display: none; }
+  .program-tab-indicator {
+    position: absolute;
+    left: 0;
+    bottom: 3px;
+    height: 3px;
+    width: 44px;
+    border-radius: 999px;
+    background: var(--prog-color, var(--bento-primary));
+    box-shadow: 0 0 10px var(--prog-color, rgba(34, 197, 94, 0.45));
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 2;
+    transition:
+      transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+      width 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+      background-color 0.28s ease,
+      box-shadow 0.28s ease,
+      opacity 0.22s ease;
+    will-change: transform, width;
+  }
+  .program-tab-indicator.is-visible { opacity: 1; }
   .program-select-card {
+    position: relative;
+    overflow: hidden;
     flex: 0 0 auto;
     scroll-snap-align: start;
     width: 92px;
@@ -759,12 +784,31 @@
     text-align: center;
     gap: 8px;
     cursor: pointer;
-    opacity: 0;
+    opacity: var(--cf-opacity, 1);
     transform: scale(var(--cf-scale, 1));
     /* 🎠 --cf-scale/--cf-opacity dikontrol JS (initProgramSelectorCoverflow)
        ngikutin posisi scroll -- lihat komentar di JS-nya. */
-    animation: programCardMasuk 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    transition: transform 0.15s ease-out, opacity 0.15s ease-out, border-color 0.15s, background 0.15s;
+    animation: programCardMasuk 0.45s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    transition:
+      transform 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.28s ease-out,
+      border-color 0.28s ease,
+      background-color 0.28s ease,
+      box-shadow 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .program-select-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(circle at 50% 34%, var(--prog-bg, rgba(34,197,94,0.28)) 0%, transparent 72%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.32s ease;
+  }
+  .program-select-card:active {
+    transform: scale(calc(var(--cf-scale, 1) * 0.94));
+    transition-duration: 0.1s;
   }
   .program-select-card:nth-child(1) { animation-delay: 0.03s; }
   .program-select-card:nth-child(2) { animation-delay: 0.08s; }
@@ -779,7 +823,35 @@
   .program-select-card.active {
     border-color: var(--prog-color, var(--bento-primary));
     background: var(--prog-bg, rgba(var(--bento-primary-rgb),0.12));
-    box-shadow: 0 0 0 1px var(--prog-color, var(--bento-primary)) inset;
+    transform: translateY(-2px) scale(calc(var(--cf-scale, 1) * 1.02));
+    box-shadow: 0 8px 18px -10px var(--prog-color, rgba(34,197,94,0.55)), 0 0 0 1px var(--prog-color, var(--bento-primary)) inset;
+  }
+  .program-select-card.active::before {
+    opacity: 0.75;
+  }
+  .program-select-card.is-tab-entering::before {
+    animation: programTabCardSweep 0.48s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  .program-select-card.is-tab-entering .program-select-icon {
+    animation: programTabIconPop 0.44s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .program-select-card.is-tab-leaving .program-select-icon {
+    animation: programTabIconLeave 0.26s ease-out;
+  }
+  @keyframes programTabCardSweep {
+    0%   { opacity: 0.15; transform: scale(0.72); }
+    45%  { opacity: 1; transform: scale(1.06); }
+    100% { opacity: 0.75; transform: scale(1); }
+  }
+  @keyframes programTabIconPop {
+    0%   { transform: scale(0.84) rotate(calc(var(--tab-dir, 1) * -6deg)); }
+    52%  { transform: scale(1.14) rotate(calc(var(--tab-dir, 1) * 3deg)); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+  @keyframes programTabIconLeave {
+    0%   { transform: scale(1.04); }
+    50%  { transform: scale(0.92); }
+    100% { transform: scale(1); }
   }
   .program-select-icon {
     width: 40px; height: 40px; border-radius: 50%;
@@ -787,6 +859,7 @@
     color: var(--prog-color, var(--text-secondary));
     display: flex; align-items: center; justify-content: center;
     position: relative;
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.28s ease, color 0.28s ease;
   }
   /* Cincin radar yang muter-mekar pelan di belakang ikon kartu program
      yang lagi AKTIF -- kartu lain (belum dipilih) diam saja, biar mata
@@ -804,11 +877,17 @@
     100% { transform: scale(1.55); opacity: 0; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .program-select-card { opacity: var(--cf-opacity, 1); animation: none !important; transform: none !important; }
-    .program-select-card.active .program-select-icon::after { animation: none !important; display: none; }
+    .program-select-card { opacity: var(--cf-opacity, 1); animation: none !important; transform: none !important; transition: border-color 0.15s ease, background-color 0.15s ease !important; }
+    .program-select-card.active { transform: none !important; }
+    .program-select-card.is-tab-entering::before,
+    .program-select-card.is-tab-entering .program-select-icon,
+    .program-select-card.is-tab-leaving .program-select-icon,
+    .program-select-card.active .program-select-icon::after { animation: none !important; }
+    .program-select-card.active .program-select-icon::after { display: none; }
+    .program-tab-indicator { transition: none !important; }
   }
   .program-select-icon .material-symbols-outlined { font-size: 20px; }
-  .program-select-label { font-size: 11.5px; font-weight: 800; color: var(--text-primary); letter-spacing: 0.2px; }
+  .program-select-label { font-size: 11.5px; font-weight: 800; color: var(--text-primary); letter-spacing: 0.2px; transition: color 0.25s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1); }
   .program-select-sub { font-size: 8.5px; color: var(--text-secondary); line-height: 1.25; }
   .summary-sub-icon {
     width: 20px; height: 20px; border-radius: 6px;
@@ -3744,10 +3823,17 @@ html[data-theme="light"] .stitch-rekap-pill { color: #7E22CE; }
   border-radius: 14px !important;
   border: 1px solid var(--st-line, var(--glass-border)) !important;
   background: var(--st-inner, var(--glass)) !important;
+  transition:
+    transform 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.28s ease-out,
+    border-color 0.28s ease,
+    background-color 0.28s ease,
+    box-shadow 0.34s cubic-bezier(0.22, 1, 0.36, 1) !important;
 }
 .program-select-card.active {
   border: 1.5px solid var(--prog-color) !important;
   background: var(--prog-bg) !important;
+  box-shadow: 0 8px 18px -10px var(--prog-color, rgba(34,197,94,0.55)), 0 0 0 1px var(--prog-color, var(--bento-primary)) inset !important;
 }
 .program-select-label { font-weight: 700; letter-spacing: 0.01em; }
 
@@ -4901,12 +4987,29 @@ html[data-theme="light"] .um-logout-btn {
 }
 
 /* ===== Program YASSA / Program GO-PAY Overlay (#programGopayPage) ===== */
+#programGopayPage.overlay.open {
+  animation: pgOverlayEnter 0.34s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+#programGopayPage.overlay.closing {
+  display: flex;
+  pointer-events: none;
+  animation: pgOverlayExit 0.22s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+@keyframes pgOverlayEnter {
+  from { opacity: 0; transform: translate3d(0, 26px, 0) scale(0.985); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes pgOverlayExit {
+  from { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  to   { opacity: 0; transform: translate3d(0, 22px, 0) scale(0.985); }
+}
 #programGopayPage .overlay-header {
   padding: 10px 16px;
   min-height: 58px;
   background: rgba(11, 16, 28, 0.92);
   border-bottom: 1px solid var(--glass-border);
   backdrop-filter: blur(18px);
+  transition: border-color 0.28s ease, background-color 0.25s ease;
 }
 html[data-theme="light"] #programGopayPage .overlay-header {
   background: rgba(255, 255, 255, 0.94);
@@ -4949,6 +5052,22 @@ html[data-theme="light"] #programGopayPage .overlay-header {
   background: var(--pg-accent-bg, rgba(34, 197, 94, 0.14));
   border: 1px solid var(--pg-accent-border, rgba(34, 197, 94, 0.28));
   color: var(--pg-accent, #22C55E);
+  transition: background 0.28s ease, border-color 0.28s ease, color 0.28s ease;
+}
+#programGopayPage.is-switching-head .pg-header-badge {
+  animation: pgHeaderBadgePop 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+}
+#programGopayPage.is-switching-head .pg-header-titles {
+  animation: pgHeaderTitleIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes pgHeaderBadgePop {
+  0%   { transform: scale(0.8); opacity: 0.65; }
+  60%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes pgHeaderTitleIn {
+  from { opacity: 0.35; transform: translate3d(8px, 0, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 .pg-header-badge .material-symbols-outlined {
   font-size: 19px;
@@ -4991,6 +5110,54 @@ html[data-theme="light"] #programGopayPage .overlay-header {
   margin: 0 auto;
   padding: 16px 16px 36px;
   box-sizing: border-box;
+}
+.pg-shell.pg-enter-next {
+  animation: pgShellSlideNext 0.36s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.pg-shell.pg-enter-prev {
+  animation: pgShellSlidePrev 0.36s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.pg-shell.pg-enter-fade {
+  animation: pgShellFadeUp 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.pg-shell.pg-animating .pg-banner-card {
+  animation: pgBlockReveal 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.pg-shell.pg-animating .pg-summary-card {
+  animation: pgBlockReveal 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.055s both;
+}
+.pg-shell.pg-animating .pg-wilayah-section {
+  animation: pgBlockReveal 0.42s cubic-bezier(0.22, 1, 0.36, 1) 0.11s both;
+}
+@keyframes pgShellSlideNext {
+  from { opacity: 0; transform: translate3d(20px, 6px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes pgShellSlidePrev {
+  from { opacity: 0; transform: translate3d(-20px, 6px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes pgShellFadeUp {
+  from { opacity: 0; transform: translate3d(0, 12px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes pgBlockReveal {
+  from { opacity: 0; transform: translate3d(0, 10px, 0) scale(0.988); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #programGopayPage.overlay.open,
+  #programGopayPage.overlay.closing,
+  #programGopayPage.is-switching-head .pg-header-badge,
+  #programGopayPage.is-switching-head .pg-header-titles,
+  .pg-shell.pg-enter-next,
+  .pg-shell.pg-enter-prev,
+  .pg-shell.pg-enter-fade,
+  .pg-shell.pg-animating .pg-banner-card,
+  .pg-shell.pg-animating .pg-summary-card,
+  .pg-shell.pg-animating .pg-wilayah-section {
+    animation: none !important;
+  }
 }
 .pg-hero-grid {
   display: grid;
@@ -6167,7 +6334,7 @@ html[data-theme="light"] .pg-region-card:hover {
     <div class="overlay-sso-loading" id="overlaySsoLoading">
       <div class="overlay-sso-spinner" id="overlaySsoSpinner"></div>
       <span id="overlaySsoLoadingText">Menghubungkan ke YASSA Mobile...</span>
-      <!-- 🆕 Tampil cuma kalau SEMUA percobaan tiket SSO gagal -- biar user
+      <!--      Tampil cuma kalau SEMUA percobaan tiket SSO gagal -- biar user
            yang mutusin (coba lagi vs lanjut login manual sekarang), bukan
            Hub yang diam-diam langsung buka Mobile tanpa tiket. -->
       <div class="overlay-sso-choice" id="overlaySsoChoice">
@@ -7535,10 +7702,14 @@ const YASSA_PROGRAMS = [
   { key: "batan", label: "BATAN", sub: "Bantuan Kesehatan", icon: "favorite", color: "#14B8A6", bg: "rgba(20,184,166,0.15)", ready: true },
 ];
 let activeProgram = "gopay";
+let currentProgramTabKey_ = "gopay";
+let programTabOpenTimer_ = null;
+let programTabClearTimer_ = null;
 
 function renderProgramSelectorHtml_() {
+  const activeKey = currentProgramTabKey_ || activeProgram;
   const cards = YASSA_PROGRAMS.map(function (p) {
-    const isActive = p.key === activeProgram;
+    const isActive = p.key === activeKey;
     return (
       '<div class="program-select-card' + (isActive ? " active" : "") + '" data-program="' + p.key + '" ' +
       'style="--prog-color:' + p.color + '; --prog-bg:' + p.bg + ';" onclick="selectProgramTab(\'' + p.key + '\')">' +
@@ -7552,7 +7723,10 @@ function renderProgramSelectorHtml_() {
     '<div style="margin-bottom: 16px;">' +
       '<h3 class="stitch-section-title" style="margin-bottom:2px;">PILIH PROGRAM YASSA</h3>' +
       '<div style="font-size: 10.5px; color: var(--text-secondary); margin-bottom: 10px;">Pilih salah satu program untuk melihat data dan progres</div>' +
-      '<div class="program-select-scroll" id="programSelectScroll">' + cards + '</div>' +
+      '<div class="program-select-scroll" id="programSelectScroll">' +
+        cards +
+        '<span class="program-tab-indicator" id="programTabIndicator" aria-hidden="true"></span>' +
+      '</div>' +
     '</div>'
   );
 }
@@ -7573,24 +7747,77 @@ function renderProgramComingSoonHtml_(p) {
   );
 }
 
-// Ganti program yang aktif di selector "PILIH PROGRAM YASSA" -- tinggal
-// toggle tampil/sembunyi panel yang udah dirender (gak perlu render ulang
-// seluruh tab Beranda), jadi ringan & data GO-PAY yang udah kemuat gak
-// perlu fetch ulang tiap ganti-ganti tab program.
+function updateProgramTabIndicator_(targetCard) {
+  const scroller = document.getElementById("programSelectScroll");
+  const indicator = document.getElementById("programTabIndicator");
+  if (!scroller || !indicator) return;
+  const card = targetCard || scroller.querySelector(".program-select-card.active") || scroller.querySelector(".program-select-card");
+  if (!card) return;
+  const cardW = card.offsetWidth || 92;
+  const pillW = Math.max(28, Math.round(cardW * 0.48));
+  const left = card.offsetLeft + Math.round((cardW - pillW) / 2);
+  const progColor = card.style.getPropertyValue("--prog-color") || "";
+  if (progColor) indicator.style.setProperty("--prog-color", progColor);
+  indicator.style.width = pillW + "px";
+  indicator.style.transform = "translate3d(" + left + "px, 0, 0)";
+  indicator.classList.add("is-visible");
+}
+
+// Ganti program yang aktif di selector "PILIH PROGRAM YASSA" -- dengan animasi
+// indikator geser, umpan balik ikon, dan transisi layar program yang halus.
 function selectProgramTab(key) {
   // 🔒 Kartu ringkasan "Kebutuhan / Kekurangan Santunan" di atas SELALU milik GO-PAY.
-  // Karena setiap program sekarang membuka LAYAR BARU-nya sendiri (lihat openProgramPage_),
-  // kartu itu tidak perlu lagi berganti isi mengikuti program yang ditekan. Maka
   // `activeProgram` SENGAJA tidak diubah di sini (tetap "gopay") -- yang berganti hanya
-  // sorotan kartu pilihan, lalu layar program yang dipilih dibuka.
-  document.querySelectorAll(".program-select-card").forEach(function (el) {
-    el.classList.toggle("active", el.getAttribute("data-program") === key);
+  // sorotan kartu pilihan & indikator tab di Beranda, lalu layar program dibuka.
+  const prevKey = currentProgramTabKey_ || activeProgram;
+  const prevIdx = YASSA_PROGRAMS.findIndex(function (p) { return p.key === prevKey; });
+  const nextIdx = YASSA_PROGRAMS.findIndex(function (p) { return p.key === key; });
+  const switchDir = (prevIdx >= 0 && nextIdx >= 0 && prevIdx !== nextIdx)
+    ? (nextIdx > prevIdx ? "next" : "prev")
+    : "fade";
+  const dirSign = switchDir === "next" ? 1 : (switchDir === "prev" ? -1 : 0);
+
+  currentProgramTabKey_ = key;
+
+  const cards = document.querySelectorAll(".program-select-card");
+  let prevCardEl = null;
+  let nextCardEl = null;
+  cards.forEach(function (el) {
+    const prog = el.getAttribute("data-program");
+    if (prog === prevKey && prevKey !== key) prevCardEl = el;
+    if (prog === key) nextCardEl = el;
+    el.classList.remove("is-tab-entering", "is-tab-leaving");
+    el.classList.toggle("active", prog === key);
   });
-  const cardEl = document.querySelector('.program-select-card[data-program="' + key + '"]');
-  if (cardEl && cardEl.scrollIntoView) {
-    cardEl.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+
+  if (prevCardEl) prevCardEl.classList.add("is-tab-leaving");
+  if (nextCardEl) {
+    nextCardEl.style.setProperty("--tab-dir", String(dirSign));
+    void nextCardEl.offsetWidth;
+    nextCardEl.classList.add("is-tab-entering");
   }
-  openProgramPage_(key);
+
+  clearTimeout(programTabClearTimer_);
+  programTabClearTimer_ = setTimeout(function () {
+    document.querySelectorAll(".program-select-card").forEach(function (el) {
+      el.classList.remove("is-tab-entering", "is-tab-leaving");
+    });
+  }, 480);
+
+  updateProgramTabIndicator_(nextCardEl);
+
+  if (nextCardEl && nextCardEl.scrollIntoView) {
+    nextCardEl.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }
+
+  const reducedMotion = (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) ||
+    document.documentElement.classList.contains("lite-mode");
+  const delayMs = reducedMotion || prevKey === key ? 0 : 150;
+
+  clearTimeout(programTabOpenTimer_);
+  programTabOpenTimer_ = setTimeout(function () {
+    openProgramPage_(key, switchDir);
+  }, delayMs);
 }
 
 // ============================================================
@@ -16189,9 +16416,43 @@ function openProgramGopayPage() { openProgramPage_("gopay"); }
 // GOPAY_KELOMPOK_WILAYAH). Memakai overlay #programGopayPage yang sama.
 // ============================================================
 let programPageKey_ = "gopay";
+let programPageAnimPending_ = false;
+let programPageSwitchDir_ = "fade";
+let programPageCloseTimer_ = null;
+let programPageHeadTimer_ = null;
 
-function openProgramPage_(key) {
+function applyProgramPageTransition_(el) {
+  if (!el || !programPageAnimPending_) return;
+  programPageAnimPending_ = false;
+  const shell = el.querySelector(".pg-shell");
+  if (!shell) return;
+  const dirClass = programPageSwitchDir_ === "next"
+    ? "pg-enter-next"
+    : (programPageSwitchDir_ === "prev" ? "pg-enter-prev" : "pg-enter-fade");
+  shell.classList.add("pg-animating", dirClass);
+}
+
+function closeProgramPage_() {
+  const pageEl = document.getElementById("programGopayPage");
+  if (!pageEl) return;
+  clearTimeout(programTabOpenTimer_);
+  clearTimeout(programPageCloseTimer_);
+  const reducedMotion = (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) ||
+    document.documentElement.classList.contains("lite-mode");
+  if (reducedMotion || !pageEl.classList.contains("open")) {
+    pageEl.classList.remove("open", "closing", "is-switching-head");
+    return;
+  }
+  pageEl.classList.add("closing");
+  programPageCloseTimer_ = setTimeout(function () {
+    pageEl.classList.remove("open", "closing", "is-switching-head");
+  }, 210);
+}
+
+function openProgramPage_(key, switchDir) {
   programPageKey_ = key;
+  programPageSwitchDir_ = switchDir || "fade";
+  programPageAnimPending_ = true;
   const p = programInfo_(key);
   const judul = document.getElementById("programPageTitle");
   if (judul) judul.textContent = "Program " + p.label;
@@ -16201,10 +16462,17 @@ function openProgramPage_(key) {
   if (ico) ico.textContent = p.icon || "volunteer_activism";
   const pageEl = document.getElementById("programGopayPage");
   if (pageEl) {
+    clearTimeout(programPageCloseTimer_);
+    clearTimeout(programPageHeadTimer_);
+    pageEl.classList.remove("closing", "is-switching-head");
     pageEl.style.setProperty("--pg-accent", p.color || "#22C55E");
     pageEl.style.setProperty("--pg-accent-bg", p.bg || "rgba(34,197,94,0.15)");
     pageEl.style.setProperty("--pg-accent-border", (p.color || "#22C55E") + "44");
-    pageEl.classList.add("open");
+    void pageEl.offsetWidth;
+    pageEl.classList.add("open", "is-switching-head");
+    programPageHeadTimer_ = setTimeout(function () {
+      pageEl.classList.remove("is-switching-head");
+    }, 380);
   }
   const area = document.getElementById("programGopayContent");
   if (area) area.scrollTop = 0;
@@ -16386,6 +16654,7 @@ function loadProgramSapaPage_() {
       '<div class="pg-hero-grid">' + renderProgramGopayBanner_("sapa") +
         '<div class="pg-state-card"><span class="material-symbols-outlined spin" style="font-size: 22px; color: var(--bento-primary);">progress_activity</span><span>Mengambil data Anak Asuh dari YASSA Mobile...</span></div>' +
       '</div></div>';
+    applyProgramPageTransition_(el);
   }
   callGASWithRetry_("getDataAnakAsuh", [authToken])
     .then(function (data) {
@@ -16401,6 +16670,7 @@ function loadProgramSapaPage_() {
           '<div class="pg-state-card"><span>Gagal memuat data: ' + escapeHtmlHub(String(err && err.message || err)) + '</span>' +
           '<button type="button" class="pg-retry-btn" onclick="loadProgramSapaPage_()">Coba lagi</button></div>' +
         '</div></div>';
+      applyProgramPageTransition_(el);
     });
 }
 
@@ -16449,6 +16719,7 @@ function renderProgramSapaPage_(data, dariCache) {
     '</div>' +
     htmlDaftarRincianWilayah_(kartu, kolom, p.color) +
   '</div>';
+  applyProgramPageTransition_(el);
 }
 
 // ---------- BASO / PEDAS / BADIK / BATAN: data penyaluran tahun berjalan ----------
@@ -16483,6 +16754,7 @@ function renderProgramTersalurPage_(key, percobaan) {
         ? '<span class="material-symbols-outlined spin" style="font-size:22px; color: var(--bento-primary);">progress_activity</span><span>Mengambil data Program ' + escapeHtmlHub(p.label) + '...</span>'
         : '<span>Data Program ' + escapeHtmlHub(p.label) + ' belum tersedia. Tutup layar ini lalu tarik Beranda ke bawah untuk memuat ulang.</span>') +
       '</div></div></div>';
+    applyProgramPageTransition_(el);
     if (menunggu) {
       setTimeout(function () {
         if (programPageKey_ === key && document.getElementById("programGopayPage").classList.contains("open")) {
@@ -16524,6 +16796,7 @@ function renderProgramTersalurPage_(key, percobaan) {
     '</div>' +
     htmlDaftarRincianWilayah_(kartu, kolom, p.color) +
   '</div>';
+  applyProgramPageTransition_(el);
 }
 
 function loadProgramGopayPage_() {
@@ -16537,6 +16810,7 @@ function loadProgramGopayPage_() {
         '<span class="material-symbols-outlined spin" style="font-size: 22px; color: var(--bento-primary);">progress_activity</span>' +
         '<span>Mengambil data anak yatim dari YASSA Mobile...</span>' +
       '</div></div></div>';
+    applyProgramPageTransition_(el);
   }
   callGASWithRetry_("getDataAnakYatim", [authToken])
     .then(function (data) {
@@ -16553,6 +16827,7 @@ function loadProgramGopayPage_() {
           '<span>Gagal memuat data: ' + escapeHtmlHub(String(err && err.message || err)) + '</span>' +
           '<button type="button" class="pg-retry-btn" onclick="loadProgramGopayPage_()">Coba lagi</button>' +
         '</div></div></div>';
+      applyProgramPageTransition_(el);
     });
 }
 
@@ -16738,6 +17013,7 @@ function renderProgramGopayPage_(data, dariCache) {
     html += '</div><div class="pg-search-empty">Tidak ada wilayah yang cocok dengan pencarian Anda.</div>';
   }
   el.innerHTML = html + '</div></div>';
+  applyProgramPageTransition_(el);
 }
 
 function openDataAnakYatim() {
@@ -21031,7 +21307,7 @@ document.getElementById("laporanPdfViewerClose").addEventListener("click", funct
 });
 
 document.getElementById("programGopayClose").addEventListener("click", function () {
-  document.getElementById("programGopayPage").classList.remove("open");
+  closeProgramPage_();
 });
 
 document.getElementById("dataAnakYatimClose").addEventListener("click", function () {
@@ -21391,6 +21667,17 @@ function cleanupCacheAndUpdate() {
 function initProgramSelectorCoverflow() {
   const scroller = document.getElementById("programSelectScroll");
   if (!scroller) return;
+
+  requestAnimationFrame(function () {
+    updateProgramTabIndicator_();
+  });
+  if (!window._pgTabResizeBound) {
+    window._pgTabResizeBound = true;
+    window.addEventListener("resize", function () {
+      updateProgramTabIndicator_();
+    }, { passive: true });
+  }
+
   if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
   let ticking = false;
@@ -21688,6 +21975,7 @@ function closeTopmostOverlay() {
     if (el.id === "inputOverlay") { toggleInputSheet(); return; }
     if (el.id === "inputGopaySubOverlay") { toggleInputGopaySubSheet(); return; }
     if (el.id === "kegiatanFormOverlay" && typeof closeKegiatanForm === "function") { closeKegiatanForm(); return; }
+    if (el.id === "programGopayPage" && typeof closeProgramPage_ === "function") { closeProgramPage_(); return; }
     el.classList.remove("open"); // fallback generic
   });
   return true;
