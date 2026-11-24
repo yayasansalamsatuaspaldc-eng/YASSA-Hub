@@ -2386,6 +2386,143 @@
     display: none;
   }
 
+  /* Kartu Anggota Digital Modal Controls */
+  .kartu-modal-shell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .kartu-tema-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 999px;
+    background: var(--glass-bg-2, rgba(255,255,255,0.06));
+    border: 1px solid var(--glass-border);
+    max-width: 100%;
+  }
+  .kartu-tema-btn {
+    border: none;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    background: transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+  }
+  .kartu-tema-btn .kartu-tema-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    flex-shrink: 0;
+  }
+  .kartu-tema-btn.active {
+    background: var(--grad-primary);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(16,185,129,0.28);
+  }
+  .kartu-sisi-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    max-width: 340px;
+  }
+  .kartu-sisi-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    background: rgba(16,185,129,0.12);
+    color: #34D399;
+    border: 1px solid rgba(52,211,153,0.28);
+  }
+  .kartu-sisi-badge[data-side="belakang"] {
+    background: rgba(245,158,11,0.12);
+    color: #FBBF24;
+    border-color: rgba(245,158,11,0.3);
+  }
+  .kartu-sisi-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: currentColor;
+  }
+  .kartu-balik-btn {
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg-2, rgba(255,255,255,0.06));
+    color: var(--text-primary);
+    border-radius: 999px;
+    padding: 6px 13px;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+  .kartu-balik-btn:hover {
+    border-color: var(--emerald, #10B981);
+    background: rgba(16,185,129,0.1);
+  }
+  .kartu-balik-btn:active {
+    transform: scale(0.97);
+  }
+  .kartu-aksi-divider {
+    width: 100%;
+    max-width: 340px;
+    height: 1px;
+    background: var(--glass-border);
+    margin: 2px 0;
+  }
+  .kartu-aksi-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    max-width: 340px;
+  }
+  .kartu-anggota-aksi {
+    border: none;
+    border-radius: 13px;
+    padding: 11px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    background: var(--grad-primary);
+    cursor: pointer;
+    opacity: 0.5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: opacity 0.2s ease, transform 0.15s ease, filter 0.15s ease;
+  }
+  .kartu-anggota-aksi.kartu-aksi-secondary {
+    background: var(--glass-bg-2, rgba(255,255,255,0.07));
+    color: var(--text-primary);
+    border: 1px solid var(--glass-border);
+  }
+  .kartu-anggota-aksi.kartu-aksi-full {
+    grid-column: 1 / -1;
+  }
+  .kartu-anggota-aksi:not(:disabled):active {
+    transform: scale(0.98);
+  }
+
   /* ============================================================
      ✨ IMMERSIVE: kartu "Jabatan/Wilayah" + tombol CTA "Formulir Data
      Baru GOPAY" di tab Profil.
@@ -19980,30 +20117,164 @@ async function ambilTeksQrKartu_(vcardFallback) {
   return vcardFallback;
 }
 
-async function gambarKartuAnggota_() {
+const KARTU_THEMES_ = {
+  emerald: {
+    id: "emerald",
+    label: "Emerald YASSA",
+    bgStops: ["#0D2D24", "#101E2E", "#0A101C"],
+    glowRgb: "16,185,129",
+    glowHex: "#10B981",
+    glowAlphaFront: 0.2,
+    glowAlphaBack: 0.22,
+    accent: "#34D399",
+    accentGold: "#F59E0B",
+    subTitle: "#A7F3D0",
+    muted: "#94A3B8",
+    stripStops: ["#6EE7B7", "#10B981", "#D97706"],
+    frameStops: ["#6EE7B7", "#10B981", "#F59E0B"],
+    circleBg: "#0B1B18",
+    circleStroke: "#34D399",
+    dashRgba: "rgba(52,211,153,0.55)",
+    dashHex: "#34D399",
+    badgeBg: "rgba(16,185,129,0.18)",
+    badgeStroke: "rgba(52,211,153,0.58)",
+    badgeDot: "#34D399",
+    badgeText: "#A7F3D0",
+    watermarkRgba: "rgba(255,255,255,0.036)",
+    watermarkOpacity: "0.036",
+    edgeA: "#0F3D2E",
+    edgeB: "#08271E",
+    qrStroke: "#34D399",
+    qrUrlColor: "#34D399"
+  },
+  gold: {
+    id: "gold",
+    label: "Hitam Emas",
+    bgStops: ["#2B2B2B", "#222222", "#1A1A1A"],
+    glowRgb: "243,156,18",
+    glowHex: "#F39C12",
+    glowAlphaFront: 0.12,
+    glowAlphaBack: 0.14,
+    accent: "#F39C12",
+    accentGold: "#FFD27A",
+    subTitle: "#F39C12",
+    muted: "#A0A0A0",
+    stripStops: ["#FFC04D", "#F39C12", "#B86E00"],
+    frameStops: ["#FFD27A", "#F39C12", "#B86E00"],
+    circleBg: "#111111",
+    circleStroke: "#F39C12",
+    dashRgba: "rgba(243,156,18,0.6)",
+    dashHex: "#F39C12",
+    badgeBg: "rgba(243,156,18,0.16)",
+    badgeStroke: "rgba(243,156,18,0.58)",
+    badgeDot: "#F39C12",
+    badgeText: "#FFD27A",
+    watermarkRgba: "rgba(255,255,255,0.032)",
+    watermarkOpacity: "0.032",
+    edgeA: "#8A5A00",
+    edgeB: "#5E3C00",
+    qrStroke: "#F39C12",
+    qrUrlColor: "#F39C12"
+  }
+};
+
+var kartuTemaAktif_ = "emerald";
+var kartuBelakangQr_ = null, kartuBelakangCanvas_ = null, kartuDataSvg_ = null;
+
+function getTemaKartu_(temaKey) {
+  return KARTU_THEMES_[temaKey || kartuTemaAktif_] || KARTU_THEMES_.emerald;
+}
+
+function kodeAnggotaYassa_(user) {
+  const u = user || currentUser || {};
+  const eksplisit = String(u.idAnggota || u.noAnggota || "").trim();
+  if (eksplisit) return eksplisit.toUpperCase();
+  const seed = [u.username || "", u.email || "", u.nama || "Pengurus"].join("|");
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  const kode = (h >>> 0).toString(36).toUpperCase().padStart(6, "0").slice(-6);
+  return "YSS-" + kode;
+}
+
+function buildKartuVcard_(nama, jabatan, telp, emailKartu, wilayah, idAnggota) {
+  return [
+    "BEGIN:VCARD",
+    "VERSION:3.0",
+    "FN:" + nama + " (" + jabatan + " YASSA)",
+    "N:;" + nama + " (" + jabatan + " YASSA);;;",
+    "TITLE:" + jabatan,
+    "ORG:Yayasan Salam Satu Aspal (YASSA)",
+    "TEL;TYPE=CELL:" + telp,
+    emailKartu ? ("EMAIL:" + emailKartu) : "",
+    "NOTE:ID " + idAnggota + " | Jabatan: " + jabatan + " | Wilayah: " + wilayah,
+    "END:VCARD"
+  ].filter(Boolean).join("\n");
+}
+
+function setTemaKartuAnggota(tema) {
+  if (!KARTU_THEMES_[tema] || kartuTemaAktif_ === tema) return;
+  kartuTemaAktif_ = tema;
+  const btns = document.querySelectorAll(".kartu-tema-btn");
+  btns.forEach(function (btn) {
+    btn.classList.toggle("active", btn.getAttribute("data-tema") === tema);
+  });
+  const t = getTemaKartu_(tema);
+  const edges = document.querySelectorAll(".kartu-edge-layer");
+  edges.forEach(function (el, idx) {
+    el.style.background = idx % 2 === 0 ? t.edgeA : t.edgeB;
+  });
+  if (kartuDataSvg_) kartuDataSvg_.tema = tema;
+  gambarKartuAnggota_(true);
+}
+
+async function gambarKartuAnggota_(pakaiCache) {
   const canvas = document.getElementById("kartuAnggotaCanvas");
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
   const W = canvas.width, H = canvas.height;
-  const nama = String(currentUser.nama || "Pengurus");
-  const jabatan = String(currentUser.jabatan || "-");
-  const telp = String(currentUser.username || "");
-  const emailKartu = String(currentUser.email || "").trim();
-  const wilayah = String(currentUser.wilayahAkses || "").toUpperCase() === "ALL" ? "Semua Wilayah" : (currentUser.wilayahAkses || "-");
-  const vcard = "BEGIN:VCARD\nVERSION:3.0\nFN:" + nama + " (" + jabatan + " YASSA)\nN:;" + nama + " (" + jabatan + " YASSA);;;\nTITLE:" + jabatan + "\nORG:Yayasan Salam Satu Aspal (YASSA)\nTEL;TYPE=CELL:" + telp + (emailKartu ? "\nEMAIL:" + emailKartu : "") + "\nNOTE:Jabatan: " + jabatan + " | Wilayah: " + wilayah + "\nEND:VCARD";
-  const teksQr = await ambilTeksQrKartu_(vcard);
-  const qrUrl = "https://quickchart.io/qr?size=300&margin=1&ecLevel=M&text=" + encodeURIComponent(teksQr);
+  const t = getTemaKartu_(kartuTemaAktif_);
 
-  const hasilMuat = await Promise.all([
-    muatFotoProfilKartu_(),
-    muatGambarKartu_(qrUrl),
-  ]);
-  const foto = hasilMuat[0], qr = hasilMuat[1];
-  if (!document.getElementById("kartuAnggotaCanvas")) return; // modal sudah ditutup
-  // QR dipindah ke sisi BELAKANG kartu: simpan lalu gambar ulang sisi belakang bila sudah ada
+  let nama, jabatan, telp, emailKartu, wilayah, idAnggota, vcard, teksQr, foto, qr;
+  if (pakaiCache && kartuDataSvg_) {
+    nama = kartuDataSvg_.nama;
+    jabatan = kartuDataSvg_.jabatan;
+    telp = kartuDataSvg_.telp;
+    emailKartu = kartuDataSvg_.emailKartu;
+    wilayah = kartuDataSvg_.wilayah;
+    idAnggota = kartuDataSvg_.idAnggota;
+    vcard = kartuDataSvg_.vcard;
+    teksQr = kartuDataSvg_.teksQr;
+    foto = kartuDataSvg_.foto;
+    qr = kartuDataSvg_.qr;
+  } else {
+    nama = String(currentUser.nama || "Pengurus");
+    jabatan = String(currentUser.jabatan || "-");
+    telp = String(currentUser.username || "");
+    emailKartu = String(currentUser.email || "").trim();
+    wilayah = String(currentUser.wilayahAkses || "").toUpperCase() === "ALL" ? "Semua Wilayah" : (currentUser.wilayahAkses || "-");
+    idAnggota = kodeAnggotaYassa_(currentUser);
+    vcard = buildKartuVcard_(nama, jabatan, telp, emailKartu, wilayah, idAnggota);
+    teksQr = await ambilTeksQrKartu_(vcard);
+    const qrUrl = "https://quickchart.io/qr?size=300&margin=1&ecLevel=M&text=" + encodeURIComponent(teksQr);
+    const hasilMuat = await Promise.all([
+      muatFotoProfilKartu_(),
+      muatGambarKartu_(qrUrl),
+    ]);
+    foto = hasilMuat[0];
+    qr = hasilMuat[1];
+    if (!document.getElementById("kartuAnggotaCanvas")) return;
+  }
+
   kartuBelakangQr_ = qr;
-  kartuDataSvg_ = { nama: nama, jabatan: jabatan, telp: telp, emailKartu: emailKartu, wilayah: String(wilayah), foto: foto, qr: qr, teksQr: teksQr };
-  if (kartuBelakangCanvas_) gambarBelakangKartu_(kartuBelakangCanvas_, qr);
+  kartuDataSvg_ = {
+    nama: nama, jabatan: jabatan, telp: telp, emailKartu: emailKartu,
+    wilayah: String(wilayah), idAnggota: idAnggota, vcard: vcard,
+    foto: foto, qr: qr, teksQr: teksQr, tema: kartuTemaAktif_
+  };
+  if (kartuBelakangCanvas_) gambarBelakangKartu_(kartuBelakangCanvas_, qr, kartuTemaAktif_);
 
   const FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
 
@@ -20012,56 +20283,72 @@ async function gambarKartuAnggota_() {
   pathRoundRect_(ctx, 0, 0, W, H, 44);
   ctx.save(); ctx.clip();
   const g = ctx.createLinearGradient(0, 0, W, H);
-  g.addColorStop(0, "#2B2B2B"); g.addColorStop(1, "#1A1A1A");
+  g.addColorStop(0, t.bgStops[0]);
+  g.addColorStop(0.55, t.bgStops[1]);
+  g.addColorStop(1, t.bgStops[2]);
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   const glow = ctx.createRadialGradient(W * 0.25, H * 0.15, 0, W * 0.25, H * 0.15, 560);
-  glow.addColorStop(0, "rgba(243,156,18,0.12)"); glow.addColorStop(1, "rgba(243,156,18,0)");
+  glow.addColorStop(0, "rgba(" + t.glowRgb + "," + t.glowAlphaFront + ")");
+  glow.addColorStop(1, "rgba(" + t.glowRgb + ",0)");
   ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
   const kilau = ctx.createLinearGradient(0, 0, W * 0.75, H * 0.75);
   kilau.addColorStop(0, "rgba(255,255,255,0.13)"); kilau.addColorStop(0.4, "rgba(255,255,255,0.04)"); kilau.addColorStop(0.41, "rgba(255,255,255,0)");
-  ctx.fillStyle = kilau; ctx.fillRect(0, 0, W, H); // kilau diagonal ala permukaan mengilap
-  const strip = ctx.createLinearGradient(0, H - 14, 0, H);
-  strip.addColorStop(0, "#FFC04D"); strip.addColorStop(0.5, "#F39C12"); strip.addColorStop(1, "#B86E00");
-  ctx.fillStyle = strip; ctx.fillRect(0, H - 14, W, 14); // aksen marka jalan (timbul)
+  ctx.fillStyle = kilau; ctx.fillRect(0, 0, W, H);
+
+  // Watermark halus YASSA di latar
+  ctx.save();
+  ctx.translate(W * 0.52, H * 0.54);
+  ctx.rotate(-22 * Math.PI / 180);
+  ctx.fillStyle = t.watermarkRgba;
+  ctx.font = "900 132px " + FONT;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("YASSA", 0, 0);
   ctx.restore();
-  // Bevel tepi kartu: terang di kiri-atas, gelap di kanan-bawah
+
+  const strip = ctx.createLinearGradient(0, H - 14, 0, H);
+  strip.addColorStop(0, t.stripStops[0]); strip.addColorStop(0.5, t.stripStops[1]); strip.addColorStop(1, t.stripStops[2]);
+  ctx.fillStyle = strip; ctx.fillRect(0, H - 14, W, 14);
+  ctx.restore();
+
+  // Bevel tepi kartu
   const bevel = ctx.createLinearGradient(0, 0, W, H);
   bevel.addColorStop(0, "rgba(255,255,255,0.45)"); bevel.addColorStop(0.5, "rgba(255,255,255,0.03)"); bevel.addColorStop(1, "rgba(0,0,0,0.6)");
   pathRoundRect_(ctx, 2, 2, W - 4, H - 4, 42); ctx.strokeStyle = bevel; ctx.lineWidth = 4; ctx.stroke();
 
-  // ===== LAYOUT POTRAIT (638 x 1012), semua rata tengah =====
+  // ===== LAYOUT PORTRAIT (638 x 1012), rata tengah =====
   const cx = W / 2;
-  // Header: logo YASSA dalam lingkaran gelap
   {
-    const lr = 54, lcy = 98;
+    const lr = 54, lcy = 96;
     ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 14; ctx.shadowOffsetY = 6;
-    ctx.fillStyle = "#111111";
+    ctx.fillStyle = t.circleBg;
     ctx.beginPath(); ctx.arc(cx, lcy, lr, 0, Math.PI * 2); ctx.fill();
     ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-    ctx.strokeStyle = "#F39C12"; ctx.lineWidth = 4;
+    ctx.strokeStyle = t.circleStroke; ctx.lineWidth = 4;
     ctx.beginPath(); ctx.arc(cx, lcy, lr, 0, Math.PI * 2); ctx.stroke();
     gambarLogoYassa_(ctx, cx - lr * 0.85, lcy - lr * 0.85, lr * 1.7);
   }
   ctx.textBaseline = "alphabetic"; ctx.textAlign = "center";
   ctx.shadowColor = "rgba(0,0,0,0.55)"; ctx.shadowBlur = 6; ctx.shadowOffsetY = 3;
   ctx.fillStyle = "#FFFFFF"; ctx.font = "800 40px " + FONT;
-  ctx.fillText("YASSA", cx, 206);
-  ctx.fillStyle = "#F39C12"; ctx.font = "700 21px " + FONT;
-  ctx.fillText("YAYASAN SALAM SATU ASPAL", cx, 238);
-  ctx.fillStyle = "#A0A0A0"; ctx.font = "600 17px " + FONT;
-  ctx.fillText("KARTU ANGGOTA PENGURUS", cx, 264);
+  ctx.fillText("YASSA", cx, 202);
+  ctx.fillStyle = t.subTitle; ctx.font = "700 20px " + FONT;
+  ctx.fillText("YAYASAN SALAM SATU ASPAL", cx, 234);
+  ctx.fillStyle = t.muted; ctx.font = "600 16px " + FONT;
+  ctx.fillText("KARTU ANGGOTA PENGURUS", cx, 260);
   ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-  // Garis putus-putus ala marka jalan
+
+  // Garis marka jalan
   ctx.save();
-  ctx.strokeStyle = "rgba(243,156,18,0.6)"; ctx.lineWidth = 3; ctx.setLineDash([22, 14]);
-  ctx.beginPath(); ctx.moveTo(48, 288); ctx.lineTo(W - 48, 288); ctx.stroke();
+  ctx.strokeStyle = t.dashRgba; ctx.lineWidth = 3; ctx.setLineDash([22, 14]);
+  ctx.beginPath(); ctx.moveTo(48, 282); ctx.lineTo(W - 48, 282); ctx.stroke();
   ctx.restore();
 
   // Foto (tengah)
-  const fs = 320, fx = (W - fs) / 2, fy = 322;
+  const fs = 310, fx = (W - fs) / 2, fy = 308;
   ctx.save();
   ctx.shadowColor = "rgba(0,0,0,0.65)"; ctx.shadowBlur = 26; ctx.shadowOffsetY = 12;
-  ctx.fillStyle = "#111111"; pathRoundRect_(ctx, fx, fy, fs, fs, 48); ctx.fill();
+  ctx.fillStyle = t.circleBg; pathRoundRect_(ctx, fx, fy, fs, fs, 48); ctx.fill();
   ctx.restore();
   ctx.save();
   pathRoundRect_(ctx, fx, fy, fs, fs, 48); ctx.clip();
@@ -20070,8 +20357,8 @@ async function gambarKartuAnggota_() {
     const dw = foto.width * sk, dh = foto.height * sk;
     ctx.drawImage(foto, fx + (fs - dw) / 2, fy + (fs - dh) / 2, dw, dh);
   } else {
-    ctx.fillStyle = "rgba(255,255,255,0.18)"; ctx.fillRect(fx, fy, fs, fs);
-    ctx.fillStyle = "#FFFFFF"; ctx.font = "800 132px " + FONT;
+    ctx.fillStyle = "rgba(255,255,255,0.16)"; ctx.fillRect(fx, fy, fs, fs);
+    ctx.fillStyle = "#FFFFFF"; ctx.font = "800 128px " + FONT;
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillText((nama.trim().charAt(0) || "?").toUpperCase(), fx + fs / 2, fy + fs / 2 + 4);
     ctx.textBaseline = "alphabetic";
@@ -20079,26 +20366,44 @@ async function gambarKartuAnggota_() {
   ctx.restore();
   pathRoundRect_(ctx, fx, fy, fs, fs, 48);
   const bingkai = ctx.createLinearGradient(fx, fy, fx + fs, fy + fs);
-  bingkai.addColorStop(0, "#FFD27A"); bingkai.addColorStop(0.5, "#F39C12"); bingkai.addColorStop(1, "#B86E00");
+  bingkai.addColorStop(0, t.frameStops[0]); bingkai.addColorStop(0.5, t.frameStops[1]); bingkai.addColorStop(1, t.frameStops[2]);
   ctx.strokeStyle = bingkai; ctx.lineWidth = 6; ctx.stroke();
 
-  // Teks identitas (rata tengah di bawah foto)
+  // Pill Badge Status Aktif & Nomor ID Anggota
+  {
+    const badgeText = "PENGURUS AKTIF  ·  " + idAnggota;
+    ctx.font = "700 16px " + FONT;
+    const teksW = ctx.measureText(badgeText).width;
+    const bw = Math.min(W - 96, teksW + 56), bh = 34;
+    const bx = cx - bw / 2, by = 640;
+    pathRoundRect_(ctx, bx, by, bw, bh, 17);
+    ctx.fillStyle = t.badgeBg; ctx.fill();
+    ctx.strokeStyle = t.badgeStroke; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = t.badgeDot;
+    ctx.beginPath(); ctx.arc(bx + 20, by + bh / 2, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = t.badgeText;
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(badgeText, cx + 8, by + bh / 2 + 1);
+    ctx.textBaseline = "alphabetic";
+  }
+
+  // Teks identitas
   const lebarTeks = W - 80;
   ctx.textAlign = "center";
   ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 5; ctx.shadowOffsetY = 3;
-  let ukNama = 40;
+  let ukNama = 38;
   ctx.font = "800 " + ukNama + "px " + FONT;
-  while (ukNama > 26 && ctx.measureText(nama).width > lebarTeks) { ukNama -= 1; ctx.font = "800 " + ukNama + "px " + FONT; }
+  while (ukNama > 25 && ctx.measureText(nama).width > lebarTeks) { ukNama -= 1; ctx.font = "800 " + ukNama + "px " + FONT; }
   ctx.fillStyle = "#FFFFFF";
-  ctx.fillText(potongTeksKartu_(ctx, nama, lebarTeks), cx, 712);
-  ctx.fillStyle = "#F39C12"; ctx.font = "700 26px " + FONT;
-  ctx.fillText(potongTeksKartu_(ctx, jabatan, lebarTeks), cx, 754);
-  ctx.fillStyle = "rgba(255,255,255,0.88)"; ctx.font = "500 22px " + FONT;
-  ctx.fillText(potongTeksKartu_(ctx, "Wilayah: " + wilayah, lebarTeks), cx, 796);
-  if (telp) ctx.fillText(potongTeksKartu_(ctx, "Kontak: " + telp, lebarTeks), cx, 832);
+  ctx.fillText(potongTeksKartu_(ctx, nama, lebarTeks), cx, 722);
+  ctx.fillStyle = t.accent; ctx.font = "700 25px " + FONT;
+  ctx.fillText(potongTeksKartu_(ctx, jabatan, lebarTeks), cx, 762);
+  ctx.fillStyle = "rgba(255,255,255,0.88)"; ctx.font = "500 21px " + FONT;
+  ctx.fillText(potongTeksKartu_(ctx, "Wilayah: " + wilayah, lebarTeks), cx, 800);
+  if (telp) ctx.fillText(potongTeksKartu_(ctx, "Kontak: " + telp, lebarTeks), cx, 834);
   if (emailKartu) {
     const teksEmail = "Email: " + emailKartu;
-    let ukEmail = 22;
+    let ukEmail = 21;
     ctx.font = "500 " + ukEmail + "px " + FONT;
     while (ukEmail > 14 && ctx.measureText(teksEmail).width > lebarTeks) {
       ukEmail -= 1;
@@ -20108,73 +20413,98 @@ async function gambarKartuAnggota_() {
   }
   ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
-  // Footer (rata tengah)
+  // Footer
   const tgl = new Date();
   const bln = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
-  ctx.fillStyle = "#A0A0A0"; ctx.font = "500 18px " + FONT; ctx.textAlign = "center";
-  ctx.fillText("Dicetak " + tgl.getDate() + " " + bln[tgl.getMonth()] + " " + tgl.getFullYear(), cx, 976);
+  ctx.fillStyle = t.muted; ctx.font = "500 18px " + FONT; ctx.textAlign = "center";
+  ctx.fillText("Dicetak " + tgl.getDate() + " " + bln[tgl.getMonth()] + " " + tgl.getFullYear(), cx, 974);
   ctx.textAlign = "left";
 
   const ket = document.getElementById("kartuAnggotaKet");
-  if (ket && !foto && currentUser.fotoUrl) ket.textContent = "Foto tidak bisa dimuat ke kartu, jadi diganti inisial.";
+  if (ket) {
+    ket.textContent = (!foto && currentUser.fotoUrl)
+      ? "Foto profil diganti inisial · Ketuk 2x untuk balik · Siap cetak 300 DPI"
+      : "Geser kartu untuk efek 3D · Ketuk 2x untuk balik · Siap cetak 300 DPI";
+  }
   const tombol = document.querySelectorAll(".kartu-anggota-aksi");
   tombol.forEach(function (b) { b.disabled = false; b.style.opacity = "1"; });
 }
 
-var kartuBelakangQr_ = null, kartuBelakangCanvas_ = null, kartuDataSvg_ = null;
-function gambarBelakangKartu_(canvas, qr) {
+function gambarBelakangKartu_(canvas, qr, temaKey) {
   const ctx = canvas.getContext("2d");
   const W = canvas.width, H = canvas.height;
   const FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
+  const t = getTemaKartu_(temaKey || kartuTemaAktif_);
+  const idAnggota = (kartuDataSvg_ && kartuDataSvg_.idAnggota) ? kartuDataSvg_.idAnggota : kodeAnggotaYassa_(currentUser);
+
   ctx.clearRect(0, 0, W, H);
   pathRoundRect_(ctx, 0, 0, W, H, 44);
   ctx.save(); ctx.clip();
   const g = ctx.createLinearGradient(0, 0, W, H);
-  g.addColorStop(0, "#2B2B2B"); g.addColorStop(1, "#1A1A1A");
+  g.addColorStop(0, t.bgStops[0]);
+  g.addColorStop(0.55, t.bgStops[1]);
+  g.addColorStop(1, t.bgStops[2]);
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  const glow = ctx.createRadialGradient(W * 0.5, H * 0.4, 0, W * 0.5, H * 0.4, 520);
-  glow.addColorStop(0, "rgba(243,156,18,0.14)"); glow.addColorStop(1, "rgba(243,156,18,0)");
+  const glow = ctx.createRadialGradient(W * 0.5, H * 0.38, 0, W * 0.5, H * 0.38, 520);
+  glow.addColorStop(0, "rgba(" + t.glowRgb + "," + t.glowAlphaBack + ")");
+  glow.addColorStop(1, "rgba(" + t.glowRgb + ",0)");
   ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
   const kilau = ctx.createLinearGradient(0, 0, W * 0.75, H * 0.75);
   kilau.addColorStop(0, "rgba(255,255,255,0.12)"); kilau.addColorStop(0.4, "rgba(255,255,255,0.03)"); kilau.addColorStop(0.41, "rgba(255,255,255,0)");
   ctx.fillStyle = kilau; ctx.fillRect(0, 0, W, H);
+
+  // Watermark halus YASSA di latar belakang
+  ctx.save();
+  ctx.translate(W * 0.5, H * 0.54);
+  ctx.rotate(-22 * Math.PI / 180);
+  ctx.fillStyle = t.watermarkRgba;
+  ctx.font = "900 132px " + FONT;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("YASSA", 0, 0);
+  ctx.restore();
+
   const strip = ctx.createLinearGradient(0, H - 14, 0, H);
-  strip.addColorStop(0, "#FFC04D"); strip.addColorStop(0.5, "#F39C12"); strip.addColorStop(1, "#B86E00");
+  strip.addColorStop(0, t.stripStops[0]); strip.addColorStop(0.5, t.stripStops[1]); strip.addColorStop(1, t.stripStops[2]);
   ctx.fillStyle = strip; ctx.fillRect(0, H - 14, W, 14);
-  ctx.fillRect(0, 0, 0, 0);
-  ctx.strokeStyle = "rgba(243,156,18,0.6)"; ctx.lineWidth = 3; ctx.setLineDash([22, 14]);
+  ctx.strokeStyle = t.dashRgba; ctx.lineWidth = 3; ctx.setLineDash([22, 14]);
   ctx.beginPath(); ctx.moveTo(56, 70); ctx.lineTo(W - 56, 70); ctx.moveTo(56, H - 70); ctx.lineTo(W - 56, H - 70); ctx.stroke();
   ctx.setLineDash([]);
   ctx.restore();
+
   const bevel = ctx.createLinearGradient(0, 0, W, H);
   bevel.addColorStop(0, "rgba(255,255,255,0.45)"); bevel.addColorStop(0.5, "rgba(255,255,255,0.03)"); bevel.addColorStop(1, "rgba(0,0,0,0.6)");
   pathRoundRect_(ctx, 2, 2, W - 4, H - 4, 42); ctx.strokeStyle = bevel; ctx.lineWidth = 4; ctx.stroke();
-  // QR besar di tengah (menggantikan logo)
-  const qrBox = 320, qx = (W - qrBox) / 2, qy = 210;
+
+  // QR besar di tengah
+  const qrBox = 320, qx = (W - qrBox) / 2, qy = 196;
   ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 24; ctx.shadowOffsetY = 10;
   ctx.fillStyle = "#FFFFFF"; pathRoundRect_(ctx, qx, qy, qrBox, qrBox, 30); ctx.fill();
   ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-  pathRoundRect_(ctx, qx, qy, qrBox, qrBox, 30); ctx.strokeStyle = "#F39C12"; ctx.lineWidth = 5; ctx.stroke();
+  pathRoundRect_(ctx, qx, qy, qrBox, qrBox, 30); ctx.strokeStyle = t.qrStroke; ctx.lineWidth = 5; ctx.stroke();
   if (qr) {
     ctx.drawImage(qr, qx + 16, qy + 16, qrBox - 32, qrBox - 32);
   } else {
     ctx.fillStyle = "#6B7280"; ctx.font = "600 20px system-ui, sans-serif"; ctx.textAlign = "center";
     ctx.fillText("Memuat QR...", qx + qrBox / 2, qy + qrBox / 2 + 7);
   }
+
   // Teks
   ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
   ctx.shadowColor = "rgba(0,0,0,0.55)"; ctx.shadowBlur = 6; ctx.shadowOffsetY = 3;
   ctx.fillStyle = "#FFFFFF"; ctx.font = "800 46px " + FONT;
-  ctx.fillText("YASSA", W / 2, 626);
-  ctx.fillStyle = "#F39C12"; ctx.font = "700 22px " + FONT;
-  ctx.fillText("YAYASAN SALAM SATU ASPAL", W / 2, 666);
+  ctx.fillText("YASSA", W / 2, 606);
+  ctx.fillStyle = t.subTitle; ctx.font = "700 22px " + FONT;
+  ctx.fillText("YAYASAN SALAM SATU ASPAL", W / 2, 646);
   ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-  ctx.fillStyle = "#A0A0A0"; ctx.font = "600 18px " + FONT;
-  ctx.fillText("BROTHERHOOD OF THE ROAD", W / 2, 700);
-  ctx.fillStyle = "#8A8A8A"; ctx.font = "500 18px " + FONT;
-  ctx.fillText("Scan QR untuk verifikasi kartu", W / 2, 790);
-  ctx.fillStyle = "#F39C12"; ctx.font = "700 24px " + FONT;
-  ctx.fillText("www.yayasansalamsatuaspal.com", W / 2, 880);
+  ctx.fillStyle = t.muted; ctx.font = "600 18px " + FONT;
+  ctx.fillText("BROTHERHOOD OF THE ROAD", W / 2, 680);
+  ctx.fillStyle = t.badgeText; ctx.font = "700 18px " + FONT;
+  ctx.fillText("ID Anggota: " + idAnggota, W / 2, 730);
+  ctx.fillStyle = t.muted; ctx.font = "500 18px " + FONT;
+  ctx.fillText("Scan QR untuk verifikasi kartu", W / 2, 788);
+  ctx.fillStyle = t.qrUrlColor; ctx.font = "700 24px " + FONT;
+  ctx.fillText("www.yayasansalamsatuaspal.com", W / 2, 874);
   ctx.textAlign = "left";
 }
 
@@ -20219,32 +20549,45 @@ function pasang3dKartu_() {
     clearTimeout(timerLanjut);
     timerLanjut = setTimeout(ayun, 1200);
   }
-  // Ketebalan kartu: tumpukan lapisan tipis di belakang sisi depan, kelihatan sebagai tepi saat kartu miring
+
+  const t = getTemaKartu_(kartuTemaAktif_);
   const flip = document.getElementById("kartuFlip");
   const depan = document.getElementById("kartuAnggotaCanvas");
   const TEBAL = 10;
   if (flip && depan) {
     for (let i = 1; i <= TEBAL; i++) {
       const l = document.createElement("div");
-      l.style.cssText = "position:absolute; inset:0; border-radius:18px; pointer-events:none; background:" + (i % 2 ? "#8A5A00" : "#5E3C00") + "; transform:translateZ(-" + i + "px);";
+      l.className = "kartu-edge-layer";
+      l.style.cssText = "position:absolute; inset:0; border-radius:18px; pointer-events:none; background:" + (i % 2 ? t.edgeA : t.edgeB) + "; transform:translateZ(-" + i + "px);";
       flip.insertBefore(l, depan);
     }
-    // Sisi belakang kartu
     const bel = document.createElement("canvas");
     bel.width = 638; bel.height = 1012;
     bel.style.cssText = "position:absolute; inset:0; width:100%; height:100%; border-radius:18px; backface-visibility:hidden; -webkit-backface-visibility:hidden; transform:translateZ(-" + (TEBAL + 1) + "px) rotateY(180deg);";
     flip.appendChild(bel);
     kartuBelakangCanvas_ = bel;
-    gambarBelakangKartu_(bel, kartuBelakangQr_);
+    gambarBelakangKartu_(bel, kartuBelakangQr_, kartuTemaAktif_);
+
     let terbalik = false;
+    const perbaruiIndikatorSisi = function () {
+      const badge = document.getElementById("kartuSisiBadge");
+      const label = document.getElementById("kartuBalikLabel");
+      if (badge) {
+        badge.setAttribute("data-side", terbalik ? "belakang" : "depan");
+        badge.innerHTML = '<span class="kartu-sisi-dot"></span>' + (terbalik ? "Sisi Belakang · QR" : "Sisi Depan");
+      }
+      if (label) label.textContent = terbalik ? "Lihat Depan" : "Lihat Belakang (QR)";
+    };
     const balik = function () {
       terbalik = !terbalik;
       flip.style.transition = "transform 0.8s cubic-bezier(0.4, 0.1, 0.2, 1)";
       flip.style.transform = terbalik ? "rotateY(180deg)" : "rotateY(0deg)";
+      perbaruiIndikatorSisi();
     };
     const tb = document.getElementById("kartuBalikBtn");
     if (tb) tb.addEventListener("click", balik);
     wrap.addEventListener("dblclick", balik);
+    perbaruiIndikatorSisi();
   }
   wrap.addEventListener("pointerdown", miring);
   wrap.addEventListener("pointermove", miring);
@@ -20255,10 +20598,14 @@ function pasang3dKartu_() {
 }
 
 function showKartuAnggotaDigital() {
-  const tombolStyle = "flex:1 1 calc(50% - 4px); border:none; border-radius:14px; padding:12px 10px; font-size:12.5px; font-weight:700; color:#fff; background:var(--grad-primary); cursor:pointer; opacity:0.5; display:flex; align-items:center; justify-content:center; gap:6px;";
   const bisaBagikan = !!(navigator.share && navigator.canShare);
-  const html = '<div style="display:flex; flex-direction:column; align-items:center; gap:12px;">' +
-    '<div id="kartu3dWrap" style="width:100%; max-width:260px; perspective:800px; touch-action:none; padding:8px 0 14px;">' +
+  const temaAktif = getTemaKartu_(kartuTemaAktif_).id;
+  const html = '<div class="kartu-modal-shell">' +
+    '<div id="kartuTemaSwitch" class="kartu-tema-switch" role="group" aria-label="Pilih tema kartu">' +
+      '<button type="button" class="kartu-tema-btn' + (temaAktif === "emerald" ? " active" : "") + '" data-tema="emerald" onclick="setTemaKartuAnggota(\'emerald\')"><span class="kartu-tema-dot" style="background:#10B981;"></span>Emerald YASSA</button>' +
+      '<button type="button" class="kartu-tema-btn' + (temaAktif === "gold" ? " active" : "") + '" data-tema="gold" onclick="setTemaKartuAnggota(\'gold\')"><span class="kartu-tema-dot" style="background:#F39C12;"></span>Hitam Emas</button>' +
+    '</div>' +
+    '<div id="kartu3dWrap" style="width:100%; max-width:250px; perspective:800px; touch-action:none; padding:6px 0 10px;">' +
       '<div id="kartu3d" style="position:relative; transform-style:preserve-3d; will-change:transform;">' +
         '<div id="kartuFlip" style="position:relative; transform-style:preserve-3d;">' +
           '<canvas id="kartuAnggotaCanvas" width="638" height="1012" style="display:block; width:100%; aspect-ratio:638/1012; border-radius:18px; backface-visibility:hidden; -webkit-backface-visibility:hidden;"></canvas>' +
@@ -20266,12 +20613,18 @@ function showKartuAnggotaDigital() {
         '</div>' +
       '</div>' +
     '</div>' +
-    '<div id="kartuAnggotaKet" style="font-size:10.5px; color:var(--text-muted); text-align:center; min-height:14px;">Menyiapkan kartu...</div>' +
-    '<div style="display:flex; flex-wrap:wrap; gap:8px; width:100%; max-width:340px;">' +
-      '<button class="kartu-anggota-aksi" disabled onclick="unduhKartuAnggota()" style="' + tombolStyle + '"><span class="material-symbols-outlined" style="font-size:17px;">image</span>Unduh PNG</button>' +
-      '<button class="kartu-anggota-aksi" disabled onclick="unduhKartuSvg()" style="' + tombolStyle + '"><span class="material-symbols-outlined" style="font-size:17px;">download</span>Unduh SVG</button>' +
-      (bisaBagikan ? '<button class="kartu-anggota-aksi" disabled onclick="bagikanKartuAnggota()" style="' + tombolStyle + '"><span class="material-symbols-outlined" style="font-size:17px;">share</span>Bagikan</button>' : '') +
-      '<button type="button" id="kartuBalikBtn" style="' + tombolStyle.replace("opacity:0.5;", "opacity:1;") + '"><span class="material-symbols-outlined" style="font-size:17px;">360</span>Balik</button>' +
+    '<div class="kartu-sisi-bar">' +
+      '<span id="kartuSisiBadge" class="kartu-sisi-badge" data-side="depan"><span class="kartu-sisi-dot"></span>Sisi Depan</span>' +
+      '<button type="button" id="kartuBalikBtn" class="kartu-balik-btn"><span class="material-symbols-outlined" style="font-size:16px;">360</span><span id="kartuBalikLabel">Lihat Belakang (QR)</span></button>' +
+    '</div>' +
+    '<div id="kartuAnggotaKet" style="font-size:10.5px; color:var(--text-muted); text-align:center; min-height:14px; line-height:1.4;">Menyiapkan kartu digital...</div>' +
+    '<div class="kartu-aksi-divider"></div>' +
+    '<div class="kartu-aksi-grid">' +
+      '<button type="button" class="kartu-anggota-aksi" disabled onclick="unduhKartuAnggota()"><span class="material-symbols-outlined" style="font-size:16px;">image</span>Unduh PNG</button>' +
+      '<button type="button" class="kartu-anggota-aksi" disabled onclick="unduhKartuSvg()"><span class="material-symbols-outlined" style="font-size:16px;">download</span>Unduh SVG</button>' +
+      '<button type="button" class="kartu-anggota-aksi kartu-aksi-secondary" disabled onclick="unduhKartuVcf()"><span class="material-symbols-outlined" style="font-size:16px;">contact_page</span>Simpan .VCF</button>' +
+      '<button type="button" class="kartu-anggota-aksi kartu-aksi-secondary" disabled onclick="cetakKartuAnggota()"><span class="material-symbols-outlined" style="font-size:16px;">print</span>Cetak CR80</button>' +
+      (bisaBagikan ? '<button type="button" class="kartu-anggota-aksi kartu-aksi-full" disabled onclick="bagikanKartuAnggota()"><span class="material-symbols-outlined" style="font-size:16px;">share</span>Bagikan Kartu</button>' : '') +
     '</div>' +
   '</div>';
   showModal("Kartu Anggota Digital", html, false, null, "Tutup");
@@ -20288,7 +20641,7 @@ function kartuAnggotaBlob_() {
     try {
       const bel = document.createElement("canvas");
       bel.width = dep.width; bel.height = dep.height;
-      gambarBelakangKartu_(bel, kartuBelakangQr_);
+      gambarBelakangKartu_(bel, kartuBelakangQr_, kartuTemaAktif_);
       const jarak = 60;
       const c = document.createElement("canvas");
       c.width = dep.width * 2 + jarak; c.height = dep.height;
@@ -20328,69 +20681,83 @@ function logoYassaSvg_(ox, oy, size) {
 }
 const KARTU_FONT_SVG_ = "system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif";
 
-function kartuSvgDefs_(sisi) {
+function kartuSvgDefs_(sisi, temaKey) {
   const W = 638, H = 1012;
+  const t = getTemaKartu_(temaKey);
   const glow = sisi === "depan"
-    ? { cx: W * 0.25, cy: H * 0.15, r: 560, a: 0.12 }
-    : { cx: W * 0.5, cy: H * 0.4, r: 520, a: 0.14 };
+    ? { cx: W * 0.25, cy: H * 0.15, r: 560, a: t.glowAlphaFront }
+    : { cx: W * 0.5, cy: H * 0.38, r: 520, a: t.glowAlphaBack };
   const kil = sisi === "depan" ? [0.13, 0.04] : [0.12, 0.03];
   return '<defs>' +
-    '<linearGradient id="bg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="' + W + '" y2="' + H + '"><stop offset="0" stop-color="#2B2B2B"/><stop offset="1" stop-color="#1A1A1A"/></linearGradient>' +
-    '<radialGradient id="glow" gradientUnits="userSpaceOnUse" cx="' + glow.cx + '" cy="' + glow.cy + '" r="' + glow.r + '"><stop offset="0" stop-color="#F39C12" stop-opacity="' + glow.a + '"/><stop offset="1" stop-color="#F39C12" stop-opacity="0"/></radialGradient>' +
+    '<linearGradient id="bg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="' + W + '" y2="' + H + '"><stop offset="0" stop-color="' + t.bgStops[0] + '"/><stop offset="0.55" stop-color="' + t.bgStops[1] + '"/><stop offset="1" stop-color="' + t.bgStops[2] + '"/></linearGradient>' +
+    '<radialGradient id="glow" gradientUnits="userSpaceOnUse" cx="' + glow.cx + '" cy="' + glow.cy + '" r="' + glow.r + '"><stop offset="0" stop-color="' + t.glowHex + '" stop-opacity="' + glow.a + '"/><stop offset="1" stop-color="' + t.glowHex + '" stop-opacity="0"/></radialGradient>' +
     '<linearGradient id="kilau" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="' + (W * 0.75) + '" y2="' + (H * 0.75) + '"><stop offset="0" stop-color="#FFFFFF" stop-opacity="' + kil[0] + '"/><stop offset="0.4" stop-color="#FFFFFF" stop-opacity="' + kil[1] + '"/><stop offset="0.41" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>' +
-    '<linearGradient id="strip" gradientUnits="userSpaceOnUse" x1="0" y1="' + (H - 14) + '" x2="0" y2="' + H + '"><stop offset="0" stop-color="#FFC04D"/><stop offset="0.5" stop-color="#F39C12"/><stop offset="1" stop-color="#B86E00"/></linearGradient>' +
+    '<linearGradient id="strip" gradientUnits="userSpaceOnUse" x1="0" y1="' + (H - 14) + '" x2="0" y2="' + H + '"><stop offset="0" stop-color="' + t.stripStops[0] + '"/><stop offset="0.5" stop-color="' + t.stripStops[1] + '"/><stop offset="1" stop-color="' + t.stripStops[2] + '"/></linearGradient>' +
     '<linearGradient id="bevel" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="' + W + '" y2="' + H + '"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.45"/><stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0.03"/><stop offset="1" stop-color="#000000" stop-opacity="0.6"/></linearGradient>' +
     '<clipPath id="kartu"><rect width="' + W + '" height="' + H + '" rx="44"/></clipPath>' +
     '<filter id="bayang" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000000" flood-opacity="0.6"/></filter>' +
     '</defs>';
 }
-function kartuSvgLatar_(sisi) {
+function kartuSvgLatar_(sisi, temaKey) {
   const W = 638, H = 1012;
+  const t = getTemaKartu_(temaKey);
   let s = '<g clip-path="url(#kartu)">' +
     '<rect width="' + W + '" height="' + H + '" fill="url(#bg)"/>' +
     '<rect width="' + W + '" height="' + H + '" fill="url(#glow)"/>' +
     '<rect width="' + W + '" height="' + H + '" fill="url(#kilau)"/>' +
+    '<text x="' + (W * 0.52) + '" y="' + (H * 0.54) + '" text-anchor="middle" dominant-baseline="central" transform="rotate(-22 ' + (W * 0.52) + ' ' + (H * 0.54) + ')" font-family="' + KARTU_FONT_SVG_ + '" font-size="132" font-weight="900" fill="#FFFFFF" fill-opacity="' + t.watermarkOpacity + '">YASSA</text>' +
     '<rect y="' + (H - 14) + '" width="' + W + '" height="14" fill="url(#strip)"/>';
   if (sisi === "belakang") {
-    s += '<path d="M56 70 H' + (W - 56) + ' M56 ' + (H - 70) + ' H' + (W - 56) + '" stroke="#F39C12" stroke-opacity="0.6" stroke-width="3" stroke-dasharray="22 14" fill="none"/>';
+    s += '<path d="M56 70 H' + (W - 56) + ' M56 ' + (H - 70) + ' H' + (W - 56) + '" stroke="' + t.dashHex + '" stroke-opacity="0.6" stroke-width="3" stroke-dasharray="22 14" fill="none"/>';
   }
   s += '</g><rect x="2" y="2" width="' + (W - 4) + '" height="' + (H - 4) + '" rx="42" fill="none" stroke="url(#bevel)" stroke-width="4"/>';
   return s;
 }
 function kartuSvgDepan_(d) {
   const W = 638, H = 1012, cx = W / 2, FONT = KARTU_FONT_SVG_;
+  const tTheme = getTemaKartu_(d.tema);
   const m = document.createElement("canvas").getContext("2d");
   const lebarTeks = W - 80;
   let t = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="54mm" height="86mm" viewBox="0 0 ' + W + ' ' + H + '">' +
-    kartuSvgDefs_("depan") + kartuSvgLatar_("depan");
+    kartuSvgDefs_("depan", d.tema) + kartuSvgLatar_("depan", d.tema);
   // header
-  t += '<circle cx="' + cx + '" cy="98" r="54" fill="#111111" stroke="#F39C12" stroke-width="4" filter="url(#bayang)"/>' + logoYassaSvg_(cx - 54 * 0.85, 98 - 54 * 0.85, 54 * 1.7);
+  t += '<circle cx="' + cx + '" cy="96" r="54" fill="' + tTheme.circleBg + '" stroke="' + tTheme.circleStroke + '" stroke-width="4" filter="url(#bayang)"/>' + logoYassaSvg_(cx - 54 * 0.85, 96 - 54 * 0.85, 54 * 1.7);
   t += '<g text-anchor="middle" font-family="' + FONT + '">' +
-    '<text x="' + cx + '" y="206" font-size="40" font-weight="800" fill="#FFFFFF">YASSA</text>' +
-    '<text x="' + cx + '" y="238" font-size="21" font-weight="700" fill="#F39C12">YAYASAN SALAM SATU ASPAL</text>' +
-    '<text x="' + cx + '" y="264" font-size="17" font-weight="600" fill="#A0A0A0">KARTU ANGGOTA PENGURUS</text></g>';
-  t += '<path d="M48 288 H' + (W - 48) + '" stroke="#F39C12" stroke-opacity="0.6" stroke-width="3" stroke-dasharray="22 14" fill="none"/>';
+    '<text x="' + cx + '" y="202" font-size="40" font-weight="800" fill="#FFFFFF">YASSA</text>' +
+    '<text x="' + cx + '" y="234" font-size="20" font-weight="700" fill="' + tTheme.subTitle + '">YAYASAN SALAM SATU ASPAL</text>' +
+    '<text x="' + cx + '" y="260" font-size="16" font-weight="600" fill="' + tTheme.muted + '">KARTU ANGGOTA PENGURUS</text></g>';
+  t += '<path d="M48 282 H' + (W - 48) + '" stroke="' + tTheme.dashHex + '" stroke-opacity="0.6" stroke-width="3" stroke-dasharray="22 14" fill="none"/>';
   // foto
-  const fs = 320, fx = (W - fs) / 2, fy = 322;
-  t += '<rect x="' + fx + '" y="' + fy + '" width="' + fs + '" height="' + fs + '" rx="48" fill="#111111" filter="url(#bayang)"/>';
+  const fs = 310, fx = (W - fs) / 2, fy = 308;
+  t += '<rect x="' + fx + '" y="' + fy + '" width="' + fs + '" height="' + fs + '" rx="48" fill="' + tTheme.circleBg + '" filter="url(#bayang)"/>';
   t += '<clipPath id="fotoClip"><rect x="' + fx + '" y="' + fy + '" width="' + fs + '" height="' + fs + '" rx="48"/></clipPath>';
   if (d.fotoData) {
     t += '<image x="' + fx + '" y="' + fy + '" width="' + fs + '" height="' + fs + '" preserveAspectRatio="xMidYMid slice" clip-path="url(#fotoClip)" href="' + d.fotoData + '" xlink:href="' + d.fotoData + '"/>';
   } else {
-    t += '<rect x="' + fx + '" y="' + fy + '" width="' + fs + '" height="' + fs + '" rx="48" fill="#FFFFFF" fill-opacity="0.18"/>' +
-      '<text x="' + cx + '" y="' + (fy + fs / 2 + 46) + '" text-anchor="middle" font-family="' + FONT + '" font-size="132" font-weight="800" fill="#FFFFFF">' + xmlEsc_((d.nama.trim().charAt(0) || "?").toUpperCase()) + '</text>';
+    t += '<rect x="' + fx + '" y="' + fy + '" width="' + fs + '" height="' + fs + '" rx="48" fill="#FFFFFF" fill-opacity="0.16"/>' +
+      '<text x="' + cx + '" y="' + (fy + fs / 2 + 46) + '" text-anchor="middle" font-family="' + FONT + '" font-size="128" font-weight="800" fill="#FFFFFF">' + xmlEsc_((d.nama.trim().charAt(0) || "?").toUpperCase()) + '</text>';
   }
-  t += '<linearGradient id="bingkai" gradientUnits="userSpaceOnUse" x1="' + fx + '" y1="' + fy + '" x2="' + (fx + fs) + '" y2="' + (fy + fs) + '"><stop offset="0" stop-color="#FFD27A"/><stop offset="0.5" stop-color="#F39C12"/><stop offset="1" stop-color="#B86E00"/></linearGradient>' +
+  t += '<linearGradient id="bingkai" gradientUnits="userSpaceOnUse" x1="' + fx + '" y1="' + fy + '" x2="' + (fx + fs) + '" y2="' + (fy + fs) + '"><stop offset="0" stop-color="' + tTheme.frameStops[0] + '"/><stop offset="0.5" stop-color="' + tTheme.frameStops[1] + '"/><stop offset="1" stop-color="' + tTheme.frameStops[2] + '"/></linearGradient>' +
     '<rect x="' + fx + '" y="' + fy + '" width="' + fs + '" height="' + fs + '" rx="48" fill="none" stroke="url(#bingkai)" stroke-width="6"/>';
-  // teks identitas (ukuran & pemotongan sama dengan versi PNG)
-  let ukNama = 40; m.font = "800 " + ukNama + "px " + FONT;
-  while (ukNama > 26 && m.measureText(d.nama).width > lebarTeks) { ukNama -= 1; m.font = "800 " + ukNama + "px " + FONT; }
+
+  // Badge status aktif & ID anggota
+  const badgeText = "PENGURUS AKTIF  ·  " + (d.idAnggota || "YSS-000000");
+  m.font = "700 16px " + FONT;
+  const bw = Math.min(W - 96, m.measureText(badgeText).width + 56), bh = 34;
+  const bx = cx - bw / 2, by = 640;
+  t += '<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="' + bh + '" rx="17" fill="' + tTheme.glowHex + '" fill-opacity="0.16" stroke="' + tTheme.circleStroke + '" stroke-opacity="0.58" stroke-width="2"/>' +
+    '<circle cx="' + (bx + 20) + '" cy="' + (by + bh / 2) + '" r="5" fill="' + tTheme.badgeDot + '"/>' +
+    '<text x="' + (cx + 8) + '" y="' + (by + bh / 2 + 5) + '" text-anchor="middle" font-family="' + FONT + '" font-size="16" font-weight="700" fill="' + tTheme.badgeText + '">' + xmlEsc_(badgeText) + '</text>';
+
+  // teks identitas
+  let ukNama = 38; m.font = "800 " + ukNama + "px " + FONT;
+  while (ukNama > 25 && m.measureText(d.nama).width > lebarTeks) { ukNama -= 1; m.font = "800 " + ukNama + "px " + FONT; }
   const namaT = potongTeksKartu_(m, d.nama, lebarTeks);
-  m.font = "700 26px " + FONT; const jabT = potongTeksKartu_(m, d.jabatan, lebarTeks);
-  m.font = "500 22px " + FONT;
+  m.font = "700 25px " + FONT; const jabT = potongTeksKartu_(m, d.jabatan, lebarTeks);
+  m.font = "500 21px " + FONT;
   const wilT = potongTeksKartu_(m, "Wilayah: " + d.wilayah, lebarTeks);
   const telT = d.telp ? potongTeksKartu_(m, "Kontak: " + d.telp, lebarTeks) : "";
-  let emailT = "", ukEmail = 22;
+  let emailT = "", ukEmail = 21;
   if (d.emailKartu) {
     const te = "Email: " + d.emailKartu;
     m.font = "500 " + ukEmail + "px " + FONT;
@@ -20398,29 +20765,31 @@ function kartuSvgDepan_(d) {
     emailT = potongTeksKartu_(m, te, lebarTeks);
   }
   t += '<g text-anchor="middle" font-family="' + FONT + '">' +
-    '<text x="' + cx + '" y="712" font-size="' + ukNama + '" font-weight="800" fill="#FFFFFF">' + xmlEsc_(namaT) + '</text>' +
-    '<text x="' + cx + '" y="754" font-size="26" font-weight="700" fill="#F39C12">' + xmlEsc_(jabT) + '</text>' +
-    '<text x="' + cx + '" y="796" font-size="22" font-weight="500" fill="#FFFFFF" fill-opacity="0.88">' + xmlEsc_(wilT) + '</text>' +
-    (telT ? '<text x="' + cx + '" y="832" font-size="22" font-weight="500" fill="#FFFFFF" fill-opacity="0.88">' + xmlEsc_(telT) + '</text>' : '') +
+    '<text x="' + cx + '" y="722" font-size="' + ukNama + '" font-weight="800" fill="#FFFFFF">' + xmlEsc_(namaT) + '</text>' +
+    '<text x="' + cx + '" y="762" font-size="25" font-weight="700" fill="' + tTheme.accent + '">' + xmlEsc_(jabT) + '</text>' +
+    '<text x="' + cx + '" y="800" font-size="21" font-weight="500" fill="#FFFFFF" fill-opacity="0.88">' + xmlEsc_(wilT) + '</text>' +
+    (telT ? '<text x="' + cx + '" y="834" font-size="21" font-weight="500" fill="#FFFFFF" fill-opacity="0.88">' + xmlEsc_(telT) + '</text>' : '') +
     (emailT ? '<text x="' + cx + '" y="868" font-size="' + ukEmail + '" font-weight="500" fill="#FFFFFF" fill-opacity="0.88">' + xmlEsc_(emailT) + '</text>' : '') +
-    '<text x="' + cx + '" y="976" font-size="18" font-weight="500" fill="#A0A0A0">' + xmlEsc_(d.dicetak) + '</text></g>';
+    '<text x="' + cx + '" y="974" font-size="18" font-weight="500" fill="' + tTheme.muted + '">' + xmlEsc_(d.dicetak) + '</text></g>';
   return t + '</svg>';
 }
 function kartuSvgBelakang_(d) {
   const W = 638, H = 1012, cx = W / 2, FONT = KARTU_FONT_SVG_;
-  const qb = 320, qx = (W - qb) / 2, qy = 210;
+  const tTheme = getTemaKartu_(d.tema);
+  const qb = 320, qx = (W - qb) / 2, qy = 196;
   let t = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="54mm" height="86mm" viewBox="0 0 ' + W + ' ' + H + '">' +
-    kartuSvgDefs_("belakang") + kartuSvgLatar_("belakang");
-  t += '<rect x="' + qx + '" y="' + qy + '" width="' + qb + '" height="' + qb + '" rx="30" fill="#FFFFFF" stroke="#F39C12" stroke-width="5" filter="url(#bayang)"/>';
+    kartuSvgDefs_("belakang", d.tema) + kartuSvgLatar_("belakang", d.tema);
+  t += '<rect x="' + qx + '" y="' + qy + '" width="' + qb + '" height="' + qb + '" rx="30" fill="#FFFFFF" stroke="' + tTheme.qrStroke + '" stroke-width="5" filter="url(#bayang)"/>';
   if (d.qrData) {
     t += '<image x="' + (qx + 16) + '" y="' + (qy + 16) + '" width="' + (qb - 32) + '" height="' + (qb - 32) + '" href="' + d.qrData + '" xlink:href="' + d.qrData + '"/>';
   }
   t += '<g text-anchor="middle" font-family="' + FONT + '">' +
-    '<text x="' + cx + '" y="626" font-size="46" font-weight="800" fill="#FFFFFF">YASSA</text>' +
-    '<text x="' + cx + '" y="666" font-size="22" font-weight="700" fill="#F39C12">YAYASAN SALAM SATU ASPAL</text>' +
-    '<text x="' + cx + '" y="700" font-size="18" font-weight="600" fill="#A0A0A0">BROTHERHOOD OF THE ROAD</text>' +
-    '<text x="' + cx + '" y="790" font-size="18" font-weight="500" fill="#8A8A8A">Scan QR untuk verifikasi kartu</text>' +
-    '<text x="' + cx + '" y="880" font-size="24" font-weight="700" fill="#F39C12">www.yayasansalamsatuaspal.com</text></g>';
+    '<text x="' + cx + '" y="606" font-size="46" font-weight="800" fill="#FFFFFF">YASSA</text>' +
+    '<text x="' + cx + '" y="646" font-size="22" font-weight="700" fill="' + tTheme.subTitle + '">YAYASAN SALAM SATU ASPAL</text>' +
+    '<text x="' + cx + '" y="680" font-size="18" font-weight="600" fill="' + tTheme.muted + '">BROTHERHOOD OF THE ROAD</text>' +
+    '<text x="' + cx + '" y="730" font-size="18" font-weight="700" fill="' + tTheme.badgeText + '">ID Anggota: ' + xmlEsc_(d.idAnggota || "YSS-000000") + '</text>' +
+    '<text x="' + cx + '" y="788" font-size="18" font-weight="500" fill="' + tTheme.muted + '">Scan QR untuk verifikasi kartu</text>' +
+    '<text x="' + cx + '" y="874" font-size="24" font-weight="700" fill="' + tTheme.qrUrlColor + '">www.yayasansalamsatuaspal.com</text></g>';
   return t + '</svg>';
 }
 
@@ -20456,7 +20825,8 @@ async function unduhKartuSvg() {
     const tgl = new Date();
     const bln = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
     const d = {
-      nama: sumber.nama, jabatan: sumber.jabatan, telp: sumber.telp, emailKartu: sumber.emailKartu, wilayah: sumber.wilayah,
+      nama: sumber.nama, jabatan: sumber.jabatan, telp: sumber.telp, emailKartu: sumber.emailKartu,
+      wilayah: sumber.wilayah, idAnggota: sumber.idAnggota, tema: kartuTemaAktif_,
       fotoData: sumber.foto ? gambarKeDataUrl_(sumber.foto, 800, "image/jpeg") : "",
       qrData: await ambilQrUntukSvg_(sumber),
       dicetak: "Dicetak " + tgl.getDate() + " " + bln[tgl.getMonth()] + " " + tgl.getFullYear()
@@ -20467,6 +20837,83 @@ async function unduhKartuSvg() {
     if (typeof showHubToast === "function") showHubToast("SVG depan & belakang diunduh", "success");
   } catch (e) {
     if (typeof showHubToast === "function") showHubToast("Gagal membuat SVG kartu", "error");
+  }
+}
+
+function unduhKartuVcf() {
+  const sumber = kartuDataSvg_;
+  const nama = sumber ? sumber.nama : String(currentUser.nama || "Pengurus");
+  const jabatan = sumber ? sumber.jabatan : String(currentUser.jabatan || "-");
+  const telp = sumber ? sumber.telp : String(currentUser.username || "");
+  const emailKartu = sumber ? sumber.emailKartu : String(currentUser.email || "").trim();
+  const wilayah = sumber ? sumber.wilayah : (String(currentUser.wilayahAkses || "").toUpperCase() === "ALL" ? "Semua Wilayah" : (currentUser.wilayahAkses || "-"));
+  const idAnggota = sumber ? sumber.idAnggota : kodeAnggotaYassa_(currentUser);
+  const vcard = (sumber && sumber.vcard) ? sumber.vcard : buildKartuVcard_(nama, jabatan, telp, emailKartu, wilayah, idAnggota);
+  const namaFile = namaFileKartu_().replace(/\.png$/i, ".vcf");
+  unduhFileKartu_(vcard, namaFile, "text/vcard;charset=utf-8");
+  if (typeof showHubToast === "function") showHubToast("Kontak pengurus (.vcf) diunduh", "success");
+}
+
+function cetakKartuAnggota() {
+  const dep = document.getElementById("kartuAnggotaCanvas");
+  if (!dep) return;
+  try {
+    const bel = document.createElement("canvas");
+    bel.width = dep.width; bel.height = dep.height;
+    gambarBelakangKartu_(bel, kartuBelakangQr_, kartuTemaAktif_);
+    const depUrl = dep.toDataURL("image/png");
+    const belUrl = bel.toDataURL("image/png");
+    const idAnggota = (kartuDataSvg_ && kartuDataSvg_.idAnggota) ? kartuDataSvg_.idAnggota : kodeAnggotaYassa_(currentUser);
+    const nama = xmlEsc_((kartuDataSvg_ && kartuDataSvg_.nama) || currentUser.nama || "Pengurus");
+
+    const frame = document.createElement("iframe");
+    frame.setAttribute("aria-hidden", "true");
+    frame.style.cssText = "position:fixed; right:0; bottom:0; width:0; height:0; border:0; opacity:0; pointer-events:none;";
+    document.body.appendChild(frame);
+
+    const doc = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    if (!doc) { frame.remove(); return; }
+    doc.open();
+    doc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cetak Kartu Anggota - ' + nama + '</title>' +
+      '<style>' +
+      '@page { size: A4; margin: 16mm; }' +
+      '* { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }' +
+      'body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color: #111827; background: #fff; }' +
+      '.wrap { display: flex; flex-direction: column; align-items: center; gap: 8mm; padding-top: 6mm; }' +
+      '.head { text-align: center; }' +
+      '.head h1 { margin: 0 0 2mm; font-size: 13pt; font-weight: 800; }' +
+      '.head p { margin: 0; font-size: 9pt; color: #4B5563; }' +
+      '.cards { display: flex; justify-content: center; gap: 10mm; flex-wrap: wrap; }' +
+      '.slot { display: flex; flex-direction: column; align-items: center; gap: 3mm; }' +
+      '.card-box { width: 54mm; height: 86mm; border: 0.3mm dashed #9CA3AF; padding: 0.4mm; display: flex; align-items: center; justify-content: center; }' +
+      '.card-box img { width: 54mm; height: 86mm; display: block; border-radius: 3.2mm; }' +
+      '.lbl { font-size: 8.5pt; font-weight: 700; color: #374151; letter-spacing: 0.04em; text-transform: uppercase; }' +
+      '</style></head><body>' +
+      '<div class="wrap">' +
+        '<div class="head"><h1>Kartu Anggota Digital YASSA</h1><p>' + nama + ' · ' + xmlEsc_(idAnggota) + ' · Skala Asli CR80 (54 × 86 mm)</p></div>' +
+        '<div class="cards">' +
+          '<div class="slot"><div class="card-box"><img src="' + depUrl + '" alt="Sisi Depan"></div><div class="lbl">Sisi Depan</div></div>' +
+          '<div class="slot"><div class="card-box"><img src="' + belUrl + '" alt="Sisi Belakang"></div><div class="lbl">Sisi Belakang</div></div>' +
+        '</div>' +
+      '</div></body></html>');
+    doc.close();
+
+    const bersihkan = function () {
+      setTimeout(function () { if (frame.parentNode) frame.remove(); }, 600);
+    };
+    const imgs = Array.prototype.slice.call(doc.images || []);
+    Promise.all(imgs.map(function (im) {
+      return im.complete ? Promise.resolve() : new Promise(function (r) { im.onload = r; im.onerror = r; });
+    })).then(function () {
+      const win = frame.contentWindow;
+      if (!win) { bersihkan(); return; }
+      win.onafterprint = bersihkan;
+      win.focus();
+      win.print();
+      setTimeout(bersihkan, 15000);
+    });
+  } catch (e) {
+    if (typeof showHubToast === "function") showHubToast("Gagal menyiapkan cetak kartu", "error");
   }
 }
 
