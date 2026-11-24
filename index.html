@@ -8731,12 +8731,32 @@ function buatIdUnikHub_() {
   });
 }
 
+// 🩹 Ubah error jaringan mentah browser ("Failed to fetch", "Load failed",
+// "NetworkError ...") jadi pesan yang bisa dipahami & ditindaklanjuti user.
+// Error ini muncul kalau request TIDAK PERNAH sampai ke server (DNS/ISP
+// memblokir, VPN/adblock/antivirus, WiFi tanpa internet, CORS, dll).
+function pesanErrorJaringan_(err) {
+  const msg = String((err && err.message) || "");
+  const isNet = (err && err.name === "TypeError") ||
+    /failed to fetch|load failed|networkerror|network request failed/i.test(msg);
+  if (!isNet) return err;
+  const e = new Error(
+    "Tidak bisa terhubung ke server. Periksa koneksi internet, matikan VPN/adblock, " +
+    "atau coba jaringan lain (mis. hotspot HP / ganti DNS ke 1.1.1.1). " +
+    "Jika masih gagal, tutup lalu buka ulang aplikasi."
+  );
+  e.isNetworkError = true;
+  e.original = err;
+  return e;
+}
+
 function callGAS(action, args) {
   return fetch(GAS_AUTH_URL, {
     method: "POST",
     headers: { "Content-Type": "text/plain" },
     body: JSON.stringify({ action: action, args: args || [] }),
   })
+    .catch(function (err) { throw pesanErrorJaringan_(err); })
     .then(async function (r) {
       // Ambil respons mentah terlebih dahulu untuk pelacakan (debugging)
       const textRaw = await r.text();
@@ -8814,6 +8834,7 @@ function callGASWithRetry_(action, args, opts) {
       body: JSON.stringify({ action: action, args: args || [] }),
       signal: controller.signal,
     })
+      .catch(function (err) { throw pesanErrorJaringan_(err); })
       .then(async function (r) {
         const textRaw = await r.text();
         try {
