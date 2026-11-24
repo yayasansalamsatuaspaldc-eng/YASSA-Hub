@@ -2387,17 +2387,46 @@
   }
 
   /* Kartu Anggota Digital Modal Controls */
+  #customModalOverlay .custom-modal:has(.kartu-modal-shell) {
+    max-width: 390px;
+    width: 92%;
+    padding: 18px 18px 16px;
+  }
+  #customModalOverlay .custom-modal:has(.kartu-modal-shell) .custom-modal-title {
+    margin-bottom: 8px;
+    font-size: 16.5px;
+  }
+  #customModalOverlay .custom-modal:has(.kartu-modal-shell) .custom-modal-message {
+    margin-bottom: 12px;
+    white-space: normal;
+  }
   .kartu-modal-shell {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+    width: 100%;
+  }
+  .kartu-modal-preview,
+  .kartu-modal-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+  #kartu3dWrap {
+    width: 100%;
+    max-width: clamp(148px, 25vh, 184px);
+    perspective: 800px;
+    touch-action: none;
+    padding: 2px 0 6px;
   }
   .kartu-tema-switch {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    padding: 4px;
+    padding: 3px;
     border-radius: 999px;
     background: var(--glass-bg-2, rgba(255,255,255,0.06));
     border: 1px solid var(--glass-border);
@@ -2406,15 +2435,15 @@
   .kartu-tema-btn {
     border: none;
     border-radius: 999px;
-    padding: 6px 12px;
-    font-size: 11.5px;
+    padding: 5px 11px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--text-secondary);
     background: transparent;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
   }
   .kartu-tema-btn .kartu-tema-dot {
@@ -2432,7 +2461,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
     width: 100%;
     max-width: 340px;
   }
@@ -2440,9 +2469,9 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 5px 11px;
+    padding: 5px 10px;
     border-radius: 999px;
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 700;
     letter-spacing: 0.02em;
     background: rgba(16,185,129,0.12);
@@ -2465,8 +2494,8 @@
     background: var(--glass-bg-2, rgba(255,255,255,0.06));
     color: var(--text-primary);
     border-radius: 999px;
-    padding: 6px 13px;
-    font-size: 11.5px;
+    padding: 5px 12px;
+    font-size: 11px;
     font-weight: 700;
     cursor: pointer;
     display: inline-flex;
@@ -2486,29 +2515,29 @@
     max-width: 340px;
     height: 1px;
     background: var(--glass-border);
-    margin: 2px 0;
+    margin: 1px 0;
   }
   .kartu-aksi-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    gap: 7px;
     width: 100%;
     max-width: 340px;
   }
   .kartu-anggota-aksi {
     border: none;
-    border-radius: 13px;
-    padding: 11px 10px;
-    font-size: 12px;
+    border-radius: 12px;
+    padding: 10px 9px;
+    font-size: 11.5px;
     font-weight: 700;
     color: #fff;
     background: var(--grad-primary);
     cursor: pointer;
-    opacity: 0.5;
+    opacity: 0.72;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 5px;
     transition: opacity 0.2s ease, transform 0.15s ease, filter 0.15s ease;
   }
   .kartu-anggota-aksi.kartu-aksi-secondary {
@@ -2521,6 +2550,35 @@
   }
   .kartu-anggota-aksi:not(:disabled):active {
     transform: scale(0.98);
+  }
+  @media (min-width: 580px) {
+    #customModalOverlay .custom-modal:has(.kartu-modal-shell) {
+      max-width: 600px;
+      padding: 20px 22px 18px;
+    }
+    .kartu-modal-shell {
+      display: grid;
+      grid-template-columns: 205px minmax(0, 1fr);
+      align-items: center;
+      gap: 18px;
+      text-align: left;
+    }
+    #kartu3dWrap {
+      max-width: 200px;
+      padding: 4px 0 8px;
+    }
+    .kartu-modal-controls {
+      align-items: stretch;
+      gap: 10px;
+    }
+    .kartu-tema-switch {
+      align-self: flex-start;
+    }
+    .kartu-sisi-bar,
+    .kartu-aksi-divider,
+    .kartu-aksi-grid {
+      max-width: none;
+    }
   }
 
   /* ============================================================
@@ -20598,33 +20656,36 @@ function pasang3dKartu_() {
 }
 
 function showKartuAnggotaDigital() {
-  const bisaBagikan = !!(navigator.share && navigator.canShare);
   const temaAktif = getTemaKartu_(kartuTemaAktif_).id;
   const html = '<div class="kartu-modal-shell">' +
-    '<div id="kartuTemaSwitch" class="kartu-tema-switch" role="group" aria-label="Pilih tema kartu">' +
-      '<button type="button" class="kartu-tema-btn' + (temaAktif === "emerald" ? " active" : "") + '" data-tema="emerald" onclick="setTemaKartuAnggota(\'emerald\')"><span class="kartu-tema-dot" style="background:#10B981;"></span>Emerald YASSA</button>' +
-      '<button type="button" class="kartu-tema-btn' + (temaAktif === "gold" ? " active" : "") + '" data-tema="gold" onclick="setTemaKartuAnggota(\'gold\')"><span class="kartu-tema-dot" style="background:#F39C12;"></span>Hitam Emas</button>' +
-    '</div>' +
-    '<div id="kartu3dWrap" style="width:100%; max-width:250px; perspective:800px; touch-action:none; padding:6px 0 10px;">' +
-      '<div id="kartu3d" style="position:relative; transform-style:preserve-3d; will-change:transform;">' +
-        '<div id="kartuFlip" style="position:relative; transform-style:preserve-3d;">' +
-          '<canvas id="kartuAnggotaCanvas" width="638" height="1012" style="display:block; width:100%; aspect-ratio:638/1012; border-radius:18px; backface-visibility:hidden; -webkit-backface-visibility:hidden;"></canvas>' +
-          '<div id="kartu3dGlare" style="position:absolute; inset:0; border-radius:18px; pointer-events:none; opacity:0; transition:opacity 0.2s; transform:translateZ(1px); backface-visibility:hidden; -webkit-backface-visibility:hidden;"></div>' +
+    '<div class="kartu-modal-preview">' +
+      '<div id="kartu3dWrap">' +
+        '<div id="kartu3d" style="position:relative; transform-style:preserve-3d; will-change:transform;">' +
+          '<div id="kartuFlip" style="position:relative; transform-style:preserve-3d;">' +
+            '<canvas id="kartuAnggotaCanvas" width="638" height="1012" style="display:block; width:100%; aspect-ratio:638/1012; border-radius:18px; backface-visibility:hidden; -webkit-backface-visibility:hidden;"></canvas>' +
+            '<div id="kartu3dGlare" style="position:absolute; inset:0; border-radius:18px; pointer-events:none; opacity:0; transition:opacity 0.2s; transform:translateZ(1px); backface-visibility:hidden; -webkit-backface-visibility:hidden;"></div>' +
+          '</div>' +
         '</div>' +
       '</div>' +
     '</div>' +
-    '<div class="kartu-sisi-bar">' +
-      '<span id="kartuSisiBadge" class="kartu-sisi-badge" data-side="depan"><span class="kartu-sisi-dot"></span>Sisi Depan</span>' +
-      '<button type="button" id="kartuBalikBtn" class="kartu-balik-btn"><span class="material-symbols-outlined" style="font-size:16px;">360</span><span id="kartuBalikLabel">Lihat Belakang (QR)</span></button>' +
-    '</div>' +
-    '<div id="kartuAnggotaKet" style="font-size:10.5px; color:var(--text-muted); text-align:center; min-height:14px; line-height:1.4;">Menyiapkan kartu digital...</div>' +
-    '<div class="kartu-aksi-divider"></div>' +
-    '<div class="kartu-aksi-grid">' +
-      '<button type="button" class="kartu-anggota-aksi" disabled onclick="unduhKartuAnggota()"><span class="material-symbols-outlined" style="font-size:16px;">image</span>Unduh PNG</button>' +
-      '<button type="button" class="kartu-anggota-aksi" disabled onclick="unduhKartuSvg()"><span class="material-symbols-outlined" style="font-size:16px;">download</span>Unduh SVG</button>' +
-      '<button type="button" class="kartu-anggota-aksi kartu-aksi-secondary" disabled onclick="unduhKartuVcf()"><span class="material-symbols-outlined" style="font-size:16px;">contact_page</span>Simpan .VCF</button>' +
-      '<button type="button" class="kartu-anggota-aksi kartu-aksi-secondary" disabled onclick="cetakKartuAnggota()"><span class="material-symbols-outlined" style="font-size:16px;">print</span>Cetak CR80</button>' +
-      (bisaBagikan ? '<button type="button" class="kartu-anggota-aksi kartu-aksi-full" disabled onclick="bagikanKartuAnggota()"><span class="material-symbols-outlined" style="font-size:16px;">share</span>Bagikan Kartu</button>' : '') +
+    '<div class="kartu-modal-controls">' +
+      '<div id="kartuTemaSwitch" class="kartu-tema-switch" role="group" aria-label="Pilih tema kartu">' +
+        '<button type="button" class="kartu-tema-btn' + (temaAktif === "emerald" ? " active" : "") + '" data-tema="emerald" onclick="setTemaKartuAnggota(\'emerald\')"><span class="kartu-tema-dot" style="background:#10B981;"></span>Emerald YASSA</button>' +
+        '<button type="button" class="kartu-tema-btn' + (temaAktif === "gold" ? " active" : "") + '" data-tema="gold" onclick="setTemaKartuAnggota(\'gold\')"><span class="kartu-tema-dot" style="background:#F39C12;"></span>Hitam Emas</button>' +
+      '</div>' +
+      '<div class="kartu-sisi-bar">' +
+        '<span id="kartuSisiBadge" class="kartu-sisi-badge" data-side="depan"><span class="kartu-sisi-dot"></span>Sisi Depan</span>' +
+        '<button type="button" id="kartuBalikBtn" class="kartu-balik-btn"><span class="material-symbols-outlined" style="font-size:15px;">360</span><span id="kartuBalikLabel">Lihat Belakang (QR)</span></button>' +
+      '</div>' +
+      '<div id="kartuAnggotaKet" style="font-size:10.5px; color:var(--text-muted); text-align:center; min-height:14px; line-height:1.35;">Menyiapkan kartu digital...</div>' +
+      '<div class="kartu-aksi-divider"></div>' +
+      '<div class="kartu-aksi-grid">' +
+        '<button type="button" class="kartu-anggota-aksi" disabled onclick="unduhKartuAnggota()"><span class="material-symbols-outlined" style="font-size:16px;">download</span>Unduh PNG</button>' +
+        '<button type="button" class="kartu-anggota-aksi" disabled onclick="bagikanKartuAnggota()"><span class="material-symbols-outlined" style="font-size:16px;">share</span>Bagikan</button>' +
+        '<button type="button" class="kartu-anggota-aksi kartu-aksi-secondary" disabled onclick="unduhKartuSvg()"><span class="material-symbols-outlined" style="font-size:16px;">polyline</span>Unduh SVG</button>' +
+        '<button type="button" class="kartu-anggota-aksi kartu-aksi-secondary" disabled onclick="unduhKartuVcf()"><span class="material-symbols-outlined" style="font-size:16px;">contact_page</span>Simpan .VCF</button>' +
+        '<button type="button" class="kartu-anggota-aksi kartu-aksi-secondary kartu-aksi-full" disabled onclick="cetakKartuAnggota()"><span class="material-symbols-outlined" style="font-size:16px;">print</span>Cetak CR80 (54 × 86 mm)</button>' +
+      '</div>' +
     '</div>' +
   '</div>';
   showModal("Kartu Anggota Digital", html, false, null, "Tutup");
@@ -20931,14 +20992,34 @@ function unduhKartuAnggota() {
 }
 
 function bagikanKartuAnggota() {
-  kartuAnggotaBlob_().then(function (blob) {
+  kartuAnggotaBlob_().then(async function (blob) {
     const file = new File([blob], namaFileKartu_(), { type: "image/png" });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       return navigator.share({ files: [file], title: "Kartu Anggota Yassa GoPay" });
     }
-    unduhKartuAnggota();
+    const teksVerif = (kartuDataSvg_ && kartuDataSvg_.teksQr && /^https?:\/\//i.test(kartuDataSvg_.teksQr)) ? kartuDataSvg_.teksQr : "";
+    if (navigator.share) {
+      return navigator.share({
+        title: "Kartu Anggota Digital YASSA",
+        text: "Kartu Anggota Pengurus YASSA - " + String(currentUser.nama || "Pengurus"),
+        url: teksVerif || undefined
+      });
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = namaFileKartu_();
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+    if (teksVerif && navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(teksVerif);
+        if (typeof showHubToast === "function") showHubToast("Kartu diunduh & link verifikasi disalin", "success");
+        return;
+      } catch (e) { /* abaikan error clipboard */ }
+    }
+    if (typeof showHubToast === "function") showHubToast("Kartu diunduh — siap dibagikan manual", "success");
   }).catch(function (e) {
-    if (e && e.name === "AbortError") return; // user membatalkan
+    if (e && e.name === "AbortError") return;
     if (typeof showHubToast === "function") showHubToast("Gagal membagikan kartu", "error");
   });
 }
