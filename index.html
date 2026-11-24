@@ -2248,12 +2248,35 @@
       linear-gradient(135deg, rgba(16, 185, 129, 0.14) 0%, rgba(15, 23, 42, 0.0) 65%),
       var(--glass-inner);
     border-bottom: 1px solid var(--glass-border);
+    overflow: hidden;
+  }
+  .login-header-bg::after {
+    content: "";
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 0;
+    height: 2px;
+    background: repeating-linear-gradient(
+      90deg,
+      rgba(16, 185, 129, 0.42) 0 14px,
+      transparent 14px 24px
+    );
+    opacity: 0.72;
+    pointer-events: none;
   }
   html[data-theme="light"] .login-header-bg {
     background:
       linear-gradient(135deg, rgba(5, 150, 105, 0.08) 0%, rgba(248, 250, 252, 0.8) 70%),
       #F8FAFC;
     border-bottom-color: rgba(15, 23, 42, 0.08);
+  }
+  html[data-theme="light"] .login-header-bg::after {
+    background: repeating-linear-gradient(
+      90deg,
+      rgba(5, 150, 105, 0.34) 0 14px,
+      transparent 14px 24px
+    );
   }
 
   .login-brand-lockup {
@@ -2325,6 +2348,29 @@
     margin-bottom: 18px;
   }
 
+  .login-greeting-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #34D399;
+    margin-bottom: 6px;
+  }
+  .login-greeting-line::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10B981;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.65);
+    flex-shrink: 0;
+  }
+  html[data-theme="light"] .login-greeting-line {
+    color: #059669;
+  }
+
   .login-form-heading {
     font-size: 19px;
     font-weight: 800;
@@ -2352,6 +2398,7 @@
     border-radius: 12px;
     margin-bottom: 16px;
     text-align: left;
+    animation: loginErrorPop 0.24s cubic-bezier(0.22, 1, 0.36, 1);
   }
   html[data-theme="light"] .login-error {
     background: #FEF2F2;
@@ -2383,6 +2430,14 @@
     font-size: 11px;
     font-weight: 500;
     color: var(--text-muted);
+    transition: color 0.2s ease;
+  }
+  .login-label-hint.is-formatted {
+    color: #34D399;
+    font-weight: 600;
+  }
+  html[data-theme="light"] .login-label-hint.is-formatted {
+    color: #059669;
   }
 
   .login-field {
@@ -2402,6 +2457,10 @@
   .login-field:focus-within {
     border-color: var(--bento-primary);
     box-shadow: 0 0 0 3px rgba(var(--bento-primary-rgb), 0.16);
+  }
+  .login-field.is-error {
+    border-color: rgba(239, 68, 68, 0.65);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.14);
   }
 
   .login-field-icon {
@@ -2505,7 +2564,38 @@
   .password-input-wrap .user-form-input { padding-right: 42px; }
   .password-input-wrap .password-toggle-btn { right: 8px; }
 
+  .login-remember-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 2px 0 12px;
+  }
+  .login-remember-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+  }
+  .login-remember-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: #10B981;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 0;
+  }
+
   .login-btn {
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     width: 100%;
     height: 48px;
     padding: 0 18px;
@@ -2517,9 +2607,9 @@
     font-weight: 700;
     letter-spacing: 0.01em;
     cursor: pointer;
-    margin-top: 6px;
+    margin-top: 2px;
     box-shadow: 0 10px 22px -8px rgba(16, 185, 129, 0.55), 0 1px 0 rgba(255, 255, 255, 0.18) inset;
-    transition: transform 0.15s ease, filter 0.18s ease, box-shadow 0.18s ease;
+    transition: transform 0.15s ease, filter 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
   }
   .login-btn:hover:not(:disabled) {
     filter: brightness(1.06);
@@ -2534,10 +2624,73 @@
     outline-offset: 2px;
   }
   .login-btn:disabled {
-    opacity: 0.6;
+    opacity: 0.78;
     cursor: not-allowed;
     box-shadow: none;
     transform: none;
+  }
+  .login-btn.is-loading::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 25%, rgba(255, 255, 255, 0.24) 50%, transparent 75%);
+    transform: translateX(-100%);
+    animation: loginBtnShimmer 1.3s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .login-btn-spinner {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #FFFFFF;
+    animation: loginSpin 0.75s linear infinite;
+    flex-shrink: 0;
+  }
+
+  /* Entrance & validation micro-interactions */
+  .login-card.is-entering {
+    animation: loginCardEnter 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .login-card.is-entering .login-brand-lockup {
+    animation: loginBlockSlideUp 0.42s cubic-bezier(0.22, 1, 0.36, 1) 0.04s both;
+  }
+  .login-card.is-entering .login-form-head {
+    animation: loginBlockSlideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+  }
+  .login-card.is-entering #loginForm {
+    animation: loginBlockSlideUp 0.42s cubic-bezier(0.22, 1, 0.36, 1) 0.13s both;
+  }
+  .login-card.is-entering .login-footer-icons {
+    animation: loginBlockSlideUp 0.42s cubic-bezier(0.22, 1, 0.36, 1) 0.18s both;
+  }
+  .login-form-container.is-shake {
+    animation: loginFormShake 0.38s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  }
+  @keyframes loginCardEnter {
+    from { opacity: 0; transform: translate3d(0, 14px, 0) scale(0.985); }
+    to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  }
+  @keyframes loginBlockSlideUp {
+    from { opacity: 0; transform: translate3d(0, 10px, 0); }
+    to   { opacity: 1; transform: translate3d(0, 0, 0); }
+  }
+  @keyframes loginErrorPop {
+    from { opacity: 0; transform: translate3d(0, -4px, 0) scale(0.985); }
+    to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  }
+  @keyframes loginFormShake {
+    15%, 75% { transform: translate3d(-5px, 0, 0); }
+    30%, 60% { transform: translate3d(5px, 0, 0); }
+    45%      { transform: translate3d(-3px, 0, 0); }
+    90%      { transform: translate3d(2px, 0, 0); }
+    100%     { transform: translate3d(0, 0, 0); }
+  }
+  @keyframes loginBtnShimmer {
+    to { transform: translateX(100%); }
+  }
+  @keyframes loginSpin {
+    to { transform: rotate(360deg); }
   }
 
   .login-link {
@@ -2793,6 +2946,55 @@
       justify-content: center;
       flex-shrink: 0;
     }
+    .login-desktop-amanah {
+      margin-top: 6px;
+      padding: 13px 15px;
+      border-radius: 14px;
+      background: rgba(15, 23, 42, 0.48);
+      border: 1px solid rgba(52, 211, 153, 0.20);
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+    .login-desktop-amanah-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .login-desktop-amanah-tag {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #34D399;
+    }
+    .login-desktop-conn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(226, 232, 240, 0.88);
+    }
+    .login-desktop-conn-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
+    }
+    .login-desktop-conn.is-offline .login-desktop-conn-dot {
+      background: #F59E0B;
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.65);
+    }
+    .login-desktop-amanah-quote {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.5;
+      color: rgba(241, 245, 249, 0.88);
+      font-style: italic;
+    }
     .login-form-container {
       flex: 1;
       justify-content: center;
@@ -2814,6 +3016,17 @@
   @media (prefers-reduced-motion: reduce) {
     .login-field, .login-btn, .login-footer-icon-btn, .password-toggle-btn {
       transition: none !important;
+    }
+    .login-card.is-entering,
+    .login-card.is-entering .login-brand-lockup,
+    .login-card.is-entering .login-form-head,
+    .login-card.is-entering #loginForm,
+    .login-card.is-entering .login-footer-icons,
+    .login-form-container.is-shake,
+    .login-error,
+    .login-btn.is-loading::after,
+    .login-btn-spinner {
+      animation: none !important;
     }
   }
 
@@ -5861,11 +6074,23 @@ html[data-theme="light"] .pg-region-card:hover {
             <span>Dokumentasi &amp; absensi pengurus</span>
           </li>
         </ul>
+
+        <div class="login-desktop-amanah">
+          <div class="login-desktop-amanah-top">
+            <span class="login-desktop-amanah-tag">Pengingat Amanah</span>
+            <span class="login-desktop-conn" id="loginDesktopConn">
+              <span class="login-desktop-conn-dot"></span>
+              <span id="loginDesktopConnText">Siap Masuk</span>
+            </span>
+          </div>
+          <p class="login-desktop-amanah-quote" id="loginDesktopAmanahQuote">"Setiap rupiah yang tercatat rapi adalah amanah besar bagi masa depan anak-anak yatim."</p>
+        </div>
       </div>
     </div>
 
-    <div class="login-form-container">
+    <div class="login-form-container" id="loginFormContainer">
       <div class="login-form-head">
+        <div class="login-greeting-line" id="loginGreetingText">Assalamu'alaikum · Selamat Datang</div>
         <h1 class="login-form-heading">Masuk ke Akun</h1>
         <p class="login-form-desc">Gunakan nomor WhatsApp terdaftar atau akun Google Anda.</p>
       </div>
@@ -5876,13 +6101,13 @@ html[data-theme="light"] .pg-region-card:hover {
         <div class="login-field-group">
           <div class="login-label-row">
             <label for="loginEmail" class="login-label">Username / WhatsApp</label>
-            <span class="login-label-hint">628xxxxxxxxx</span>
+            <span class="login-label-hint" id="loginWaHint">628xxxxxxxxx</span>
           </div>
-          <div class="login-field">
+          <div class="login-field" id="loginEmailField">
             <div class="login-field-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             </div>
-            <input type="tel" id="loginEmail" class="login-input" placeholder="628xxxxxxxxx" required autocomplete="tel" inputmode="numeric">
+            <input type="tel" id="loginEmail" class="login-input" placeholder="08 / 628xxxxxxxxx" required autocomplete="tel" inputmode="numeric">
           </div>
         </div>
 
@@ -5891,7 +6116,7 @@ html[data-theme="light"] .pg-region-card:hover {
             <label for="loginPassword" class="login-label">Password</label>
             <a href="#" class="login-link" onclick="showModal('Lupa Password', 'Silakan hubungi Super Admin untuk mereset password Anda.'); return false;">Lupa Password?</a>
           </div>
-          <div class="login-field login-field--password">
+          <div class="login-field login-field--password" id="loginPasswordField">
             <div class="login-field-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             </div>
@@ -5900,6 +6125,13 @@ html[data-theme="light"] .pg-region-card:hover {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
           </div>
+        </div>
+
+        <div class="login-remember-row">
+          <label class="login-remember-label" for="loginRememberUser">
+            <input type="checkbox" id="loginRememberUser" class="login-remember-checkbox">
+            <span>Ingat username di perangkat ini</span>
+          </label>
         </div>
 
         <button type="submit" id="loginSubmitBtn" class="login-btn">Masuk</button>
@@ -6334,7 +6566,7 @@ html[data-theme="light"] .pg-region-card:hover {
     <div class="overlay-sso-loading" id="overlaySsoLoading">
       <div class="overlay-sso-spinner" id="overlaySsoSpinner"></div>
       <span id="overlaySsoLoadingText">Menghubungkan ke YASSA Mobile...</span>
-      <!--      Tampil cuma kalau SEMUA percobaan tiket SSO gagal -- biar user
+      <!-- 🆕 Tampil cuma kalau SEMUA percobaan tiket SSO gagal -- biar user
            yang mutusin (coba lagi vs lanjut login manual sekarang), bukan
            Hub yang diam-diam langsung buka Mobile tanpa tiket. -->
       <div class="overlay-sso-choice" id="overlaySsoChoice">
@@ -8295,10 +8527,148 @@ function initAuth() {
   });
 }
 
+const LOGIN_REMEMBER_WA_KEY_ = "yassa_remembered_wa";
+const LOGIN_AMANAH_QUOTES_ = [
+  "\"Setiap rupiah yang tercatat rapi adalah amanah besar bagi masa depan anak-anak yatim.\"",
+  "\"Pelayanan yang jujur dan transparan menghadirkan keberkahan bagi pengurus maupun donatur.\"",
+  "\"Salam Satu Aspal: langkah kecil di lapangan menjadi harapan nyata bagi mereka yang membutuhkan.\"",
+  "\"Amanah terjaga ketika data penyaluran terdokumentasi akurat dari pusat hingga wilayah.\""
+];
+
+function normalizeWaUsername_(raw) {
+  let digits = String(raw || "").replace(/[^0-9+]/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("+62")) digits = "62" + digits.slice(3);
+  else if (digits.startsWith("0062")) digits = "62" + digits.slice(4);
+  else digits = digits.replace(/\+/g, "");
+  if (digits.startsWith("08")) digits = "628" + digits.slice(2);
+  else if (digits.startsWith("8") && digits.length >= 9) digits = "62" + digits;
+  return digits;
+}
+
+function updateLoginDesktopMeta_() {
+  const connEl = document.getElementById("loginDesktopConn");
+  const connTxt = document.getElementById("loginDesktopConnText");
+  const quoteEl = document.getElementById("loginDesktopAmanahQuote");
+  if (connEl && connTxt) {
+    const isOnline = navigator.onLine !== false;
+    connEl.classList.toggle("is-offline", !isOnline);
+    connTxt.textContent = isOnline ? "Koneksi Online · Siap" : "Sedang Offline";
+  }
+  if (quoteEl) {
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 0);
+    const dayIndex = Math.floor((now - startOfYear) / 86400000);
+    quoteEl.textContent = LOGIN_AMANAH_QUOTES_[dayIndex % LOGIN_AMANAH_QUOTES_.length];
+  }
+}
+
+function updateLoginGreeting_() {
+  const el = document.getElementById("loginGreetingText");
+  if (!el) return;
+  const hour = new Date().getHours();
+  let waktu = "Selamat Malam";
+  if (hour >= 4 && hour < 11) waktu = "Selamat Pagi";
+  else if (hour >= 11 && hour < 15) waktu = "Selamat Siang";
+  else if (hour >= 15 && hour < 18) waktu = "Selamat Sore";
+  el.textContent = "Assalamu'alaikum · " + waktu;
+}
+
+function initLoginEnhancements_() {
+  const emailInput = document.getElementById("loginEmail");
+  const passInput = document.getElementById("loginPassword");
+  const rememberCb = document.getElementById("loginRememberUser");
+  const hintEl = document.getElementById("loginWaHint");
+  const emailField = document.getElementById("loginEmailField");
+  const passField = document.getElementById("loginPasswordField");
+  if (!emailInput || emailInput.dataset.enhanced) return;
+  emailInput.dataset.enhanced = "1";
+
+  const refreshWaHint = function (autoConverted) {
+    if (!hintEl) return;
+    if (autoConverted) {
+      hintEl.textContent = "Format 628 otomatis";
+      hintEl.classList.add("is-formatted");
+    } else {
+      hintEl.textContent = "628xxxxxxxxx";
+      hintEl.classList.remove("is-formatted");
+    }
+  };
+
+  emailInput.addEventListener("input", function () {
+    if (emailField) emailField.classList.remove("is-error");
+    const raw = emailInput.value;
+    const trimmed = raw.replace(/\s+/g, "");
+    let formatted = false;
+    if (/^(08|\+628|00628)/.test(trimmed)) {
+      const norm = normalizeWaUsername_(trimmed);
+      if (norm !== raw) {
+        emailInput.value = norm;
+        formatted = true;
+      }
+    }
+    refreshWaHint(formatted || (emailInput.value.startsWith("628") && emailInput.value.length >= 10));
+  });
+
+  emailInput.addEventListener("blur", function () {
+    const norm = normalizeWaUsername_(emailInput.value);
+    if (norm && norm !== emailInput.value) {
+      emailInput.value = norm;
+      refreshWaHint(true);
+    }
+  });
+
+  if (passInput && passField) {
+    passInput.addEventListener("input", function () {
+      passField.classList.remove("is-error");
+    });
+  }
+
+  if (rememberCb) {
+    rememberCb.addEventListener("change", function () {
+      try {
+        if (!rememberCb.checked) localStorage.removeItem(LOGIN_REMEMBER_WA_KEY_);
+        else if (emailInput.value.trim()) {
+          localStorage.setItem(LOGIN_REMEMBER_WA_KEY_, normalizeWaUsername_(emailInput.value));
+        }
+      } catch (e) {}
+    });
+  }
+
+  if (!window._loginOnlineListenerBound) {
+    window._loginOnlineListenerBound = true;
+    window.addEventListener("online", updateLoginDesktopMeta_);
+    window.addEventListener("offline", updateLoginDesktopMeta_);
+  }
+}
+
 function showLoginScreen() {
-  document.getElementById("loginScreen").style.display = "flex";
+  const screenEl = document.getElementById("loginScreen");
+  const cardEl = screenEl ? screenEl.querySelector(".login-card") : null;
+  screenEl.style.display = "flex";
   document.getElementById("app").style.display = "none";
   document.getElementById("loginAppVersion").textContent = "Versi " + APP_VERSION;
+
+  updateLoginGreeting_();
+  updateLoginDesktopMeta_();
+  initLoginEnhancements_();
+
+  try {
+    const savedWa = localStorage.getItem(LOGIN_REMEMBER_WA_KEY_);
+    const emailInput = document.getElementById("loginEmail");
+    const rememberCb = document.getElementById("loginRememberUser");
+    if (savedWa && emailInput) {
+      emailInput.value = savedWa;
+      if (rememberCb) rememberCb.checked = true;
+    }
+  } catch (e) {}
+
+  if (cardEl) {
+    cardEl.classList.remove("is-entering");
+    void cardEl.offsetWidth;
+    cardEl.classList.add("is-entering");
+  }
+
   initGoogleSignIn();
 }
 
@@ -8412,53 +8782,92 @@ function roleLabel(role) {
   return map[role] || role;
 }
 
-function showLoginError(msg) {
+function showLoginError(msg, focusField) {
   const el = document.getElementById("loginError");
+  const container = document.getElementById("loginFormContainer");
+  const emailField = document.getElementById("loginEmailField");
+  const passField = document.getElementById("loginPasswordField");
   el.textContent = msg;
+  el.style.display = "none";
+  void el.offsetWidth;
   el.style.display = "block";
+  if (emailField) emailField.classList.toggle("is-error", focusField === "email" || focusField === "both");
+  if (passField) passField.classList.toggle("is-error", focusField === "password" || focusField === "both");
+  if (container) {
+    container.classList.remove("is-shake");
+    void container.offsetWidth;
+    container.classList.add("is-shake");
+  }
+}
+
+function setLoginBtnLoading_(btn, text) {
+  if (!btn) return;
+  btn.disabled = true;
+  btn.classList.add("is-loading");
+  btn.innerHTML = '<span class="login-btn-spinner" aria-hidden="true"></span><span>' + escapeHtmlHub(text) + '</span>';
+}
+
+function resetLoginBtn_(btn) {
+  if (!btn) return;
+  btn.disabled = false;
+  btn.classList.remove("is-loading");
+  btn.textContent = "Masuk";
 }
 
 function handleLoginSubmit(event) {
   event.preventDefault();
   document.getElementById("loginError").style.display = "none";
-  const email = document.getElementById("loginEmail").value.trim();
+  const emailInput = document.getElementById("loginEmail");
+  const rememberCb = document.getElementById("loginRememberUser");
+  const emailField = document.getElementById("loginEmailField");
+  const passField = document.getElementById("loginPasswordField");
+  if (emailField) emailField.classList.remove("is-error");
+  if (passField) passField.classList.remove("is-error");
+
+  const email = normalizeWaUsername_(emailInput.value.trim());
+  if (email && email !== emailInput.value) {
+    emailInput.value = email;
+  }
   const password = document.getElementById("loginPassword").value;
   const btn = document.getElementById("loginSubmitBtn");
-  
+
   if (!email) {
-    showLoginError("Username wajib diisi.");
+    showLoginError("Username wajib diisi.", "email");
     return;
   }
   if (!email.startsWith("628")) {
-    showLoginError("Username harus diawali dengan 628 (dipakai juga sebagai nomor WA, contoh: 62812345678)");
+    showLoginError("Username harus diawali 08 atau 628 (nomor WA, contoh: 62812345678).", "email");
     return;
   }
 
-  btn.disabled = true;
-  btn.textContent = "Memproses...";
+  try {
+    if (rememberCb && rememberCb.checked) localStorage.setItem(LOGIN_REMEMBER_WA_KEY_, email);
+    else localStorage.removeItem(LOGIN_REMEMBER_WA_KEY_);
+  } catch (e) {}
+
+  setLoginBtnLoading_(btn, "Memverifikasi akun...");
 
   callGASWithRetry_("login", [email, password], {
     timeoutMs: 40000,
     maxAttempts: 2,
     delayMs: 2000,
     onRetry: function (attempt, maxAttempts) {
-      btn.textContent = "Koneksi lambat, memproses... (" + attempt + "/" + maxAttempts + ")";
+      setLoginBtnLoading_(btn, "Koneksi lambat, mencoba ulang... (" + attempt + "/" + maxAttempts + ")");
     },
   })
     .then(function (res) {
-      pendingOldPassword = password; 
+      pendingOldPassword = password;
       onLoginSuccess(res);
     })
     .catch(function (err) {
-      showLoginError(err.message);
+      showLoginError(err.message, "both");
       // 📡 Monitor Akses: percobaan login GAGAL -- Username yang dicoba
       // dicatat apa adanya (bukan berarti akun itu beneran ada), biar
       // kelihatan kalau ada yang nyoba nebak-nebak berkali-kali.
       logAksesEvent_("LOGIN_GAGAL", { username: email });
     })
     .finally(function () {
-      btn.disabled = false;
-      btn.textContent = "Masuk";
+      resetLoginBtn_(btn);
     });
 }
 
