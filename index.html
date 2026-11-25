@@ -22598,12 +22598,22 @@ function resetSsoOverlayUi_() {
 // logout (resetOverlayIframe) biar pengguna berikutnya ditanya ulang.
 // ============================================================
 const MOBILE_THEME_SESSION_KEY_ = "yassa_mobile_theme_session";
+const MOBILE_THEME_LAST_KEY_ = "yassa_mobile_theme_last";
 let mobileThemeAskCallback_ = null;
+// true hanya saat Hub memulihkan jendela app otomatis (bootApp) -- pas itu
+// JANGAN munculkan dialog, pakai pilihan terakhir saja.
+let hubRestoringOverlay_ = false;
 
 function tanyaTemaMobile_(lanjut) {
   let tersimpan = null;
   try { tersimpan = sessionStorage.getItem(MOBILE_THEME_SESSION_KEY_); } catch (e) {}
   if (tersimpan === "dark" || tersimpan === "light") { lanjut(tersimpan); return; }
+  if (hubRestoringOverlay_) {
+    let terakhir = null;
+    try { terakhir = localStorage.getItem(MOBILE_THEME_LAST_KEY_); } catch (e) {}
+    lanjut(terakhir === "dark" || terakhir === "light" ? terakhir : null);
+    return;
+  }
 
   const el = document.getElementById("mobileThemeAsk");
   if (!el) { lanjut(null); return; } // dialog tidak ada -> Mobile pakai pilihannya sendiri
@@ -22623,6 +22633,7 @@ function pilihTemaMobile_(tema) {
   mobileThemeAskCallback_ = null;
   if (!tema || !cb) return; // Batal -> Mobile tidak jadi dibuka
   try { sessionStorage.setItem(MOBILE_THEME_SESSION_KEY_, tema); } catch (e) {}
+  try { localStorage.setItem(MOBILE_THEME_LAST_KEY_, tema); } catch (e) {}
   cb(tema);
 }
 
@@ -23844,7 +23855,7 @@ function bootApp() {
       // langsung buka kembali aplikasi & tab terakhir yang sedang dibuka user
       try {
         const lastOvRaw = localStorage.getItem("yassa_hub_last_overlay");
-        if (lastOvRaw) {
+        if (lastOvRaw && authToken) {
           const lo = JSON.parse(lastOvRaw);
           if (lo && lo.active && typeof lo.index === "number" && Date.now() - (lo.time || 0) < 2 * 3600 * 1000) {
             if (typeof MENUS !== "undefined" && MENUS[lo.active] && MENUS[lo.active].items[lo.index]) {
@@ -23852,8 +23863,9 @@ function bootApp() {
               active = lo.active;
               render();
               setTimeout(function () {
-                if (typeof openApp === "function") {
-                  openApp(lo.index);
+                if (typeof openApp === "function" && authToken) {
+                  hubRestoringOverlay_ = true;
+                  try { openApp(lo.index); } finally { hubRestoringOverlay_ = false; }
                   if (typeof showHubToast === "function") {
                     showHubToast("Jendela " + (lo.label || "aplikasi") + " dipulihkan otomatis", "info", 3000);
                   }
