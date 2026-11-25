@@ -1193,6 +1193,20 @@
   .user-menu-icon.tone-muted { background: rgba(255,255,255,0.07); color: var(--text-secondary); }
 
   .overlay { position: absolute; inset: 0; background: var(--bg-navy); display: none; flex-direction: column; z-index: 30; }
+  /* 🌓 Dialog "Pilih Tampilan YASSA Mobile" -- ditanyakan sebelum Mobile dibuka */
+  .mta-backdrop { position: fixed; inset: 0; z-index: 100001; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(2, 6, 14, 0.62); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .mta-backdrop.show { display: flex; }
+  .mta-card { width: 100%; max-width: 340px; background: var(--glass-strong); color: var(--text-primary); border: 1px solid var(--glass-border-strong); border-radius: 24px; padding: 22px 20px 12px; box-shadow: var(--shadow-deep); text-align: center; }
+  .mta-title { font-size: 17px; font-weight: 800; margin: 0 0 6px; }
+  .mta-sub { font-size: 12.5px; line-height: 1.5; color: var(--text-secondary); margin: 0 0 16px; }
+  .mta-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .mta-btn { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 10px; min-height: 44px; border-radius: 18px; border: 2px solid transparent; font: inherit; font-weight: 800; font-size: 13px; cursor: pointer; }
+  .mta-btn .material-symbols-outlined { font-size: 30px; }
+  .mta-dark { background: #0D1321; color: #F8FAFC; border-color: #334155; }
+  .mta-light { background: #F8FAFC; color: #0F172A; border-color: #CBD5E1; }
+  .mta-btn.sugesti { border-color: #10B981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.28); }
+  .mta-cancel { margin-top: 8px; background: none; border: none; color: var(--text-secondary); font: inherit; font-size: 12px; font-weight: 700; padding: 10px 14px; cursor: pointer; }
+
   /* ============================================================
      🩹 FIX (poin 3: indikator status jaringan): banner tipis di
      ATAS layar, muncul otomatis pas koneksi terputus (event
@@ -22539,6 +22553,43 @@ function resetSsoOverlayUi_() {
   if (ssoChoiceEl) ssoChoiceEl.classList.remove("show");
 }
 
+// ============================================================
+// 🌓 PILIH MODE TAMPILAN YASSA MOBILE
+// Mobile jalan di origin lain (yassa-mobile.github.io), jadi pilihan tema
+// Hub (localStorage) TIDAK kebaca dari sana. Makanya pilihan dikirim lewat
+// parameter ?theme=dark|light di URL Mobile; Mobile yang membacanya.
+// Ditanyakan sekali per sesi (sessionStorage), dan dilupakan lagi saat
+// logout (resetOverlayIframe) biar pengguna berikutnya ditanya ulang.
+// ============================================================
+const MOBILE_THEME_SESSION_KEY_ = "yassa_mobile_theme_session";
+let mobileThemeAskCallback_ = null;
+
+function tanyaTemaMobile_(lanjut) {
+  let tersimpan = null;
+  try { tersimpan = sessionStorage.getItem(MOBILE_THEME_SESSION_KEY_); } catch (e) {}
+  if (tersimpan === "dark" || tersimpan === "light") { lanjut(tersimpan); return; }
+
+  const el = document.getElementById("mobileThemeAsk");
+  if (!el) { lanjut(null); return; } // dialog tidak ada -> Mobile pakai pilihannya sendiri
+  const hubTerang = document.documentElement.getAttribute("data-theme") === "light";
+  const bDark = document.getElementById("mtaBtnDark");
+  const bLight = document.getElementById("mtaBtnLight");
+  if (bDark) bDark.classList.toggle("sugesti", !hubTerang);
+  if (bLight) bLight.classList.toggle("sugesti", hubTerang);
+  mobileThemeAskCallback_ = lanjut;
+  el.classList.add("show");
+}
+
+function pilihTemaMobile_(tema) {
+  const el = document.getElementById("mobileThemeAsk");
+  if (el) el.classList.remove("show");
+  const cb = mobileThemeAskCallback_;
+  mobileThemeAskCallback_ = null;
+  if (!tema || !cb) return; // Batal -> Mobile tidak jadi dibuka
+  try { sessionStorage.setItem(MOBILE_THEME_SESSION_KEY_, tema); } catch (e) {}
+  cb(tema);
+}
+
 function openApp(index) {
   const menu = MENUS[active];
   const item = menu.items[index];
@@ -22629,12 +22680,15 @@ function openApp(index) {
   // ditentukan Mobile sendiri lewat handleSsoLogin() di Code.gs-nya -- ini
   // cuma titip identitas doang.
   if (active === "mobile") {
-    document.getElementById("overlayFrame").src = "about:blank";
-    document.getElementById("overlay").classList.add("open");
-    const baseTabUrl = menu.baseUrl + "?embed=1&tab=" + item.tab;
-    bukaMobileDenganSso_(baseTabUrl);
-    overlayLoadedMenuKey = active;
-    overlayLoadedBaseUrl = menu.baseUrl || null;
+    // 🌓 Tanya dulu mau mode malam atau terang, baru buka Mobile.
+    tanyaTemaMobile_(function (tema) {
+      document.getElementById("overlayFrame").src = "about:blank";
+      document.getElementById("overlay").classList.add("open");
+      const baseTabUrl = menu.baseUrl + "?embed=1&tab=" + item.tab + (tema ? "&theme=" + tema : "");
+      bukaMobileDenganSso_(baseTabUrl);
+      overlayLoadedMenuKey = active;
+      overlayLoadedBaseUrl = menu.baseUrl || null;
+    });
     return;
   }
 
@@ -22667,6 +22721,7 @@ document.getElementById("overlayClose").addEventListener("click", function () {
 // (kalau ada) ikut kebuang, gak ketinggalan buat user berikutnya yang login
 // di device/browser yang sama.
 function resetOverlayIframe() {
+  try { sessionStorage.removeItem(MOBILE_THEME_SESSION_KEY_); } catch (e) {}
   document.getElementById("overlay").classList.remove("open");
   document.getElementById("overlayFrame").src = "about:blank";
   const ssoLoadingEl = document.getElementById("overlaySsoLoading");
@@ -24391,5 +24446,18 @@ bootApp();
 <div id="root"></div>
 <script type="module" src="/src/main.tsx"></script>
 
+
+<!-- 🌓 Pertanyaan mode tampilan YASSA Mobile (lihat tanyaTemaMobile_ di script) -->
+<div class="mta-backdrop" id="mobileThemeAsk" role="dialog" aria-modal="true" aria-labelledby="mtaTitle">
+  <div class="mta-card">
+    <h3 class="mta-title" id="mtaTitle">Pilih Tampilan YASSA Mobile</h3>
+    <p class="mta-sub">Mau pakai mode malam atau mode terang? Mode terang lebih jelas dibaca saat di luar ruangan atau siang hari.</p>
+    <div class="mta-choices">
+      <button type="button" class="mta-btn mta-dark" id="mtaBtnDark" onclick="pilihTemaMobile_('dark')"><span class="material-symbols-outlined">dark_mode</span>Mode Malam</button>
+      <button type="button" class="mta-btn mta-light" id="mtaBtnLight" onclick="pilihTemaMobile_('light')"><span class="material-symbols-outlined">light_mode</span>Mode Terang</button>
+    </div>
+    <button type="button" class="mta-cancel" onclick="pilihTemaMobile_(null)">Batal</button>
+  </div>
+</div>
 </body>
 </html>
