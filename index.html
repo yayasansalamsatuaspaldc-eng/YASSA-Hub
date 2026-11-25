@@ -6529,43 +6529,12 @@ html[data-theme="light"] .pg-region-card:hover {
     .login-tagline { display: block; font-size: 12.5px; line-height: 1.45; color: var(--text-secondary); margin-top: 6px; max-width: 260px; }
     .google-btn-wrap { min-height: 48px; }
   }
-  /* 📱 SATU LAYAR (tanpa gulir) untuk HP berlayar pendek, mis. Redmi 9:
-     header jadi satu baris, jarak & tinggi kolom dipadatkan. Total tinggi
-     konten sekitar 530px, jadi muat di viewport browser HP umumnya. */
-  @media (max-height: 800px) and (max-width: 1023px) {
-    .login-screen { padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px)); align-items: center; }
-    .login-theme-btn { top: 10px; right: 10px; width: 40px; height: 40px; }
-    .login-header-bg { flex-direction: row; align-items: center; text-align: left; padding: 10px 62px 10px 14px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.16) 0%, rgba(15, 23, 42, 0) 65%), var(--glass-inner); }
-    .login-brand-lockup { flex-direction: row; align-items: center; gap: 12px; }
-    .login-brand-copy { align-items: flex-start; }
-    .login-logo-ring { width: 44px; height: 44px; border-radius: 13px; padding: 5px; box-shadow: 0 0 22px rgba(16, 185, 129, 0.28); }
-    .login-title { font-size: 18px; }
-    .login-subtitle { font-size: 12px; margin-top: 1px; }
+  @media (max-height: 780px) and (max-width: 1023px) {
+    .login-header-bg { padding: 14px 16px 12px; }
+    .login-logo-ring { width: 54px; height: 54px; border-radius: 17px; box-shadow: 0 0 28px rgba(16, 185, 129, 0.30); }
+    .login-brand-lockup { gap: 8px; }
+    .login-title { font-size: 20px; }
     .login-tagline { display: none; }
-    .login-form-container { padding: 12px 14px 10px; }
-    .login-form-head { margin-bottom: 8px; }
-    .login-greeting-line, .login-form-desc, .login-label-hint { display: none; }
-    .login-form-heading { font-size: 17px; margin: 0; }
-    .login-field-group { margin-bottom: 10px; }
-    .login-label-row { margin-bottom: 4px; }
-    .login-field { height: 44px; }
-    .login-remember-row { margin: 0 0 8px; }
-    .login-btn { height: 44px; }
-    .login-divider { margin: 10px 0 8px; }
-    .google-btn-wrap { min-height: 40px; margin-bottom: 8px; }
-    .login-footer-icons { padding-top: 10px; gap: 6px; }
-    .login-footer-icon-btn { min-height: 52px; padding: 6px 4px; gap: 4px; }
-    .login-footer-icon-circle { width: 24px; height: 24px; }
-    .login-meta-footer { margin-top: 8px; gap: 0; }
-    .login-app-version, .login-official-note { font-size: 10.5px; line-height: 1.3; }
-  }
-  /* layar sangat pendek (<=620px): padatkan sekali lagi */
-  @media (max-height: 620px) and (max-width: 1023px) {
-    .login-field { height: 40px; }
-    .login-btn { height: 40px; }
-    .login-footer-icon-btn { min-height: 46px; }
-    .login-divider { margin: 8px 0 6px; }
-    .login-field-group { margin-bottom: 8px; }
   }
 </style>
 </head>
